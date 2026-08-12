@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>CIM · 私密即時聊天</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%92%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div id="app" class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="lock" aria-hidden="true">🔒</span>
+        <div class="brand-text">
+          <div class="brand-name">CIM</div>
+          <div class="brand-sub">端對端加密聊天</div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button id="nickBtn" class="ghost-btn" type="button" title="更改暱稱">
+          <span id="nickLabel">訪客</span>
+        </button>
+        <button id="inviteBtn" class="primary-btn" type="button" title="複製邀請連結">
+          <span class="btn-ico" aria-hidden="true">🔗</span>
+          <span class="btn-txt">邀請</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="statusbar">
+      <span id="statusDot" class="dot connecting" aria-hidden="true"></span>
+      <span id="statusText">連線中…</span>
+      <span class="status-spacer"></span>
+      <span id="roomHint" class="room-hint" title="此房間代碼">房間 —</span>
+    </div>
+
+    <main id="messages" class="messages" aria-live="polite">
+      <div id="welcome" class="welcome">
+        <div class="welcome-emoji">🔐</div>
+        <h1>私密聊天室已就緒</h1>
+        <p>
+          這個房間的訊息在你的裝置上<strong>端對端加密</strong>，
+          金鑰藏在網址的 <code>#</code> 之後，不會傳送到任何伺服器。
+        </p>
+        <p class="welcome-cta">
+          點右上角 <strong>「🔗 邀請」</strong> 複製連結，傳給你想聊天的人。
+          <br />只有拿到這條連結的人，才進得來、也才解得開訊息。
+        </p>
+      </div>
+    </main>
+
+    <div id="typing" class="typing" hidden></div>
+
+    <footer class="composer">
+      <textarea
+        id="input"
+        class="composer-input"
+        rows="1"
+        maxlength="4000"
+        placeholder="輸入訊息…（Enter 送出，Shift+Enter 換行）"
+        autocomplete="off"
+        autocapitalize="sentences"
+      ></textarea>
+      <button id="sendBtn" class="send-btn" type="button" title="送出" disabled>
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path fill="currentColor" d="M3.4 20.4l17.45-7.48a1 1 0 000-1.84L3.4 3.6a.993.993 0 00-1.39.91L2 9.12c0 .5.37.93.87.99L17 12 2.87 13.88c-.5.07-.87.5-.87 1l.01 4.61c0 .71.73 1.2 1.39.91z"/>
+        </svg>
+      </button>
+    </footer>
+  </div>
+
+  <!-- Nickname dialog -->
+  <dialog id="nickDialog" class="dialog">
+    <form method="dialog" class="dialog-form">
+      <h2>你的暱稱</h2>
+      <p class="dialog-sub">聊天室裡的人會看到這個名字。</p>
+      <input id="nickInput" class="dialog-input" type="text" maxlength="24" placeholder="例如：小明" />
+      <div class="dialog-actions">
+        <button value="cancel" class="ghost-btn" type="submit">取消</button>
+        <button id="nickSave" value="save" class="primary-btn" type="submit">儲存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Toast -->
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="./mqtt.min.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
