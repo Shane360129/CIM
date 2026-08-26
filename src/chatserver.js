@@ -143,9 +143,10 @@ export class ChatServer {
       }
     }
     // workerd 要求 request body 被消耗；沒讀完就回應會拋出
-    // "Can't read from request stream after response has been sent"
+    // "Can't read from request stream after response has been sent"。
+    // 用 arrayBuffer() 實際讀完，讓 Worker→DO 代理兩端的串流都被吸乾
     if (request.body && !request.bodyUsed) {
-      try { await request.body.cancel(); } catch {}
+      try { await request.arrayBuffer(); } catch {}
     }
     return response;
   }
