@@ -109,9 +109,10 @@ CREATE TABLE IF NOT EXISTS events (
 );
 `;
 
+// 日系低彩度頭像色盤（柿、芥子、抹茶、青磁、藍鼠…）
 const AVATAR_COLORS = [
-  '#F76C6C', '#F7906C', '#E8A93A', '#7BC24A', '#06C755',
-  '#2BB3A3', '#4A9FF5', '#6C7CF7', '#9B6CF7', '#E56CC0',
+  '#C97E6C', '#C9A46C', '#A8B078', '#7FA88B', '#5E9C6B',
+  '#6C9FA8', '#7C8BB0', '#9B85AD', '#B07C93', '#8D8578',
 ];
 
 class HttpError extends Error {

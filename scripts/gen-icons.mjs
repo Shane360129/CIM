@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 const outDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'icons');
 mkdirSync(outDir, { recursive: true });
 
-const GREEN = [0x06, 0xc7, 0x55];
+const GREEN = [0x5e, 0x9c, 0x6b];
 const WHITE = [0xff, 0xff, 0xff];
 
 // ---- 形狀（以 0..1 正規化座標描述，與 public/icon.svg 相同構圖） ----

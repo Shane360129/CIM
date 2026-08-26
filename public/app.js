@@ -1642,7 +1642,7 @@ function applyAppearance() {
   const dark = state.theme === 'dark' || (state.theme === 'auto' && systemDarkMq.matches);
   document.body.classList.toggle('theme-dark', dark);
   const metaTheme = document.querySelector('meta[name="theme-color"]');
-  if (metaTheme) metaTheme.content = dark ? '#1a1e25' : '#06C755';
+  if (metaTheme) metaTheme.content = dark ? '#1E1C17' : '#F6F4EE';
   const iconLink = document.querySelector('link[rel="icon"]');
   if (iconLink) iconLink.href = state.stealth ? '/doc.svg' : '/icon.svg';
   updateUnreadBadges();
