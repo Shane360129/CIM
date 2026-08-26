@@ -133,7 +133,7 @@ const state = {
   notify: localStorage.getItem('cim_notify') !== '0',
   notifDismissed: localStorage.getItem('cim_notif_dismissed') === '1',
   theme: localStorage.getItem('cim_theme') || 'auto',
-  skin: localStorage.getItem('cim_skin') || 'washi',
+  skin: localStorage.getItem('cim_skin') || 'ocean',
   fontSize: localStorage.getItem('cim_font') || 'md',
   stealth: localStorage.getItem('cim_stealth') === '1',
   pushOn: localStorage.getItem('cim_push') === '1',
@@ -1633,10 +1633,10 @@ function beep(start, freq, dur) {
 
 // 可選風格：[代號, 名稱, 預覽底色, 預覽主色]
 const SKINS = [
+  ['ocean', '海洋', '#E7EDF2', '#4A8FBF'],
   ['washi', '和紙抹茶', '#EAE6DD', '#5E9C6B'],
   ['classic', '經典綠', '#7b94bd', '#06C755'],
   ['sakura', '櫻花', '#F6ECEA', '#D77A8C'],
-  ['ocean', '海洋', '#E7EDF2', '#4A8FBF'],
   ['sumi', '墨白', '#F1F0EE', '#4A4A46'],
 ];
 
@@ -1657,7 +1657,7 @@ function applyAppearance() {
   const metaTheme = document.querySelector('meta[name="theme-color"]');
   if (metaTheme) {
     const panel = getComputedStyle(document.body).getPropertyValue('--panel').trim();
-    metaTheme.content = panel || (dark ? '#1E1C17' : '#F6F4EE');
+    metaTheme.content = panel || (dark ? '#171E25' : '#F4F7FA');
   }
   const iconLink = document.querySelector('link[rel="icon"]');
   if (iconLink) iconLink.href = state.stealth ? '/doc.svg' : '/icon.svg';

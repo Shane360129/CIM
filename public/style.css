@@ -111,32 +111,32 @@ input, textarea { font-family: inherit; font-size: 15px; color: var(--ink); }
 
 .auth {
   min-height: 100dvh; display: flex; align-items: center; justify-content: center;
-  background: #F2EFE9;
+  background: #EFF3F7;
   padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
 }
 .auth-card {
-  width: 100%; max-width: 360px; background: #FBFAF6; border: 1px solid #E6E1D6;
-  border-radius: 20px; padding: 32px 28px; box-shadow: 0 14px 40px rgba(80, 70, 50, .10);
+  width: 100%; max-width: 360px; background: #FBFCFE; border: 1px solid #E0E7EE;
+  border-radius: 20px; padding: 32px 28px; box-shadow: 0 14px 40px rgba(40, 60, 85, .10);
   display: flex; flex-direction: column; align-items: center;
 }
 .auth-logo { width: 68px; height: 68px; border-radius: 16px; }
 .auth-title { margin: 12px 0 0; font-size: 25px; letter-spacing: 6px; font-weight: 400; }
 .auth-sub { margin: 4px 0 18px; color: var(--sub); font-size: 13px; }
 .auth-tabs {
-  display: flex; width: 100%; background: #EDE9E0; border-radius: 10px; padding: 3px; margin-bottom: 16px;
+  display: flex; width: 100%; background: #E8EEF3; border-radius: 10px; padding: 3px; margin-bottom: 16px;
 }
 .auth-tabs button {
   flex: 1; padding: 8px 0; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--sub);
 }
-.auth-tabs button.active { background: #FFFFFF; color: #3D3A33; box-shadow: 0 1px 3px rgba(80, 70, 50, .12); }
+.auth-tabs button.active { background: #FFFFFF; color: #35404A; box-shadow: 0 1px 3px rgba(40, 60, 85, .12); }
 #auth-form { width: 100%; display: flex; flex-direction: column; gap: 10px; }
 #auth-form input {
-  width: 100%; padding: 12px 14px; border: 1px solid #E6E1D6; border-radius: 10px; outline: none;
-  background: #FFFFFF; color: #3D3A33;
+  width: 100%; padding: 12px 14px; border: 1px solid #E0E7EE; border-radius: 10px; outline: none;
+  background: #FFFFFF; color: #35404A;
 }
 #auth-form input:focus { border-color: var(--green); }
 .auth-hint {
-  background: #E8F0E4; color: #457952; font-size: 13px;
+  background: #E3EEF6; color: #38729B; font-size: 13px;
   padding: 10px 12px; border-radius: 10px; line-height: 1.5;
 }
 .auth-hint.warn { background: #fdf0e6; color: #ad5700; }

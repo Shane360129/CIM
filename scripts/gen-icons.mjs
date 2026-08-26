@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 const outDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'icons');
 mkdirSync(outDir, { recursive: true });
 
-const GREEN = [0x5e, 0x9c, 0x6b];
+const BRAND = [0x4a, 0x8f, 0xbf]; // 海洋藍
 const WHITE = [0xff, 0xff, 0xff];
 
 // ---- 形狀（以 0..1 正規化座標描述，與 public/icon.svg 相同構圖） ----
@@ -46,10 +46,10 @@ function sample(x, y, fullBleed) {
   const bubble = roundedRectSDF(u, v, 0.5, 0.47, 0.31, 0.19, 0.19);
   const tail = inTriangle(u, v, [0.324, 0.605], [0.299, 0.782], [0.48, 0.645]);
   if (bubble <= 0 || tail) {
-    if (inHeart(u, v)) return [...GREEN, 255];
+    if (inHeart(u, v)) return [...BRAND, 255];
     return [...WHITE, 255];
   }
-  return [...GREEN, 255];
+  return [...BRAND, 255];
 }
 
 function render(size, fullBleed) {
