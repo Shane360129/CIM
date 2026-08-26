@@ -137,7 +137,7 @@ const toHex = (buf) =>
   [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 const randomHex = (bytes) => toHex(crypto.getRandomValues(new Uint8Array(bytes)));
 
-const PBKDF2_ITERS = 210000; // OWASP 2023 建議值
+const PBKDF2_ITERS = 100000; // Cloudflare Workers 正式環境的 PBKDF2 迭代上限
 
 async function hashPassword(password, saltHex) {
   const salt = new Uint8Array(saltHex.match(/../g).map((h) => parseInt(h, 16)));

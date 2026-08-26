@@ -119,7 +119,7 @@ ChatServer Durable Object（src/chatserver.js）
 
 - **單一 Durable Object 實例**承載全部狀態。親友規模（數十人）下這是最簡單、
   最一致的架構：沒有分散式競態、免設定 D1/KV/R2、部署零設定。
-- **密碼**以 PBKDF2-SHA256（21 萬次迭代＋隨機鹽）雜湊儲存；登入與邀請碼嘗試皆有次數鎖定。
+- **密碼**以 PBKDF2-SHA256（10 萬次迭代＋隨機鹽，為 Cloudflare 執行環境上限）雜湊儲存；登入與邀請碼嘗試皆有次數鎖定。
 - **Session** 為隨機 token 存伺服器端，60 天未使用自動失效；改密碼會踢掉其他裝置。
 - WebSocket 使用 **Hibernation API**，沒人講話時 DO 休眠，幾乎不耗用量。
 - 圖片在**瀏覽器端壓縮**成 JPEG（最長邊 1280px、約 450KB 內）後以 data URL 存進資料庫。
