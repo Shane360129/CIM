@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS push_subs (
   sub TEXT NOT NULL,
   created_at INTEGER NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_push_user ON push_subs (user_id);
 CREATE TABLE IF NOT EXISTS shopping (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   text TEXT NOT NULL,
@@ -125,19 +126,25 @@ class HttpError extends Error {
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json; charset=utf-8' },
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff',
+    },
   });
 
 const toHex = (buf) =>
   [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 const randomHex = (bytes) => toHex(crypto.getRandomValues(new Uint8Array(bytes)));
 
+const PBKDF2_ITERS = 210000; // OWASP 2023 建議值
+
 async function hashPassword(password, saltHex) {
   const salt = new Uint8Array(saltHex.match(/../g).map((h) => parseInt(h, 16)));
   const key = await crypto.subtle.importKey(
     'raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
   const bits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 100000 }, key, 256);
+    { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: PBKDF2_ITERS }, key, 256);
   return toHex(bits);
 }
 
@@ -195,6 +202,7 @@ export class ChatServer {
     this.env = env;
     this.sql = ctx.storage.sql;
     this.loginGuard = new Map(); // username -> {fails, lockedUntil}（記憶體內、盡力而為）
+    this.registerGuard = new Map(); // ip -> {fails, lockedUntil}：防邀請碼暴力猜測
     ctx.blockConcurrencyWhile(async () => {
       this.sql.exec(SCHEMA);
       const v = Number(this.getSetting('schema_version') || 1);
@@ -413,10 +421,23 @@ export class ChatServer {
 
     const count = this.userCount();
     if (count > 0) {
+      const ip = request.headers.get('CF-Connecting-IP') || 'local';
+      const guard = this.registerGuard.get(ip);
+      if (guard && guard.lockedUntil > Date.now())
+        throw new HttpError(429, '嘗試次數過多，請 15 分鐘後再試');
       const invite = this.getSetting('invite_code');
       if (!invite) throw new HttpError(403, '目前未開放註冊，請聯絡管理員');
-      if (String(body.inviteCode || '').trim() !== invite)
+      if (String(body.inviteCode || '').trim() !== invite) {
+        const g = this.registerGuard.get(ip) || { fails: 0, lockedUntil: 0 };
+        g.fails += 1;
+        if (g.fails >= 5) {
+          g.lockedUntil = Date.now() + 1000 * 60 * 15;
+          g.fails = 0;
+        }
+        this.registerGuard.set(ip, g);
         throw new HttpError(403, '邀請碼不正確');
+      }
+      this.registerGuard.delete(ip);
     }
     if (this.sql.exec(`SELECT id FROM users WHERE username = ?`, username).toArray().length)
       throw new HttpError(409, '這個帳號已經有人使用了');
@@ -1015,6 +1036,11 @@ export class ChatServer {
         `DELETE FROM reactions WHERE message_id = ? AND user_id = ? AND emoji = ?`,
         messageId, me.id, emoji);
     } else {
+      const mine = this.sql
+        .exec(`SELECT COUNT(*) AS c FROM reactions WHERE message_id = ? AND user_id = ?`,
+          messageId, me.id)
+        .one().c;
+      if (mine >= 6) throw new HttpError(400, '每則訊息最多加 6 種表情');
       this.sql.exec(
         `INSERT INTO reactions (message_id, user_id, emoji, created_at) VALUES (?, ?, ?, ?)`,
         messageId, me.id, emoji, Date.now());
@@ -1280,6 +1306,11 @@ export class ChatServer {
       `INSERT INTO push_subs (endpoint, user_id, sub, created_at) VALUES (?, ?, ?, ?)
        ON CONFLICT(endpoint) DO UPDATE SET user_id = excluded.user_id, sub = excluded.sub`,
       sub.endpoint, me.id, JSON.stringify(sub), Date.now());
+    // 每人最多 8 個裝置訂閱，超過刪最舊的
+    this.sql.exec(
+      `DELETE FROM push_subs WHERE user_id = ? AND endpoint NOT IN (
+         SELECT endpoint FROM push_subs WHERE user_id = ? ORDER BY created_at DESC LIMIT 8)`,
+      me.id, me.id);
     return json({ ok: true });
   }
 

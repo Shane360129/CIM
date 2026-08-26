@@ -2312,8 +2312,7 @@ function manageMembersModal() {
         el('div', { class: 'row-name', text: u.displayName + (u.isAdmin ? '　👑 管理員' : '') }),
         el('div', { class: 'row-sub', text: '@' + u.username })),
       u.id !== state.me.id ? el('button', {
-        class: 'member-remove', type: 'button', text: '重設密碼',
-        style: 'color: var(--green-dark)',
+        class: 'member-remove member-reset', type: 'button', text: '重設密碼',
         onclick: async () => {
           if (!(await confirmModal('重設密碼', `要幫「${u.displayName}」重設密碼嗎？舊密碼會立即失效，所有裝置都需要用新的臨時密碼重新登入。`))) return;
           try {
