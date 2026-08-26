@@ -1,156 +1,174 @@
-# CIM · 私密即時聊天 🔒
+# CHAT · 親友專屬聊天室 💙
 
-一個**不需要後端伺服器**、**端對端加密**、可以直接部署在 GitHub Pages 上的即時聊天室。
+一個部署在 **Cloudflare** 上、介面仿 **LINE** 的網頁聊天室（App 名稱：**CHAT**，程式庫沿用 CIM）。
+專為「上班不能用手機、只能開網頁」的情境設計：你在公司用瀏覽器開網頁，
+親友在手機把它「加到主畫面」當 App 用，隨時都能聯絡上你。
 
-- 🔗 **只有拿到你網址的人進得來** — 房間金鑰藏在網址 `#` 後面，永遠不會傳到任何伺服器。
-- 🔐 **端對端加密** — 訊息在你的瀏覽器裡用 AES-256-GCM 加密後才送出，中繼伺服器只看得到亂碼。
-- 🚫 **比較不會被公司網頁擋掉** — 網站放在 `github.io`（開發／技術類網域，通常不在公司封鎖名單裡），也不需要連到任何「聊天／社群」類網站。
-- 🪶 **零安裝、零後端** — 只有靜態的 HTML / CSS / JS，打開網址就能用。
-
-> ⚠️ 使用前請留意：這是給個人與朋友之間的私訊工具。請遵守你所在公司或網路的使用規範，別用它來做違反規定的事。
-
----
-
-## 🚀 怎麼用（3 步驟）
-
-1. 依照下面「部署到 GitHub Pages」把網站上線，得到一個網址，例如
-   `https://<你的帳號>.github.io/cim/`
-2. 用瀏覽器打開它。網址後面會自動長出一段 `#xxxxxxxx`，那就是這間房間的**秘密金鑰**。
-3. 點右上角 **「🔗 邀請」** 複製完整網址，傳給你想聊天的對象。
-   對方打開同一條網址，你們就在同一間加密房間了。
-
-> 想開一間全新的房間？把網址 `#` 後面那段刪掉再重新整理，就會產生一把新金鑰。
+| | |
+|---|---|
+| 💬 **1 對 1 與群組聊天** | 訊息永久保存在你自己的 Cloudflare 帳號裡，換裝置、重新整理都不會消失 |
+| ✅ **已讀回條** | 跟 LINE 一樣顯示「已讀」（群組顯示「已讀 N」） |
+| ⌨️ **即時體驗** | WebSocket 即時推播、「正在輸入…」提示、新訊息通知與音效 |
+| 🖼️ **豐富訊息** | 圖片（自動壓縮）、語音訊息、貼圖、表情符號、收回訊息（24 小時內） |
+| 💛 **互動** | 表情回應（對訊息按 ❤️👍）、回覆引用、投票、群組公告置頂、訊息搜尋 |
+| 🔔 **離線推播** | 網頁沒開也收得到通知（Web Push，金鑰全自動產生、零設定） |
+| 🏠 **家庭小工具** | 全家共用購物清單、家庭行事曆（到時自動提醒所有人） |
+| 🌙 **外觀** | 深色模式（自動／手動）、四段字體大小（長輩友善）、上班低調模式 |
+| 🔐 **邀請碼註冊** | 只有拿到邀請碼的親友能註冊；第一位註冊者（你）自動成為管理員，可管理成員 |
+| 📝 **我的記事本** | 跟自己聊天，當備忘錄用 |
+| 📱 **PWA** | 手機瀏覽器「加入主畫面」後就像原生 App |
+| 💸 **免費** | Cloudflare 免費方案即可運行，不需要信用卡 |
 
 ---
 
-## 🛠️ 部署到 GitHub Pages
+## 🚀 部署（約 5 分鐘）
 
-網站的檔案已經在這個 repo 的根目錄，選一種方式讓 GitHub Pages 上線即可。
+兩種方式擇一。共同前提：一個 [Cloudflare 帳號](https://dash.cloudflare.com/sign-up)（免費，不用信用卡）。
 
-### 方法 A：直接從分支發布（最快，不用合併）
+> 💡 建議在**自己的電腦**（家裡）部署，公司電腦之後只需要瀏覽器開網址就能用。
+> 部署是一次性的動作，之後只有要更新程式時才需要再做。
 
-1. 進到 repo 的 **Settings → Pages**。
-2. **Build and deployment → Source** 選 **「Deploy from a branch」**。
-3. **Branch** 選這個工作分支 `claude/bypass-corporate-chat-dg8d38`，資料夾選 **`/ (root)`**，按 **Save**。
-4. 等一兩分鐘，頁面上方會出現網址 `https://<你的帳號>.github.io/cim/`。完成！
+### 方法 A：用自己的電腦部署
 
-### 方法 B：用 GitHub Actions 自動部署（合併到 `main` 後）
+電腦需裝好 [Node.js](https://nodejs.org/)（18 以上）。
 
-本 repo 已附上 `.github/workflows/deploy.yml`。當你把這個分支合併（或推送）到 `main` 後：
+```bash
+# 1. 下載這個專案
+git clone https://github.com/Shane360129/CIM.git
+cd CIM
 
-1. 進到 **Settings → Pages**，**Source** 選 **「GitHub Actions」**。
-2. 之後每次 `main` 有更新，都會自動重新部署。
+# 2. 安裝工具
+npm install
 
-> 小提醒：GitHub Pages 的 `github-pages` 環境預設只允許從**預設分支**（通常是 `main`）用 Actions 部署。
-> 所以還沒合併到 `main` 之前，請先用**方法 A** 立即上線。
+# 3. 登入 Cloudflare（會開瀏覽器讓你授權）
+npx wrangler login
 
----
-
-## 🔐 它是怎麼做到「私密」的？
-
-| 環節 | 做法 |
-|------|------|
-| **誰能進房間** | 房間由網址 `#` 後面的隨機金鑰決定。瀏覽器**不會**把 `#` 之後的內容送給任何伺服器，所以只有拿到完整網址的人知道金鑰。 |
-| **訊息內容** | 每則訊息在送出前，先用從金鑰導出的 AES-256-GCM 金鑰在你的瀏覽器裡加密。中繼站只看得到 base64 亂碼。 |
-| **中繼站看得到房間名稱嗎** | 看不到。MQTT 主題是金鑰的 SHA-256 雜湊值，中繼站無法從主題反推金鑰，也分不出哪間是哪間。 |
-| **拿不到網址的人** | 就算他連上同一個公開中繼站，也不知道正確主題可訂閱；就算矇到，沒有金鑰也解不開任何一則訊息。 |
-
-換句話說：**進得來 + 看得懂，兩件事都需要你的邀請網址。** 金鑰（`#` 之後那段）請只透過你信任的管道傳給對方（例如當面、或另一個你信任的 App）。
-
----
-
-## ⚙️ 技術架構
-
-```
-你的瀏覽器 ──(AES-GCM 加密)──►  公開 MQTT 中繼站 (WSS)  ──►  對方的瀏覽器 ──(解密)──►
-   ▲                              只看得到亂碼與雜湊主題                          │
-   └──────────────────  金鑰只存在網址 #，兩邊各自導出，不經過網路  ─────────────────┘
+# 4. 部署！
+npx wrangler deploy
 ```
 
-- 前端：純靜態 `index.html` / `styles.css` / `app.js`
-- 加密：瀏覽器內建 **Web Crypto API**（HKDF 導出金鑰 + AES-256-GCM）
-- 即時傳輸：**MQTT over Secure WebSocket**，用了公開中繼站（EMQX、HiveMQ），主程式會自動在它們之間備援。
-- MQTT 用戶端：`mqtt.min.js` 已內建在 repo 裡（沒有依賴任何 CDN，少一個可能被擋的外部網域）。
+Windows 小提醒：如果在 PowerShell 執行 `npm` / `npx` 出現「**因為這個系統上已停用指令碼執行**」，
+那是公司或系統的 PowerShell 執行原則擋住了 `.ps1` 捷徑 —— 改開「**命令提示字元（cmd）**」執行
+同樣的指令，或把指令改成 `npm.cmd install`、`npx.cmd wrangler deploy` 就能繞過。
 
-**已知限制**
+### 方法 B：完全用瀏覽器部署（GitHub Actions，零安裝）
 
-- 訊息是「當下即時」的：新加入的人**不會**看到他加入之前的歷史訊息（你自己的裝置會用 `localStorage` 保留你看過的訊息，重新整理不會消失）。
-- 公開 MQTT 中繼站是免費、盡力而為的服務，偶爾可能較慢或短暫中斷。若要更穩定，見下方 Firebase 方案。
+公司電腦被限制、不能裝 Node.js？這個方式**從頭到尾只需要瀏覽器**：
+
+1. 登入 [Cloudflare Dash](https://dash.cloudflare.com/) → 進入 **Workers & Pages** 頁一次
+   （第一次進入會請你取一個 `*.workers.dev` 子網域名稱，取好就好）。
+2. 在 Workers & Pages 首頁右側複製 **Account ID**。
+3. 到右上角頭像 → **My Profile → API Tokens** → **Create Token** →
+   選 **Edit Cloudflare Workers** 範本 → 建立，複製產生的 token（只會顯示一次）。
+4. 回到 GitHub 這個 repo → **Settings → Secrets and variables → Actions** →
+   **New repository secret**，新增兩個：
+   - 名稱 `CLOUDFLARE_API_TOKEN`，值＝第 3 步的 token
+   - 名稱 `CLOUDFLARE_ACCOUNT_ID`，值＝第 2 步的 Account ID
+5. 到 repo 的 **Actions** 分頁 → 左側選「**部署到 Cloudflare**」→ **Run workflow**。
+   約一分鐘跑完，打開「部署」步驟的紀錄就能看到你的網址。
+
+之後想更新版本，再按一次 Run workflow 即可。
+
+### 部署完成後
+
+你的網址長得像：
+
+```
+https://chat.<你的子網域>.workers.dev
+```
+
+**不需要**建資料庫、**不需要**設定任何金鑰 —— 所有資料都存在
+Worker 附帶的 Durable Object（SQLite）裡；重新部署不會弄丟資料。
+
+---
+
+## 👨‍👩‍👧 開始使用（3 步驟）
+
+1. **你先註冊**：打開網址 → 「註冊」→ 建立帳號。
+   第一位註冊的人自動成為**管理員**（在這之前不會有別人能註冊）。
+2. **設定邀請碼**：進「設定」→「管理員」→ 輸入一組邀請碼（例如 `family888`）→ 儲存。
+   然後點「**複製邀請訊息**」，把網址＋邀請碼傳給親友。
+3. **親友註冊**：親友打開網址 → 註冊時輸入邀請碼。
+   註冊完系統會**自動幫他們建立與你的聊天室**，一進來就找得到你。
+
+小提醒：
+
+- **公司電腦**：把網頁開著（瀏覽器分頁），有訊息時分頁標題會顯示未讀數
+  `(3) CHAT`，也可以開啟桌面通知與音效。
+- **親友手機**：用瀏覽器打開網址 → 選單 → 「**加入主畫面**」，
+  之後點圖示開啟就是全螢幕 App 體驗。
+- **想關閉註冊**：邀請碼清空再按儲存，就沒有人能再註冊（已註冊的不受影響）。
 
 ---
 
-## 🧯 如果公司網路還是把它擋掉了
+## 🧱 技術架構
 
-網站本身在 `github.io`（通常不會被以「分類」為主的公司過濾器封鎖）。真正可能被擋的是那條到 MQTT 中繼站的連線（走的是 `8084` / `8884` 埠）。若你的公司只放行 `443` 埠，可以改用 **Firebase Realtime Database** 當中繼 —— 它走 `443`、網域是 `*.firebaseio.com`（一般不在封鎖名單），而且更穩定。
+```
+瀏覽器（前端 SPA，public/）
+   │  HTTPS（REST API：登入、傳訊息、已讀…）
+   │  WebSocket（即時接收：新訊息、已讀、輸入中…）
+   ▼
+Cloudflare Worker（src/index.js）── 靜態檔由 Cloudflare Assets 供應
+   ▼
+ChatServer Durable Object（src/chatserver.js）
+   ├─ SQLite 儲存：使用者、聊天室、訊息、已讀進度、邀請碼
+   └─ WebSocket Hibernation：所有線上成員的即時連線
+```
 
-**做法**（免費，約 5 分鐘）：
+設計重點：
 
-1. 到 <https://console.firebase.google.com> 建一個專案，開啟 **Realtime Database**（測試模式即可）。
-2. 專案設定裡拿到 `firebaseConfig`（那串金鑰是設計給前端公開用的，放進網頁沒問題）。
-3. 在 `index.html` 的 `mqtt.min.js` 那行**上面**，加入 Firebase 的 SDK：
+- **單一 Durable Object 實例**承載全部狀態。親友規模（數十人）下這是最簡單、
+  最一致的架構：沒有分散式競態、免設定 D1/KV/R2、部署零設定。
+- **密碼**以 PBKDF2-SHA256（21 萬次迭代＋隨機鹽）雜湊儲存；登入與邀請碼嘗試皆有次數鎖定。
+- **Session** 為隨機 token 存伺服器端，60 天未使用自動失效；改密碼會踢掉其他裝置。
+- WebSocket 使用 **Hibernation API**，沒人講話時 DO 休眠，幾乎不耗用量。
+- 圖片在**瀏覽器端壓縮**成 JPEG（最長邊 1280px、約 450KB 內）後以 data URL 存進資料庫。
 
-   ```html
-   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-   ```
+### 免費方案夠用嗎？
 
-4. 在 `app.js` 貼上這個對應同一組介面的傳輸層（放在 `MqttTransport` 附近）：
-
-   ```js
-   // 需先在 index.html 載入 firebase-app-compat / firebase-database-compat
-   var FIREBASE_CONFIG = { /* 這裡貼上你的 firebaseConfig */ };
-
-   function FirebaseTransport(topic, clientId, willPayload) {
-     var handlers = { message: function () {}, status: function () {} };
-     var ref = null;
-     return {
-       connect: function () {
-         handlers.status("connecting");
-         if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-         var db = firebase.database();
-         ref = db.ref("rooms/" + topic.replace(/[.#$/\[\]]/g, "_"));
-         db.ref(".info/connected").on("value", function (s) {
-           handlers.status(s.val() ? "online" : "offline");
-         });
-         // 只轉發最近 250 則；重複與自己的訊息由 app 層自動過濾
-         ref.limitToLast(250).on("child_added", function (snap) {
-           var v = snap.val();
-           if (v && v.p) handlers.message(v.p);
-         });
-       },
-       publish: function (str) {
-         if (ref) ref.push({ p: str, t: firebase.database.ServerValue.TIMESTAMP });
-       },
-       close: function () { if (ref) ref.off(); },
-       onMessage: function (fn) { handlers.message = fn; },
-       onStatus: function (fn) { handlers.status = fn; },
-     };
-   }
-   ```
-
-5. 在 `app.js` 的 `boot()` 裡，把這行
-
-   ```js
-   state.transport = MqttTransport(state.topic, state.clientId, willPayload);
-   ```
-
-   改成
-
-   ```js
-   state.transport = FirebaseTransport(state.topic, state.clientId, willPayload);
-   ```
-
-> Firebase 版本有個附帶好處：訊息會（以加密後的亂碼形式）存在資料庫裡，所以**新加入的人也看得到之前的歷史訊息**。內容一樣是端對端加密，Firebase 也只存得到亂碼。
+夠。Workers 免費方案每天 10 萬次請求、Durable Objects（SQLite 版）含 5GB 儲存。
+以家人朋友的訊息量（即使天天貼圖傳照片）通常連免費額度的邊都碰不到。
 
 ---
+
+## 🛠️ 常用操作
+
+| 想做什麼 | 指令／位置 |
+|---|---|
+| 本機開發預覽 | `npm run dev` → http://localhost:8787 |
+| 部署／更新 | `npx wrangler deploy` |
+| 重新產生 App 圖示 | `npm run icons`（改 `scripts/gen-icons.mjs` 配色後執行） |
+| 備份聊天資料 | 網頁「設定」→「管理員」→「下載聊天備份」 |
+| 換自己的網域 | Cloudflare Dash → Workers → chat → Settings → Domains & Routes |
 
 ## 📁 檔案結構
 
 ```
-index.html   聊天室介面
-styles.css   樣式（深／淺色自動切換、支援手機）
-app.js       加密、傳輸、UI 邏輯（含可替換的 Transport 介面）
-mqtt.min.js  內建的 MQTT 用戶端（無外部 CDN 依賴）
-.github/workflows/deploy.yml   GitHub Pages 自動部署（合併到 main 後生效）
-.nojekyll    讓 GitHub Pages 原樣提供靜態檔
+wrangler.jsonc        Cloudflare 設定（Worker、Durable Object、靜態資源）
+src/index.js          Worker 入口（路由轉送）
+src/chatserver.js     聊天伺服器：帳號、訊息、群組、WebSocket（Durable Object）
+public/index.html     前端頁面骨架
+public/app.js         前端邏輯（登入、聊天、已讀、通知、貼圖…）
+public/style.css      LINE 風格樣式（桌面／手機自適應）
+public/manifest.webmanifest + sw.js + icons/   PWA（加到主畫面）
+scripts/gen-icons.mjs 產生 PNG 圖示的小工具（零相依）
+legacy-github-pages/  舊版（GitHub Pages + MQTT 端對端加密版）留存
 ```
+
+## 🔔 離線推播小抄
+
+在「設定 → 通知 → 離線推播」開啟後，網頁完全關閉也會收到「新訊息」提醒
+（內容一律不顯示聊天文字，兼顧隱私與低調）：
+
+- **Android／電腦 Chrome、Edge**：直接開啟即可。
+- **iPhone**：iOS 16.4 以上，需先用 Safari「**加入主畫面**」，再從主畫面圖示開啟 CHAT，
+  才能開啟離線推播（這是 Apple 的限制）。
+- 為避免轟炸，離線推播每人最多每分鐘一則。
+
+## ⚠️ 已知限制
+
+- 沒有語音／視訊通話。
+- 傳一般檔案（文件、影片）尚未支援（適合之後掛 Cloudflare R2 再加）。
+- 訊息在伺服器上以明文儲存於**你自己**的 Cloudflare 帳號（跟 LINE 一樣是伺服器可讀的模式）；
+  若需要端對端加密，`legacy-github-pages/` 裡的舊版是加密的（但無帳號、無歷史訊息）。
+- 請遵守你所在公司的網路使用規範。

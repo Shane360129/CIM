@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
+  <title>CHAT</title>
+  <meta name="description" content="CHAT — 親友專屬聊天室">
+  <meta name="theme-color" content="#F4F7FA">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="CHAT">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@300;400;500;700&display=swap">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <!-- 登入／註冊 -->
+  <div id="auth" class="auth hidden">
+    <div class="auth-card">
+      <img class="auth-logo" src="/icon.svg" alt="CHAT">
+      <h1 class="auth-title">CHAT</h1>
+      <p class="auth-sub">親友專屬聊天室</p>
+      <div class="auth-tabs">
+        <button type="button" id="auth-tab-login" class="active">登入</button>
+        <button type="button" id="auth-tab-register">註冊</button>
+      </div>
+      <form id="auth-form" autocomplete="on">
+        <div id="firstrun-hint" class="auth-hint hidden">🎉 歡迎！你是第一位註冊的人，將成為這個聊天室的<b>管理員</b>。</div>
+        <div id="reg-closed" class="auth-hint warn hidden">目前未開放註冊。請向管理員索取邀請碼，或請管理員開放註冊。</div>
+        <input id="f-username" placeholder="帳號（英文小寫、數字、底線）" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="20">
+        <input id="f-password" type="password" placeholder="密碼（至少 6 個字元）" autocomplete="current-password" maxlength="200">
+        <input id="f-displayname" class="hidden" placeholder="暱稱（大家看到的名字）" autocomplete="nickname" maxlength="30">
+        <input id="f-invite" class="hidden" placeholder="邀請碼" autocomplete="off" maxlength="50">
+        <div id="auth-error" class="auth-error hidden"></div>
+        <button id="auth-submit" type="submit" class="btn btn-primary btn-block">登入</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 主畫面 -->
+  <div id="app" class="app hidden">
+    <nav id="nav" class="nav">
+      <button class="nav-btn active" data-tab="chats" aria-label="聊天">
+        <span class="ic" data-icon="chat"></span><span class="nav-label">聊天</span>
+        <span id="nav-unread" class="nav-badge hidden"></span>
+      </button>
+      <button class="nav-btn" data-tab="friends" aria-label="好友">
+        <span class="ic" data-icon="users"></span><span class="nav-label">好友</span>
+      </button>
+      <button class="nav-btn" data-tab="tools" aria-label="小工具">
+        <span class="ic" data-icon="tools"></span><span class="nav-label">小工具</span>
+      </button>
+      <button class="nav-btn" data-tab="settings" aria-label="設定">
+        <span class="ic" data-icon="gear"></span><span class="nav-label">設定</span>
+      </button>
+    </nav>
+
+    <section id="panel" class="panel">
+      <div id="tab-chats" class="tab">
+        <header class="panel-header">
+          <h1>聊天</h1>
+          <div class="header-actions">
+            <button id="btn-search" class="icon-btn" data-icon="search" aria-label="搜尋訊息" title="搜尋訊息"></button>
+            <button id="btn-new-group" class="icon-btn" data-icon="plus" aria-label="建立群組" title="建立群組"></button>
+          </div>
+        </header>
+        <div id="search-bar" class="search-bar hidden">
+          <input id="search-input" placeholder="搜尋訊息內容" maxlength="50" autocomplete="off">
+          <button id="btn-search-close" class="icon-btn" data-icon="x" aria-label="關閉搜尋"></button>
+        </div>
+        <div id="search-results" class="list hidden"></div>
+        <div id="conn-banner" class="conn-banner hidden">連線中斷，重新連線中…</div>
+        <div id="notif-banner" class="notif-banner hidden">
+          <span>開啟通知，親友傳訊息時馬上知道</span>
+          <button id="btn-notif-on" class="btn btn-small btn-primary">開啟</button>
+          <button id="btn-notif-dismiss" class="icon-btn" data-icon="x" aria-label="關閉"></button>
+        </div>
+        <div id="chat-list" class="list"></div>
+      </div>
+
+      <div id="tab-friends" class="tab hidden">
+        <header class="panel-header"><h1>好友</h1></header>
+        <div id="friend-list" class="list"></div>
+      </div>
+
+      <div id="tab-tools" class="tab hidden">
+        <header class="panel-header"><h1>小工具</h1></header>
+        <div class="tool-tabs">
+          <button id="tool-tab-shopping" class="active">購物清單</button>
+          <button id="tool-tab-calendar">行事曆</button>
+        </div>
+        <div id="tool-shopping" class="tool-body">
+          <form id="shopping-form" class="tool-add">
+            <input id="shopping-input" placeholder="要買什麼？全家人都看得到" maxlength="60" autocomplete="off">
+            <button type="submit" class="btn btn-small btn-primary">加入</button>
+          </form>
+          <div id="shopping-list" class="list"></div>
+        </div>
+        <div id="tool-calendar" class="tool-body hidden">
+          <div class="tool-add">
+            <button id="btn-add-event" class="btn btn-primary btn-block">＋ 新增事項（生日、聚餐、提醒…）</button>
+          </div>
+          <div id="event-list" class="list"></div>
+        </div>
+      </div>
+
+      <div id="tab-settings" class="tab hidden">
+        <header class="panel-header"><h1>設定</h1></header>
+        <div id="settings-body" class="settings-body"></div>
+      </div>
+    </section>
+
+    <main id="chat" class="chat">
+      <div id="chat-empty" class="chat-empty">
+        <img src="/icon.svg" alt="" width="72" height="72">
+        <p>選擇一個聊天，開始跟親友聊天吧</p>
+      </div>
+      <div id="chat-view" class="chat-view hidden">
+        <header class="chat-header">
+          <button id="btn-back" class="icon-btn only-mobile" data-icon="back" aria-label="返回"></button>
+          <div id="chat-title-wrap" class="chat-title-wrap">
+            <div id="chat-title" class="chat-title"></div>
+            <div id="chat-sub" class="chat-sub"></div>
+          </div>
+          <button id="btn-chat-info" class="icon-btn" data-icon="menu" aria-label="聊天室資訊"></button>
+        </header>
+        <button id="pin-banner" class="pin-banner hidden">
+          <span class="ic" data-icon="pin"></span>
+          <span id="pin-text" class="pin-text"></span>
+          <span id="btn-pin-clear" class="icon-btn pin-clear" data-icon="x" role="button" aria-label="取消公告"></span>
+        </button>
+        <div id="msg-scroll" class="msg-scroll">
+          <div class="load-more-wrap"><button id="btn-load-more" class="load-more hidden">看更早的訊息</button></div>
+          <div id="msg-list" class="msg-list"></div>
+        </div>
+        <div id="typing" class="typing hidden"></div>
+        <button id="btn-jump" class="jump hidden"><span class="ic" data-icon="down"></span> 新訊息</button>
+
+        <div id="picker" class="picker hidden">
+          <div class="picker-tabs">
+            <button id="picker-tab-emoji" class="active">表情符號</button>
+            <button id="picker-tab-sticker">貼圖</button>
+          </div>
+          <div id="picker-emoji" class="picker-grid emoji-grid"></div>
+          <div id="picker-sticker" class="picker-grid sticker-grid hidden"></div>
+        </div>
+
+        <div id="reply-bar" class="reply-bar hidden">
+          <div class="reply-info">
+            <div id="reply-name" class="reply-name"></div>
+            <div id="reply-text" class="reply-text"></div>
+          </div>
+          <button id="btn-reply-cancel" class="icon-btn" data-icon="x" aria-label="取消回覆"></button>
+        </div>
+        <div id="rec-bar" class="rec-bar hidden">
+          <span class="rec-dot"></span>
+          <span id="rec-time" class="rec-time">0:00</span>
+          <span class="rec-hint">錄音中…最長 60 秒</span>
+          <button id="btn-rec-cancel" class="btn btn-ghost btn-small" type="button">取消</button>
+          <button id="btn-rec-send" class="btn btn-primary btn-small" type="button">送出</button>
+        </div>
+        <footer class="composer">
+          <button id="btn-image" class="icon-btn" data-icon="image" aria-label="傳送圖片"></button>
+          <textarea id="input" rows="1" placeholder="輸入訊息" maxlength="4000"></textarea>
+          <button id="btn-emoji" class="icon-btn" data-icon="smile" aria-label="表情符號與貼圖"></button>
+          <button id="btn-mic" class="icon-btn" data-icon="mic" aria-label="錄語音訊息"></button>
+          <button id="btn-send" class="icon-btn send" data-icon="send" aria-label="傳送"></button>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <div id="modal-root"></div>
+  <div id="toast-root"></div>
+  <div id="viewer" class="viewer hidden"><img id="viewer-img" alt=""></div>
+  <input type="file" id="file-input" accept="image/*" hidden>
+  <input type="file" id="avatar-input" accept="image/*" hidden>
+
+  <script src="/app.js"></script>
+</body>
+</html>

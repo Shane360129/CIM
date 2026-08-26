@@ -1,0 +1,24 @@
+// CIM — Cloudflare Workers 設定檔
+// 部署：npx wrangler deploy
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "chat",
+  "main": "src/index.js",
+  "compatibility_date": "2025-10-01",
+
+  // 前端靜態檔（public/）由 Cloudflare 直接供應；/api/* 與 /ws 先進 Worker
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/ws"]
+  },
+
+  // 聊天伺服器：單一 Durable Object 實例（SQLite 儲存 + WebSocket）
+  "durable_objects": {
+    "bindings": [{ "name": "CHAT", "class_name": "ChatServer" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ChatServer"] }],
+
+  "observability": { "enabled": true }
+}

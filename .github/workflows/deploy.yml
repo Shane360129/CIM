@@ -1,41 +1,36 @@
-name: Deploy to GitHub Pages
+# 從瀏覽器一鍵部署到 Cloudflare（不需要在任何電腦上安裝工具）
+# 使用方式見 README「方法 B」：設定好兩個 Secrets 後，
+# 到 repo 的 Actions 分頁選這個 workflow → Run workflow。
+name: 部署到 Cloudflare
 
-# This workflow deploys the static site whenever the default branch (main)
-# updates. To publish immediately from your working branch WITHOUT merging,
-# use the "Deploy from a branch" option instead — see README.md.
 on:
-  push:
-    branches: ["main"]
   workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-# Allow one concurrent deployment; don't cancel an in-progress one.
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
 
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: 檢查 Secrets 是否已設定
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$TOKEN" ] || [ -z "$ACCOUNT" ]; then
+            echo "::error::請先到 repo 的 Settings → Secrets and variables → Actions，新增 CLOUDFLARE_API_TOKEN 與 CLOUDFLARE_ACCOUNT_ID 兩個 secret（做法見 README「方法 B」）"
+            exit 1
+          fi
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
+      - uses: actions/checkout@v4
 
-      - name: Upload site
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/setup-node@v4
         with:
-          path: "."
+          node-version: 20
 
-      - name: Deploy
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: 安裝 wrangler
+        run: npm ci
+
+      - name: 部署
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
