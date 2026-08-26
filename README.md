@@ -19,7 +19,14 @@
 
 ## 🚀 部署（約 5 分鐘）
 
-需要：一個 [Cloudflare 帳號](https://dash.cloudflare.com/sign-up)（免費）＋電腦上裝好 [Node.js](https://nodejs.org/)（18 以上）。
+兩種方式擇一。共同前提：一個 [Cloudflare 帳號](https://dash.cloudflare.com/sign-up)（免費，不用信用卡）。
+
+> 💡 建議在**自己的電腦**（家裡）部署，公司電腦之後只需要瀏覽器開網址就能用。
+> 部署是一次性的動作，之後只有要更新程式時才需要再做。
+
+### 方法 A：用自己的電腦部署
+
+電腦需裝好 [Node.js](https://nodejs.org/)（18 以上）。
 
 ```bash
 # 1. 下載這個專案
@@ -36,16 +43,38 @@ npx wrangler login
 npx wrangler deploy
 ```
 
-完成後畫面會顯示你的網址，長得像：
+Windows 小提醒：如果在 PowerShell 執行 `npm` / `npx` 出現「**因為這個系統上已停用指令碼執行**」，
+那是公司或系統的 PowerShell 執行原則擋住了 `.ps1` 捷徑 —— 改開「**命令提示字元（cmd）**」執行
+同樣的指令，或把指令改成 `npm.cmd install`、`npx.cmd wrangler deploy` 就能繞過。
+
+### 方法 B：完全用瀏覽器部署（GitHub Actions，零安裝）
+
+公司電腦被限制、不能裝 Node.js？這個方式**從頭到尾只需要瀏覽器**：
+
+1. 登入 [Cloudflare Dash](https://dash.cloudflare.com/) → 進入 **Workers & Pages** 頁一次
+   （第一次進入會請你取一個 `*.workers.dev` 子網域名稱，取好就好）。
+2. 在 Workers & Pages 首頁右側複製 **Account ID**。
+3. 到右上角頭像 → **My Profile → API Tokens** → **Create Token** →
+   選 **Edit Cloudflare Workers** 範本 → 建立，複製產生的 token（只會顯示一次）。
+4. 回到 GitHub 這個 repo → **Settings → Secrets and variables → Actions** →
+   **New repository secret**，新增兩個：
+   - 名稱 `CLOUDFLARE_API_TOKEN`，值＝第 3 步的 token
+   - 名稱 `CLOUDFLARE_ACCOUNT_ID`，值＝第 2 步的 Account ID
+5. 到 repo 的 **Actions** 分頁 → 左側選「**部署到 Cloudflare**」→ **Run workflow**。
+   約一分鐘跑完，打開「部署」步驟的紀錄就能看到你的網址。
+
+之後想更新版本，再按一次 Run workflow 即可。
+
+### 部署完成後
+
+你的網址長得像：
 
 ```
-https://cim.<你的帳號>.workers.dev
+https://cim.<你的子網域>.workers.dev
 ```
 
-就這樣，**不需要**建資料庫、**不需要**設定任何金鑰 —— 所有資料都存在
-Worker 附帶的 Durable Object（SQLite）裡。
-
-> 之後想更新程式，改完再跑一次 `npx wrangler deploy` 即可，資料不會不見。
+**不需要**建資料庫、**不需要**設定任何金鑰 —— 所有資料都存在
+Worker 附帶的 Durable Object（SQLite）裡；重新部署不會弄丟資料。
 
 ---
 

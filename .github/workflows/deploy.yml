@@ -1,0 +1,36 @@
+# 從瀏覽器一鍵部署到 Cloudflare（不需要在任何電腦上安裝工具）
+# 使用方式見 README「方法 B」：設定好兩個 Secrets 後，
+# 到 repo 的 Actions 分頁選這個 workflow → Run workflow。
+name: 部署到 Cloudflare
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 檢查 Secrets 是否已設定
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$TOKEN" ] || [ -z "$ACCOUNT" ]; then
+            echo "::error::請先到 repo 的 Settings → Secrets and variables → Actions，新增 CLOUDFLARE_API_TOKEN 與 CLOUDFLARE_ACCOUNT_ID 兩個 secret（做法見 README「方法 B」）"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 安裝 wrangler
+        run: npm ci
+
+      - name: 部署
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
