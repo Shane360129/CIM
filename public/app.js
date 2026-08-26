@@ -416,7 +416,7 @@ function updateUnreadBadges() {
   const badge = $('nav-unread');
   badge.classList.toggle('hidden', total === 0);
   badge.textContent = total > 99 ? '99+' : String(total);
-  const base = state.stealth ? '線上文件' : 'CIM';
+  const base = state.stealth ? '線上文件' : 'CHAT';
   document.title = total > 0 ? `(${total}) ${base}` : base;
 }
 
@@ -609,7 +609,7 @@ function renderSettings() {
         try {
           const s = await api('/api/admin/settings');
           if (!s.inviteCode) return toast('請先設定邀請碼');
-          const text = `邀請你加入我們的 CIM 聊天室！\n1. 打開 ${location.origin}\n2. 點「註冊」建立帳號\n3. 邀請碼：${s.inviteCode}`;
+          const text = `邀請你加入我們的 CHAT 聊天室！\n1. 打開 ${location.origin}\n2. 點「註冊」建立帳號\n3. 邀請碼：${s.inviteCode}`;
           await navigator.clipboard.writeText(text);
           toast('邀請訊息已複製，貼給親友吧！');
         } catch (e2) { toast(e2.message); }
@@ -619,7 +619,7 @@ function renderSettings() {
         try {
           const data = await api('/api/admin/export');
           const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
-          const a = el('a', { href: URL.createObjectURL(blob), download: 'cim-backup.json' });
+          const a = el('a', { href: URL.createObjectURL(blob), download: 'chat-backup.json' });
           a.click();
           URL.revokeObjectURL(a.href);
         } catch (e2) { toast(e2.message); }
@@ -642,7 +642,7 @@ function renderSettings() {
       showAuth();
     })));
 
-  box.append(el('div', { class: 'set-note', text: 'CIM v1.0 — 手機瀏覽器選單中點「加入主畫面」，就能像 App 一樣使用。' }));
+  box.append(el('div', { class: 'set-note', text: 'CHAT v1.0 — 手機瀏覽器選單中點「加入主畫面」，就能像 App 一樣使用。' }));
 }
 
 async function patchMe(body) {

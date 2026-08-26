@@ -2,7 +2,7 @@
 // 部署：npx wrangler deploy
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "cim",
+  "name": "chat",
   "main": "src/index.js",
   "compatibility_date": "2025-10-01",
 

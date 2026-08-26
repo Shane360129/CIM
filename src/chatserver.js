@@ -400,7 +400,7 @@ export class ChatServer {
     const count = this.userCount();
     const inviteCode = this.getSetting('invite_code');
     return json({
-      name: 'CIM',
+      name: 'CHAT',
       firstRun: count === 0,
       registrationOpen: count === 0 || !!inviteCode,
     });

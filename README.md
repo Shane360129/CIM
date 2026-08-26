@@ -1,6 +1,6 @@
-# CIM · 親友專屬聊天室 💬
+# CHAT · 親友專屬聊天室 💚
 
-一個部署在 **Cloudflare** 上、介面仿 **LINE** 的網頁聊天室。
+一個部署在 **Cloudflare** 上、介面仿 **LINE** 的網頁聊天室（App 名稱：**CHAT**，程式庫沿用 CIM）。
 專為「上班不能用手機、只能開網頁」的情境設計：你在公司用瀏覽器開網頁，
 親友在手機把它「加到主畫面」當 App 用，隨時都能聯絡上你。
 
@@ -74,7 +74,7 @@ Windows 小提醒：如果在 PowerShell 執行 `npm` / `npx` 出現「**因為�
 你的網址長得像：
 
 ```
-https://cim.<你的子網域>.workers.dev
+https://chat.<你的子網域>.workers.dev
 ```
 
 **不需要**建資料庫、**不需要**設定任何金鑰 —— 所有資料都存在
@@ -94,7 +94,7 @@ Worker 附帶的 Durable Object（SQLite）裡；重新部署不會弄丟資料�
 小提醒：
 
 - **公司電腦**：把網頁開著（瀏覽器分頁），有訊息時分頁標題會顯示未讀數
-  `(3) CIM`，也可以開啟桌面通知與音效。
+  `(3) CHAT`，也可以開啟桌面通知與音效。
 - **親友手機**：用瀏覽器打開網址 → 選單 → 「**加入主畫面**」，
   之後點圖示開啟就是全螢幕 App 體驗。
 - **想關閉註冊**：邀請碼清空再按儲存，就沒有人能再註冊（已註冊的不受影響）。
@@ -119,7 +119,7 @@ ChatServer Durable Object（src/chatserver.js）
 
 - **單一 Durable Object 實例**承載全部狀態。親友規模（數十人）下這是最簡單、
   最一致的架構：沒有分散式競態、免設定 D1/KV/R2、部署零設定。
-- **密碼**以 PBKDF2-SHA256（10 萬次迭代＋隨機鹽）雜湊儲存；登入失敗 8 次鎖 10 分鐘。
+- **密碼**以 PBKDF2-SHA256（21 萬次迭代＋隨機鹽）雜湊儲存；登入與邀請碼嘗試皆有次數鎖定。
 - **Session** 為隨機 token 存伺服器端，60 天未使用自動失效；改密碼會踢掉其他裝置。
 - WebSocket 使用 **Hibernation API**，沒人講話時 DO 休眠，幾乎不耗用量。
 - 圖片在**瀏覽器端壓縮**成 JPEG（最長邊 1280px、約 450KB 內）後以 data URL 存進資料庫。
@@ -139,7 +139,7 @@ ChatServer Durable Object（src/chatserver.js）
 | 部署／更新 | `npx wrangler deploy` |
 | 重新產生 App 圖示 | `npm run icons`（改 `scripts/gen-icons.mjs` 配色後執行） |
 | 備份聊天資料 | 網頁「設定」→「管理員」→「下載聊天備份」 |
-| 換自己的網域 | Cloudflare Dash → Workers → cim → Settings → Domains & Routes |
+| 換自己的網域 | Cloudflare Dash → Workers → chat → Settings → Domains & Routes |
 
 ## 📁 檔案結構
 
@@ -161,7 +161,7 @@ legacy-github-pages/  舊版（GitHub Pages + MQTT 端對端加密版）留存
 （內容一律不顯示聊天文字，兼顧隱私與低調）：
 
 - **Android／電腦 Chrome、Edge**：直接開啟即可。
-- **iPhone**：iOS 16.4 以上，需先用 Safari「**加入主畫面**」，再從主畫面圖示開啟 CIM，
+- **iPhone**：iOS 16.4 以上，需先用 Safari「**加入主畫面**」，再從主畫面圖示開啟 CHAT，
   才能開啟離線推播（這是 Apple 的限制）。
 - 為避免轟炸，離線推播每人最多每分鐘一則。
 
