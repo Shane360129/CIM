@@ -28,11 +28,9 @@ function inTriangle(px, py, a, b, c) {
   return !(neg && pos);
 }
 
-// 泡泡內的愛心（兩圓＋三角形近似，座標對應 public/icon.svg 的心形）
-function inHeart(u, v) {
-  if (Math.hypot(u - 0.416, v - 0.392) < 0.088) return true;
-  if (Math.hypot(u - 0.584, v - 0.392) < 0.088) return true;
-  return inTriangle(u, v, [0.338, 0.413], [0.662, 0.413], [0.5, 0.594]);
+// 泡泡內的三個對話圓點（座標對應 public/icon.svg 的圓點）
+function inDots(u, v) {
+  return [0.35, 0.5, 0.65].some((cx) => Math.hypot(u - cx, v - 0.47) < 0.049);
 }
 
 // 回傳 [r,g,b,a]；fullBleed=true 時整張填滿綠色（maskable / iOS 用）
@@ -46,7 +44,7 @@ function sample(x, y, fullBleed) {
   const bubble = roundedRectSDF(u, v, 0.5, 0.47, 0.31, 0.19, 0.19);
   const tail = inTriangle(u, v, [0.324, 0.605], [0.299, 0.782], [0.48, 0.645]);
   if (bubble <= 0 || tail) {
-    if (inHeart(u, v)) return [...BRAND, 255];
+    if (inDots(u, v)) return [...BRAND, 255];
     return [...WHITE, 255];
   }
   return [...BRAND, 255];
