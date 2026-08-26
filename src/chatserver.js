@@ -299,6 +299,10 @@ export class ChatServer {
       this.requireAdmin(me);
       return this.removeUser(me, +m[1]);
     }
+    if ((m = pathname.match(/^\/api\/admin\/users\/(\d+)\/reset-password$/)) && method === 'POST') {
+      this.requireAdmin(me);
+      return this.resetPassword(+m[1]);
+    }
 
     if (pathname === '/api/admin/settings') {
       this.requireAdmin(me);
@@ -1224,6 +1228,25 @@ export class ChatServer {
     }
     this.broadcastAll({ type: 'user', user: pubUser(updated) });
     return json({ ok: true });
+  }
+
+  // 管理員重設成員密碼：產生一次性臨時密碼，舊登入全部失效
+  async resetPassword(userId) {
+    const row = this.sql
+      .exec(`SELECT * FROM users WHERE id = ? AND disabled = 0`, userId).toArray()[0];
+    if (!row) throw new HttpError(404, '找不到這位成員');
+    // 好唸好抄的字元集（去掉 0/O、1/l 等易混淆字）
+    const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+    const rand = crypto.getRandomValues(new Uint8Array(8));
+    const tempPassword = [...rand].map((b) => chars[b % chars.length]).join('');
+    const salt = randomHex(16);
+    const hash = await hashPassword(tempPassword, salt);
+    this.sql.exec(`UPDATE users SET password_hash = ?, salt = ? WHERE id = ?`, hash, salt, userId);
+    this.sql.exec(`DELETE FROM sessions WHERE user_id = ?`, userId);
+    for (const ws of this.ctx.getWebSockets(`u:${userId}`)) {
+      try { ws.close(1000, 'password reset'); } catch {}
+    }
+    return json({ tempPassword });
   }
 
   // ---------- 離線推播（Web Push / VAPID，自動產生金鑰）----------

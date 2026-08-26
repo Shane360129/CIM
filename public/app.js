@@ -133,6 +133,7 @@ const state = {
   notify: localStorage.getItem('cim_notify') !== '0',
   notifDismissed: localStorage.getItem('cim_notif_dismissed') === '1',
   theme: localStorage.getItem('cim_theme') || 'auto',
+  skin: localStorage.getItem('cim_skin') || 'washi',
   fontSize: localStorage.getItem('cim_font') || 'md',
   stealth: localStorage.getItem('cim_stealth') === '1',
   pushOn: localStorage.getItem('cim_push') === '1',
@@ -531,6 +532,7 @@ function renderSettings() {
   // 外觀
   box.append(el('div', { class: 'set-group' },
     el('div', { class: 'set-group-title', text: '外觀' }),
+    skinRow(),
     el('div', { class: 'set-item' },
       el('span', { text: '主題' }),
       segControl([['auto', '自動'], ['light', '淺色'], ['dark', '深色']], state.theme, (v) => {
@@ -1629,10 +1631,21 @@ function beep(start, freq, dur) {
 
 /* ---------- 外觀（主題／字體／低調模式） ---------- */
 
+// 可選風格：[代號, 名稱, 預覽底色, 預覽主色]
+const SKINS = [
+  ['washi', '和紙抹茶', '#EAE6DD', '#5E9C6B'],
+  ['classic', '經典綠', '#7b94bd', '#06C755'],
+  ['sakura', '櫻花', '#F6ECEA', '#D77A8C'],
+  ['ocean', '海洋', '#E7EDF2', '#4A8FBF'],
+  ['sumi', '墨白', '#F1F0EE', '#4A4A46'],
+];
+
 let systemDarkMq = null;
 function applyAppearance() {
   document.body.classList.remove('font-sm', 'font-lg', 'font-xl');
   if (state.fontSize !== 'md') document.body.classList.add('font-' + state.fontSize);
+  for (const [key] of SKINS) document.body.classList.remove('skin-' + key);
+  if (state.skin !== 'washi') document.body.classList.add('skin-' + state.skin);
   if (!systemDarkMq) {
     systemDarkMq = matchMedia('(prefers-color-scheme: dark)');
     systemDarkMq.addEventListener('change', () => {
@@ -1642,10 +1655,32 @@ function applyAppearance() {
   const dark = state.theme === 'dark' || (state.theme === 'auto' && systemDarkMq.matches);
   document.body.classList.toggle('theme-dark', dark);
   const metaTheme = document.querySelector('meta[name="theme-color"]');
-  if (metaTheme) metaTheme.content = dark ? '#1E1C17' : '#F6F4EE';
+  if (metaTheme) {
+    const panel = getComputedStyle(document.body).getPropertyValue('--panel').trim();
+    metaTheme.content = panel || (dark ? '#1E1C17' : '#F6F4EE');
+  }
   const iconLink = document.querySelector('link[rel="icon"]');
   if (iconLink) iconLink.href = state.stealth ? '/doc.svg' : '/icon.svg';
   updateUnreadBadges();
+}
+
+function skinRow() {
+  const row = el('div', { class: 'skin-row' });
+  for (const [key, label, roomBg, accent] of SKINS) {
+    const dot = el('span', { class: 'dot' });
+    dot.style.background = `linear-gradient(135deg, ${roomBg} 50%, ${accent} 50%)`;
+    row.append(el('button', {
+      type: 'button',
+      class: 'skin-swatch' + (state.skin === key ? ' active' : ''),
+      onclick: () => {
+        state.skin = key;
+        localStorage.setItem('cim_skin', key);
+        applyAppearance();
+        renderSettings();
+      },
+    }, dot, label));
+  }
+  return row;
 }
 
 function forceLogout(msg) {
@@ -2277,6 +2312,18 @@ function manageMembersModal() {
         el('div', { class: 'row-name', text: u.displayName + (u.isAdmin ? '　👑 管理員' : '') }),
         el('div', { class: 'row-sub', text: '@' + u.username })),
       u.id !== state.me.id ? el('button', {
+        class: 'member-remove', type: 'button', text: '重設密碼',
+        style: 'color: var(--green-dark)',
+        onclick: async () => {
+          if (!(await confirmModal('重設密碼', `要幫「${u.displayName}」重設密碼嗎？舊密碼會立即失效，所有裝置都需要用新的臨時密碼重新登入。`))) return;
+          try {
+            const r = await api(`/api/admin/users/${u.id}/reset-password`, { method: 'POST' });
+            close();
+            showTempPassword(u, r.tempPassword);
+          } catch (e2) { toast(e2.message); }
+        },
+      }) : null,
+      u.id !== state.me.id ? el('button', {
         class: 'member-remove', type: 'button', text: '移除',
         onclick: async () => {
           if (!(await confirmModal('移除成員', `確定將「${u.displayName}」移出聊天室嗎？移除後他將無法再登入（聊天紀錄會保留）。`, true))) return;
@@ -2295,6 +2342,23 @@ function manageMembersModal() {
     el('div', { class: 'modal-body' }, el('div', { class: 'member-list' }, rows)),
     el('div', { class: 'modal-actions' },
       el('button', { class: 'btn btn-ghost', text: '關閉', onclick: () => close() }))));
+}
+
+function showTempPassword(user, tempPassword) {
+  const close = openModal(el('div', { class: 'modal' },
+    el('div', { class: 'modal-title', text: `${user.displayName} 的臨時密碼` }),
+    el('div', { class: 'modal-body' },
+      el('div', { class: 'temp-pass', text: tempPassword }),
+      el('p', { text: '請用其他方式（口頭、簡訊）把這組密碼交給他。他用「帳號＋這組密碼」登入後，記得到「設定 → 變更密碼」改成自己的密碼。' }),
+      el('p', { text: '這組密碼只會顯示這一次。' })),
+    el('div', { class: 'modal-actions' },
+      el('button', {
+        class: 'btn btn-ghost', text: '複製',
+        onclick: async () => {
+          try { await navigator.clipboard.writeText(tempPassword); toast('已複製'); } catch { toast('無法複製'); }
+        },
+      }),
+      el('button', { class: 'btn btn-primary', text: '完成', onclick: () => close() }))));
 }
 
 /* ---------- 事件綁定與啟動 ---------- */

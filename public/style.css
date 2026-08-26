@@ -657,3 +657,148 @@ body.theme-dark .rchip.own { color: var(--green); }
 .nav-label { letter-spacing: .06em; }
 .btn { font-weight: 400; letter-spacing: .05em; }
 .list-section { letter-spacing: .08em; }
+
+/* ==================== 風格切換（設定 → 外觀 → 風格） ==================== */
+
+/* —— 經典綠：原 LINE 藍底綠泡 —— */
+body.skin-classic {
+  --green: #06C755; --green-dark: #05a648; --green-soft: #e6f9ee;
+  --room-bg: #7b94bd;
+  --bubble-me: #9de26d; --bubble-me-ink: #182019;
+  --bubble-other: #ffffff; --bubble-line: transparent;
+  --ink: #191b21; --sub: #8a919c; --line: #e9eaee;
+  --bg: #f4f5f8; --panel: #ffffff; --rail-bg: #f7f8fa;
+  --hover: #f2f3f6; --input-bg: #f2f3f6;
+  --icon: #55606e; --nav-ink: #9aa1ab; --time: #aab0b9;
+  --meta-ink: rgba(255, 255, 255, .95); --name-ink: #eef2f8;
+  --pill-bg: rgba(50, 66, 96, .35); --pill-ink: #ffffff;
+  --accent-fill: rgba(6, 199, 85, .18);
+  --float-bg: rgba(255, 255, 255, .88); --float-ink: #3a4a66;
+}
+body.theme-dark.skin-classic {
+  --green-soft: #143324;
+  --room-bg: #202b3a;
+  --bubble-other: #313945; --bubble-line: transparent;
+  --ink: #e7eaee; --sub: #98a1ad; --line: #2a303a;
+  --bg: #12151a; --panel: #1a1e25; --rail-bg: #171a20;
+  --hover: #232936; --input-bg: #252b35;
+  --icon: #a5aeba; --nav-ink: #7e8894; --time: #78828e;
+  --meta-ink: rgba(255, 255, 255, .85); --name-ink: #cfd6e0;
+  --pill-bg: rgba(255, 255, 255, .12); --pill-ink: #dfe5ec;
+  --accent-fill: rgba(6, 199, 85, .22);
+  --float-bg: rgba(20, 26, 36, .85); --float-ink: #c7d0dc;
+}
+
+/* —— 櫻花：淡桜紙 × 桜色 —— */
+body.skin-sakura {
+  --green: #D77A8C; --green-dark: #B95F73; --green-soft: #F9E8EC;
+  --room-bg: #F6ECEA;
+  --bubble-me: #F6D3DA; --bubble-me-ink: #4A2830;
+  --bubble-other: #ffffff; --bubble-line: #EFDDDC;
+  --ink: #453A3C; --sub: #9B8A8D; --line: #EFE2E1;
+  --bg: #FAF3F2; --panel: #FFFBFA; --rail-bg: #F8F1F0;
+  --hover: #F3E7E6; --input-bg: #F4E9E8;
+  --icon: #7A6A6D; --nav-ink: #B3A2A5; --time: #BCA9AC;
+  --meta-ink: #B39CA0; --name-ink: #937F82;
+  --pill-bg: #EBD9D8; --pill-ink: #7A6A6D;
+  --accent-fill: rgba(215, 122, 140, .20);
+  --float-bg: rgba(255, 255, 255, .92); --float-ink: #7A6A6D;
+}
+body.theme-dark.skin-sakura {
+  --green: #E393A3; --green-dark: #ECA9B7; --green-soft: #3A2429;
+  --room-bg: #1D1719;
+  --bubble-me: #E8B9C3; --bubble-me-ink: #3A1F27;
+  --bubble-other: #2E2528; --bubble-line: #3A2F32;
+  --ink: #EBE1E3; --sub: #A28F93; --line: #362B2E;
+  --bg: #191416; --panel: #211A1D; --rail-bg: #1C1618;
+  --hover: #2C2225; --input-bg: #2C2225;
+  --icon: #A9969A; --nav-ink: #776569; --time: #816F73;
+  --meta-ink: #8A777B; --name-ink: #9C898D;
+  --pill-bg: #2E2427; --pill-ink: #A8959A;
+  --accent-fill: rgba(227, 147, 163, .25);
+  --float-bg: rgba(30, 22, 25, .9); --float-ink: #CBB9BD;
+}
+
+/* —— 海洋：清爽藍 —— */
+body.skin-ocean {
+  --green: #4A8FBF; --green-dark: #38729B; --green-soft: #E3EEF6;
+  --room-bg: #E7EDF2;
+  --bubble-me: #C5DEF0; --bubble-me-ink: #1F3446;
+  --bubble-other: #ffffff; --bubble-line: #DDE6EC;
+  --ink: #35404A; --sub: #7F8C99; --line: #E0E7EE;
+  --bg: #EFF3F7; --panel: #FBFCFE; --rail-bg: #F4F7FA;
+  --hover: #E8EEF3; --input-bg: #EAF0F4;
+  --icon: #62707E; --nav-ink: #9DA9B5; --time: #A3B0BC;
+  --meta-ink: #93A2B0; --name-ink: #7A8A98;
+  --pill-bg: #D8E1E9; --pill-ink: #62707E;
+  --accent-fill: rgba(74, 143, 191, .18);
+  --float-bg: rgba(255, 255, 255, .92); --float-ink: #62707E;
+}
+body.theme-dark.skin-ocean {
+  --green: #6FAEDB; --green-dark: #8FC2E6; --green-soft: #1D3040;
+  --room-bg: #141B22;
+  --bubble-me: #A6CCE8; --bubble-me-ink: #12283A;
+  --bubble-other: #232C35; --bubble-line: #2E3944;
+  --ink: #E2E9EF; --sub: #8B99A6; --line: #2A3540;
+  --bg: #10151A; --panel: #171E25; --rail-bg: #131A21;
+  --hover: #202A34; --input-bg: #202A34;
+  --icon: #9FAEBB; --nav-ink: #6C7A87; --time: #75828F;
+  --meta-ink: #7E8C99; --name-ink: #8B99A6;
+  --pill-bg: #222C36; --pill-ink: #9AA9B6;
+  --accent-fill: rgba(111, 174, 219, .25);
+  --float-bg: rgba(18, 25, 32, .9); --float-ink: #C2CFDB;
+}
+
+/* —— 墨白：極簡黑白灰 —— */
+body.skin-sumi {
+  --green: #4A4A46; --green-dark: #2E2E2B; --green-soft: #ECECEA;
+  --room-bg: #F1F0EE;
+  --bubble-me: #E3E2DE; --bubble-me-ink: #2A2A27;
+  --bubble-other: #ffffff; --bubble-line: #E4E3DF;
+  --ink: #333330; --sub: #8B8B85; --line: #E6E5E1;
+  --bg: #F5F4F2; --panel: #FCFBFA; --rail-bg: #F5F4F1;
+  --hover: #ECEBE7; --input-bg: #EEEDEA;
+  --icon: #66665F; --nav-ink: #A5A59D; --time: #ACABA2;
+  --meta-ink: #A2A199; --name-ink: #83827A;
+  --pill-bg: #E0DFDA; --pill-ink: #6B6A63;
+  --accent-fill: rgba(74, 74, 70, .14);
+  --float-bg: rgba(255, 255, 255, .92); --float-ink: #66665F;
+}
+body.theme-dark.skin-sumi {
+  --green: #B9B8B2; --green-dark: #CFCEC8; --green-soft: #2A2A27;
+  --room-bg: #171716;
+  --bubble-me: #D6D5D0; --bubble-me-ink: #232320;
+  --bubble-other: #262624; --bubble-line: #32322F;
+  --ink: #E7E6E2; --sub: #969591; --line: #30302D;
+  --bg: #121211; --panel: #1B1B19; --rail-bg: #161615;
+  --hover: #262624; --input-bg: #262624;
+  --icon: #A5A49E; --nav-ink: #6F6E69; --time: #797870;
+  --meta-ink: #838278; --name-ink: #908F86;
+  --pill-bg: #292926; --pill-ink: #A3A29A;
+  --accent-fill: rgba(185, 184, 178, .20);
+  --float-bg: rgba(24, 24, 22, .9); --float-ink: #C5C4BE;
+}
+body.skin-sumi .btn-primary, body.skin-sumi .badge, body.skin-sumi .nav-badge { color: #fff; }
+body.theme-dark.skin-sumi .btn-primary,
+body.theme-dark.skin-sumi .badge,
+body.theme-dark.skin-sumi .nav-badge { color: #1B1B19; }
+
+/* —— 風格色票列 —— */
+.skin-row { display: flex; gap: 10px; flex-wrap: wrap; padding: 4px 16px 14px; }
+.skin-swatch {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  font-size: 11.5px; color: var(--sub); border-radius: 12px; padding: 6px 6px 4px;
+}
+.skin-swatch .dot {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 2px solid var(--line);
+}
+.skin-swatch.active { color: var(--ink); font-weight: 700; }
+.skin-swatch.active .dot { border-color: var(--green); box-shadow: 0 0 0 2px var(--green-soft); }
+
+/* 臨時密碼顯示 */
+.temp-pass {
+  font-family: "Huninn", ui-monospace, monospace; font-size: 26px; letter-spacing: 4px;
+  text-align: center; background: var(--hover); border-radius: 12px;
+  padding: 14px 10px; margin: 10px 0; user-select: all;
+}
