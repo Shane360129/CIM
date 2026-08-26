@@ -9,6 +9,9 @@ const MAX_TEXT = 4000;
 const MAX_IMAGE = 700000; // data URL 長度上限（約 500KB 圖檔）
 const MAX_AVATAR = 80000;
 const MAX_STICKER = 20;
+const MAX_AUDIO = 900000; // 語音 data URL 上限（約 60 秒 opus）
+const MAX_REACTION = 16;
+const PUSH_THROTTLE = 60000; // 每人離線推播最小間隔
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS users (
@@ -58,6 +61,54 @@ CREATE INDEX IF NOT EXISTS idx_members_user ON members (user_id);
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
 `;
 
+// v2：表情回應、回覆、投票、公告、離線推播、購物清單、行事曆、停用帳號
+const SCHEMA_V2 = `
+ALTER TABLE messages ADD COLUMN reply_to INTEGER;
+ALTER TABLE messages ADD COLUMN meta TEXT;
+ALTER TABLE conversations ADD COLUMN pinned_message_id INTEGER;
+ALTER TABLE users ADD COLUMN disabled INTEGER NOT NULL DEFAULT 0;
+CREATE TABLE IF NOT EXISTS reactions (
+  message_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  emoji TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (message_id, user_id, emoji)
+);
+CREATE INDEX IF NOT EXISTS idx_reactions_msg ON reactions (message_id);
+CREATE TABLE IF NOT EXISTS poll_votes (
+  message_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  opt INTEGER NOT NULL,
+  PRIMARY KEY (message_id, user_id)
+);
+CREATE TABLE IF NOT EXISTS push_subs (
+  endpoint TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL,
+  sub TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS shopping (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  text TEXT NOT NULL,
+  done INTEGER NOT NULL DEFAULT 0,
+  created_by INTEGER NOT NULL,
+  created_at INTEGER NOT NULL,
+  done_by INTEGER,
+  done_at INTEGER
+);
+CREATE TABLE IF NOT EXISTS events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  date TEXT NOT NULL,
+  time TEXT,
+  note TEXT NOT NULL DEFAULT '',
+  remind_at INTEGER NOT NULL,
+  created_by INTEGER NOT NULL,
+  created_at INTEGER NOT NULL,
+  reminded INTEGER NOT NULL DEFAULT 0
+);
+`;
+
 const AVATAR_COLORS = [
   '#F76C6C', '#F7906C', '#E8A93A', '#7BC24A', '#06C755',
   '#2BB3A3', '#4A9FF5', '#6C7CF7', '#9B6CF7', '#E56CC0',
@@ -104,6 +155,7 @@ const pubUser = (row) => ({
   avatar: row.avatar || null,
   avatarColor: row.avatar_color,
   isAdmin: !!row.is_admin,
+  disabled: !!row.disabled,
   createdAt: row.created_at,
 });
 
@@ -115,7 +167,26 @@ const pubMessage = (row) => ({
   content: row.deleted ? '' : row.content,
   createdAt: row.created_at,
   deleted: !!row.deleted,
+  replyTo: row.reply_to || null,
+  meta: row.deleted || !row.meta ? null : JSON.parse(row.meta),
 });
+
+const b64url = (buf) =>
+  btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const b64urlJson = (obj) => b64url(new TextEncoder().encode(JSON.stringify(obj)));
+
+// 各訊息類型在清單與引用中的簡短預覽
+function previewOf(row) {
+  if (row.deleted) return '已收回訊息';
+  if (row.type === 'image') return '[圖片]';
+  if (row.type === 'sticker') return '[貼圖] ' + row.content;
+  if (row.type === 'audio') return '[語音訊息]';
+  if (row.type === 'poll') {
+    try { return '[投票] ' + JSON.parse(row.content).q; } catch { return '[投票]'; }
+  }
+  return String(row.content).slice(0, 60);
+}
 
 export class ChatServer {
   constructor(ctx, env) {
@@ -125,6 +196,11 @@ export class ChatServer {
     this.loginGuard = new Map(); // username -> {fails, lockedUntil}（記憶體內、盡力而為）
     ctx.blockConcurrencyWhile(async () => {
       this.sql.exec(SCHEMA);
+      const v = Number(this.getSetting('schema_version') || 1);
+      if (v < 2) {
+        this.sql.exec(SCHEMA_V2);
+        this.setSetting('schema_version', '2');
+      }
     });
     // 心跳不喚醒 DO：客戶端送 "ping"，執行環境自動回 "pong"
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
@@ -175,6 +251,26 @@ export class ChatServer {
     if (method === 'GET' && pathname === '/api/users') return this.listUsers();
     if (method === 'GET' && pathname === '/api/conversations') return this.listConversations(me);
     if (method === 'POST' && pathname === '/api/conversations') return this.createConversation(request, me);
+    if (method === 'GET' && pathname === '/api/search') return this.search(url, me);
+
+    if (method === 'GET' && pathname === '/api/push/key') return this.pushKey();
+    if (method === 'POST' && pathname === '/api/push/subscribe') return this.pushSubscribe(request, me);
+    if (method === 'POST' && pathname === '/api/push/unsubscribe') return this.pushUnsubscribe(request, me);
+
+    if (pathname === '/api/shopping') {
+      if (method === 'GET') return this.listShopping();
+      if (method === 'POST') return this.addShopping(request, me);
+    }
+    if ((m = pathname.match(/^\/api\/shopping\/(\d+)$/))) {
+      if (method === 'PATCH') return this.toggleShopping(request, me, +m[1]);
+      if (method === 'DELETE') return this.deleteShopping(me, +m[1]);
+    }
+    if (pathname === '/api/events') {
+      if (method === 'GET') return this.listEvents();
+      if (method === 'POST') return this.addEvent(request, me);
+    }
+    if ((m = pathname.match(/^\/api\/events\/(\d+)$/)) && method === 'DELETE')
+      return this.deleteEvent(me, +m[1]);
 
     if ((m = pathname.match(/^\/api\/conversations\/(\d+)\/messages$/))) {
       if (method === 'GET') return this.listMessages(url, me, +m[1]);
@@ -192,6 +288,16 @@ export class ChatServer {
       return this.renameGroup(request, me, +m[1]);
     if ((m = pathname.match(/^\/api\/messages\/(\d+)\/unsend$/)) && method === 'POST')
       return this.unsend(me, +m[1]);
+    if ((m = pathname.match(/^\/api\/messages\/(\d+)\/react$/)) && method === 'POST')
+      return this.react(request, me, +m[1]);
+    if ((m = pathname.match(/^\/api\/messages\/(\d+)\/vote$/)) && method === 'POST')
+      return this.vote(request, me, +m[1]);
+    if ((m = pathname.match(/^\/api\/conversations\/(\d+)\/pin$/)) && method === 'POST')
+      return this.pinMessage(request, me, +m[1]);
+    if ((m = pathname.match(/^\/api\/admin\/users\/(\d+)$/)) && method === 'DELETE') {
+      this.requireAdmin(me);
+      return this.removeUser(me, +m[1]);
+    }
 
     if (pathname === '/api/admin/settings') {
       this.requireAdmin(me);
@@ -238,7 +344,7 @@ export class ChatServer {
          FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token = ?`,
         token)
       .toArray()[0];
-    if (!row) return null;
+    if (!row || row.disabled) return null;
     const now = Date.now();
     if (now - row.session_seen > SESSION_TTL) {
       this.sql.exec(`DELETE FROM sessions WHERE token = ?`, token);
@@ -359,6 +465,7 @@ export class ChatServer {
       throw new HttpError(401, '帳號或密碼錯誤');
     }
     this.loginGuard.delete(username);
+    if (row.disabled) throw new HttpError(403, '這個帳號已被管理員停用');
     const token = this.createSession(row.id);
     return json({ token, user: pubUser(row) });
   }
@@ -477,6 +584,7 @@ export class ChatServer {
       name: conv.name,
       createdBy: conv.created_by,
       createdAt: conv.created_at,
+      pinnedMessageId: conv.pinned_message_id || null,
       members,
       lastMessage: last ? pubMessage(last) : null,
       lastActivity: last ? last.created_at : conv.created_at,
@@ -563,31 +671,112 @@ export class ChatServer {
   listMessages(url, me, conversationId) {
     const conv = this.requireMember(conversationId, me.id);
     const before = Number(url.searchParams.get('before')) || null;
+    const around = Number(url.searchParams.get('around')) || null;
     const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 50, 1), 100);
-    const rows = before
-      ? this.sql
-          .exec(
-            `SELECT * FROM messages WHERE conversation_id = ? AND id < ?
-             ORDER BY id DESC LIMIT ?`, conversationId, before, limit + 1)
-          .toArray()
-      : this.sql
-          .exec(
-            `SELECT * FROM messages WHERE conversation_id = ?
-             ORDER BY id DESC LIMIT ?`, conversationId, limit + 1)
-          .toArray();
-    const hasMore = rows.length > limit;
-    if (hasMore) rows.pop();
-    rows.reverse();
+    let rows;
+    let hasMore = false;
+    let hasNewer = false;
+    if (around) {
+      const older = this.sql
+        .exec(
+          `SELECT * FROM messages WHERE conversation_id = ? AND id <= ?
+           ORDER BY id DESC LIMIT ?`, conversationId, around, 26)
+        .toArray();
+      hasMore = older.length > 25;
+      if (hasMore) older.pop();
+      older.reverse();
+      const newer = this.sql
+        .exec(
+          `SELECT * FROM messages WHERE conversation_id = ? AND id > ?
+           ORDER BY id ASC LIMIT ?`, conversationId, around, 26)
+        .toArray();
+      hasNewer = newer.length > 25;
+      if (hasNewer) newer.pop();
+      rows = [...older, ...newer];
+    } else if (before) {
+      rows = this.sql
+        .exec(
+          `SELECT * FROM messages WHERE conversation_id = ? AND id < ?
+           ORDER BY id DESC LIMIT ?`, conversationId, before, limit + 1)
+        .toArray();
+      hasMore = rows.length > limit;
+      if (hasMore) rows.pop();
+      rows.reverse();
+    } else {
+      rows = this.sql
+        .exec(
+          `SELECT * FROM messages WHERE conversation_id = ?
+           ORDER BY id DESC LIMIT ?`, conversationId, limit + 1)
+        .toArray();
+      hasMore = rows.length > limit;
+      if (hasMore) rows.pop();
+      rows.reverse();
+    }
     const members = this.sql
       .exec(`SELECT user_id, last_read_id FROM members WHERE conversation_id = ?`, conversationId)
       .toArray()
       .map((r) => ({ userId: r.user_id, lastReadId: r.last_read_id }));
+    let pinned = null;
+    if (conv.pinned_message_id) {
+      const p = this.sql
+        .exec(`SELECT * FROM messages WHERE id = ?`, conv.pinned_message_id).toArray()[0];
+      if (p && !p.deleted) pinned = pubMessage(p);
+    }
     return json({
-      conversation: { id: conv.id, type: conv.type, name: conv.name },
-      messages: rows.map(pubMessage),
+      conversation: {
+        id: conv.id, type: conv.type, name: conv.name,
+        pinnedMessageId: conv.pinned_message_id || null,
+      },
+      messages: this.attachExtras(rows.map(pubMessage)),
       members,
       hasMore,
+      hasNewer,
+      pinned,
     });
+  }
+
+  // 一次補上訊息的表情回應與投票資料
+  attachExtras(messages) {
+    if (!messages.length) return messages;
+    const ids = messages.map((m) => m.id);
+    const ph = ids.map(() => '?').join(',');
+    const reactions = this.sql
+      .exec(`SELECT * FROM reactions WHERE message_id IN (${ph}) ORDER BY created_at`, ...ids)
+      .toArray();
+    const votes = this.sql
+      .exec(`SELECT * FROM poll_votes WHERE message_id IN (${ph})`, ...ids)
+      .toArray();
+    for (const m of messages) {
+      const mine = reactions.filter((r) => r.message_id === m.id);
+      const byEmoji = new Map();
+      for (const r of mine) {
+        if (!byEmoji.has(r.emoji)) byEmoji.set(r.emoji, []);
+        byEmoji.get(r.emoji).push(r.user_id);
+      }
+      m.reactions = [...byEmoji.entries()].map(([emoji, users]) => ({ emoji, users }));
+      if (m.type === 'poll')
+        m.votes = votes.filter((v) => v.message_id === m.id).map((v) => ({ userId: v.user_id, opt: v.opt }));
+    }
+    return messages;
+  }
+
+  reactionsOf(messageId) {
+    const rows = this.sql
+      .exec(`SELECT * FROM reactions WHERE message_id = ? ORDER BY created_at`, messageId)
+      .toArray();
+    const byEmoji = new Map();
+    for (const r of rows) {
+      if (!byEmoji.has(r.emoji)) byEmoji.set(r.emoji, []);
+      byEmoji.get(r.emoji).push(r.user_id);
+    }
+    return [...byEmoji.entries()].map(([emoji, users]) => ({ emoji, users }));
+  }
+
+  votesOf(messageId) {
+    return this.sql
+      .exec(`SELECT * FROM poll_votes WHERE message_id = ?`, messageId)
+      .toArray()
+      .map((v) => ({ userId: v.user_id, opt: v.opt }));
   }
 
   async postMessage(request, me, conversationId) {
@@ -595,6 +784,7 @@ export class ChatServer {
     const body = await this.readJson(request);
     const type = String(body.type || 'text');
     let content = String(body.content || '');
+    const meta = {};
 
     if (type === 'text') {
       content = content.replace(/\r\n/g, '\n');
@@ -606,23 +796,54 @@ export class ChatServer {
     } else if (type === 'sticker') {
       if (!content.trim() || content.length > MAX_STICKER)
         throw new HttpError(400, '貼圖格式不符');
+    } else if (type === 'audio') {
+      if (!content.startsWith('data:audio/') || content.length > MAX_AUDIO)
+        throw new HttpError(400, '語音格式不符或太長');
+      const dur = Math.round(Number(body.duration));
+      if (!Number.isFinite(dur) || dur < 1 || dur > 180)
+        throw new HttpError(400, '語音長度不正確');
+      meta.duration = dur;
+    } else if (type === 'poll') {
+      const q = String((body.poll && body.poll.q) || '').trim();
+      const options = (Array.isArray(body.poll && body.poll.options) ? body.poll.options : [])
+        .map((o) => String(o).trim())
+        .filter(Boolean);
+      if (!q || [...q].length > 100) throw new HttpError(400, '投票問題需為 1–100 個字');
+      if (options.length < 2 || options.length > 6)
+        throw new HttpError(400, '投票選項需為 2–6 個');
+      if (options.some((o) => [...o].length > 30))
+        throw new HttpError(400, '每個選項最長 30 個字');
+      content = JSON.stringify({ q, options });
     } else {
       throw new HttpError(400, '不支援的訊息類型');
     }
 
+    // 回覆／引用：存下被回覆訊息的快照
+    const replyTo = Number(body.replyTo) || null;
+    if (replyTo) {
+      const orig = this.sql
+        .exec(`SELECT * FROM messages WHERE id = ? AND conversation_id = ?`, replyTo, conversationId)
+        .toArray()[0];
+      if (!orig) throw new HttpError(404, '找不到要回覆的訊息');
+      if (orig.deleted) throw new HttpError(400, '無法回覆已收回的訊息');
+      meta.reply = { id: orig.id, senderId: orig.sender_id, type: orig.type, text: previewOf(orig) };
+    }
+
     const row = this.sql
       .exec(
-        `INSERT INTO messages (conversation_id, sender_id, type, content, created_at)
-         VALUES (?, ?, ?, ?, ?) RETURNING *`,
-        conversationId, me.id, type, content, Date.now())
+        `INSERT INTO messages (conversation_id, sender_id, type, content, created_at, reply_to, meta)
+         VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *`,
+        conversationId, me.id, type, content, Date.now(),
+        replyTo, Object.keys(meta).length ? JSON.stringify(meta) : null)
       .one();
     // 自己送出的訊息視同已讀
     this.sql.exec(
       `UPDATE members SET last_read_id = MAX(last_read_id, ?)
        WHERE conversation_id = ? AND user_id = ?`, row.id, conversationId, me.id);
 
-    const message = pubMessage(row);
+    const message = this.attachExtras([pubMessage(row)])[0];
     this.sendToUsers(this.memberIds(conversationId), { type: 'message', message });
+    this.notifyOffline(conversationId, me.id);
     return json({ message });
   }
 
@@ -731,6 +952,16 @@ export class ChatServer {
       throw new HttpError(403, '已超過 24 小時，無法收回');
     this.sql.exec(
       `UPDATE messages SET deleted = 1, content = '' WHERE id = ?`, messageId);
+    const conv = this.sql
+      .exec(`SELECT pinned_message_id FROM conversations WHERE id = ?`, row.conversation_id)
+      .toArray()[0];
+    if (conv && conv.pinned_message_id === messageId) {
+      this.sql.exec(
+        `UPDATE conversations SET pinned_message_id = NULL WHERE id = ?`, row.conversation_id);
+      this.sendToUsers(this.memberIds(row.conversation_id), {
+        type: 'pin', conversationId: row.conversation_id, pinned: null,
+      });
+    }
     this.sendToUsers(this.memberIds(row.conversation_id), {
       type: 'unsend',
       conversationId: row.conversation_id,
@@ -759,6 +990,337 @@ export class ChatServer {
     const members = this.sql.exec(`SELECT * FROM members`).toArray();
     const messages = this.sql.exec(`SELECT * FROM messages`).toArray();
     return json({ exportedAt: Date.now(), users, conversations, members, messages });
+  }
+
+  // ---------- 表情回應、投票、公告 ----------
+
+  async react(request, me, messageId) {
+    const row = this.sql.exec(`SELECT * FROM messages WHERE id = ?`, messageId).toArray()[0];
+    if (!row || row.deleted) throw new HttpError(404, '找不到這則訊息');
+    this.requireMember(row.conversation_id, me.id);
+    const body = await this.readJson(request, 5000);
+    const emoji = String(body.emoji || '').trim();
+    if (!emoji || emoji.length > MAX_REACTION) throw new HttpError(400, '表情格式不符');
+    const existing = this.sql
+      .exec(`SELECT 1 AS x FROM reactions WHERE message_id = ? AND user_id = ? AND emoji = ?`,
+        messageId, me.id, emoji)
+      .toArray()[0];
+    if (existing) {
+      this.sql.exec(
+        `DELETE FROM reactions WHERE message_id = ? AND user_id = ? AND emoji = ?`,
+        messageId, me.id, emoji);
+    } else {
+      this.sql.exec(
+        `INSERT INTO reactions (message_id, user_id, emoji, created_at) VALUES (?, ?, ?, ?)`,
+        messageId, me.id, emoji, Date.now());
+    }
+    const reactions = this.reactionsOf(messageId);
+    this.sendToUsers(this.memberIds(row.conversation_id), {
+      type: 'reaction', conversationId: row.conversation_id, messageId, reactions,
+    });
+    return json({ reactions });
+  }
+
+  async vote(request, me, messageId) {
+    const row = this.sql.exec(`SELECT * FROM messages WHERE id = ?`, messageId).toArray()[0];
+    if (!row || row.deleted || row.type !== 'poll') throw new HttpError(404, '找不到這個投票');
+    this.requireMember(row.conversation_id, me.id);
+    const body = await this.readJson(request, 5000);
+    const opt = Number(body.opt);
+    const poll = JSON.parse(row.content);
+    if (!Number.isInteger(opt) || opt < 0 || opt >= poll.options.length)
+      throw new HttpError(400, '選項不正確');
+    const cur = this.sql
+      .exec(`SELECT opt FROM poll_votes WHERE message_id = ? AND user_id = ?`, messageId, me.id)
+      .toArray()[0];
+    if (cur && cur.opt === opt) {
+      this.sql.exec(`DELETE FROM poll_votes WHERE message_id = ? AND user_id = ?`, messageId, me.id);
+    } else {
+      this.sql.exec(
+        `INSERT INTO poll_votes (message_id, user_id, opt) VALUES (?, ?, ?)
+         ON CONFLICT(message_id, user_id) DO UPDATE SET opt = excluded.opt`,
+        messageId, me.id, opt);
+    }
+    const votes = this.votesOf(messageId);
+    this.sendToUsers(this.memberIds(row.conversation_id), {
+      type: 'vote', conversationId: row.conversation_id, messageId, votes,
+    });
+    return json({ votes });
+  }
+
+  async pinMessage(request, me, conversationId) {
+    this.requireMember(conversationId, me.id);
+    const body = await this.readJson(request, 5000);
+    let pinned = null;
+    if (body.messageId === null || body.messageId === undefined || body.messageId === 0) {
+      this.sql.exec(`UPDATE conversations SET pinned_message_id = NULL WHERE id = ?`, conversationId);
+    } else {
+      const mid = Number(body.messageId);
+      const row = this.sql
+        .exec(`SELECT * FROM messages WHERE id = ? AND conversation_id = ?`, mid, conversationId)
+        .toArray()[0];
+      if (!row || row.deleted || row.type === 'system')
+        throw new HttpError(404, '找不到要設為公告的訊息');
+      this.sql.exec(`UPDATE conversations SET pinned_message_id = ? WHERE id = ?`, mid, conversationId);
+      pinned = pubMessage(row);
+      this.addSystemMessage(conversationId, `${me.display_name} 設定了新公告`);
+    }
+    this.sendToUsers(this.memberIds(conversationId), {
+      type: 'pin', conversationId, pinned,
+    });
+    return json({ ok: true });
+  }
+
+  // ---------- 訊息搜尋 ----------
+
+  search(url, me) {
+    const q = String(url.searchParams.get('q') || '').trim();
+    if (!q || q.length > 50) throw new HttpError(400, '請輸入 1–50 個字的關鍵字');
+    const esc = q.replace(/[\\%_]/g, (c) => '\\' + c);
+    const rows = this.sql
+      .exec(
+        `SELECT m.* FROM messages m
+         JOIN members mb ON mb.conversation_id = m.conversation_id AND mb.user_id = ?
+         WHERE m.deleted = 0 AND m.type = 'text' AND m.content LIKE ? ESCAPE '\\'
+         ORDER BY m.id DESC LIMIT 30`,
+        me.id, `%${esc}%`)
+      .toArray();
+    return json({ results: rows.map(pubMessage) });
+  }
+
+  // ---------- 購物清單 ----------
+
+  pubShopping(row) {
+    return {
+      id: row.id, text: row.text, done: !!row.done,
+      createdBy: row.created_by, createdAt: row.created_at, doneBy: row.done_by,
+    };
+  }
+
+  listShopping() {
+    const rows = this.sql
+      .exec(`SELECT * FROM shopping ORDER BY done ASC, id DESC LIMIT 200`).toArray();
+    return json({ items: rows.map((r) => this.pubShopping(r)) });
+  }
+
+  async addShopping(request, me) {
+    const body = await this.readJson(request, 5000);
+    const text = String(body.text || '').trim();
+    if (!text || [...text].length > 60) throw new HttpError(400, '項目需為 1–60 個字');
+    const row = this.sql
+      .exec(
+        `INSERT INTO shopping (text, created_by, created_at) VALUES (?, ?, ?) RETURNING *`,
+        text, me.id, Date.now())
+      .one();
+    this.broadcastAll({ type: 'shopping-changed' });
+    return json({ item: this.pubShopping(row) });
+  }
+
+  async toggleShopping(request, me, id) {
+    const body = await this.readJson(request, 5000);
+    const done = body.done ? 1 : 0;
+    const row = this.sql
+      .exec(
+        `UPDATE shopping SET done = ?, done_by = ?, done_at = ? WHERE id = ? RETURNING *`,
+        done, done ? me.id : null, done ? Date.now() : null, id)
+      .toArray()[0];
+    if (!row) throw new HttpError(404, '找不到這個項目');
+    this.broadcastAll({ type: 'shopping-changed' });
+    return json({ item: this.pubShopping(row) });
+  }
+
+  deleteShopping(me, id) {
+    this.sql.exec(`DELETE FROM shopping WHERE id = ?`, id);
+    this.broadcastAll({ type: 'shopping-changed' });
+    return json({ ok: true });
+  }
+
+  // ---------- 家庭行事曆（DO Alarm 到時提醒）----------
+
+  pubEvent(row) {
+    return {
+      id: row.id, title: row.title, date: row.date, time: row.time, note: row.note,
+      remindAt: row.remind_at, createdBy: row.created_by, createdAt: row.created_at,
+      reminded: !!row.reminded,
+    };
+  }
+
+  listEvents() {
+    const rows = this.sql.exec(`SELECT * FROM events ORDER BY remind_at ASC LIMIT 200`).toArray();
+    return json({ events: rows.map((r) => this.pubEvent(r)) });
+  }
+
+  async addEvent(request, me) {
+    const body = await this.readJson(request, 8000);
+    const title = String(body.title || '').trim();
+    const date = String(body.date || '');
+    const time = body.time ? String(body.time) : null;
+    const note = String(body.note || '').trim();
+    const remindAt = Number(body.remindAt);
+    if (!title || [...title].length > 60) throw new HttpError(400, '標題需為 1–60 個字');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new HttpError(400, '日期格式不正確');
+    if (time && !/^\d{2}:\d{2}$/.test(time)) throw new HttpError(400, '時間格式不正確');
+    if ([...note].length > 200) throw new HttpError(400, '備註最長 200 個字');
+    if (!Number.isFinite(remindAt)) throw new HttpError(400, '提醒時間不正確');
+    const row = this.sql
+      .exec(
+        `INSERT INTO events (title, date, time, note, remind_at, created_by, created_at, reminded)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`,
+        title, date, time, note, remindAt, me.id, Date.now(),
+        remindAt <= Date.now() ? 1 : 0)
+      .one();
+    this.scheduleNextAlarm();
+    this.broadcastAll({ type: 'events-changed' });
+    return json({ event: this.pubEvent(row) });
+  }
+
+  deleteEvent(me, id) {
+    this.sql.exec(`DELETE FROM events WHERE id = ?`, id);
+    this.scheduleNextAlarm();
+    this.broadcastAll({ type: 'events-changed' });
+    return json({ ok: true });
+  }
+
+  scheduleNextAlarm() {
+    const next = this.sql
+      .exec(`SELECT MIN(remind_at) AS t FROM events WHERE reminded = 0`).one().t;
+    if (next) this.ctx.storage.setAlarm(Math.max(next, Date.now() + 1000));
+    else this.ctx.storage.deleteAlarm();
+  }
+
+  async alarm() {
+    const due = this.sql
+      .exec(`SELECT * FROM events WHERE reminded = 0 AND remind_at <= ?`, Date.now())
+      .toArray();
+    for (const e of due) {
+      this.sql.exec(`UPDATE events SET reminded = 1 WHERE id = ?`, e.id);
+      this.broadcastAll({ type: 'event-reminder', event: this.pubEvent(e) });
+    }
+    if (due.length) {
+      const users = this.sql.exec(`SELECT id FROM users WHERE disabled = 0`).toArray();
+      const offline = users
+        .filter((u) => this.ctx.getWebSockets(`u:${u.id}`).length === 0)
+        .map((u) => u.id);
+      const p = this.sendPushTo(offline);
+      if (this.ctx.waitUntil) this.ctx.waitUntil(p);
+    }
+    this.scheduleNextAlarm();
+  }
+
+  // ---------- 管理員：移除成員 ----------
+
+  removeUser(me, userId) {
+    if (userId === me.id) throw new HttpError(400, '不能移除自己');
+    const row = this.sql
+      .exec(`SELECT * FROM users WHERE id = ? AND disabled = 0`, userId).toArray()[0];
+    if (!row) throw new HttpError(404, '找不到這位成員');
+    const updated = this.sql
+      .exec(`UPDATE users SET disabled = 1 WHERE id = ? RETURNING *`, userId).one();
+    this.sql.exec(`DELETE FROM sessions WHERE user_id = ?`, userId);
+    this.sql.exec(`DELETE FROM push_subs WHERE user_id = ?`, userId);
+    for (const ws of this.ctx.getWebSockets(`u:${userId}`)) {
+      try { ws.close(4003, 'removed'); } catch {}
+    }
+    this.broadcastAll({ type: 'user', user: pubUser(updated) });
+    return json({ ok: true });
+  }
+
+  // ---------- 離線推播（Web Push / VAPID，自動產生金鑰）----------
+
+  async ensureVapid() {
+    const pub = this.getSetting('vapid_public');
+    const priv = this.getSetting('vapid_private');
+    if (pub && priv) return { pub, priv: JSON.parse(priv) };
+    const pair = await crypto.subtle.generateKey(
+      { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+    const rawPub = await crypto.subtle.exportKey('raw', pair.publicKey);
+    const jwkPriv = await crypto.subtle.exportKey('jwk', pair.privateKey);
+    const pubB64 = b64url(rawPub);
+    this.setSetting('vapid_public', pubB64);
+    this.setSetting('vapid_private', JSON.stringify(jwkPriv));
+    return { pub: pubB64, priv: jwkPriv };
+  }
+
+  async pushKey() {
+    const { pub } = await this.ensureVapid();
+    return json({ key: pub });
+  }
+
+  async pushSubscribe(request, me) {
+    const body = await this.readJson(request, 10000);
+    const sub = body.subscription;
+    if (!sub || typeof sub.endpoint !== 'string' ||
+        !sub.endpoint.startsWith('https://') || sub.endpoint.length > 1000)
+      throw new HttpError(400, '訂閱資料不正確');
+    this.sql.exec(
+      `INSERT INTO push_subs (endpoint, user_id, sub, created_at) VALUES (?, ?, ?, ?)
+       ON CONFLICT(endpoint) DO UPDATE SET user_id = excluded.user_id, sub = excluded.sub`,
+      sub.endpoint, me.id, JSON.stringify(sub), Date.now());
+    return json({ ok: true });
+  }
+
+  async pushUnsubscribe(request, me) {
+    const body = await this.readJson(request, 10000);
+    this.sql.exec(
+      `DELETE FROM push_subs WHERE endpoint = ? AND user_id = ?`,
+      String(body.endpoint || ''), me.id);
+    return json({ ok: true });
+  }
+
+  async vapidJwt(origin) {
+    this.jwtCache = this.jwtCache || new Map();
+    const cached = this.jwtCache.get(origin);
+    if (cached && cached.expMs > Date.now() + 60000) return cached.jwt;
+    const { priv } = await this.ensureVapid();
+    const key = await crypto.subtle.importKey(
+      'jwk', priv, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
+    const exp = Math.floor(Date.now() / 1000) + 3600 * 12;
+    const data = b64urlJson({ typ: 'JWT', alg: 'ES256' }) + '.' +
+      b64urlJson({ aud: origin, exp, sub: 'mailto:admin@example.com' });
+    const sig = await crypto.subtle.sign(
+      { name: 'ECDSA', hash: 'SHA-256' }, key, new TextEncoder().encode(data));
+    const jwt = data + '.' + b64url(sig);
+    this.jwtCache.set(origin, { jwt, expMs: exp * 1000 });
+    return jwt;
+  }
+
+  // 送「無內容」推播喚醒 service worker（不需加密 payload；SW 顯示通用通知）
+  async sendPushTo(userIds) {
+    if (!userIds.length) return;
+    const now = Date.now();
+    this.pushLast = this.pushLast || new Map();
+    const targets = userIds.filter((id) => (this.pushLast.get(id) || 0) < now - PUSH_THROTTLE);
+    if (!targets.length) return;
+    for (const id of targets) this.pushLast.set(id, now);
+    const ph = targets.map(() => '?').join(',');
+    const subs = this.sql
+      .exec(`SELECT * FROM push_subs WHERE user_id IN (${ph})`, ...targets).toArray();
+    if (!subs.length) return;
+    const { pub } = await this.ensureVapid();
+    await Promise.all(subs.map(async (s) => {
+      try {
+        const origin = new URL(s.endpoint).origin;
+        const jwt = await this.vapidJwt(origin);
+        const res = await fetch(s.endpoint, {
+          method: 'POST',
+          headers: {
+            'Authorization': `vapid t=${jwt}, k=${pub}`,
+            'TTL': '86400',
+            'Urgency': 'normal',
+          },
+        });
+        if (res.status === 404 || res.status === 410)
+          this.sql.exec(`DELETE FROM push_subs WHERE endpoint = ?`, s.endpoint);
+      } catch {}
+    }));
+  }
+
+  notifyOffline(conversationId, senderId) {
+    const offline = this.memberIds(conversationId)
+      .filter((id) => id !== senderId && this.ctx.getWebSockets(`u:${id}`).length === 0);
+    if (!offline.length) return;
+    const p = this.sendPushTo(offline);
+    if (this.ctx.waitUntil) this.ctx.waitUntil(p);
   }
 
   // ---------- WebSocket ----------

@@ -49,6 +49,9 @@
       <button class="nav-btn" data-tab="friends" aria-label="好友">
         <span class="ic" data-icon="users"></span><span class="nav-label">好友</span>
       </button>
+      <button class="nav-btn" data-tab="tools" aria-label="小工具">
+        <span class="ic" data-icon="tools"></span><span class="nav-label">小工具</span>
+      </button>
       <button class="nav-btn" data-tab="settings" aria-label="設定">
         <span class="ic" data-icon="gear"></span><span class="nav-label">設定</span>
       </button>
@@ -58,8 +61,16 @@
       <div id="tab-chats" class="tab">
         <header class="panel-header">
           <h1>聊天</h1>
-          <button id="btn-new-group" class="icon-btn" data-icon="plus" aria-label="建立群組" title="建立群組"></button>
+          <div class="header-actions">
+            <button id="btn-search" class="icon-btn" data-icon="search" aria-label="搜尋訊息" title="搜尋訊息"></button>
+            <button id="btn-new-group" class="icon-btn" data-icon="plus" aria-label="建立群組" title="建立群組"></button>
+          </div>
         </header>
+        <div id="search-bar" class="search-bar hidden">
+          <input id="search-input" placeholder="搜尋訊息內容" maxlength="50" autocomplete="off">
+          <button id="btn-search-close" class="icon-btn" data-icon="x" aria-label="關閉搜尋"></button>
+        </div>
+        <div id="search-results" class="list hidden"></div>
         <div id="conn-banner" class="conn-banner hidden">連線中斷，重新連線中…</div>
         <div id="notif-banner" class="notif-banner hidden">
           <span>開啟通知，親友傳訊息時馬上知道</span>
@@ -72,6 +83,27 @@
       <div id="tab-friends" class="tab hidden">
         <header class="panel-header"><h1>好友</h1></header>
         <div id="friend-list" class="list"></div>
+      </div>
+
+      <div id="tab-tools" class="tab hidden">
+        <header class="panel-header"><h1>小工具</h1></header>
+        <div class="tool-tabs">
+          <button id="tool-tab-shopping" class="active">購物清單</button>
+          <button id="tool-tab-calendar">行事曆</button>
+        </div>
+        <div id="tool-shopping" class="tool-body">
+          <form id="shopping-form" class="tool-add">
+            <input id="shopping-input" placeholder="要買什麼？全家人都看得到" maxlength="60" autocomplete="off">
+            <button type="submit" class="btn btn-small btn-primary">加入</button>
+          </form>
+          <div id="shopping-list" class="list"></div>
+        </div>
+        <div id="tool-calendar" class="tool-body hidden">
+          <div class="tool-add">
+            <button id="btn-add-event" class="btn btn-primary btn-block">＋ 新增事項（生日、聚餐、提醒…）</button>
+          </div>
+          <div id="event-list" class="list"></div>
+        </div>
       </div>
 
       <div id="tab-settings" class="tab hidden">
@@ -94,6 +126,11 @@
           </div>
           <button id="btn-chat-info" class="icon-btn" data-icon="menu" aria-label="聊天室資訊"></button>
         </header>
+        <button id="pin-banner" class="pin-banner hidden">
+          <span class="ic" data-icon="pin"></span>
+          <span id="pin-text" class="pin-text"></span>
+          <span id="btn-pin-clear" class="icon-btn pin-clear" data-icon="x" role="button" aria-label="取消公告"></span>
+        </button>
         <div id="msg-scroll" class="msg-scroll">
           <div class="load-more-wrap"><button id="btn-load-more" class="load-more hidden">看更早的訊息</button></div>
           <div id="msg-list" class="msg-list"></div>
@@ -110,10 +147,25 @@
           <div id="picker-sticker" class="picker-grid sticker-grid hidden"></div>
         </div>
 
+        <div id="reply-bar" class="reply-bar hidden">
+          <div class="reply-info">
+            <div id="reply-name" class="reply-name"></div>
+            <div id="reply-text" class="reply-text"></div>
+          </div>
+          <button id="btn-reply-cancel" class="icon-btn" data-icon="x" aria-label="取消回覆"></button>
+        </div>
+        <div id="rec-bar" class="rec-bar hidden">
+          <span class="rec-dot"></span>
+          <span id="rec-time" class="rec-time">0:00</span>
+          <span class="rec-hint">錄音中…最長 60 秒</span>
+          <button id="btn-rec-cancel" class="btn btn-ghost btn-small" type="button">取消</button>
+          <button id="btn-rec-send" class="btn btn-primary btn-small" type="button">送出</button>
+        </div>
         <footer class="composer">
           <button id="btn-image" class="icon-btn" data-icon="image" aria-label="傳送圖片"></button>
           <textarea id="input" rows="1" placeholder="輸入訊息" maxlength="4000"></textarea>
           <button id="btn-emoji" class="icon-btn" data-icon="smile" aria-label="表情符號與貼圖"></button>
+          <button id="btn-mic" class="icon-btn" data-icon="mic" aria-label="錄語音訊息"></button>
           <button id="btn-send" class="icon-btn send" data-icon="send" aria-label="傳送"></button>
         </footer>
       </div>

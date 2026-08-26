@@ -39,6 +39,14 @@ const ICONS = {
   check: '<polyline points="20 6 9 17 4 12"/>',
   camera: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
   logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+  search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  mic: '<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>',
+  tools: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
+  pin: '<path d="M3 10v4h3l6 4V6l-6 4H3z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/>',
+  play: '<polygon points="6 3 20 12 6 21 6 3"/>',
+  pause: '<rect x="5" y="4" width="5" height="16" rx="1"/><rect x="14" y="4" width="5" height="16" rx="1"/>',
+  trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  reply: '<polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/>',
 };
 
 function iconSvg(name) {
@@ -124,6 +132,14 @@ const state = {
   sound: localStorage.getItem('cim_sound') !== '0',
   notify: localStorage.getItem('cim_notify') !== '0',
   notifDismissed: localStorage.getItem('cim_notif_dismissed') === '1',
+  theme: localStorage.getItem('cim_theme') || 'auto',
+  fontSize: localStorage.getItem('cim_font') || 'md',
+  stealth: localStorage.getItem('cim_stealth') === '1',
+  pushOn: localStorage.getItem('cim_push') === '1',
+  replyTarget: null,          // { id, convId, name, preview }
+  toolTab: 'shopping',
+  rec: null,                  // 錄音中：{ recorder, chunks, timer, seconds, stream }
+  audio: null,                // 播放中：{ el, mid, posEl, btnEl }
 };
 
 const userOf = (id) => state.users.get(id) || null;
@@ -150,6 +166,10 @@ function msgPreview(m) {
   if (m.type === 'system') return m.content;
   if (m.type === 'image') return '[圖片]';
   if (m.type === 'sticker') return '[貼圖] ' + m.content;
+  if (m.type === 'audio') return '[語音訊息]';
+  if (m.type === 'poll') {
+    try { return '[投票] ' + JSON.parse(m.content).q; } catch { return '[投票]'; }
+  }
   return m.content.replace(/\n/g, ' ');
 }
 
@@ -302,6 +322,7 @@ async function enterApp() {
   switchTab('chats');
   connectWs();
   updateNotifBanner();
+  syncPushSubscription();
   if (state.appInfo === null) {
     api('/api/app-info').then((i) => { state.appInfo = i; }).catch(() => {});
   }
@@ -347,9 +368,11 @@ function switchTab(tab) {
     b.classList.toggle('active', b.dataset.tab === tab));
   $('tab-chats').classList.toggle('hidden', tab !== 'chats');
   $('tab-friends').classList.toggle('hidden', tab !== 'friends');
+  $('tab-tools').classList.toggle('hidden', tab !== 'tools');
   $('tab-settings').classList.toggle('hidden', tab !== 'settings');
   if (tab === 'friends') renderFriends();
   if (tab === 'settings') renderSettings();
+  if (tab === 'tools') renderTools();
   document.body.classList.remove('chat-open');
 }
 
@@ -392,7 +415,8 @@ function updateUnreadBadges() {
   const badge = $('nav-unread');
   badge.classList.toggle('hidden', total === 0);
   badge.textContent = total > 99 ? '99+' : String(total);
-  document.title = total > 0 ? `(${total}) CIM` : 'CIM';
+  const base = state.stealth ? '線上文件' : 'CIM';
+  document.title = total > 0 ? `(${total}) ${base}` : base;
 }
 
 /* ---------- 好友 ---------- */
@@ -412,7 +436,7 @@ function renderFriends() {
       el('div', { class: 'row-sub', text: '我的記事本 — 傳訊息給自己做筆記' })));
   box.append(meRow);
 
-  const others = [...state.users.values()].filter((u) => u.id !== state.me.id);
+  const others = [...state.users.values()].filter((u) => u.id !== state.me.id && !u.disabled);
   box.append(el('div', { class: 'list-section', text: `好友 ${others.length}` }));
   if (!others.length) {
     box.append(el('div', { class: 'list-empty', text: '還沒有其他成員。\n到「設定」複製邀請訊息，傳給親友請他們註冊！' }));
@@ -504,8 +528,28 @@ function renderSettings() {
       patchMe({ statusMessage: v });
     })));
 
-  // 通知
+  // 外觀
   box.append(el('div', { class: 'set-group' },
+    el('div', { class: 'set-group-title', text: '外觀' }),
+    el('div', { class: 'set-item' },
+      el('span', { text: '主題' }),
+      segControl([['auto', '自動'], ['light', '淺色'], ['dark', '深色']], state.theme, (v) => {
+        state.theme = v;
+        localStorage.setItem('cim_theme', v);
+        applyAppearance();
+        renderSettings();
+      })),
+    el('div', { class: 'set-item' },
+      el('span', { text: '字體大小' }),
+      segControl([['sm', '小'], ['md', '標準'], ['lg', '大'], ['xl', '特大']], state.fontSize, (v) => {
+        state.fontSize = v;
+        localStorage.setItem('cim_font', v);
+        applyAppearance();
+        renderSettings();
+      }))));
+
+  // 通知
+  const notifGroup = el('div', { class: 'set-group' },
     el('div', { class: 'set-group-title', text: '通知' }),
     switchItem('桌面通知', state.notify, async (on) => {
       state.notify = on;
@@ -517,8 +561,30 @@ function renderSettings() {
       state.sound = on;
       localStorage.setItem('cim_sound', on ? '1' : '0');
       if (on) ding();
+    }));
+  if (pushSupported()) {
+    notifGroup.append(
+      switchItem('離線推播（網頁沒開也通知）', state.pushOn, async (on) => {
+        if (on) {
+          const ok2 = await enablePush();
+          if (!ok2) { renderSettings(); return; }
+          toast('離線推播已開啟');
+        } else {
+          await disablePush();
+        }
+        renderSettings();
+      }),
+      el('div', { class: 'set-note', text: 'iPhone 要先用 Safari「加入主畫面」、從主畫面開啟後才能開離線推播。推播內容一律只顯示「新訊息」，不會外洩聊天內容。' }));
+  }
+  notifGroup.append(
+    switchItem('上班低調模式', state.stealth, (on) => {
+      state.stealth = on;
+      localStorage.setItem('cim_stealth', on ? '1' : '0');
+      applyAppearance();
+      toast(on ? '低調模式開啟：標題與通知都會偽裝' : '低調模式已關閉');
     }),
-    el('div', { class: 'set-note', text: '通知只在瀏覽器（或安裝的 App）開著時出現。上班時把分頁開著、手機把 CIM 加到主畫面，就不會漏訊息。' })));
+    el('div', { class: 'set-note', text: '低調模式：分頁標題顯示「線上文件」、分頁圖示換成文件樣式、通知只顯示「有新內容」。只影響這台裝置。' }));
+  box.append(notifGroup);
 
   // 管理員
   if (state.me.isAdmin) {
@@ -546,14 +612,7 @@ function renderSettings() {
           toast('邀請訊息已複製，貼給親友吧！');
         } catch (e2) { toast(e2.message); }
       }),
-      setItem('成員', `${state.users.size} 位`, () => {
-        openListModal('所有成員', [...state.users.values()].map((u) =>
-          el('div', { class: 'row' },
-            avatarEl(u, 44),
-            el('div', { class: 'row-main' },
-              el('div', { class: 'row-name', text: u.displayName + (u.isAdmin ? '　👑 管理員' : '') }),
-              el('div', { class: 'row-sub', text: '@' + u.username })))));
-      }),
+      setItem('成員管理', `${[...state.users.values()].filter((u) => !u.disabled).length} 位`, manageMembersModal),
       setItem('下載聊天備份', null, async () => {
         try {
           const data = await api('/api/admin/export');
@@ -648,7 +707,10 @@ function openConv(convId) {
   $('typing').classList.add('hidden');
   $('btn-jump').classList.add('hidden');
   hidePicker();
+  clearReply();
+  cancelRec();
   updateChatHeader(conv);
+  updatePinBanner(convId);
 
   const cached = state.msgCache.get(convId);
   renderMessages(convId);
@@ -684,9 +746,13 @@ async function fetchMessages(convId) {
     messages: data.messages,
     members: data.members,
     hasMore: data.hasMore,
+    pinned: data.pinned || null,
+    aroundMode: false,
+    hasNewer: false,
   });
   if (state.currentConv === convId) {
     renderMessages(convId);
+    updatePinBanner(convId);
     scrollToBottom(false);
     sendReadIfNeeded(convId);
   }
@@ -716,6 +782,19 @@ function readLabelFor(conv, cache, m) {
   return conv.type === 'group' ? `已讀 ${readers}` : '已讀';
 }
 
+function buildMessageContent(m) {
+  if (m.deleted) return el('div', { class: 'bubble deleted', text: '已收回訊息' });
+  if (m.type === 'image')
+    return el('img', {
+      class: 'msg-img', src: m.content, alt: '圖片',
+      onclick: () => openViewer(m.content),
+    });
+  if (m.type === 'sticker') return el('div', { class: 'msg-sticker', text: m.content });
+  if (m.type === 'audio') return buildAudioMsg(m);
+  if (m.type === 'poll') return buildPollCard(m);
+  return el('div', { class: 'bubble' }, renderText(m.content));
+}
+
 function buildMessageNode(conv, cache, m, prev) {
   const frag = document.createDocumentFragment();
   if (!prev || !sameDay(prev.createdAt, m.createdAt)) {
@@ -730,25 +809,20 @@ function buildMessageNode(conv, cache, m, prev) {
   const head = !prev || prev.senderId !== m.senderId || prev.type === 'system' ||
     (m.createdAt - prev.createdAt) > 5 * 60 * 1000 || !sameDay(prev.createdAt, m.createdAt);
 
-  let content;
-  if (m.deleted) {
-    content = el('div', { class: 'bubble deleted', text: '已收回訊息' });
-  } else if (m.type === 'image') {
-    content = el('img', {
-      class: 'msg-img', src: m.content, alt: '圖片',
-      onclick: () => openViewer(m.content),
-    });
-  } else if (m.type === 'sticker') {
-    content = el('div', { class: 'msg-sticker', text: m.content });
-  } else {
-    content = el('div', { class: 'bubble' }, renderText(m.content));
+  const stack = el('div', { class: 'msg-stack' });
+  if (m.meta && m.meta.reply) {
+    const r = m.meta.reply;
+    stack.append(el('div', { class: 'quote', onclick: () => scrollToMessage(r.id) },
+      el('div', { class: 'qname', text: nameOf(r.senderId) }),
+      el('div', { class: 'qtext', text: r.text })));
   }
+  stack.append(buildMessageContent(m));
 
   const meta = el('div', { class: 'meta' },
     el('span', { class: 'read', text: readLabelFor(conv, cache, m) }),
     el('span', { class: 'time', text: fmtTime(m.createdAt) }));
 
-  const line = el('div', { class: 'msg-line' }, content, meta);
+  const line = el('div', { class: 'msg-line' }, stack, meta);
   attachMsgMenu(line, m);
 
   const row = el('div', { class: `msg-row ${mine ? 'mine' : 'theirs'}${head ? ' head' : ''}`, 'data-mid': m.id });
@@ -762,6 +836,8 @@ function buildMessageNode(conv, cache, m, prev) {
     body.append(el('div', { class: 'msg-name', text: nameOf(m.senderId) }));
   }
   body.append(line);
+  const chips = renderReactionChips(m);
+  if (chips) body.append(chips);
   row.append(body);
   frag.append(row);
   return frag;
@@ -832,24 +908,13 @@ function sendReadIfNeeded(convId) {
 
 /* ---------- 訊息選單（收回／複製） ---------- */
 
+const QUICK_REACTIONS = ['❤️', '👍', '😂', '😮', '😢', '🙏'];
+
 function attachMsgMenu(node, m) {
   if (m.type === 'system') return;
   const open = (e) => {
     e.preventDefault();
-    const items = [];
-    if (!m.deleted && m.type === 'text') items.push({ label: '複製', value: 'copy' });
-    if (!m.deleted && m.senderId === state.me.id && Date.now() - m.createdAt < 24 * 3600 * 1000) {
-      items.push({ label: '收回', value: 'unsend', danger: true });
-    }
-    if (!items.length) return;
-    openSheet(items).then(async (v) => {
-      if (v === 'copy') {
-        try { await navigator.clipboard.writeText(m.content); toast('已複製'); } catch { toast('無法複製'); }
-      }
-      if (v === 'unsend') {
-        try { await api(`/api/messages/${m.id}/unsend`, { method: 'POST' }); } catch (e2) { toast(e2.message); }
-      }
-    });
+    if (!m.deleted) openMsgSheet(m);
   };
   node.addEventListener('contextmenu', open);
   let pressTimer = null;
@@ -858,6 +923,47 @@ function attachMsgMenu(node, m) {
   }, { passive: true });
   ['touchend', 'touchmove', 'touchcancel'].forEach((evt) =>
     node.addEventListener(evt, () => clearTimeout(pressTimer), { passive: true }));
+}
+
+function openMsgSheet(m) {
+  const sheet = el('div', { class: 'sheet' });
+  const emojiRow = el('div', { class: 'sheet-emojis' });
+  for (const emo of QUICK_REACTIONS) {
+    emojiRow.append(el('button', {
+      type: 'button', text: emo,
+      onclick: async () => {
+        close();
+        try {
+          await api(`/api/messages/${m.id}/react`, { method: 'POST', body: { emoji: emo } });
+        } catch (e2) { toast(e2.message); }
+      },
+    }));
+  }
+  sheet.append(emojiRow);
+  const add = (label, danger, fn) => sheet.append(el('button', {
+    class: danger ? 'danger' : '', text: label,
+    onclick: () => { close(); fn(); },
+  }));
+  add('回覆', false, () => setReply(m));
+  if (m.type === 'text') {
+    add('複製', false, async () => {
+      try { await navigator.clipboard.writeText(m.content); toast('已複製'); } catch { toast('無法複製'); }
+    });
+  }
+  add('設為公告', false, async () => {
+    try {
+      await api(`/api/conversations/${m.conversationId}/pin`, {
+        method: 'POST', body: { messageId: m.id },
+      });
+    } catch (e2) { toast(e2.message); }
+  });
+  if (m.senderId === state.me.id && Date.now() - m.createdAt < 24 * 3600 * 1000) {
+    add('收回', true, async () => {
+      try { await api(`/api/messages/${m.id}/unsend`, { method: 'POST' }); } catch (e2) { toast(e2.message); }
+    });
+  }
+  sheet.append(el('button', { class: 'cancel', text: '取消', onclick: () => close() }));
+  const close = openModal(sheet);
 }
 
 /* ---------- 傳送訊息 ---------- */
@@ -883,10 +989,11 @@ async function sendText() {
   }
 }
 
-async function postMessage(convId, type, content) {
-  const data = await api(`/api/conversations/${convId}/messages`, {
-    method: 'POST', body: { type, content },
-  });
+async function postMessage(convId, type, content, extra = {}) {
+  const body = { type, content, ...extra };
+  if (state.replyTarget && state.replyTarget.convId === convId) body.replyTo = state.replyTarget.id;
+  const data = await api(`/api/conversations/${convId}/messages`, { method: 'POST', body });
+  clearReply();
   handleIncomingMessage(data.message, true);
 }
 
@@ -1024,7 +1131,7 @@ function memberPickRows(users, selected) {
 }
 
 function newGroupModal() {
-  const others = [...state.users.values()].filter((u) => u.id !== state.me.id);
+  const others = [...state.users.values()].filter((u) => u.id !== state.me.id && !u.disabled);
   if (!others.length) return toast('目前還沒有其他成員可以加入群組');
   const nameIn = el('input', { placeholder: '群組名稱', maxlength: 30 });
   const selected = new Set();
@@ -1086,6 +1193,9 @@ function chatInfoModal() {
       el('button', {
         class: 'set-item', onclick: () => { close(); inviteToGroupModal(conv); },
       }, el('span', { class: 'grow', text: '邀請成員加入' })),
+      el('button', {
+        class: 'set-item', onclick: () => { close(); pollCreateModal(conv); },
+      }, el('span', { class: 'grow', text: '發起投票' })),
       el('div', { class: 'list-section', text: `成員 ${conv.members.length}` }),
       el('div', { class: 'member-list' }, memberRows)),
     el('div', { class: 'modal-actions' },
@@ -1106,7 +1216,7 @@ function chatInfoModal() {
 
 function inviteToGroupModal(conv) {
   const memberIds = new Set(conv.members.map((m) => m.userId));
-  const candidates = [...state.users.values()].filter((u) => !memberIds.has(u.id));
+  const candidates = [...state.users.values()].filter((u) => !memberIds.has(u.id) && !u.disabled);
   if (!candidates.length) return toast('所有成員都已經在群組裡了');
   const selected = new Set();
   const close = openModal(el('div', { class: 'modal' },
@@ -1232,7 +1342,11 @@ function connectWs() {
     if (e.data === 'pong') { state.wsAlive = true; return; }
     try { handleWsEvent(JSON.parse(e.data)); } catch {}
   };
-  ws.onclose = () => {
+  ws.onclose = (ev) => {
+    if (ev && ev.code === 4003) {
+      forceLogout('你已被管理員移出聊天室');
+      return;
+    }
     if (state.ws === ws) handleWsDown();
   };
   ws.onerror = () => {
@@ -1315,6 +1429,12 @@ function handleWsEvent(ev) {
       break;
     }
     case 'conversations-changed': scheduleConvReload(); break;
+    case 'reaction': handleReaction(ev); break;
+    case 'vote': handleVote(ev); break;
+    case 'pin': handlePin(ev); break;
+    case 'shopping-changed': if (state.tab === 'tools' && state.toolTab === 'shopping') renderShopping(); break;
+    case 'events-changed': if (state.tab === 'tools' && state.toolTab === 'calendar') renderCalendar(); break;
+    case 'event-reminder': handleEventReminder(ev); break;
   }
 }
 
@@ -1322,9 +1442,12 @@ function handleIncomingMessage(m, fromSelfPost) {
   const conv = convById(m.conversationId);
   const cache = state.msgCache.get(m.conversationId);
 
-  // 更新訊息快取（避免 POST 回應與 WS 事件重複加入）
+  // 更新訊息快取（避免 POST 回應與 WS 事件重複加入）。
+  // 檢視搜尋跳轉的舊訊息時（與最新之間有缺口）不插入，回到最新時整批重抓。
   let added = false;
-  if (cache) {
+  if (cache && cache.aroundMode && cache.hasNewer) {
+    cache.stale = true;
+  } else if (cache) {
     if (!cache.messages.some((x) => x.id === m.id)) {
       cache.messages.push(m);
       cache.messages.sort((a, b) => a.id - b.id);
@@ -1356,8 +1479,12 @@ function handleIncomingMessage(m, fromSelfPost) {
     const stick = nearBottom() || m.senderId === state.me.id;
     appendMessage(m.conversationId, m);
     hideTyping();
-    if (stick) scrollToBottom(m.senderId !== state.me.id);
-    else $('btn-jump').classList.remove('hidden');
+    if (stick) {
+      scrollToBottom(m.senderId !== state.me.id);
+    } else {
+      setJumpLabel('新訊息');
+      $('btn-jump').classList.remove('hidden');
+    }
     if (document.visibilityState === 'visible' && m.senderId !== state.me.id) {
       sendReadIfNeeded(m.conversationId);
     }
@@ -1452,11 +1579,18 @@ function showNotification(m, conv) {
   if (!state.notify || !('Notification' in window) || Notification.permission !== 'granted') return;
   try {
     const sender = userOf(m.senderId);
-    const title = conv
-      ? convTitle(conv) + (conv.type === 'group' && sender ? `｜${sender.displayName}` : '')
-      : (sender ? sender.displayName : '新訊息');
+    let title, bodyText;
+    if (state.stealth) {
+      title = '提醒';
+      bodyText = '有新內容';
+    } else {
+      title = conv
+        ? convTitle(conv) + (conv.type === 'group' && sender ? `｜${sender.displayName}` : '')
+        : (sender ? sender.displayName : '新訊息');
+      bodyText = msgPreview(m);
+    }
     const n = new Notification(title, {
-      body: msgPreview(m),
+      body: bodyText,
       icon: '/icons/icon-192.png',
       tag: 'cim-conv-' + m.conversationId,
     });
@@ -1493,6 +1627,676 @@ function beep(start, freq, dur) {
   osc.stop(start + dur + 0.05);
 }
 
+/* ---------- 外觀（主題／字體／低調模式） ---------- */
+
+let systemDarkMq = null;
+function applyAppearance() {
+  document.body.classList.remove('font-sm', 'font-lg', 'font-xl');
+  if (state.fontSize !== 'md') document.body.classList.add('font-' + state.fontSize);
+  if (!systemDarkMq) {
+    systemDarkMq = matchMedia('(prefers-color-scheme: dark)');
+    systemDarkMq.addEventListener('change', () => {
+      if (state.theme === 'auto') applyAppearance();
+    });
+  }
+  const dark = state.theme === 'dark' || (state.theme === 'auto' && systemDarkMq.matches);
+  document.body.classList.toggle('theme-dark', dark);
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) metaTheme.content = dark ? '#1a1e25' : '#06C755';
+  const iconLink = document.querySelector('link[rel="icon"]');
+  if (iconLink) iconLink.href = state.stealth ? '/doc.svg' : '/icon.svg';
+  updateUnreadBadges();
+}
+
+function forceLogout(msg) {
+  state.token = null;
+  localStorage.removeItem('cim_token');
+  stopWs();
+  closeChat();
+  showAuth();
+  if (msg) toast(msg);
+}
+
+function segControl(options, value, onChange) {
+  const seg = el('div', { class: 'seg' });
+  for (const [val, label] of options) {
+    seg.append(el('button', {
+      type: 'button', class: val === value ? 'active' : '', text: label,
+      onclick: () => onChange(val),
+    }));
+  }
+  return seg;
+}
+
+/* ---------- 回覆／引用 ---------- */
+
+function setReply(m) {
+  state.replyTarget = { id: m.id, convId: m.conversationId };
+  $('reply-name').textContent = '回覆 ' + nameOf(m.senderId);
+  $('reply-text').textContent = msgPreview(m);
+  $('reply-bar').classList.remove('hidden');
+  if (!isTouch()) $('input').focus();
+}
+
+function clearReply() {
+  state.replyTarget = null;
+  $('reply-bar').classList.add('hidden');
+}
+
+function scrollToMessage(mid) {
+  const row = document.querySelector(`#msg-list [data-mid="${mid}"]`);
+  if (!row) { toast('這則訊息在更早的紀錄裡'); return; }
+  row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  row.classList.remove('flash');
+  void row.offsetWidth;
+  row.classList.add('flash');
+}
+
+// 重新渲染單一訊息（表情回應／投票更新時用，不動整個列表）
+function rerenderMessage(convId, mid) {
+  if (state.currentConv !== convId) return;
+  const conv = convById(convId);
+  const cache = state.msgCache.get(convId);
+  if (!conv || !cache) return;
+  const idx = cache.messages.findIndex((x) => x.id === mid);
+  if (idx < 0) return;
+  const old = document.querySelector(`#msg-list [data-mid="${mid}"]`);
+  if (!old) return;
+  const frag = buildMessageNode(conv, cache, cache.messages[idx], idx > 0 ? cache.messages[idx - 1] : null);
+  const fresh = frag.querySelector(`[data-mid="${mid}"]`);
+  if (fresh) old.replaceWith(fresh);
+}
+
+/* ---------- 表情回應、投票、公告（即時事件） ---------- */
+
+function renderReactionChips(m) {
+  if (!m.reactions || !m.reactions.length) return null;
+  const wrap = el('div', { class: 'reaction-chips' });
+  for (const r of m.reactions) {
+    const own = r.users.includes(state.me.id);
+    wrap.append(el('button', {
+      class: 'rchip' + (own ? ' own' : ''), type: 'button',
+      title: r.users.map(nameOf).join('、'),
+      onclick: () => api(`/api/messages/${m.id}/react`, { method: 'POST', body: { emoji: r.emoji } })
+        .catch((e) => toast(e.message)),
+    }, `${r.emoji} ${r.users.length}`));
+  }
+  return wrap;
+}
+
+function handleReaction(ev) {
+  const cache = state.msgCache.get(ev.conversationId);
+  if (!cache) return;
+  const m = cache.messages.find((x) => x.id === ev.messageId);
+  if (!m) return;
+  m.reactions = ev.reactions;
+  rerenderMessage(ev.conversationId, ev.messageId);
+}
+
+function handleVote(ev) {
+  const cache = state.msgCache.get(ev.conversationId);
+  if (!cache) return;
+  const m = cache.messages.find((x) => x.id === ev.messageId);
+  if (!m) return;
+  m.votes = ev.votes;
+  rerenderMessage(ev.conversationId, ev.messageId);
+}
+
+function handlePin(ev) {
+  const conv = convById(ev.conversationId);
+  if (conv) conv.pinnedMessageId = ev.pinned ? ev.pinned.id : null;
+  const cache = state.msgCache.get(ev.conversationId);
+  if (cache) cache.pinned = ev.pinned;
+  if (state.currentConv === ev.conversationId) updatePinBanner(ev.conversationId);
+}
+
+function updatePinBanner(convId) {
+  const banner = $('pin-banner');
+  const cache = state.msgCache.get(convId);
+  const p = cache && cache.pinned;
+  if (!p) { banner.classList.add('hidden'); return; }
+  $('pin-text').textContent = `${nameOf(p.senderId)}：${msgPreview(p)}`;
+  banner.classList.remove('hidden');
+}
+
+/* ---------- 語音訊息 ---------- */
+
+const fmtDur = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+function stopAudio() {
+  if (!state.audio) return;
+  try { state.audio.el.pause(); } catch {}
+  const { posEl, btnEl } = state.audio;
+  if (posEl) posEl.style.width = '0';
+  if (btnEl) { btnEl.textContent = ''; btnEl.append(icon('play', 18)); }
+  state.audio = null;
+}
+
+function buildAudioMsg(m) {
+  const playBtn = el('button', { class: 'audio-play', type: 'button', 'aria-label': '播放語音' }, icon('play', 18));
+  const pos = el('div', { class: 'apos' });
+  const track = el('div', { class: 'audio-track' }, pos);
+  const durLabel = el('span', { class: 'audio-dur', text: fmtDur((m.meta && m.meta.duration) || 0) });
+  playBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (state.audio && state.audio.mid === m.id) { stopAudio(); return; }
+    stopAudio();
+    const a = new Audio(m.content);
+    state.audio = { el: a, mid: m.id, posEl: pos, btnEl: playBtn };
+    playBtn.textContent = '';
+    playBtn.append(icon('pause', 18));
+    a.addEventListener('timeupdate', () => {
+      const d = a.duration && isFinite(a.duration) ? a.duration : ((m.meta && m.meta.duration) || 1);
+      pos.style.width = Math.min(100, (a.currentTime / d) * 100) + '%';
+    });
+    a.addEventListener('ended', stopAudio);
+    a.play().catch(() => { stopAudio(); toast('無法播放語音'); });
+  });
+  return el('div', { class: 'audio-msg' }, playBtn, track, durLabel);
+}
+
+async function startRec() {
+  if (!state.currentConv || state.rec) return;
+  if (!navigator.mediaDevices || !window.MediaRecorder) {
+    toast('這個瀏覽器不支援錄音');
+    return;
+  }
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (err) {
+    toast(err && err.name === 'NotFoundError'
+      ? '找不到麥克風裝置'
+      : '需要麥克風權限才能錄語音訊息');
+    return;
+  }
+  const mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4']
+    .find((t) => MediaRecorder.isTypeSupported(t)) || '';
+  const recorder = new MediaRecorder(
+    stream, mime ? { mimeType: mime, audioBitsPerSecond: 32000 } : undefined);
+  const chunks = [];
+  recorder.addEventListener('dataavailable', (e) => { if (e.data.size) chunks.push(e.data); });
+  state.rec = { recorder, chunks, seconds: 0, stream, timer: null };
+  recorder.start(250);
+  $('rec-time').textContent = '0:00';
+  $('rec-bar').classList.remove('hidden');
+  document.querySelector('.composer').classList.add('hidden');
+  hidePicker();
+  state.rec.timer = setInterval(() => {
+    if (!state.rec) return;
+    state.rec.seconds += 1;
+    $('rec-time').textContent = fmtDur(state.rec.seconds);
+    if (state.rec.seconds >= 60) finishRec(true);
+  }, 1000);
+}
+
+function teardownRec() {
+  if (!state.rec) return;
+  clearInterval(state.rec.timer);
+  try { state.rec.stream.getTracks().forEach((t) => t.stop()); } catch {}
+  state.rec = null;
+  $('rec-bar').classList.add('hidden');
+  document.querySelector('.composer').classList.remove('hidden');
+}
+
+function cancelRec() {
+  if (!state.rec) return;
+  try { state.rec.recorder.stop(); } catch {}
+  teardownRec();
+}
+
+function finishRec(send) {
+  const rec = state.rec;
+  if (!rec) return;
+  const seconds = Math.max(1, rec.seconds);
+  const convId = state.currentConv;
+  rec.recorder.addEventListener('stop', async () => {
+    if (!send || !convId) return;
+    const blob = new Blob(rec.chunks, { type: rec.recorder.mimeType || 'audio/webm' });
+    if (blob.size > 650000) { toast('錄音檔太大，請縮短一點'); return; }
+    try {
+      const dataUrl = await new Promise((res, rej) => {
+        const fr = new FileReader();
+        fr.onload = () => res(fr.result);
+        fr.onerror = () => rej(new Error('讀取錄音失敗'));
+        fr.readAsDataURL(blob);
+      });
+      await postMessage(convId, 'audio', dataUrl, { duration: seconds });
+    } catch (e) { toast(e.message); }
+  }, { once: true });
+  try { rec.recorder.stop(); } catch {}
+  teardownRec();
+}
+
+/* ---------- 投票 ---------- */
+
+function buildPollCard(m) {
+  let poll;
+  try { poll = JSON.parse(m.content); } catch { return el('div', { class: 'bubble', text: '[投票]' }); }
+  const votes = m.votes || [];
+  const total = votes.length;
+  const card = el('div', { class: 'poll-card' });
+  card.append(el('div', { class: 'poll-q', text: poll.q }));
+  poll.options.forEach((label, i) => {
+    const count = votes.filter((v) => v.opt === i).length;
+    const mineVote = votes.some((v) => v.userId === state.me.id && v.opt === i);
+    const fill = el('div', { class: 'fill' });
+    fill.style.width = total ? Math.round((count / total) * 100) + '%' : '0';
+    card.append(el('button', {
+      class: 'poll-opt' + (mineVote ? ' voted' : ''), type: 'button',
+      onclick: (e) => {
+        e.stopPropagation();
+        api(`/api/messages/${m.id}/vote`, { method: 'POST', body: { opt: i } })
+          .catch((e2) => toast(e2.message));
+      },
+    }, fill,
+      el('span', { class: 'olabel', text: label }),
+      el('span', { class: 'ocount', text: String(count) })));
+  });
+  card.append(el('div', { class: 'poll-total', text: `${total} 人投票 · 點選項投票，再點一次取消` }));
+  return card;
+}
+
+function pollCreateModal(conv) {
+  const qIn = el('input', { placeholder: '想問大家什麼？（例：晚餐吃什麼）', maxlength: 100 });
+  const optWrap = el('div');
+  const optInputs = [];
+  const addOpt = (val = '') => {
+    if (optInputs.length >= 6) return;
+    const inp = el('input', { placeholder: `選項 ${optInputs.length + 1}`, maxlength: 30 });
+    inp.value = val;
+    optInputs.push(inp);
+    optWrap.append(inp);
+  };
+  addOpt(); addOpt();
+  const err = el('div', { class: 'modal-error hidden' });
+  const close = openModal(el('div', { class: 'modal' },
+    el('div', { class: 'modal-title', text: '發起投票' }),
+    el('div', { class: 'modal-body' }, qIn, optWrap,
+      el('button', {
+        class: 'btn btn-ghost btn-small', type: 'button', text: '＋ 增加選項',
+        onclick: () => addOpt(),
+      }),
+      err),
+    el('div', { class: 'modal-actions' },
+      el('button', { class: 'btn btn-ghost', text: '取消', onclick: () => close() }),
+      el('button', {
+        class: 'btn btn-primary', text: '送出',
+        onclick: async () => {
+          const q = qIn.value.trim();
+          const options = optInputs.map((i2) => i2.value.trim()).filter(Boolean);
+          if (!q || options.length < 2) {
+            err.textContent = '請輸入問題和至少 2 個選項';
+            err.classList.remove('hidden');
+            return;
+          }
+          try {
+            await postMessage(conv.id, 'poll', '', { poll: { q, options } });
+            close();
+          } catch (e2) {
+            err.textContent = e2.message;
+            err.classList.remove('hidden');
+          }
+        },
+      }))));
+}
+
+/* ---------- 訊息搜尋 ---------- */
+
+let searchTimer = null;
+
+function toggleSearch(show) {
+  const bar = $('search-bar');
+  const showing = show !== undefined ? show : bar.classList.contains('hidden');
+  bar.classList.toggle('hidden', !showing);
+  $('search-results').classList.toggle('hidden', !showing);
+  $('chat-list').classList.toggle('hidden', showing);
+  if (showing) {
+    $('search-results').textContent = '';
+    $('search-input').value = '';
+    $('search-input').focus();
+  }
+}
+
+function makeSnippet(text, q) {
+  const one = text.replace(/\n/g, ' ');
+  const idx = one.toLowerCase().indexOf(q.toLowerCase());
+  const start = Math.max(0, idx - 12);
+  const seg = (start > 0 ? '…' : '') + one.slice(start, start + 60);
+  const frag = document.createDocumentFragment();
+  const pos = seg.toLowerCase().indexOf(q.toLowerCase());
+  if (pos < 0) { frag.append(seg); return frag; }
+  frag.append(seg.slice(0, pos));
+  frag.append(el('mark', { text: seg.slice(pos, pos + q.length) }));
+  frag.append(seg.slice(pos + q.length));
+  return frag;
+}
+
+function runSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(async () => {
+    const q = $('search-input').value.trim();
+    const box = $('search-results');
+    if (!q) { box.textContent = ''; return; }
+    try {
+      const data = await api('/api/search?q=' + encodeURIComponent(q));
+      box.textContent = '';
+      if (!data.results.length) {
+        box.append(el('div', { class: 'list-empty', text: `找不到含「${q}」的訊息` }));
+        return;
+      }
+      for (const m of data.results) {
+        const conv = convById(m.conversationId);
+        box.append(el('button', {
+          class: 'row',
+          onclick: () => openConvAt(m.conversationId, m.id),
+        },
+          avatarEl(userOf(m.senderId), 44),
+          el('div', { class: 'row-main' },
+            el('div', { class: 'row-title-line' },
+              el('div', { class: 'row-name', text: conv ? convTitle(conv) : nameOf(m.senderId) })),
+            el('div', { class: 'row-sub search-snippet' }, makeSnippet(m.content, q))),
+          el('div', { class: 'row-side' },
+            el('div', { class: 'row-time', text: fmtListTime(m.createdAt) }))));
+      }
+    } catch (e) { toast(e.message); }
+  }, 300);
+}
+
+function setJumpLabel(label) {
+  const jump = $('btn-jump');
+  jump.textContent = '';
+  jump.append(icon('down', 16), ' ' + label);
+}
+
+function jumpToLatest() {
+  const convId = state.currentConv;
+  const cache = convId && state.msgCache.get(convId);
+  if (cache && (cache.aroundMode || cache.stale)) {
+    fetchMessages(convId).catch((e) => toast(e.message));
+  } else {
+    scrollToBottom();
+  }
+}
+
+// 從搜尋結果跳到訊息所在位置（載入該訊息前後的紀錄）
+async function openConvAt(convId, mid) {
+  const conv = convById(convId);
+  if (!conv) { toast('找不到這個聊天室'); return; }
+  toggleSearch(false);
+  state.currentConv = convId;
+  document.body.classList.add('chat-open');
+  $('chat-empty').classList.add('hidden');
+  $('chat-view').classList.remove('hidden');
+  $('typing').classList.add('hidden');
+  hidePicker();
+  clearReply();
+  cancelRec();
+  updateChatHeader(conv);
+  try {
+    const data = await api(`/api/conversations/${convId}/messages?around=${mid}`);
+    state.msgCache.set(convId, {
+      messages: data.messages, members: data.members, hasMore: data.hasMore,
+      pinned: data.pinned || null, aroundMode: true, hasNewer: data.hasNewer,
+    });
+    renderMessages(convId);
+    updatePinBanner(convId);
+    scrollToMessage(mid);
+    if (data.hasNewer) {
+      setJumpLabel('回到最新');
+      $('btn-jump').classList.remove('hidden');
+    } else {
+      $('btn-jump').classList.add('hidden');
+    }
+    sendReadIfNeeded(convId);
+  } catch (e) { toast(e.message); }
+}
+
+/* ---------- 小工具：購物清單與行事曆 ---------- */
+
+function renderTools() {
+  setToolTab(state.toolTab);
+}
+
+function setToolTab(tab) {
+  state.toolTab = tab;
+  $('tool-tab-shopping').classList.toggle('active', tab === 'shopping');
+  $('tool-tab-calendar').classList.toggle('active', tab === 'calendar');
+  $('tool-shopping').classList.toggle('hidden', tab !== 'shopping');
+  $('tool-calendar').classList.toggle('hidden', tab !== 'calendar');
+  if (tab === 'shopping') renderShopping();
+  else renderCalendar();
+}
+
+async function renderShopping() {
+  try {
+    const data = await api('/api/shopping');
+    const box = $('shopping-list');
+    box.textContent = '';
+    if (!data.items.length) {
+      box.append(el('div', { class: 'list-empty', text: '清單是空的。\n加入要買的東西，全家人都會即時看到！' }));
+      return;
+    }
+    for (const it of data.items) {
+      const check = el('button', { class: 'tcheck', type: 'button', 'aria-label': '完成' }, icon('check', 14));
+      check.addEventListener('click', () =>
+        api(`/api/shopping/${it.id}`, { method: 'PATCH', body: { done: !it.done } })
+          .catch((e) => toast(e.message)));
+      box.append(el('div', { class: 'titem' + (it.done ? ' done' : '') },
+        check,
+        el('div', { class: 'tmain' },
+          el('div', { class: 'ttext', text: it.text }),
+          el('div', { class: 'tsub', text: it.done ? `${nameOf(it.doneBy)} 已買到` : `${nameOf(it.createdBy)} 新增` })),
+        el('button', {
+          class: 'icon-btn', type: 'button', 'aria-label': '刪除',
+          onclick: () => api(`/api/shopping/${it.id}`, { method: 'DELETE' })
+            .catch((e) => toast(e.message)),
+        }, icon('trash', 18))));
+    }
+  } catch (e) { toast(e.message); }
+}
+
+function eventSub(ev2) {
+  const d = new Date(ev2.remindAt);
+  const parts = [`週${WEEKDAYS[d.getDay()]}`];
+  if (ev2.time) parts.push(ev2.time);
+  if (ev2.note) parts.push(ev2.note);
+  parts.push(`${nameOf(ev2.createdBy)} 建立`);
+  return parts.join(' · ');
+}
+
+function eventRow(ev2, isPast) {
+  const d = new Date(ev2.remindAt);
+  return el('div', { class: 'eitem' + (isPast ? ' past' : '') },
+    el('div', { class: 'edate' },
+      el('div', { class: 'em', text: `${d.getMonth() + 1}月` }),
+      el('div', { class: 'ed', text: String(d.getDate()) })),
+    el('div', { class: 'emain' },
+      el('div', { class: 'etitle', text: ev2.title }),
+      el('div', { class: 'esub', text: eventSub(ev2) })),
+    el('button', {
+      class: 'icon-btn', type: 'button', 'aria-label': '刪除',
+      onclick: async () => {
+        if (!(await confirmModal('刪除事項', `確定刪除「${ev2.title}」嗎？`))) return;
+        api(`/api/events/${ev2.id}`, { method: 'DELETE' }).catch((e) => toast(e.message));
+      },
+    }, icon('trash', 18)));
+}
+
+async function renderCalendar() {
+  try {
+    const data = await api('/api/events');
+    const box = $('event-list');
+    box.textContent = '';
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const upcoming = data.events.filter((e) => e.remindAt >= todayStart.getTime());
+    const past = data.events.filter((e) => e.remindAt < todayStart.getTime()).slice(-3).reverse();
+    if (!upcoming.length && !past.length) {
+      box.append(el('div', { class: 'list-empty', text: '還沒有任何事項。\n加入生日、聚餐、繳費提醒，到時全家都會收到通知！' }));
+      return;
+    }
+    for (const e of upcoming) box.append(eventRow(e, false));
+    if (past.length) {
+      box.append(el('div', { class: 'list-section', text: '已過去' }));
+      for (const e of past) box.append(eventRow(e, true));
+    }
+  } catch (e) { toast(e.message); }
+}
+
+function addEventModal() {
+  const titleIn = el('input', { placeholder: '標題（例：媽媽生日、回診）', maxlength: 60 });
+  const dateIn = el('input', { type: 'date' });
+  const timeIn = el('input', { type: 'time' });
+  const noteIn = el('input', { placeholder: '備註（可留空）', maxlength: 200 });
+  const err = el('div', { class: 'modal-error hidden' });
+  const close = openModal(el('div', { class: 'modal' },
+    el('div', { class: 'modal-title', text: '新增行事曆事項' }),
+    el('div', { class: 'modal-body' },
+      titleIn, dateIn, timeIn, noteIn,
+      el('p', { text: '到了時間全家人都會收到提醒；沒填時間就是當天早上 8 點提醒。' }),
+      err),
+    el('div', { class: 'modal-actions' },
+      el('button', { class: 'btn btn-ghost', text: '取消', onclick: () => close() }),
+      el('button', {
+        class: 'btn btn-primary', text: '新增',
+        onclick: async () => {
+          const title = titleIn.value.trim();
+          const date = dateIn.value;
+          const time = timeIn.value || null;
+          if (!title || !date) {
+            err.textContent = '請填標題和日期';
+            err.classList.remove('hidden');
+            return;
+          }
+          const [y, mo, da] = date.split('-').map(Number);
+          const [hh, mm2] = (time || '08:00').split(':').map(Number);
+          const remindAt = new Date(y, mo - 1, da, hh, mm2).getTime();
+          try {
+            await api('/api/events', {
+              method: 'POST',
+              body: { title, date, time, note: noteIn.value.trim(), remindAt },
+            });
+            close();
+          } catch (e2) {
+            err.textContent = e2.message;
+            err.classList.remove('hidden');
+          }
+        },
+      }))));
+}
+
+function handleEventReminder(ev) {
+  const e = ev.event;
+  toast(`行事曆提醒：${e.title}`);
+  if (state.sound) ding();
+  if (state.notify && 'Notification' in window && Notification.permission === 'granted') {
+    try {
+      const n = new Notification(state.stealth ? '提醒' : '行事曆提醒', {
+        body: state.stealth ? '有新內容' : e.title,
+        icon: '/icons/icon-192.png',
+        tag: 'cim-event-' + e.id,
+      });
+      n.onclick = () => { window.focus(); n.close(); };
+    } catch {}
+  }
+  if (state.tab === 'tools' && state.toolTab === 'calendar') renderCalendar();
+}
+
+/* ---------- 離線推播（客戶端） ---------- */
+
+function pushSupported() {
+  return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+}
+
+function urlB64ToUint8(b64) {
+  const pad = '='.repeat((4 - (b64.length % 4)) % 4);
+  const base = (b64 + pad).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base);
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+}
+
+async function enablePush() {
+  if (!pushSupported()) { toast('這個瀏覽器不支援離線推播'); return false; }
+  if (!(await ensureNotifPermission())) return false;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const { key } = await api('/api/push/key');
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlB64ToUint8(key),
+    });
+    await api('/api/push/subscribe', { method: 'POST', body: { subscription: sub.toJSON() } });
+    state.pushOn = true;
+    localStorage.setItem('cim_push', '1');
+    return true;
+  } catch {
+    toast('無法開啟離線推播（iPhone 需先「加入主畫面」後從主畫面開啟）');
+    return false;
+  }
+}
+
+async function disablePush() {
+  state.pushOn = false;
+  localStorage.setItem('cim_push', '0');
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      await api('/api/push/unsubscribe', { method: 'POST', body: { endpoint: sub.endpoint } })
+        .catch(() => {});
+      await sub.unsubscribe();
+    }
+  } catch {}
+}
+
+// 登入後靜默續訂（訂閱可能被瀏覽器輪換）
+async function syncPushSubscription() {
+  if (!state.pushOn || !pushSupported() || Notification.permission !== 'granted') return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      const { key } = await api('/api/push/key');
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlB64ToUint8(key),
+      });
+    }
+    await api('/api/push/subscribe', { method: 'POST', body: { subscription: sub.toJSON() } });
+  } catch {}
+}
+
+/* ---------- 管理員：成員管理 ---------- */
+
+function manageMembersModal() {
+  const rows = [...state.users.values()].filter((u) => !u.disabled).map((u) =>
+    el('div', { class: 'row' },
+      avatarEl(u, 44),
+      el('div', { class: 'row-main' },
+        el('div', { class: 'row-name', text: u.displayName + (u.isAdmin ? '　👑 管理員' : '') }),
+        el('div', { class: 'row-sub', text: '@' + u.username })),
+      u.id !== state.me.id ? el('button', {
+        class: 'member-remove', type: 'button', text: '移除',
+        onclick: async () => {
+          if (!(await confirmModal('移除成員', `確定將「${u.displayName}」移出聊天室嗎？移除後他將無法再登入（聊天紀錄會保留）。`, true))) return;
+          try {
+            await api(`/api/admin/users/${u.id}`, { method: 'DELETE' });
+            toast('已移除');
+            close();
+            await loadUsers();
+            renderSettings();
+            renderFriends();
+          } catch (e2) { toast(e2.message); }
+        },
+      }) : null));
+  const close = openModal(el('div', { class: 'modal' },
+    el('div', { class: 'modal-title', text: '成員管理' }),
+    el('div', { class: 'modal-body' }, el('div', { class: 'member-list' }, rows)),
+    el('div', { class: 'modal-actions' },
+      el('button', { class: 'btn btn-ghost', text: '關閉', onclick: () => close() }))));
+}
+
 /* ---------- 事件綁定與啟動 ---------- */
 
 function bindEvents() {
@@ -1507,7 +2311,7 @@ function bindEvents() {
   $('btn-back').addEventListener('click', closeChat);
   $('btn-chat-info').addEventListener('click', chatInfoModal);
   $('btn-load-more').addEventListener('click', loadOlder);
-  $('btn-jump').addEventListener('click', () => scrollToBottom());
+  $('btn-jump').addEventListener('click', jumpToLatest);
   $('btn-send').addEventListener('click', sendText);
   $('btn-emoji').addEventListener('click', togglePicker);
   $('btn-image').addEventListener('click', () => $('file-input').click());
@@ -1570,13 +2374,53 @@ function bindEvents() {
   });
 
   $('btn-notif-on').addEventListener('click', async () => {
-    await ensureNotifPermission();
+    const granted = await ensureNotifPermission();
+    if (granted && pushSupported()) await enablePush();
     updateNotifBanner();
   });
   $('btn-notif-dismiss').addEventListener('click', () => {
     state.notifDismissed = true;
     localStorage.setItem('cim_notif_dismissed', '1');
     updateNotifBanner();
+  });
+
+  // 搜尋
+  $('btn-search').addEventListener('click', () => toggleSearch());
+  $('btn-search-close').addEventListener('click', () => toggleSearch(false));
+  $('search-input').addEventListener('input', runSearch);
+
+  // 小工具
+  $('tool-tab-shopping').addEventListener('click', () => setToolTab('shopping'));
+  $('tool-tab-calendar').addEventListener('click', () => setToolTab('calendar'));
+  $('shopping-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = $('shopping-input').value.trim();
+    if (!text) return;
+    $('shopping-input').value = '';
+    try { await api('/api/shopping', { method: 'POST', body: { text } }); }
+    catch (e2) { toast(e2.message); }
+  });
+  $('btn-add-event').addEventListener('click', addEventModal);
+
+  // 語音訊息
+  $('btn-mic').addEventListener('click', startRec);
+  $('btn-rec-cancel').addEventListener('click', cancelRec);
+  $('btn-rec-send').addEventListener('click', () => finishRec(true));
+
+  // 回覆與公告
+  $('btn-reply-cancel').addEventListener('click', clearReply);
+  $('pin-banner').addEventListener('click', () => {
+    const cache = state.msgCache.get(state.currentConv);
+    if (cache && cache.pinned) scrollToMessage(cache.pinned.id);
+  });
+  $('btn-pin-clear').addEventListener('click', async (e) => {
+    e.stopPropagation();
+    if (!(await confirmModal('取消公告', '要撤下這則公告嗎？'))) return;
+    try {
+      await api(`/api/conversations/${state.currentConv}/pin`, {
+        method: 'POST', body: { messageId: null },
+      });
+    } catch (e2) { toast(e2.message); }
   });
 
   document.addEventListener('visibilitychange', () => {
@@ -1592,6 +2436,7 @@ function bindEvents() {
 
 async function boot() {
   injectIcons();
+  applyAppearance();
   bindEvents();
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
