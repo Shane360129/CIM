@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <title>CIM</title>
+  <meta name="description" content="CIM — 親友專屬聊天室">
+  <meta name="theme-color" content="#06C755">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="CIM">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <!-- 登入／註冊 -->
+  <div id="auth" class="auth hidden">
+    <div class="auth-card">
+      <img class="auth-logo" src="/icon.svg" alt="CIM">
+      <h1 class="auth-title">CIM</h1>
+      <p class="auth-sub">親友專屬聊天室</p>
+      <div class="auth-tabs">
+        <button type="button" id="auth-tab-login" class="active">登入</button>
+        <button type="button" id="auth-tab-register">註冊</button>
+      </div>
+      <form id="auth-form" autocomplete="on">
+        <div id="firstrun-hint" class="auth-hint hidden">🎉 歡迎！你是第一位註冊的人，將成為這個聊天室的<b>管理員</b>。</div>
+        <div id="reg-closed" class="auth-hint warn hidden">目前未開放註冊。請向管理員索取邀請碼，或請管理員開放註冊。</div>
+        <input id="f-username" placeholder="帳號（英文小寫、數字、底線）" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="20">
+        <input id="f-password" type="password" placeholder="密碼（至少 6 個字元）" autocomplete="current-password" maxlength="200">
+        <input id="f-displayname" class="hidden" placeholder="暱稱（大家看到的名字）" autocomplete="nickname" maxlength="30">
+        <input id="f-invite" class="hidden" placeholder="邀請碼" autocomplete="off" maxlength="50">
+        <div id="auth-error" class="auth-error hidden"></div>
+        <button id="auth-submit" type="submit" class="btn btn-primary btn-block">登入</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 主畫面 -->
+  <div id="app" class="app hidden">
+    <nav id="nav" class="nav">
+      <button class="nav-btn active" data-tab="chats" aria-label="聊天">
+        <span class="ic" data-icon="chat"></span><span class="nav-label">聊天</span>
+        <span id="nav-unread" class="nav-badge hidden"></span>
+      </button>
+      <button class="nav-btn" data-tab="friends" aria-label="好友">
+        <span class="ic" data-icon="users"></span><span class="nav-label">好友</span>
+      </button>
+      <button class="nav-btn" data-tab="settings" aria-label="設定">
+        <span class="ic" data-icon="gear"></span><span class="nav-label">設定</span>
+      </button>
+    </nav>
+
+    <section id="panel" class="panel">
+      <div id="tab-chats" class="tab">
+        <header class="panel-header">
+          <h1>聊天</h1>
+          <button id="btn-new-group" class="icon-btn" data-icon="plus" aria-label="建立群組" title="建立群組"></button>
+        </header>
+        <div id="conn-banner" class="conn-banner hidden">連線中斷，重新連線中…</div>
+        <div id="notif-banner" class="notif-banner hidden">
+          <span>開啟通知，親友傳訊息時馬上知道</span>
+          <button id="btn-notif-on" class="btn btn-small btn-primary">開啟</button>
+          <button id="btn-notif-dismiss" class="icon-btn" data-icon="x" aria-label="關閉"></button>
+        </div>
+        <div id="chat-list" class="list"></div>
+      </div>
+
+      <div id="tab-friends" class="tab hidden">
+        <header class="panel-header"><h1>好友</h1></header>
+        <div id="friend-list" class="list"></div>
+      </div>
+
+      <div id="tab-settings" class="tab hidden">
+        <header class="panel-header"><h1>設定</h1></header>
+        <div id="settings-body" class="settings-body"></div>
+      </div>
+    </section>
+
+    <main id="chat" class="chat">
+      <div id="chat-empty" class="chat-empty">
+        <img src="/icon.svg" alt="" width="72" height="72">
+        <p>選擇一個聊天，開始跟親友聊天吧</p>
+      </div>
+      <div id="chat-view" class="chat-view hidden">
+        <header class="chat-header">
+          <button id="btn-back" class="icon-btn only-mobile" data-icon="back" aria-label="返回"></button>
+          <div id="chat-title-wrap" class="chat-title-wrap">
+            <div id="chat-title" class="chat-title"></div>
+            <div id="chat-sub" class="chat-sub"></div>
+          </div>
+          <button id="btn-chat-info" class="icon-btn" data-icon="menu" aria-label="聊天室資訊"></button>
+        </header>
+        <div id="msg-scroll" class="msg-scroll">
+          <div class="load-more-wrap"><button id="btn-load-more" class="load-more hidden">看更早的訊息</button></div>
+          <div id="msg-list" class="msg-list"></div>
+        </div>
+        <div id="typing" class="typing hidden"></div>
+        <button id="btn-jump" class="jump hidden"><span class="ic" data-icon="down"></span> 新訊息</button>
+
+        <div id="picker" class="picker hidden">
+          <div class="picker-tabs">
+            <button id="picker-tab-emoji" class="active">表情符號</button>
+            <button id="picker-tab-sticker">貼圖</button>
+          </div>
+          <div id="picker-emoji" class="picker-grid emoji-grid"></div>
+          <div id="picker-sticker" class="picker-grid sticker-grid hidden"></div>
+        </div>
+
+        <footer class="composer">
+          <button id="btn-image" class="icon-btn" data-icon="image" aria-label="傳送圖片"></button>
+          <textarea id="input" rows="1" placeholder="輸入訊息" maxlength="4000"></textarea>
+          <button id="btn-emoji" class="icon-btn" data-icon="smile" aria-label="表情符號與貼圖"></button>
+          <button id="btn-send" class="icon-btn send" data-icon="send" aria-label="傳送"></button>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <div id="modal-root"></div>
+  <div id="toast-root"></div>
+  <div id="viewer" class="viewer hidden"><img id="viewer-img" alt=""></div>
+  <input type="file" id="file-input" accept="image/*" hidden>
+  <input type="file" id="avatar-input" accept="image/*" hidden>
+
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "cim",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CIM — 親友專用的 LINE 風格網頁聊天室（Cloudflare Workers + Durable Objects）",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "icons": "node scripts/gen-icons.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
