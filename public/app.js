@@ -217,6 +217,7 @@ function convAvatarEl(conv, size) {
 /* ---------- 登入／註冊 ---------- */
 
 function showAuth() {
+  state.authMode = 'login';
   $('app').classList.add('hidden');
   $('auth').classList.remove('hidden');
   document.body.classList.remove('chat-open');
@@ -284,8 +285,9 @@ async function submitAuth(e) {
     errBox.textContent = err.message;
     errBox.classList.remove('hidden');
   } finally {
-    $('auth-submit').disabled = false;
-    renderAuthMode();
+    const info = state.appInfo || {};
+    $('auth-submit').disabled =
+      state.authMode === 'register' && !info.firstRun && !info.registrationOpen;
   }
 }
 
@@ -960,7 +962,7 @@ function notifyTyping() {
   const nowTs = Date.now();
   if (nowTs - state.lastTypingSent < 3500) return;
   state.lastTypingSent = nowTs;
-  api(`/api/conversations/${convId}/typing`, { method: 'POST', body: {} }).catch(() => {});
+  api(`/api/conversations/${convId}/typing`, { method: 'POST' }).catch(() => {});
 }
 
 /* ---------- 表情／貼圖 ---------- */
@@ -1231,12 +1233,7 @@ function connectWs() {
     try { handleWsEvent(JSON.parse(e.data)); } catch {}
   };
   ws.onclose = () => {
-    stopHeartbeat();
-    state.ws = null;
-    if (state.token) {
-      $('conn-banner').classList.remove('hidden');
-      scheduleReconnect();
-    }
+    if (state.ws === ws) handleWsDown();
   };
   ws.onerror = () => {
     // token 失效時握手會被拒絕：檢查一次登入狀態
@@ -1253,6 +1250,16 @@ function stopWs() {
   }
 }
 
+// 連線視為中斷：清狀態、顯示提示、排程重連（不等 close 握手完成）
+function handleWsDown() {
+  stopHeartbeat();
+  state.ws = null;
+  if (state.token) {
+    $('conn-banner').classList.remove('hidden');
+    scheduleReconnect();
+  }
+}
+
 function scheduleReconnect() {
   if (!state.token) return;
   const delay = Math.min(30000, 1000 * 2 ** Math.min(state.wsRetry, 5)) + Math.random() * 500;
@@ -1265,7 +1272,10 @@ function startHeartbeat() {
   state.heartbeat = setInterval(() => {
     if (!state.ws || state.ws.readyState !== 1) return;
     if (!state.wsAlive) {
-      try { state.ws.close(); } catch {}
+      // 心跳沒回應：立刻視為斷線並重連，不苦等 close 握手
+      const dead = state.ws;
+      handleWsDown();
+      try { dead.close(); } catch {}
       return;
     }
     state.wsAlive = false;

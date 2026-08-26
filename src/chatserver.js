@@ -131,13 +131,23 @@ export class ChatServer {
   }
 
   async fetch(request) {
+    let response;
     try {
-      return await this.route(request, new URL(request.url));
+      response = await this.route(request, new URL(request.url));
     } catch (e) {
-      if (e instanceof HttpError) return json({ error: e.message }, e.status);
-      console.error('unhandled error:', e && (e.stack || e.message || e));
-      return json({ error: '伺服器發生錯誤，請稍後再試' }, 500);
+      if (e instanceof HttpError) {
+        response = json({ error: e.message }, e.status);
+      } else {
+        console.error('unhandled error:', e && (e.stack || e.message || e));
+        response = json({ error: '伺服器發生錯誤，請稍後再試' }, 500);
+      }
     }
+    // workerd 要求 request body 被消耗；沒讀完就回應會拋出
+    // "Can't read from request stream after response has been sent"
+    if (request.body && !request.bodyUsed) {
+      try { await request.body.cancel(); } catch {}
+    }
+    return response;
   }
 
   // ---------- 路由 ----------
@@ -777,7 +787,14 @@ export class ChatServer {
     // 客戶端到伺服器一律走 HTTP API；"ping" 由 auto-response 處理，其餘忽略
   }
 
-  webSocketClose() {}
+  webSocketClose(ws) {
+    // 客戶端發起關閉時，伺服器須回應 close 以完成握手，
+    // 否則客戶端會永遠卡在 CLOSING 狀態
+    try {
+      ws.close(1000);
+    } catch {}
+  }
+
   webSocketError() {}
 
   sendToUsers(userIds, event) {
