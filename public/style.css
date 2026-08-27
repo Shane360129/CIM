@@ -29,6 +29,8 @@
   --float-bg: rgba(255, 255, 255, .92);
   --float-ink: #6E685C;
   --danger: #C4614F;
+  --unread: #D9544D;           /* 未讀數字標記（紅） */
+  --unread-ink: #FFFFFF;
   --nav-h: 56px;
   --fs-msg: 15px;
   --fs-list: 15.5px;
@@ -63,6 +65,8 @@ body.theme-dark {
   --accent-fill: rgba(121, 177, 132, .25);
   --float-bg: rgba(30, 28, 23, .9);
   --float-ink: #C9C3B3;
+  --unread: #E2685F;
+  --unread-ink: #FFF6F4;
 }
 
 /* 字體大小（設定頁可調） */
@@ -111,32 +115,32 @@ input, textarea { font-family: inherit; font-size: 15px; color: var(--ink); }
 
 .auth {
   min-height: 100dvh; display: flex; align-items: center; justify-content: center;
-  background: #EFF3F7;
+  background: #F3EEE0;
   padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
 }
 .auth-card {
-  width: 100%; max-width: 360px; background: #FBFCFE; border: 1px solid #E0E7EE;
-  border-radius: 20px; padding: 32px 28px; box-shadow: 0 14px 40px rgba(40, 60, 85, .10);
+  width: 100%; max-width: 360px; background: #FDFAF1; border: 1px solid #E9E1CC;
+  border-radius: 20px; padding: 32px 28px; box-shadow: 0 14px 40px rgba(96, 78, 48, .10);
   display: flex; flex-direction: column; align-items: center;
 }
 .auth-logo { width: 68px; height: 68px; border-radius: 16px; }
 .auth-title { margin: 12px 0 0; font-size: 25px; letter-spacing: 6px; font-weight: 400; }
 .auth-sub { margin: 4px 0 18px; color: var(--sub); font-size: 13px; }
 .auth-tabs {
-  display: flex; width: 100%; background: #E8EEF3; border-radius: 10px; padding: 3px; margin-bottom: 16px;
+  display: flex; width: 100%; background: #EDE6D3; border-radius: 10px; padding: 3px; margin-bottom: 16px;
 }
 .auth-tabs button {
   flex: 1; padding: 8px 0; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--sub);
 }
-.auth-tabs button.active { background: #FFFFFF; color: #35404A; box-shadow: 0 1px 3px rgba(40, 60, 85, .12); }
+.auth-tabs button.active { background: #FFFDF6; color: #4C4437; box-shadow: 0 1px 3px rgba(96, 78, 48, .12); }
 #auth-form { width: 100%; display: flex; flex-direction: column; gap: 10px; }
 #auth-form input {
-  width: 100%; padding: 12px 14px; border: 1px solid #E0E7EE; border-radius: 10px; outline: none;
-  background: #FFFFFF; color: #35404A;
+  width: 100%; padding: 12px 14px; border: 1px solid #E9E1CC; border-radius: 10px; outline: none;
+  background: #FFFDF6; color: #4C4437;
 }
-#auth-form input:focus { border-color: var(--green); }
+#auth-form input:focus { border-color: #B98A5E; }
 .auth-hint {
-  background: #E3EEF6; color: #38729B; font-size: 13px;
+  background: #F3E8D9; color: #97694A; font-size: 13px;
   padding: 10px 12px; border-radius: 10px; line-height: 1.5;
 }
 .auth-hint.warn { background: #fdf0e6; color: #ad5700; }
@@ -160,9 +164,10 @@ input, textarea { font-family: inherit; font-size: 15px; color: var(--ink); }
 .nav-btn.active { color: var(--green); }
 .nav-btn:active { background: rgba(0,0,0,.05); }
 .nav-badge {
-  position: absolute; top: 2px; right: 4px; background: var(--green); color: #fff;
+  position: absolute; top: 2px; right: 4px; background: var(--unread); color: var(--unread-ink);
   font-size: 10px; font-weight: 700; min-width: 17px; height: 17px; line-height: 17px;
   border-radius: 999px; padding: 0 4px; text-align: center;
+  box-shadow: 0 0 0 2px var(--rail-bg);
 }
 
 .panel {
@@ -187,6 +192,8 @@ input, textarea { font-family: inherit; font-size: 15px; color: var(--ink); }
 .notif-banner span { flex: 1; line-height: 1.4; }
 .notif-banner .icon-btn { width: 30px; height: 30px; }
 
+.install-steps { display: flex; flex-direction: column; gap: 10px; font-size: 14.5px; line-height: 1.6; padding: 4px 2px; }
+
 .list { flex: 1; overflow-y: auto; padding-bottom: 12px; }
 .list-empty { color: var(--sub); font-size: 14px; text-align: center; padding: 48px 24px; line-height: 1.7; }
 .list-section { font-size: 12.5px; color: var(--sub); padding: 14px 18px 6px; font-weight: 600; }
@@ -209,9 +216,10 @@ input, textarea { font-family: inherit; font-size: 15px; color: var(--ink); }
 .row-side { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex: none; }
 .row-time { color: var(--time, #aab0b9); font-size: 11.5px; }
 .badge {
-  background: var(--green); color: #fff; font-size: 11px; font-weight: 700;
+  background: var(--unread); color: var(--unread-ink); font-size: 11px; font-weight: 700;
   min-width: 19px; height: 19px; line-height: 19px; text-align: center;
   border-radius: 999px; padding: 0 5px;
+  box-shadow: 0 0 0 2px var(--panel);
 }
 
 .avatar {
@@ -778,10 +786,48 @@ body.theme-dark.skin-sumi {
   --accent-fill: rgba(185, 184, 178, .20);
   --float-bg: rgba(24, 24, 22, .9); --float-ink: #C5C4BE;
 }
-body.skin-sumi .btn-primary, body.skin-sumi .badge, body.skin-sumi .nav-badge { color: #fff; }
-body.theme-dark.skin-sumi .btn-primary,
-body.theme-dark.skin-sumi .badge,
-body.theme-dark.skin-sumi .nav-badge { color: #1B1B19; }
+body.skin-sumi .btn-primary { color: #fff; }
+body.theme-dark.skin-sumi .btn-primary { color: #1B1B19; }
+
+/* —— 手札：奶油紙 × 茶棕，日系手帳（預設） —— */
+body.skin-techo {
+  --green: #B98A5E; --green-dark: #97694A; --green-soft: #F3E8D9;
+  --room-bg: #F0E9D8;
+  --bubble-me: #F0DEC2; --bubble-me-ink: #443826;
+  --bubble-other: #FFFDF6; --bubble-line: #EBE2CC;
+  --ink: #4C4437; --sub: #9A9080; --line: #E9E1CC;
+  --bg: #F6F1E3; --panel: #FCF8ED; --rail-bg: #F7F2E4;
+  --hover: #F0E9D8; --input-bg: #F1EAD9;
+  --icon: #7B7260; --nav-ink: #AFA692; --time: #B5AB93;
+  --meta-ink: #A89E87; --name-ink: #8D8471;
+  --pill-bg: #E7DEC5; --pill-ink: #7B7260;
+  --accent-fill: rgba(185, 138, 94, .18);
+  --float-bg: rgba(255, 253, 246, .93); --float-ink: #7B7260;
+}
+body.theme-dark.skin-techo {
+  --green: #CFA478; --green-dark: #DDB890; --green-soft: #322818;
+  --room-bg: #1C1811;
+  --bubble-me: #D9BE95; --bubble-me-ink: #332716;
+  --bubble-other: #2A2419; --bubble-line: #383121;
+  --ink: #EAE3D2; --sub: #A2987F; --line: #342D1F;
+  --bg: #16120C; --panel: #201B12; --rail-bg: #1A150E;
+  --hover: #2B2417; --input-bg: #2B2417;
+  --icon: #ACA189; --nav-ink: #766C55; --time: #80755D;
+  --meta-ink: #887D64; --name-ink: #9A9077;
+  --pill-bg: #2D2617; --pill-ink: #A79C82;
+  --accent-fill: rgba(207, 164, 120, .25);
+  --float-bg: rgba(26, 21, 13, .9); --float-ink: #C9BEA4;
+}
+/* 手帳細節：虛線分隔、圓潤泡泡、標題底線 */
+body.skin-techo #chat-list .row,
+body.skin-techo #friend-list .row { border-bottom: 1px dashed var(--line); }
+body.skin-techo #chat-list .row:last-child,
+body.skin-techo #friend-list .row:last-child { border-bottom: 0; }
+body.skin-techo .panel-header h1 {
+  border-bottom: 2px dashed var(--pill-bg); padding-bottom: 3px;
+}
+body.skin-techo .set-group { border-style: dashed; }
+body.skin-techo .bubble { border-radius: 18px; }
 
 /* —— 風格色票列 —— */
 .skin-row { display: flex; gap: 10px; flex-wrap: wrap; padding: 4px 16px 14px; }

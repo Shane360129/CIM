@@ -133,10 +133,12 @@ const state = {
   notify: localStorage.getItem('cim_notify') !== '0',
   notifDismissed: localStorage.getItem('cim_notif_dismissed') === '1',
   theme: localStorage.getItem('cim_theme') || 'auto',
-  skin: localStorage.getItem('cim_skin') || 'ocean',
+  skin: localStorage.getItem('cim_skin') || 'techo',
   fontSize: localStorage.getItem('cim_font') || 'md',
   stealth: localStorage.getItem('cim_stealth') === '1',
   pushOn: localStorage.getItem('cim_push') === '1',
+  installPrompt: null,        // beforeinstallprompt 事件（Android／桌面 Chrome 可一鍵安裝）
+  installDismissed: localStorage.getItem('cim_install_dismissed') === '1',
   replyTarget: null,          // { id, convId, name, preview }
   toolTab: 'shopping',
   rec: null,                  // 錄音中：{ recorder, chunks, timer, seconds, stream }
@@ -549,6 +551,14 @@ function renderSettings() {
         applyAppearance();
         renderSettings();
       }))));
+
+  // 加入主畫面
+  if (canInstall()) {
+    box.append(el('div', { class: 'set-group' },
+      el('div', { class: 'set-group-title', text: '加入主畫面' }),
+      setItem('📲 把 CHAT 加到主畫面', null, doInstall),
+      el('div', { class: 'set-note', text: '加入後從主畫面圖示開啟，就像一般 App。Android 按下直接安裝；iPhone 會顯示 Safari 操作步驟。' })));
+  }
 
   // 通知
   const notifGroup = el('div', { class: 'set-group' },
@@ -1633,6 +1643,7 @@ function beep(start, freq, dur) {
 
 // 可選風格：[代號, 名稱, 預覽底色, 預覽主色]
 const SKINS = [
+  ['techo', '手札', '#F0E9D8', '#B98A5E'],
   ['ocean', '海洋', '#E7EDF2', '#4A8FBF'],
   ['washi', '和紙抹茶', '#EAE6DD', '#5E9C6B'],
   ['classic', '經典綠', '#7b94bd', '#06C755'],
@@ -1657,7 +1668,7 @@ function applyAppearance() {
   const metaTheme = document.querySelector('meta[name="theme-color"]');
   if (metaTheme) {
     const panel = getComputedStyle(document.body).getPropertyValue('--panel').trim();
-    metaTheme.content = panel || (dark ? '#171E25' : '#F4F7FA');
+    metaTheme.content = panel || (dark ? '#201B12' : '#F6F1E3');
   }
   const iconLink = document.querySelector('link[rel="icon"]');
   if (iconLink) iconLink.href = state.stealth ? '/doc.svg' : '/icon.svg';
@@ -1681,6 +1692,55 @@ function skinRow() {
     }, dot, label));
   }
   return row;
+}
+
+/* ---------- 加入主畫面（PWA 安裝） ---------- */
+
+function isStandalone() {
+  return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+}
+
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function canInstall() {
+  return !isStandalone() && (state.installPrompt !== null || isIOS());
+}
+
+function updateInstallUi() {
+  const showBanner = canInstall() && !state.installDismissed && matchMedia('(max-width: 700px)').matches;
+  $('install-banner').classList.toggle('hidden', !showBanner);
+}
+
+async function doInstall() {
+  if (state.installPrompt) {
+    const ev = state.installPrompt;
+    ev.prompt();
+    const choice = await ev.userChoice.catch(() => null);
+    if (choice && choice.outcome === 'accepted') {
+      state.installPrompt = null;
+      updateInstallUi();
+    }
+    return;
+  }
+  if (isIOS()) {
+    const close = openModal(
+      el('div', { class: 'modal' },
+        el('div', { class: 'modal-title', text: '加入主畫面（iPhone）' }),
+        el('div', { class: 'modal-body' },
+          el('div', { class: 'install-steps' },
+            el('div', { class: 'install-step', text: '1️⃣ 用 Safari 開啟本網頁' }),
+            el('div', { class: 'install-step', text: '2️⃣ 點下方中間的「分享」按鈕（方框加向上箭頭）' }),
+            el('div', { class: 'install-step', text: '3️⃣ 往下捲，選「加入主畫面」' }),
+            el('div', { class: 'install-step', text: '4️⃣ 右上角按「新增」就完成了' }),
+            el('div', { class: 'set-note', text: '之後從主畫面的 CHAT 圖示開啟就是全螢幕 App，也才能開啟離線推播（Apple 的規定）。' }))),
+        el('div', { class: 'modal-actions' },
+          el('button', { class: 'btn btn-primary', text: '知道了', onclick: () => close() }))));
+    return;
+  }
+  toast('請用手機瀏覽器選單裡的「加到主畫面」');
 }
 
 function forceLogout(msg) {
@@ -2446,6 +2506,25 @@ function bindEvents() {
     localStorage.setItem('cim_notif_dismissed', '1');
     updateNotifBanner();
   });
+
+  // 一鍵加入主畫面
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    state.installPrompt = e;
+    updateInstallUi();
+  });
+  window.addEventListener('appinstalled', () => {
+    state.installPrompt = null;
+    toast('已加入主畫面 🎉');
+    updateInstallUi();
+  });
+  $('btn-install').addEventListener('click', doInstall);
+  $('btn-install-dismiss').addEventListener('click', () => {
+    state.installDismissed = true;
+    localStorage.setItem('cim_install_dismissed', '1');
+    updateInstallUi();
+  });
+  updateInstallUi();
 
   // 搜尋
   $('btn-search').addEventListener('click', () => toggleSearch());
