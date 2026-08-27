@@ -75,6 +75,13 @@ body.font-lg { --fs-msg: 17px; --fs-list: 17px; --fs-sticker: 66px; }
 body.font-xl { --fs-msg: 19.5px; --fs-list: 19px; --fs-sticker: 74px; }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+/* 細滾動條：桌面瀏覽器改為低調的細圓角樣式（手機本來就是自動隱藏的覆蓋式卷軸） */
+* { scrollbar-width: thin; scrollbar-color: var(--pill-bg) transparent; }
+*::-webkit-scrollbar { width: 6px; height: 6px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--pill-bg); border-radius: 999px; }
+*::-webkit-scrollbar-thumb:hover { background: var(--sub); }
 html, body { height: 100%; }
 body {
   margin: 0;
