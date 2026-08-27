@@ -369,6 +369,13 @@ input, textarea { font-family: inherit; font-size: 15px; color: var(--ink); }
 .icon-btn.send { color: var(--green); }
 .icon-btn.send[disabled] { color: #c3c8cf; }
 
+/* 手機：輸入框最小 16px —— iOS Safari 對小於 16px 的輸入框會在聚焦時
+   自動放大整頁，造成畫面被撐開、聊天視窗被擠壓 */
+@media (pointer: coarse) {
+  input, textarea { font-size: 16px; }
+  .composer textarea { font-size: max(var(--fs-msg), 16px); }
+}
+
 /* 表情／貼圖選擇器 */
 .picker { background: var(--panel); border-top: 1px solid var(--line); flex: none; }
 .picker-tabs { display: flex; border-bottom: 1px solid var(--line); }

@@ -2811,6 +2811,15 @@ function bindEvents() {
     toast('已加入主畫面 🎉');
     updateInstallUi();
   });
+  // 手機鍵盤彈出（可視區縮小）時，讓最新訊息貼齊輸入框上方
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+      if (state.currentConv && document.activeElement === $('input')) {
+        setTimeout(() => scrollToBottom(false), 60);
+      }
+    });
+  }
+
   $('btn-install').addEventListener('click', doInstall);
   $('btn-install-dismiss').addEventListener('click', () => {
     state.installDismissed = true;
