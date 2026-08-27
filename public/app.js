@@ -536,7 +536,9 @@ function renderFriends() {
   },
     avatarEl(state.me, 52),
     el('div', { class: 'row-main' },
-      el('div', { class: 'row-name', text: state.me.displayName }),
+      el('div', { class: 'row-name' },
+        el('span', { text: state.me.displayName }),
+        state.me.isAdmin ? el('span', { class: 'role-badge', text: '👑 管理員' }) : null),
       el('div', { class: 'row-sub', text: '我的記事本 — 傳訊息給自己做筆記' })));
   box.append(meRow);
 
@@ -550,7 +552,9 @@ function renderFriends() {
     box.append(el('button', { class: 'row', onclick: () => showProfile(u) },
       avatarEl(u, 52),
       el('div', { class: 'row-main' },
-        el('div', { class: 'row-name', text: u.displayName + (u.isAdmin ? '　👑' : '') }),
+        el('div', { class: 'row-name' },
+          el('span', { text: u.displayName }),
+          u.isAdmin ? el('span', { class: 'role-badge', text: '👑 管理員' }) : null),
         el('div', { class: 'row-sub', text: u.statusMessage || '@' + u.username }))));
   }
 }
@@ -562,6 +566,7 @@ function showProfile(user) {
         el('div', { class: 'profile-card' },
           avatarEl(user, 88),
           el('div', { class: 'p-name', text: user.displayName }),
+          user.isAdmin ? el('div', { class: 'role-badge profile-badge', text: '👑 管理員' }) : null,
           user.statusMessage ? el('div', { class: 'p-status', text: user.statusMessage }) : null,
           el('div', { class: 'p-username', text: '@' + user.username }))),
       el('div', { class: 'modal-actions' },
@@ -1442,7 +1447,9 @@ function chatInfoModal() {
     return el('div', { class: 'row' },
       avatarEl(u, 44),
       el('div', { class: 'row-main' },
-        el('div', { class: 'row-name', text: (u ? u.displayName : '未知') + (m.userId === state.me.id ? '（我）' : '') })));
+        el('div', { class: 'row-name' },
+          el('span', { text: (u ? u.displayName : '未知') + (m.userId === state.me.id ? '（我）' : '') }),
+          u && u.isAdmin ? el('span', { class: 'role-badge', text: '👑 管理員' }) : null)));
   });
 
   const avatarWrap = el('div', { class: 'group-avatar-wrap' }, convAvatarEl(conv, 72));
@@ -1721,7 +1728,11 @@ function handleWsEvent(ev) {
       renderChatList();
       if (state.tab === 'settings') renderSettings();
       const conv = state.currentConv && convById(state.currentConv);
-      if (conv) updateChatHeader(conv);
+      if (conv) {
+        updateChatHeader(conv);
+        // 訊息旁的頭像也即時換新（例如對方剛換了大頭貼）
+        renderMessagesKeepScroll(state.currentConv);
+      }
       break;
     }
     case 'conversations-changed': scheduleConvReload(); break;
