@@ -140,6 +140,9 @@ const state = {
   installPrompt: null,        // beforeinstallprompt 事件（Android／桌面 Chrome 可一鍵安裝）
   installDismissed: localStorage.getItem('cim_install_dismissed') === '1',
   replyTarget: null,          // { id, convId, name, preview }
+  unreadMarker: null,         // { convId, afterId }：本次打開聊天室的未讀分隔線位置
+  customStickers: null,       // 自訂貼圖清單（懶載入）
+  stickerMap: new Map(),      // sticker id -> data URL
   toolTab: 'shopping',
   rec: null,                  // 錄音中：{ recorder, chunks, timer, seconds, stream }
   audio: null,                // 播放中：{ el, mid, posEl, btnEl }
@@ -168,7 +171,7 @@ function msgPreview(m) {
   if (m.deleted) return '已收回訊息';
   if (m.type === 'system') return m.content;
   if (m.type === 'image') return '[圖片]';
-  if (m.type === 'sticker') return '[貼圖] ' + m.content;
+  if (m.type === 'sticker') return m.content.startsWith('sid:') ? '[貼圖]' : '[貼圖] ' + m.content;
   if (m.type === 'audio') return '[語音訊息]';
   if (m.type === 'poll') {
     try { return '[投票] ' + JSON.parse(m.content).q; } catch { return '[投票]'; }
@@ -233,7 +236,15 @@ function groupAvatarEl(size) {
 }
 
 function convAvatarEl(conv, size) {
-  if (conv.type === 'group') return groupAvatarEl(size);
+  if (conv.type === 'group') {
+    if (conv.avatar) {
+      const d = el('div', { class: 'avatar' });
+      d.style.width = d.style.height = size + 'px';
+      d.append(el('img', { src: conv.avatar, alt: '' }));
+      return d;
+    }
+    return groupAvatarEl(size);
+  }
   return avatarEl(dmPartner(conv), size);
 }
 
@@ -348,7 +359,7 @@ async function loadConvs() {
       if (state.currentConv) {
         const conv = convById(state.currentConv);
         if (!conv) closeChat();
-        else updateChatHeader(conv);
+        else { updateChatHeader(conv); applyWallpaper(conv); }
       }
     } finally {
       convsLoading = null;
@@ -393,14 +404,104 @@ function renderChatList() {
       convAvatarEl(conv, 52),
       el('div', { class: 'row-main' },
         el('div', { class: 'row-title-line' },
+          conv.pinnedChat ? el('span', { class: 'row-pin' }, icon('pin', 14)) : null,
           el('div', { class: 'row-name', text: convTitle(conv) }),
           conv.type === 'group' ? el('span', { class: 'row-count', text: String(conv.members.length) }) : null),
         el('div', { class: 'row-sub', text: previewWithSender(conv) })),
       el('div', { class: 'row-side' },
         el('div', { class: 'row-time', text: conv.lastMessage ? fmtListTime(conv.lastActivity) : '' }),
         conv.unread > 0 ? el('span', { class: 'badge', text: conv.unread > 99 ? '99+' : String(conv.unread) }) : null));
+    bindLongPress(row, () => convMenuModal(conv));
     box.append(row);
   }
+}
+
+/* ---------- 聊天室長按選單（置頂／背景） ---------- */
+
+async function toggleConvPin(conv) {
+  try {
+    await api(`/api/conversations/${conv.id}/prefs`, {
+      method: 'PATCH', body: { pinned: !conv.pinnedChat },
+    });
+    conv.pinnedChat = !conv.pinnedChat;
+    await loadConvs().catch(() => {});
+    toast(conv.pinnedChat ? '已置頂' : '已取消置頂');
+  } catch (e2) { toast(e2.message); }
+}
+
+function convMenuModal(conv) {
+  const close = openModal(el('div', { class: 'modal' },
+    el('div', { class: 'modal-title', text: convTitle(conv) }),
+    el('div', { class: 'modal-body' },
+      el('button', {
+        class: 'set-item', onclick: () => { close(); toggleConvPin(conv); },
+      }, el('span', { class: 'grow', text: conv.pinnedChat ? '取消置頂' : '置頂聊天室' })),
+      el('button', {
+        class: 'set-item', onclick: () => { close(); wallpaperModal(conv); },
+      }, el('span', { class: 'grow', text: '聊天室背景' }))),
+    el('div', { class: 'modal-actions' },
+      el('button', { class: 'btn btn-ghost', text: '關閉', onclick: () => close() }))));
+}
+
+const WALLPAPER_COLORS = ['#F0E9D8', '#F3E3E7', '#E2EBF2', '#E4EFE1', '#EFE8F5', '#F6EFDD'];
+
+async function setWallpaper(conv, value) {
+  await api(`/api/conversations/${conv.id}/prefs`, { method: 'PATCH', body: { wallpaper: value } });
+  conv.wallpaper = value;
+  if (state.currentConv === conv.id) applyWallpaper(conv);
+}
+
+function wallpaperModal(conv) {
+  const dots = el('div', { class: 'wp-dots' });
+  for (const c of WALLPAPER_COLORS) {
+    const d = el('button', { type: 'button', class: 'wp-dot', 'aria-label': '背景顏色' });
+    d.style.background = c;
+    if (conv.wallpaper === 'c:' + c) d.classList.add('active');
+    d.addEventListener('click', async () => {
+      try { await setWallpaper(conv, 'c:' + c); close(); toast('背景已更換'); }
+      catch (e2) { toast(e2.message); }
+    });
+    dots.append(d);
+  }
+  const close = openModal(el('div', { class: 'modal' },
+    el('div', { class: 'modal-title', text: '聊天室背景' }),
+    el('div', { class: 'modal-body' },
+      el('div', { class: 'set-note', text: '只改變你自己看到的背景，親友不受影響。' }),
+      dots,
+      el('button', {
+        class: 'set-item', onclick: () => pickWallpaperPhoto(conv, () => close()),
+      }, el('span', { class: 'grow', text: '🖼️ 用自己的照片' })),
+      conv.wallpaper ? el('button', {
+        class: 'set-item', onclick: async () => {
+          try { await setWallpaper(conv, null); close(); toast('已恢復預設背景'); }
+          catch (e2) { toast(e2.message); }
+        },
+      }, el('span', { class: 'grow', text: '恢復預設背景' })) : null),
+    el('div', { class: 'modal-actions' },
+      el('button', { class: 'btn btn-ghost', text: '關閉', onclick: () => close() }))));
+}
+
+function pickFile(accept, onFile) {
+  const input = el('input', { type: 'file', accept, hidden: '' });
+  document.body.append(input);
+  input.addEventListener('change', () => {
+    const f = input.files && input.files[0];
+    input.remove();
+    if (f) onFile(f);
+  });
+  input.click();
+}
+
+function pickWallpaperPhoto(conv, done) {
+  pickFile('image/*', async (file) => {
+    try {
+      toast('圖片處理中…');
+      const dataUrl = await compressImage(file, 1080, 430000);
+      await setWallpaper(conv, dataUrl);
+      done();
+      toast('背景已更換');
+    } catch (e2) { toast(e2.message || '無法設定背景'); }
+  });
 }
 
 function previewWithSender(conv) {
@@ -723,6 +824,11 @@ function openConv(convId) {
   cancelRec();
   updateChatHeader(conv);
   updatePinBanner(convId);
+  applyWallpaper(conv);
+  const mineMember = conv.members.find((x) => x.userId === state.me.id);
+  state.unreadMarker = conv.unread > 0 && mineMember
+    ? { convId, afterId: mineMember.lastReadId }
+    : null;
 
   const cached = state.msgCache.get(convId);
   renderMessages(convId);
@@ -733,10 +839,24 @@ function openConv(convId) {
 
 function closeChat() {
   state.currentConv = null;
+  state.unreadMarker = null;
+  applyWallpaper(null);
   document.body.classList.remove('chat-open');
   $('chat-view').classList.add('hidden');
   $('chat-empty').classList.remove('hidden');
   hidePicker();
+}
+
+function applyWallpaper(conv) {
+  const sc = $('msg-scroll');
+  const w = conv && conv.wallpaper;
+  if (w && w.startsWith('c:')) {
+    sc.style.background = w.slice(2);
+  } else if (w) {
+    sc.style.background = `url("${w}") center / cover no-repeat`;
+  } else {
+    sc.style.background = '';
+  }
 }
 
 function updateChatHeader(conv) {
@@ -765,7 +885,9 @@ async function fetchMessages(convId) {
   if (state.currentConv === convId) {
     renderMessages(convId);
     updatePinBanner(convId);
-    scrollToBottom(false);
+    const sep = document.getElementById('unread-sep');
+    if (sep) $('msg-scroll').scrollTop = Math.max(0, sep.offsetTop - 72);
+    else scrollToBottom(false);
     sendReadIfNeeded(convId);
   }
 }
@@ -801,10 +923,49 @@ function buildMessageContent(m) {
       class: 'msg-img', src: m.content, alt: '圖片',
       onclick: () => openViewer(m.content),
     });
-  if (m.type === 'sticker') return el('div', { class: 'msg-sticker', text: m.content });
+  if (m.type === 'sticker') {
+    if (m.content.startsWith('sid:')) return buildCustomSticker(m.content.slice(4));
+    return el('div', { class: 'msg-sticker', text: m.content });
+  }
   if (m.type === 'audio') return buildAudioMsg(m);
   if (m.type === 'poll') return buildPollCard(m);
-  return el('div', { class: 'bubble' }, renderText(m.content));
+  const frag = document.createDocumentFragment();
+  frag.append(el('div', { class: 'bubble' }, renderText(m.content)));
+  if (m.meta && m.meta.link) {
+    const L = m.meta.link;
+    frag.append(el('a', {
+      class: 'link-card', href: L.url, target: '_blank', rel: 'noopener noreferrer',
+    },
+      el('div', { class: 'lc-title', text: L.title }),
+      L.desc ? el('div', { class: 'lc-desc', text: L.desc }) : null,
+      el('div', { class: 'lc-site', text: L.site || '' })));
+  }
+  return frag;
+}
+
+function buildCustomSticker(sid) {
+  const id = Number(sid);
+  const src = state.stickerMap.get(id);
+  if (src) {
+    return el('img', {
+      class: 'msg-sticker-img', src, alt: '貼圖',
+      onclick: () => openViewer(src),
+    });
+  }
+  // 尚未載入貼圖清單：先放占位，載入完成後重畫
+  ensureStickers().then(() => {
+    if (state.currentConv) renderMessagesKeepScroll(state.currentConv);
+  }).catch(() => {});
+  return el('div', { class: 'msg-sticker-img loading', text: '…' });
+}
+
+function renderMessagesKeepScroll(convId) {
+  const sc = $('msg-scroll');
+  const atBottom = nearBottom();
+  const top = sc.scrollTop;
+  renderMessages(convId);
+  if (atBottom) scrollToBottom(false);
+  else sc.scrollTop = top;
 }
 
 function buildMessageNode(conv, cache, m, prev) {
@@ -863,7 +1024,13 @@ function renderMessages(convId) {
   $('btn-load-more').classList.toggle('hidden', !(cache && cache.hasMore));
   if (!conv || !cache) return;
   let prev = null;
+  let sepDone = !(state.unreadMarker && state.unreadMarker.convId === convId);
   for (const m of cache.messages) {
+    if (!sepDone && m.type !== 'system' && m.id > state.unreadMarker.afterId) {
+      list.append(el('div', { class: 'unread-sep', id: 'unread-sep' },
+        el('span', { text: '以下是未讀訊息' })));
+      sepDone = true;
+    }
     list.append(buildMessageNode(conv, cache, m, prev));
     prev = m;
   }
@@ -921,6 +1088,16 @@ function sendReadIfNeeded(convId) {
 /* ---------- 訊息選單（收回／複製） ---------- */
 
 const QUICK_REACTIONS = ['❤️', '👍', '😂', '😮', '😢', '🙏'];
+
+function bindLongPress(node, fn) {
+  node.addEventListener('contextmenu', (e) => { e.preventDefault(); fn(e); });
+  let timer = null;
+  node.addEventListener('touchstart', (e) => {
+    timer = setTimeout(() => fn(e), 550);
+  }, { passive: true });
+  ['touchend', 'touchmove', 'touchcancel'].forEach((evt) =>
+    node.addEventListener(evt, () => clearTimeout(timer), { passive: true }));
+}
 
 function attachMsgMenu(node, m) {
   if (m.type === 'system') return;
@@ -1098,10 +1275,76 @@ function buildPicker() {
   for (const e of EMOJIS) {
     eg.append(el('button', { type: 'button', text: e, onclick: () => insertEmoji(e) }));
   }
+  rebuildStickerGrid();
+  ensureStickers().catch(() => {});
+}
+
+async function ensureStickers(force) {
+  if (!force && state.customStickers !== null) return;
+  const data = await api('/api/stickers');
+  state.customStickers = data.stickers;
+  state.stickerMap = new Map(data.stickers.map((x) => [x.id, x.image]));
+  rebuildStickerGrid();
+}
+
+function rebuildStickerGrid() {
+  if (!pickerBuilt) return;
   const sg = $('picker-sticker');
+  sg.textContent = '';
+
+  // 自訂貼圖（長按可刪除自己新增的）
+  for (const st of state.customStickers || []) {
+    const b = el('button', { type: 'button', class: 'sticker-tile', onclick: () => sendSticker('sid:' + st.id) },
+      el('img', { src: st.image, alt: '貼圖' }));
+    if (st.addedBy === state.me?.id || state.me?.isAdmin) {
+      bindLongPress(b, async () => {
+        if (!(await confirmModal('刪除貼圖', '要把這張貼圖從全家的貼圖包移除嗎？', true))) return;
+        try { await api(`/api/stickers/${st.id}`, { method: 'DELETE' }); await ensureStickers(true); }
+        catch (e2) { toast(e2.message); }
+      });
+    }
+    sg.append(b);
+  }
+
+  // 新增貼圖
+  const add = el('button', { type: 'button', class: 'sticker-tile sticker-add', title: '新增自訂貼圖' },
+    el('span', { text: '＋' }));
+  add.addEventListener('click', () => {
+    pickFile('image/*', async (file) => {
+      try {
+        toast('貼圖處理中…');
+        const dataUrl = await compressSticker(file);
+        await api('/api/stickers', { method: 'POST', body: { image: dataUrl } });
+        await ensureStickers(true);
+        toast('貼圖已加入，全家都能用！');
+      } catch (e2) { toast(e2.message || '無法新增貼圖'); }
+    });
+  });
+  sg.append(add);
+
   for (const s of STICKERS) {
     sg.append(el('button', { type: 'button', text: s, onclick: () => sendSticker(s) }));
   }
+}
+
+// 自訂貼圖壓縮：240px、保留透明（webp／png），退回 jpeg
+async function compressSticker(file) {
+  if (!/^image\//.test(file.type)) throw new Error('請選擇圖片檔');
+  let bitmap;
+  try { bitmap = await createImageBitmap(file); }
+  catch { throw new Error('不支援這種圖片格式'); }
+  const scale = Math.min(1, 240 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  let out = canvas.toDataURL('image/webp', 0.9);
+  if (!out.startsWith('data:image/webp') || out.length > 88000) {
+    const png = canvas.toDataURL('image/png');
+    out = png.length <= 88000 ? png : canvas.toDataURL('image/jpeg', 0.85);
+  }
+  if (out.length > 88000) throw new Error('圖片太複雜，請換一張或先裁小一點');
+  return out;
 }
 
 function insertEmoji(emoji) {
@@ -1177,7 +1420,20 @@ function chatInfoModal() {
 
   if (conv.type === 'dm') {
     const partner = dmPartner(conv);
-    if (partner && partner.id !== state.me.id) showProfile(partner);
+    const close = openModal(el('div', { class: 'modal' },
+      el('div', { class: 'modal-title', text: convTitle(conv) }),
+      el('div', { class: 'modal-body' },
+        partner && partner.id !== state.me.id ? el('button', {
+          class: 'set-item', onclick: () => { close(); showProfile(partner); },
+        }, el('span', { class: 'grow', text: '查看對方資料' })) : null,
+        el('button', {
+          class: 'set-item', onclick: () => { close(); toggleConvPin(conv); },
+        }, el('span', { class: 'grow', text: conv.pinnedChat ? '取消置頂' : '置頂聊天室' })),
+        el('button', {
+          class: 'set-item', onclick: () => { close(); wallpaperModal(conv); },
+        }, el('span', { class: 'grow', text: '聊天室背景' }))),
+      el('div', { class: 'modal-actions' },
+        el('button', { class: 'btn btn-ghost', text: '關閉', onclick: () => close() }))));
     return;
   }
 
@@ -1189,9 +1445,31 @@ function chatInfoModal() {
         el('div', { class: 'row-name', text: (u ? u.displayName : '未知') + (m.userId === state.me.id ? '（我）' : '') })));
   });
 
+  const avatarWrap = el('div', { class: 'group-avatar-wrap' }, convAvatarEl(conv, 72));
+  avatarWrap.title = '更換群組照片';
+  avatarWrap.addEventListener('click', () => {
+    pickFile('image/*', async (file) => {
+      try {
+        toast('圖片處理中…');
+        const dataUrl = await compressImage(file, 256, 76000);
+        await api(`/api/conversations/${conv.id}`, { method: 'PATCH', body: { avatar: dataUrl } });
+        close();
+        loadConvs().catch(() => {});
+      } catch (e2) { toast(e2.message || '無法更換群組照片'); }
+    });
+  });
+
   const close = openModal(el('div', { class: 'modal' },
     el('div', { class: 'modal-title', text: conv.name || '群組' }),
     el('div', { class: 'modal-body' },
+      el('div', { class: 'group-avatar-row' }, avatarWrap,
+        el('div', { class: 'set-note', text: '點照片可更換群組頭像' })),
+      el('button', {
+        class: 'set-item', onclick: () => { close(); toggleConvPin(conv); },
+      }, el('span', { class: 'grow', text: conv.pinnedChat ? '取消置頂' : '置頂聊天室' })),
+      el('button', {
+        class: 'set-item', onclick: () => { close(); wallpaperModal(conv); },
+      }, el('span', { class: 'grow', text: '聊天室背景' })),
       el('button', {
         class: 'set-item', onclick: async () => {
           const v = await promptModal('修改群組名稱', { value: conv.name || '', maxlength: 30 });
@@ -1430,6 +1708,12 @@ function handleWsEvent(ev) {
     case 'read': handleRead(ev); break;
     case 'typing': handleTyping(ev); break;
     case 'unsend': handleUnsend(ev); break;
+    case 'message-updated': handleMessageUpdated(ev.message); break;
+    case 'stickers-changed':
+      state.customStickers = null;
+      state.stickerMap = new Map();
+      if (pickerBuilt && !$('picker').classList.contains('hidden')) ensureStickers().catch(() => {});
+      break;
     case 'user': {
       state.users.set(ev.user.id, ev.user);
       if (state.me && ev.user.id === state.me.id) state.me = ev.user;
@@ -1448,6 +1732,15 @@ function handleWsEvent(ev) {
     case 'events-changed': if (state.tab === 'tools' && state.toolTab === 'calendar') renderCalendar(); break;
     case 'event-reminder': handleEventReminder(ev); break;
   }
+}
+
+function handleMessageUpdated(m) {
+  const cache = state.msgCache.get(m.conversationId);
+  if (!cache) return;
+  const idx = cache.messages.findIndex((x) => x.id === m.id);
+  if (idx < 0) return;
+  cache.messages[idx] = m;
+  if (state.currentConv === m.conversationId) renderMessagesKeepScroll(m.conversationId);
 }
 
 function handleIncomingMessage(m, fromSelfPost) {

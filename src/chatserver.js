@@ -11,6 +11,10 @@ const MAX_AVATAR = 80000;
 const MAX_STICKER = 20;
 const MAX_AUDIO = 900000; // 語音 data URL 上限（約 60 秒 opus）
 const MAX_REACTION = 16;
+const MAX_STICKER_IMG = 90000; // 自訂貼圖 data URL 上限（約 65KB 圖檔）
+const MAX_STICKERS = 100;
+const MAX_WALLPAPER = 450000; // 聊天室背景 data URL 上限（約 330KB 圖檔）
+const LINK_FETCH_BYTES = 131072; // 連結預覽最多讀 128KB HTML
 const PUSH_THROTTLE = 60000; // 每人離線推播最小間隔
 
 const SCHEMA = `
@@ -167,6 +171,47 @@ const pubUser = (row) => ({
   createdAt: row.created_at,
 });
 
+// v3：聊天室置頂、聊天室背景、群組頭像、自訂貼圖
+const SCHEMA_V3 = `
+ALTER TABLE members ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE members ADD COLUMN wallpaper TEXT;
+ALTER TABLE conversations ADD COLUMN avatar TEXT;
+CREATE TABLE IF NOT EXISTS stickers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  image TEXT NOT NULL,
+  added_by INTEGER NOT NULL,
+  created_at INTEGER NOT NULL
+);
+`;
+
+const URL_RE = /https?:\/\/[^\s<>"']+/;
+
+// 訊息中第一個可安全抓取預覽的網址（擋 IP、無點主機名、帳密夾帶）
+function firstHttpUrl(text) {
+  const m = text.match(URL_RE);
+  if (!m) return null;
+  try {
+    const u = new URL(m[0]);
+    if (u.username || u.password) return null;
+    const host = u.hostname;
+    if (!host.includes('.') || /^[\d.]+$/.test(host) || /^\[/.test(host) || host.endsWith('.local'))
+      return null;
+    return u.href;
+  } catch { return null; }
+}
+
+function htmlDecode(str) {
+  return str.replace(/&(amp|lt|gt|quot|#39|#x27|nbsp);/g, (x, k) =>
+    ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'", '#x27': "'", nbsp: ' ' }[k] || x));
+}
+
+function ogTag(html, prop) {
+  const tag = html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${prop}["'][^>]*>`, 'i'));
+  if (!tag) return null;
+  const c = tag[0].match(/content=["']([^"']*)["']/i);
+  return c && c[1] ? htmlDecode(c[1]).trim() : null;
+}
+
 const pubMessage = (row) => ({
   id: row.id,
   conversationId: row.conversation_id,
@@ -188,7 +233,8 @@ const b64urlJson = (obj) => b64url(new TextEncoder().encode(JSON.stringify(obj))
 function previewOf(row) {
   if (row.deleted) return '已收回訊息';
   if (row.type === 'image') return '[圖片]';
-  if (row.type === 'sticker') return '[貼圖] ' + row.content;
+  if (row.type === 'sticker')
+    return row.content.startsWith('sid:') ? '[貼圖]' : '[貼圖] ' + row.content;
   if (row.type === 'audio') return '[語音訊息]';
   if (row.type === 'poll') {
     try { return '[投票] ' + JSON.parse(row.content).q; } catch { return '[投票]'; }
@@ -209,6 +255,10 @@ export class ChatServer {
       if (v < 2) {
         this.sql.exec(SCHEMA_V2);
         this.setSetting('schema_version', '2');
+      }
+      if (v < 3) {
+        this.sql.exec(SCHEMA_V3);
+        this.setSetting('schema_version', '3');
       }
     });
     // 心跳不喚醒 DO：客戶端送 "ping"，執行環境自動回 "pong"
@@ -295,6 +345,14 @@ export class ChatServer {
       return this.leaveGroup(me, +m[1]);
     if ((m = pathname.match(/^\/api\/conversations\/(\d+)$/)) && method === 'PATCH')
       return this.renameGroup(request, me, +m[1]);
+    if ((m = pathname.match(/^\/api\/conversations\/(\d+)\/prefs$/)) && method === 'PATCH')
+      return this.updateConvPrefs(request, me, +m[1]);
+    if (pathname === '/api/stickers') {
+      if (method === 'GET') return this.listStickers();
+      if (method === 'POST') return this.addSticker(request, me);
+    }
+    if ((m = pathname.match(/^\/api\/stickers\/(\d+)$/)) && method === 'DELETE')
+      return this.deleteSticker(me, +m[1]);
     if ((m = pathname.match(/^\/api\/messages\/(\d+)\/unsend$/)) && method === 'POST')
       return this.unsend(me, +m[1]);
     if ((m = pathname.match(/^\/api\/messages\/(\d+)\/react$/)) && method === 'POST')
@@ -586,11 +644,13 @@ export class ChatServer {
   }
 
   convFor(conv, userId) {
-    const members = this.sql
+    const memberRows = this.sql
       .exec(
-        `SELECT user_id, last_read_id FROM members WHERE conversation_id = ?`, conv.id)
-      .toArray()
-      .map((r) => ({ userId: r.user_id, lastReadId: r.last_read_id }));
+        `SELECT user_id, last_read_id, pinned, wallpaper FROM members WHERE conversation_id = ?`,
+        conv.id)
+      .toArray();
+    const members = memberRows.map((r) => ({ userId: r.user_id, lastReadId: r.last_read_id }));
+    const mineRow = memberRows.find((r) => r.user_id === userId);
     const last = this.sql
       .exec(
         `SELECT * FROM messages WHERE conversation_id = ? ORDER BY id DESC LIMIT 1`, conv.id)
@@ -611,6 +671,9 @@ export class ChatServer {
       createdBy: conv.created_by,
       createdAt: conv.created_at,
       pinnedMessageId: conv.pinned_message_id || null,
+      avatar: conv.avatar || null,
+      pinnedChat: mineRow ? !!mineRow.pinned : false,
+      wallpaper: (mineRow && mineRow.wallpaper) || null,
       members,
       lastMessage: last ? pubMessage(last) : null,
       lastActivity: last ? last.created_at : conv.created_at,
@@ -625,7 +688,7 @@ export class ChatServer {
          JOIN members m ON m.conversation_id = c.id WHERE m.user_id = ?`, me.id)
       .toArray();
     const list = rows.map((c) => this.convFor(c, me.id));
-    list.sort((a, b) => b.lastActivity - a.lastActivity);
+    list.sort((a, b) => (b.pinnedChat - a.pinnedChat) || (b.lastActivity - a.lastActivity));
     return json({ conversations: list });
   }
 
@@ -820,8 +883,14 @@ export class ChatServer {
       if (!content.startsWith('data:image/') || content.length > MAX_IMAGE)
         throw new HttpError(400, '圖片格式不符或太大');
     } else if (type === 'sticker') {
-      if (!content.trim() || content.length > MAX_STICKER)
+      if (content.startsWith('sid:')) {
+        const sid = Number(content.slice(4));
+        const found = Number.isInteger(sid) &&
+          this.sql.exec(`SELECT id FROM stickers WHERE id = ?`, sid).toArray().length;
+        if (!found) throw new HttpError(400, '貼圖不存在（可能已被刪除）');
+      } else if (!content.trim() || content.length > MAX_STICKER) {
         throw new HttpError(400, '貼圖格式不符');
+      }
     } else if (type === 'audio') {
       if (!content.startsWith('data:audio/') || content.length > MAX_AUDIO)
         throw new HttpError(400, '語音格式不符或太長');
@@ -870,7 +939,116 @@ export class ChatServer {
     const message = this.attachExtras([pubMessage(row)])[0];
     this.sendToUsers(this.memberIds(conversationId), { type: 'message', message });
     this.notifyOffline(conversationId, me.id);
+    if (type === 'text') {
+      const url = firstHttpUrl(content);
+      if (url) this.ctx.waitUntil(this.attachLinkPreview(row.id, conversationId, url));
+    }
     return json({ message });
+  }
+
+  // 送出含網址的訊息後，背景抓取網頁標題／摘要，補進 meta.link 並廣播更新
+  async attachLinkPreview(messageId, conversationId, url) {
+    try {
+      const ac = new AbortController();
+      const timer = setTimeout(() => ac.abort(), 6000);
+      let resp;
+      try {
+        resp = await fetch(url, {
+          signal: ac.signal,
+          redirect: 'follow',
+          headers: { 'user-agent': 'Mozilla/5.0 (compatible; CHAT-LinkPreview)', accept: 'text/html' },
+        });
+      } finally { clearTimeout(timer); }
+      const ctype = resp.headers.get('content-type') || '';
+      if (!resp.ok || !ctype.includes('text/html') || !resp.body) return;
+      const reader = resp.body.getReader();
+      const dec = new TextDecoder();
+      let html = '', size = 0;
+      while (size < LINK_FETCH_BYTES) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        size += value.byteLength;
+        html += dec.decode(value, { stream: true });
+      }
+      try { await reader.cancel(); } catch {}
+      let title = ogTag(html, 'og:title');
+      if (!title) {
+        const t = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+        title = t && t[1] ? htmlDecode(t[1]).trim() : null;
+      }
+      if (!title) return;
+      const desc = ogTag(html, 'og:description') || ogTag(html, 'description');
+      const site = ogTag(html, 'og:site_name');
+      const link = {
+        url,
+        title: [...title].slice(0, 120).join(''),
+        desc: desc ? [...desc].slice(0, 200).join('') : null,
+        site: [...(site || new URL(url).hostname)].slice(0, 60).join(''),
+      };
+      const row = this.sql.exec(`SELECT * FROM messages WHERE id = ?`, messageId).toArray()[0];
+      if (!row || row.deleted) return;
+      const meta = row.meta ? JSON.parse(row.meta) : {};
+      meta.link = link;
+      this.sql.exec(`UPDATE messages SET meta = ? WHERE id = ?`, JSON.stringify(meta), messageId);
+      const message = this.attachExtras([pubMessage({ ...row, meta: JSON.stringify(meta) })])[0];
+      this.sendToUsers(this.memberIds(conversationId), { type: 'message-updated', message });
+    } catch {}
+  }
+
+  // 個人化設定：聊天室置頂、聊天室背景（只影響自己，跨裝置同步）
+  async updateConvPrefs(request, me, conversationId) {
+    this.requireMember(conversationId, me.id);
+    const body = await this.readJson(request, MAX_WALLPAPER + 20000);
+    if (body.pinned !== undefined) {
+      this.sql.exec(
+        `UPDATE members SET pinned = ? WHERE conversation_id = ? AND user_id = ?`,
+        body.pinned ? 1 : 0, conversationId, me.id);
+    }
+    if (body.wallpaper !== undefined) {
+      const w = body.wallpaper === null ? null : String(body.wallpaper);
+      if (w !== null) {
+        const okColor = /^c:#[0-9A-Fa-f]{6}$/.test(w);
+        const okImage = w.startsWith('data:image/') && w.length <= MAX_WALLPAPER;
+        if (!okColor && !okImage) throw new HttpError(400, '背景格式不符或圖片太大');
+      }
+      this.sql.exec(
+        `UPDATE members SET wallpaper = ? WHERE conversation_id = ? AND user_id = ?`,
+        w, conversationId, me.id);
+    }
+    this.sendToUsers([me.id], { type: 'conversations-changed' });
+    return json({ ok: true });
+  }
+
+  // ---------- 自訂貼圖 ----------
+
+  listStickers() {
+    const rows = this.sql.exec(`SELECT * FROM stickers ORDER BY id`).toArray();
+    return json({ stickers: rows.map((r) => ({ id: r.id, image: r.image, addedBy: r.added_by })) });
+  }
+
+  async addSticker(request, me) {
+    const body = await this.readJson(request, MAX_STICKER_IMG + 20000);
+    const image = String(body.image || '');
+    if (!image.startsWith('data:image/') || image.length > MAX_STICKER_IMG)
+      throw new HttpError(400, '貼圖格式不符或太大，請換一張圖');
+    const count = this.sql.exec(`SELECT COUNT(*) AS c FROM stickers`).one().c;
+    if (count >= MAX_STICKERS)
+      throw new HttpError(400, `貼圖最多 ${MAX_STICKERS} 張，請先刪掉幾張`);
+    const row = this.sql.exec(
+      `INSERT INTO stickers (image, added_by, created_at) VALUES (?, ?, ?) RETURNING *`,
+      image, me.id, Date.now()).one();
+    this.broadcastAll({ type: 'stickers-changed' });
+    return json({ sticker: { id: row.id, image: row.image, addedBy: row.added_by } });
+  }
+
+  deleteSticker(me, id) {
+    const row = this.sql.exec(`SELECT * FROM stickers WHERE id = ?`, id).toArray()[0];
+    if (!row) throw new HttpError(404, '找不到這張貼圖');
+    if (row.added_by !== me.id && !me.is_admin)
+      throw new HttpError(403, '只能刪除自己新增的貼圖');
+    this.sql.exec(`DELETE FROM stickers WHERE id = ?`, id);
+    this.broadcastAll({ type: 'stickers-changed' });
+    return json({ ok: true });
   }
 
   addSystemMessage(conversationId, text) {
@@ -959,12 +1137,27 @@ export class ChatServer {
 
   async renameGroup(request, me, conversationId) {
     const conv = this.requireMember(conversationId, me.id);
-    if (conv.type !== 'group') throw new HttpError(400, '只有群組可以改名稱');
-    const body = await this.readJson(request, 10000);
-    const name = String(body.name || '').trim();
-    if (!name || [...name].length > 30) throw new HttpError(400, '群組名稱需為 1–30 個字');
-    this.sql.exec(`UPDATE conversations SET name = ? WHERE id = ?`, name, conversationId);
-    this.addSystemMessage(conversationId, `${me.display_name} 將群組名稱改為「${name}」`);
+    if (conv.type !== 'group') throw new HttpError(400, '只有群組可以修改');
+    const body = await this.readJson(request, MAX_AVATAR + 20000);
+    let changed = false;
+    if (body.name !== undefined) {
+      const name = String(body.name || '').trim();
+      if (!name || [...name].length > 30) throw new HttpError(400, '群組名稱需為 1–30 個字');
+      this.sql.exec(`UPDATE conversations SET name = ? WHERE id = ?`, name, conversationId);
+      this.addSystemMessage(conversationId, `${me.display_name} 將群組名稱改為「${name}」`);
+      changed = true;
+    }
+    if (body.avatar !== undefined) {
+      const avatar = body.avatar === null ? null : String(body.avatar);
+      if (avatar !== null && (!avatar.startsWith('data:image/') || avatar.length > MAX_AVATAR))
+        throw new HttpError(400, '圖片格式不符或太大');
+      this.sql.exec(`UPDATE conversations SET avatar = ? WHERE id = ?`, avatar, conversationId);
+      this.addSystemMessage(conversationId, avatar
+        ? `${me.display_name} 更換了群組照片`
+        : `${me.display_name} 移除了群組照片`);
+      changed = true;
+    }
+    if (!changed) throw new HttpError(400, '沒有要修改的內容');
     this.sendToUsers(this.memberIds(conversationId), { type: 'conversations-changed' });
     return json({ ok: true });
   }

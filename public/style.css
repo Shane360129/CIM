@@ -194,6 +194,19 @@ input, textarea { font-family: inherit; font-size: 15px; color: var(--ink); }
 
 .install-steps { display: flex; flex-direction: column; gap: 10px; font-size: 14.5px; line-height: 1.6; padding: 4px 2px; }
 
+.wp-dots { display: flex; gap: 12px; flex-wrap: wrap; padding: 10px 16px; }
+.wp-dot {
+  width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--line);
+}
+.wp-dot.active { border-color: var(--green); box-shadow: 0 0 0 2px var(--accent-fill); }
+.wp-dot:active { transform: scale(.94); }
+
+.group-avatar-row {
+  display: flex; align-items: center; gap: 14px; padding: 12px 16px 4px;
+}
+.group-avatar-wrap { cursor: pointer; flex: none; }
+.group-avatar-row .set-note { padding: 0; }
+
 .list { flex: 1; overflow-y: auto; padding-bottom: 12px; }
 .list-empty { color: var(--sub); font-size: 14px; text-align: center; padding: 48px 24px; line-height: 1.7; }
 .list-section { font-size: 12.5px; color: var(--sub); padding: 14px 18px 6px; font-weight: 600; }
@@ -209,6 +222,8 @@ input, textarea { font-family: inherit; font-size: 15px; color: var(--ink); }
   font-size: var(--fs-list); font-weight: 600; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
 }
 .row-count { color: var(--sub); font-size: 13px; flex: none; }
+.row-pin { color: var(--sub); flex: none; display: inline-flex; }
+.row-pin .ic { width: 14px; height: 14px; }
 .row-sub {
   color: var(--sub); font-size: 13px; margin-top: 2px;
   overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
@@ -296,6 +311,34 @@ input, textarea { font-family: inherit; font-size: 15px; color: var(--ink); }
   border-radius: 14px; cursor: pointer; background: var(--hover);
 }
 .msg-sticker { font-size: var(--fs-sticker); line-height: 1.15; padding: 2px 4px; }
+.msg-sticker-img {
+  width: 128px; max-width: 45vw; height: auto; border-radius: 10px; cursor: pointer; display: block;
+}
+.msg-sticker-img.loading {
+  width: 128px; height: 128px; display: flex; align-items: center; justify-content: center;
+  background: var(--pill-bg); color: var(--pill-ink); font-size: 24px;
+}
+
+.unread-sep {
+  display: flex; align-items: center; gap: 10px; margin: 14px 4px;
+  color: var(--unread); font-size: 12px; font-weight: 600; letter-spacing: .06em;
+}
+.unread-sep::before, .unread-sep::after {
+  content: ''; flex: 1; border-top: 1px dashed var(--unread); opacity: .55;
+}
+
+.link-card {
+  display: block; max-width: 300px; margin-top: 4px; padding: 10px 12px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+  text-decoration: none; color: var(--ink);
+}
+.link-card:active { background: var(--hover); }
+.lc-title { font-size: 13.5px; font-weight: 700; line-height: 1.4; }
+.lc-desc {
+  font-size: 12px; color: var(--sub); margin-top: 3px; line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.lc-site { font-size: 11px; color: var(--meta-ink); margin-top: 5px; }
 
 .meta { display: flex; flex-direction: column; font-size: 10px; color: var(--meta-ink); line-height: 1.35; flex: none; }
 .mine .meta { align-items: flex-end; }
@@ -336,6 +379,14 @@ input, textarea { font-family: inherit; font-size: 15px; color: var(--ink); }
 .emoji-grid button { font-size: 23px; padding: 5px 0; border-radius: 8px; }
 .sticker-grid { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); }
 .sticker-grid button { font-size: 44px; padding: 8px 0; border-radius: 12px; }
+.sticker-grid .sticker-tile { padding: 6px; }
+.sticker-grid .sticker-tile img {
+  width: 100%; height: 64px; object-fit: contain; display: block; pointer-events: none;
+}
+.sticker-grid .sticker-add {
+  font-size: 30px; color: var(--sub); border: 2px dashed var(--line); border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; min-height: 76px;
+}
 .picker-grid button:active { background: var(--hover); }
 
 /* ---------- 設定頁 ---------- */
@@ -550,6 +601,19 @@ body.theme-dark .reply-bar .reply-name { color: var(--green); }
 }
 @keyframes rec-blink { 50% { opacity: .25; } }
 @media (prefers-reduced-motion: reduce) { .rec-dot { animation: none; } }
+
+/* ---------- UX 微調 ---------- */
+
+.btn, .icon-btn, .row, .skin-swatch, .sticker-grid button { transition: transform .08s ease, background-color .12s ease; }
+.btn:active, .icon-btn:active { transform: scale(.96); }
+.msg-row { animation: msg-in .16s ease both; }
+.modal { animation: modal-in .16s ease both; }
+@keyframes msg-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes modal-in { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .msg-row, .modal { animation: none; }
+  .btn, .icon-btn, .row, .skin-swatch, .sticker-grid button { transition: none; }
+}
 .rec-time { font-weight: 700; font-variant-numeric: tabular-nums; }
 .rec-hint { flex: 1; color: var(--sub); font-size: 13px; }
 
