@@ -345,6 +345,7 @@ async function enterApp() {
 async function loadUsers() {
   const data = await api('/api/users');
   state.users = new Map(data.users.map((u) => [u.id, u]));
+  state.usersPrivacy = !!data.privacy;
 }
 
 let convsLoading = null;
@@ -529,6 +530,8 @@ function renderFriends() {
   if (!state.me) return;
   const box = $('friend-list');
   box.textContent = '';
+  // 隱私模式下（非管理員）才需要「加好友」按鈕；管理員本來就看得到全部
+  $('btn-add-friend').classList.toggle('hidden', !(state.usersPrivacy && !state.me.isAdmin));
 
   const meRow = el('button', {
     class: 'row',
@@ -545,18 +548,47 @@ function renderFriends() {
   const others = [...state.users.values()].filter((u) => u.id !== state.me.id && !u.disabled);
   box.append(el('div', { class: 'list-section', text: `好友 ${others.length}` }));
   if (!others.length) {
-    box.append(el('div', { class: 'list-empty', text: '還沒有其他成員。\n到「設定」複製邀請訊息，傳給親友請他們註冊！' }));
+    const emptyText = state.usersPrivacy && !state.me.isAdmin
+      ? '還沒有其他好友。\n點右上「＋」輸入親友的帳號加好友，\n或請管理員把你拉進群組。'
+      : '還沒有其他成員。\n到「設定」複製邀請訊息，傳給親友請他們註冊！';
+    box.append(el('div', { class: 'list-empty', text: emptyText }));
     return;
   }
   for (const u of others) {
-    box.append(el('button', { class: 'row', onclick: () => showProfile(u) },
+    const row = el('button', { class: 'row', onclick: () => showProfile(u) },
       avatarEl(u, 52),
       el('div', { class: 'row-main' },
         el('div', { class: 'row-name' },
           el('span', { text: u.displayName }),
           u.isAdmin ? el('span', { class: 'role-badge', text: '👑 管理員' }) : null),
-        el('div', { class: 'row-sub', text: u.statusMessage || '@' + u.username }))));
+        el('div', { class: 'row-sub', text: u.statusMessage || '@' + u.username })));
+    if (state.usersPrivacy && !state.me.isAdmin && !u.isAdmin) {
+      bindLongPress(row, async () => {
+        const v = await openSheet([{ label: `移除好友「${u.displayName}」`, value: 'rm', danger: true }]);
+        if (v !== 'rm') return;
+        try {
+          await api(`/api/contacts/${u.id}`, { method: 'DELETE' });
+          await loadUsers();
+          renderFriends();
+          toast('已移除好友');
+        } catch (e2) { toast(e2.message); }
+      });
+    }
+    box.append(row);
   }
+}
+
+async function addFriendModal() {
+  const v = await promptModal('加好友', {
+    placeholder: '輸入對方的帳號（英文小寫）', maxlength: 20,
+  });
+  if (v === null || !v.trim()) return;
+  try {
+    const data = await api('/api/contacts', { method: 'POST', body: { username: v.trim() } });
+    await loadUsers();
+    renderFriends();
+    toast(`已加入「${data.user.displayName}」！`);
+  } catch (e2) { toast(e2.message); }
 }
 
 function showProfile(user) {
@@ -718,9 +750,21 @@ function renderSettings() {
         } catch (e2) { toast(e2.message); }
       },
     });
+    const privacySwitch = switchItem('好友名單隱私', true, async (on) => {
+      try {
+        await api('/api/admin/settings', { method: 'PATCH', body: { privacyContacts: on } });
+        toast(on ? '已開啟：親友需自行加好友才互相看得見' : '已關閉：所有成員互相看得見');
+      } catch (e2) { toast(e2.message); renderSettings(); }
+    });
+    api('/api/admin/settings').then((s2) => {
+      const input = privacySwitch.querySelector('input');
+      if (input) input.checked = !!s2.privacyContacts;
+    }).catch(() => {});
     box.append(el('div', { class: 'set-group' },
       el('div', { class: 'set-group-title', text: '管理員' }),
       el('div', { class: 'set-item' }, codeInput, saveBtn),
+      privacySwitch,
+      el('div', { class: 'set-note', text: '好友名單隱私開啟時：親友只看得到你、同聊天室的成員、以及自己輸入帳號加的好友；你（管理員）永遠看得到全部成員。' }),
       setItem('複製邀請訊息', null, async () => {
         try {
           const s = await api('/api/admin/settings');
@@ -1735,6 +1779,13 @@ function handleWsEvent(ev) {
       }
       break;
     }
+    case 'users-changed':
+      loadUsers().then(() => {
+        renderFriends();
+        renderChatList();
+        if (state.currentConv) renderMessagesKeepScroll(state.currentConv);
+      }).catch(() => {});
+      break;
     case 'conversations-changed': scheduleConvReload(); break;
     case 'reaction': handleReaction(ev); break;
     case 'vote': handleVote(ev); break;
@@ -2831,6 +2882,7 @@ function bindEvents() {
     });
   }
 
+  $('btn-add-friend').addEventListener('click', addFriendModal);
   $('btn-install').addEventListener('click', doInstall);
   $('btn-install-dismiss').addEventListener('click', () => {
     state.installDismissed = true;

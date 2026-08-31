@@ -184,6 +184,16 @@ CREATE TABLE IF NOT EXISTS stickers (
 );
 `;
 
+// v4：好友隱私制（親友互相看不見，需自行加好友）
+const SCHEMA_V4 = `
+CREATE TABLE IF NOT EXISTS contacts (
+  owner_id INTEGER NOT NULL,
+  friend_id INTEGER NOT NULL,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (owner_id, friend_id)
+);
+`;
+
 const URL_RE = /https?:\/\/[^\s<>"']+/;
 
 // 訊息中第一個可安全抓取預覽的網址（擋 IP、無點主機名、帳密夾帶）
@@ -260,6 +270,10 @@ export class ChatServer {
         this.sql.exec(SCHEMA_V3);
         this.setSetting('schema_version', '3');
       }
+      if (v < 4) {
+        this.sql.exec(SCHEMA_V4);
+        this.setSetting('schema_version', '4');
+      }
     });
     // 心跳不喚醒 DO：客戶端送 "ping"，執行環境自動回 "pong"
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
@@ -307,7 +321,10 @@ export class ChatServer {
     if (method === 'GET' && pathname === '/api/me') return json({ user: pubUser(me) });
     if (method === 'PATCH' && pathname === '/api/me') return this.updateMe(request, me);
     if (method === 'POST' && pathname === '/api/me/password') return this.changePassword(request, me);
-    if (method === 'GET' && pathname === '/api/users') return this.listUsers();
+    if (method === 'GET' && pathname === '/api/users') return this.listUsers(me);
+    if (method === 'POST' && pathname === '/api/contacts') return this.addContact(request, me);
+    if ((m = pathname.match(/^\/api\/contacts\/(\d+)$/)) && method === 'DELETE')
+      return this.removeContact(me, +m[1]);
     if (method === 'GET' && pathname === '/api/conversations') return this.listConversations(me);
     if (method === 'POST' && pathname === '/api/conversations') return this.createConversation(request, me);
     if (method === 'GET' && pathname === '/api/search') return this.search(url, me);
@@ -372,7 +389,8 @@ export class ChatServer {
 
     if (pathname === '/api/admin/settings') {
       this.requireAdmin(me);
-      if (method === 'GET') return json({ inviteCode: this.getSetting('invite_code') });
+      if (method === 'GET')
+        return json({ inviteCode: this.getSetting('invite_code'), privacyContacts: this.privacyOn() });
       if (method === 'PATCH') return this.updateAdminSettings(request);
     }
     if (method === 'GET' && pathname === '/api/admin/export') {
@@ -592,7 +610,7 @@ export class ChatServer {
     const row = this.sql
       .exec(`UPDATE users SET ${sets.join(', ')} WHERE id = ? RETURNING *`, ...args, me.id)
       .one();
-    this.broadcastAll({ type: 'user', user: pubUser(row) });
+    this.sendToUsers(this.audienceFor(me.id), { type: 'user', user: pubUser(row) });
     return json({ user: pubUser(row) });
   }
 
@@ -613,9 +631,72 @@ export class ChatServer {
     return json({ ok: true });
   }
 
-  listUsers() {
+  // 隱私模式（預設開啟）：親友只看得到管理員＋同聊天室成員＋自己加的好友
+  privacyOn() {
+    return this.getSetting('privacy_contacts') !== '0';
+  }
+
+  // uid 看得見哪些使用者
+  visibleUserIds(uid) {
+    const rows = this.sql.exec(
+      `SELECT id FROM users WHERE id = ? OR is_admin = 1
+       UNION SELECT m2.user_id FROM members m1
+         JOIN members m2 ON m1.conversation_id = m2.conversation_id WHERE m1.user_id = ?
+       UNION SELECT friend_id FROM contacts WHERE owner_id = ?`,
+      uid, uid, uid).toArray();
+    return new Set(rows.map((r) => r.id));
+  }
+
+  // 哪些使用者看得見 userId（用於個資更新的精準廣播）
+  audienceFor(userId) {
+    if (!this.privacyOn()) {
+      return this.sql.exec(`SELECT id FROM users`).toArray().map((r) => r.id);
+    }
+    return this.sql.exec(
+      `SELECT id FROM users WHERE id = ? OR is_admin = 1
+       UNION SELECT m2.user_id FROM members m1
+         JOIN members m2 ON m1.conversation_id = m2.conversation_id WHERE m1.user_id = ?
+       UNION SELECT owner_id FROM contacts WHERE friend_id = ?`,
+      userId, userId, userId).toArray().map((r) => r.id);
+  }
+
+  listUsers(me) {
     const rows = this.sql.exec(`SELECT * FROM users ORDER BY created_at`).toArray();
-    return json({ users: rows.map(pubUser) });
+    const privacy = this.privacyOn();
+    const visible = privacy && !me.is_admin ? this.visibleUserIds(me.id) : null;
+    return json({
+      users: rows.filter((r) => !visible || visible.has(r.id)).map(pubUser),
+      privacy,
+    });
+  }
+
+  // ---------- 好友（隱私模式下自行新增） ----------
+
+  async addContact(request, me) {
+    const body = await this.readJson(request, 10000);
+    const username = String(body.username || '').trim().toLowerCase();
+    if (!username) throw new HttpError(400, '請輸入帳號');
+    const target = this.sql.exec(`SELECT * FROM users WHERE username = ?`, username).toArray()[0];
+    if (!target || target.disabled)
+      throw new HttpError(404, '找不到這個帳號。請確認輸入的是對方的「帳號」（英文小寫），不是暱稱');
+    if (target.id === me.id) throw new HttpError(400, '這是你自己的帳號');
+    const now = Date.now();
+    this.sql.exec(
+      `INSERT OR IGNORE INTO contacts (owner_id, friend_id, created_at) VALUES (?, ?, ?)`,
+      me.id, target.id, now);
+    this.sql.exec(
+      `INSERT OR IGNORE INTO contacts (owner_id, friend_id, created_at) VALUES (?, ?, ?)`,
+      target.id, me.id, now);
+    this.sendToUsers([me.id, target.id], { type: 'users-changed' });
+    return json({ user: pubUser(target) });
+  }
+
+  removeContact(me, friendId) {
+    this.sql.exec(
+      `DELETE FROM contacts WHERE (owner_id = ? AND friend_id = ?) OR (owner_id = ? AND friend_id = ?)`,
+      me.id, friendId, friendId, me.id);
+    this.sendToUsers([me.id, friendId], { type: 'users-changed' });
+    return json({ ok: true });
   }
 
   // ---------- 聊天室 ----------
@@ -751,6 +832,7 @@ export class ChatServer {
       });
       this.addSystemMessage(conv.id, `${me.display_name} 建立了群組「${name}」`);
       this.sendToUsers([...ids], { type: 'conversations-changed' });
+      this.sendToUsers([...ids], { type: 'users-changed' });
       return json({ conversation: this.convFor(conv, me.id) });
     }
 
@@ -1114,6 +1196,7 @@ export class ChatServer {
       const names = added.map((u) => u.display_name).join('、');
       this.addSystemMessage(conversationId, `${me.display_name} 邀請 ${names} 加入群組`);
       this.sendToUsers(this.memberIds(conversationId), { type: 'conversations-changed' });
+      this.sendToUsers(this.memberIds(conversationId), { type: 'users-changed' });
     }
     return json({ ok: true, added: added.map((u) => u.id) });
   }
@@ -1198,7 +1281,11 @@ export class ChatServer {
       if (code.length > 50) throw new HttpError(400, '邀請碼最長 50 個字');
       this.setSetting('invite_code', code || null);
     }
-    return json({ inviteCode: this.getSetting('invite_code') });
+    if (body.privacyContacts !== undefined) {
+      this.setSetting('privacy_contacts', body.privacyContacts ? '1' : '0');
+      this.broadcastAll({ type: 'users-changed' });
+    }
+    return json({ inviteCode: this.getSetting('invite_code'), privacyContacts: this.privacyOn() });
   }
 
   exportData() {
