@@ -149,7 +149,7 @@ src/index.js          Worker 入口（路由轉送）
 src/chatserver.js     聊天伺服器：帳號、訊息、群組、WebSocket（Durable Object）
 public/index.html     前端頁面骨架
 public/app.js         前端邏輯（登入、聊天、已讀、通知、貼圖…）
-public/style.css      LINE 風格樣式（桌面／手機自適應）
+public/style.css      LINE 風格樣式（全尺寸響應式：小手機／手機／平板／桌面／超寬螢幕）
 public/manifest.webmanifest + sw.js + icons/   PWA（加到主畫面）
 scripts/gen-icons.mjs 產生 PNG 圖示的小工具（零相依）
 legacy-github-pages/  舊版（GitHub Pages + MQTT 端對端加密版）留存
