@@ -7,6 +7,7 @@ const SESSION_TTL = 1000 * 60 * 60 * 24 * 60; // 60 天未使用即需重新登�
 const UNSEND_WINDOW = 1000 * 60 * 60 * 24; // 送出後 24 小時內可收回
 const MAX_TEXT = 4000;
 const MAX_IMAGE = 700000; // data URL 長度上限（約 500KB 圖檔）
+const MAX_GIF = 1900000; // GIF 原檔直傳以保留動畫，上限約 1.4MB 檔案
 const MAX_AVATAR = 80000;
 const MAX_STICKER = 20;
 const MAX_AUDIO = 900000; // 語音 data URL 上限（約 60 秒 opus）
@@ -952,7 +953,7 @@ export class ChatServer {
 
   async postMessage(request, me, conversationId) {
     this.requireMember(conversationId, me.id);
-    const body = await this.readJson(request);
+    const body = await this.readJson(request, MAX_GIF + 100000);
     const type = String(body.type || 'text');
     let content = String(body.content || '');
     const meta = {};
@@ -962,8 +963,10 @@ export class ChatServer {
       if (!content.trim()) throw new HttpError(400, '訊息不能是空的');
       if (content.length > MAX_TEXT) throw new HttpError(400, '訊息太長了（上限 4000 字）');
     } else if (type === 'image') {
-      if (!content.startsWith('data:image/') || content.length > MAX_IMAGE)
-        throw new HttpError(400, '圖片格式不符或太大');
+      const isGif = content.startsWith('data:image/gif');
+      const cap = isGif ? MAX_GIF : MAX_IMAGE;
+      if (!content.startsWith('data:image/') || content.length > cap)
+        throw new HttpError(400, isGif ? 'GIF 檔太大（上限約 1.4MB），請選小一點的' : '圖片格式不符或太大');
     } else if (type === 'sticker') {
       if (content.startsWith('sid:')) {
         const sid = Number(content.slice(4));

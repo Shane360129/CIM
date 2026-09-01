@@ -1242,11 +1242,27 @@ async function sendSticker(sticker) {
   catch (err) { toast(err.message); }
 }
 
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = () => reject(new Error('無法讀取檔案'));
+    r.readAsDataURL(file);
+  });
+}
+
 async function sendImageFile(file) {
   if (!state.currentConv || !file) return;
   try {
-    toast('圖片處理中…');
-    const dataUrl = await compressImage(file, 1280, 620000);
+    let dataUrl;
+    if (file.type === 'image/gif') {
+      // GIF 直接原檔傳送，保留動畫（經過 canvas 壓縮會變成靜態圖）
+      if (file.size > 1400000) throw new Error('GIF 檔太大（上限約 1.4MB），請選小一點的');
+      dataUrl = await fileToDataUrl(file);
+    } else {
+      toast('圖片處理中…');
+      dataUrl = await compressImage(file, 1280, 620000);
+    }
     await postMessage(state.currentConv, 'image', dataUrl);
   } catch (err) {
     toast(err.message || '圖片無法傳送');
@@ -1376,9 +1392,12 @@ function rebuildStickerGrid() {
   }
 }
 
-// 自訂貼圖壓縮：240px、保留透明（webp／png），退回 jpeg
+// 自訂貼圖壓縮：240px、保留透明（webp／png），退回 jpeg；小 GIF 原檔保留動畫
 async function compressSticker(file) {
   if (!/^image\//.test(file.type)) throw new Error('請選擇圖片檔');
+  if (file.type === 'image/gif' && file.size <= 64000) {
+    return fileToDataUrl(file); // 動態貼圖！
+  }
   let bitmap;
   try { bitmap = await createImageBitmap(file); }
   catch { throw new Error('不支援這種圖片格式'); }
