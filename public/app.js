@@ -100,11 +100,21 @@ function toast(msg) {
 }
 
 const URL_RE = /(https?:\/\/[^\s<>"']+)/g;
+// 只允許 http/https 連結；擋掉 javascript:/data: 等偽裝網址（避免點擊執行程式碼）。
+// 協定驗證通過就回傳原字串，保留使用者看到的網址原樣（不做正規化）
+function safeHttpUrl(u) {
+  try {
+    const parsed = new URL(u);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? u : null;
+  } catch { return null; }
+}
+
 function renderText(text) {
   const frag = document.createDocumentFragment();
   const parts = text.split(URL_RE);
   parts.forEach((part, i) => {
-    if (i % 2 === 1) frag.append(el('a', { href: part, target: '_blank', rel: 'noopener noreferrer', text: part }));
+    const href = i % 2 === 1 ? safeHttpUrl(part) : null;
+    if (href) frag.append(el('a', { href, target: '_blank', rel: 'noopener noreferrer nofollow', text: part }));
     else if (part) frag.append(part);
   });
   return frag;
@@ -983,7 +993,7 @@ function buildMessageContent(m) {
   if (m.meta && m.meta.link) {
     const L = m.meta.link;
     frag.append(el('a', {
-      class: 'link-card', href: L.url, target: '_blank', rel: 'noopener noreferrer',
+      class: 'link-card', href: safeHttpUrl(L.url) || '#', target: '_blank', rel: 'noopener noreferrer nofollow',
     },
       el('div', { class: 'lc-title', text: L.title }),
       L.desc ? el('div', { class: 'lc-desc', text: L.desc }) : null,
