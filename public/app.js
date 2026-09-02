@@ -100,11 +100,21 @@ function toast(msg) {
 }
 
 const URL_RE = /(https?:\/\/[^\s<>"']+)/g;
+// 只允許 http/https 連結；擋掉 javascript:/data: 等偽裝網址（避免點擊執行程式碼）。
+// 協定驗證通過就回傳原字串，保留使用者看到的網址原樣（不做正規化）
+function safeHttpUrl(u) {
+  try {
+    const parsed = new URL(u);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? u : null;
+  } catch { return null; }
+}
+
 function renderText(text) {
   const frag = document.createDocumentFragment();
   const parts = text.split(URL_RE);
   parts.forEach((part, i) => {
-    if (i % 2 === 1) frag.append(el('a', { href: part, target: '_blank', rel: 'noopener noreferrer', text: part }));
+    const href = i % 2 === 1 ? safeHttpUrl(part) : null;
+    if (href) frag.append(el('a', { href, target: '_blank', rel: 'noopener noreferrer nofollow', text: part }));
     else if (part) frag.append(part);
   });
   return frag;
@@ -133,12 +143,17 @@ const state = {
   notify: localStorage.getItem('cim_notify') !== '0',
   notifDismissed: localStorage.getItem('cim_notif_dismissed') === '1',
   theme: localStorage.getItem('cim_theme') || 'auto',
-  skin: localStorage.getItem('cim_skin') || 'ocean',
+  skin: localStorage.getItem('cim_skin') || 'techo',
   fontSize: localStorage.getItem('cim_font') || 'md',
   typeface: localStorage.getItem('cim_typeface') || 'default',
   stealth: localStorage.getItem('cim_stealth') === '1',
   pushOn: localStorage.getItem('cim_push') === '1',
+  installPrompt: null,        // beforeinstallprompt 事件（Android／桌面 Chrome 可一鍵安裝）
+  installDismissed: localStorage.getItem('cim_install_dismissed') === '1',
   replyTarget: null,          // { id, convId, name, preview }
+  unreadMarker: null,         // { convId, afterId }：本次打開聊天室的未讀分隔線位置
+  customStickers: null,       // 自訂貼圖清單（懶載入）
+  stickerMap: new Map(),      // sticker id -> data URL
   toolTab: 'shopping',
   rec: null,                  // 錄音中：{ recorder, chunks, timer, seconds, stream }
   audio: null,                // 播放中：{ el, mid, posEl, btnEl }
@@ -167,7 +182,7 @@ function msgPreview(m) {
   if (m.deleted) return '已收回訊息';
   if (m.type === 'system') return m.content;
   if (m.type === 'image') return '[圖片]';
-  if (m.type === 'sticker') return '[貼圖] ' + m.content;
+  if (m.type === 'sticker') return m.content.startsWith('sid:') ? '[貼圖]' : '[貼圖] ' + m.content;
   if (m.type === 'audio') return '[語音訊息]';
   if (m.type === 'poll') {
     try { return '[投票] ' + JSON.parse(m.content).q; } catch { return '[投票]'; }
@@ -232,7 +247,15 @@ function groupAvatarEl(size) {
 }
 
 function convAvatarEl(conv, size) {
-  if (conv.type === 'group') return groupAvatarEl(size);
+  if (conv.type === 'group') {
+    if (conv.avatar) {
+      const d = el('div', { class: 'avatar' });
+      d.style.width = d.style.height = size + 'px';
+      d.append(el('img', { src: conv.avatar, alt: '' }));
+      return d;
+    }
+    return groupAvatarEl(size);
+  }
   return avatarEl(dmPartner(conv), size);
 }
 
@@ -333,6 +356,7 @@ async function enterApp() {
 async function loadUsers() {
   const data = await api('/api/users');
   state.users = new Map(data.users.map((u) => [u.id, u]));
+  state.usersPrivacy = !!data.privacy;
 }
 
 let convsLoading = null;
@@ -347,7 +371,7 @@ async function loadConvs() {
       if (state.currentConv) {
         const conv = convById(state.currentConv);
         if (!conv) closeChat();
-        else updateChatHeader(conv);
+        else { updateChatHeader(conv); applyWallpaper(conv); }
       }
     } finally {
       convsLoading = null;
@@ -396,14 +420,104 @@ function renderChatList() {
       convAvatarEl(conv, 52),
       el('div', { class: 'row-main' },
         el('div', { class: 'row-title-line' },
+          conv.pinnedChat ? el('span', { class: 'row-pin' }, icon('pin', 14)) : null,
           el('div', { class: 'row-name', text: convTitle(conv) }),
           conv.type === 'group' ? el('span', { class: 'row-count', text: String(conv.members.length) }) : null),
         el('div', { class: 'row-sub', text: previewWithSender(conv) })),
       el('div', { class: 'row-side' },
         el('div', { class: 'row-time', text: conv.lastMessage ? fmtListTime(conv.lastActivity) : '' }),
         conv.unread > 0 ? el('span', { class: 'badge', text: conv.unread > 99 ? '99+' : String(conv.unread) }) : null));
+    bindLongPress(row, () => convMenuModal(conv));
     box.append(row);
   }
+}
+
+/* ---------- 聊天室長按選單（置頂／背景） ---------- */
+
+async function toggleConvPin(conv) {
+  try {
+    await api(`/api/conversations/${conv.id}/prefs`, {
+      method: 'PATCH', body: { pinned: !conv.pinnedChat },
+    });
+    conv.pinnedChat = !conv.pinnedChat;
+    await loadConvs().catch(() => {});
+    toast(conv.pinnedChat ? '已置頂' : '已取消置頂');
+  } catch (e2) { toast(e2.message); }
+}
+
+function convMenuModal(conv) {
+  const close = openModal(el('div', { class: 'modal' },
+    el('div', { class: 'modal-title', text: convTitle(conv) }),
+    el('div', { class: 'modal-body' },
+      el('button', {
+        class: 'set-item', onclick: () => { close(); toggleConvPin(conv); },
+      }, el('span', { class: 'grow', text: conv.pinnedChat ? '取消置頂' : '置頂聊天室' })),
+      el('button', {
+        class: 'set-item', onclick: () => { close(); wallpaperModal(conv); },
+      }, el('span', { class: 'grow', text: '聊天室背景' }))),
+    el('div', { class: 'modal-actions' },
+      el('button', { class: 'btn btn-ghost', text: '關閉', onclick: () => close() }))));
+}
+
+const WALLPAPER_COLORS = ['#F0E9D8', '#F3E3E7', '#E2EBF2', '#E4EFE1', '#EFE8F5', '#F6EFDD'];
+
+async function setWallpaper(conv, value) {
+  await api(`/api/conversations/${conv.id}/prefs`, { method: 'PATCH', body: { wallpaper: value } });
+  conv.wallpaper = value;
+  if (state.currentConv === conv.id) applyWallpaper(conv);
+}
+
+function wallpaperModal(conv) {
+  const dots = el('div', { class: 'wp-dots' });
+  for (const c of WALLPAPER_COLORS) {
+    const d = el('button', { type: 'button', class: 'wp-dot', 'aria-label': '背景顏色' });
+    d.style.background = c;
+    if (conv.wallpaper === 'c:' + c) d.classList.add('active');
+    d.addEventListener('click', async () => {
+      try { await setWallpaper(conv, 'c:' + c); close(); toast('背景已更換'); }
+      catch (e2) { toast(e2.message); }
+    });
+    dots.append(d);
+  }
+  const close = openModal(el('div', { class: 'modal' },
+    el('div', { class: 'modal-title', text: '聊天室背景' }),
+    el('div', { class: 'modal-body' },
+      el('div', { class: 'set-note', text: '只改變你自己看到的背景，親友不受影響。' }),
+      dots,
+      el('button', {
+        class: 'set-item', onclick: () => pickWallpaperPhoto(conv, () => close()),
+      }, el('span', { class: 'grow', text: '🖼️ 用自己的照片' })),
+      conv.wallpaper ? el('button', {
+        class: 'set-item', onclick: async () => {
+          try { await setWallpaper(conv, null); close(); toast('已恢復預設背景'); }
+          catch (e2) { toast(e2.message); }
+        },
+      }, el('span', { class: 'grow', text: '恢復預設背景' })) : null),
+    el('div', { class: 'modal-actions' },
+      el('button', { class: 'btn btn-ghost', text: '關閉', onclick: () => close() }))));
+}
+
+function pickFile(accept, onFile) {
+  const input = el('input', { type: 'file', accept, hidden: '' });
+  document.body.append(input);
+  input.addEventListener('change', () => {
+    const f = input.files && input.files[0];
+    input.remove();
+    if (f) onFile(f);
+  });
+  input.click();
+}
+
+function pickWallpaperPhoto(conv, done) {
+  pickFile('image/*', async (file) => {
+    try {
+      toast('圖片處理中…');
+      const dataUrl = await compressImage(file, 1080, 430000);
+      await setWallpaper(conv, dataUrl);
+      done();
+      toast('背景已更換');
+    } catch (e2) { toast(e2.message || '無法設定背景'); }
+  });
 }
 
 function previewWithSender(conv) {
@@ -431,6 +545,8 @@ function renderFriends() {
   if (!state.me) return;
   const box = $('friend-list');
   box.textContent = '';
+  // 隱私模式下（非管理員）才需要「加好友」按鈕；管理員本來就看得到全部
+  $('btn-add-friend').classList.toggle('hidden', !(state.usersPrivacy && !state.me.isAdmin));
 
   const meRow = el('button', {
     class: 'row',
@@ -438,22 +554,42 @@ function renderFriends() {
   },
     avatarEl(state.me, 52),
     el('div', { class: 'row-main' },
-      el('div', { class: 'row-name', text: state.me.displayName }),
+      el('div', { class: 'row-name' },
+        el('span', { text: state.me.displayName }),
+        state.me.isAdmin ? el('span', { class: 'role-badge', text: '👑 管理員' }) : null),
       el('div', { class: 'row-sub', text: '我的記事本 — 傳訊息給自己做筆記' })));
   box.append(meRow);
 
   const others = [...state.users.values()].filter((u) => u.id !== state.me.id && !u.disabled);
   box.append(el('div', { class: 'list-section', text: `好友 ${others.length}` }));
   if (!others.length) {
-    box.append(el('div', { class: 'list-empty', text: '還沒有其他成員。\n到「設定」複製邀請訊息，傳給親友請他們註冊！' }));
+    const emptyText = state.usersPrivacy && !state.me.isAdmin
+      ? '還沒有其他好友。\n點右上「＋」輸入親友的帳號加好友，\n或請管理員把你拉進群組。'
+      : '還沒有其他成員。\n到「設定」複製邀請訊息，傳給親友請他們註冊！';
+    box.append(el('div', { class: 'list-empty', text: emptyText }));
     return;
   }
   for (const u of others) {
-    box.append(el('button', { class: 'row', onclick: () => showProfile(u) },
+    const row = el('button', { class: 'row', onclick: () => showProfile(u) },
       avatarEl(u, 52),
       el('div', { class: 'row-main' },
-        el('div', { class: 'row-name', text: u.displayName + (u.isAdmin ? '　👑' : '') }),
-        el('div', { class: 'row-sub', text: u.statusMessage || '@' + u.username }))));
+        el('div', { class: 'row-name' },
+          el('span', { text: u.displayName }),
+          u.isAdmin ? el('span', { class: 'role-badge', text: '👑 管理員' }) : null),
+        el('div', { class: 'row-sub', text: u.statusMessage || '@' + u.username })));
+    if (state.usersPrivacy && !state.me.isAdmin && !u.isAdmin) {
+      bindLongPress(row, async () => {
+        const v = await openSheet([{ label: `移除好友「${u.displayName}」`, value: 'rm', danger: true }]);
+        if (v !== 'rm') return;
+        try {
+          await api(`/api/contacts/${u.id}`, { method: 'DELETE' });
+          await loadUsers();
+          renderFriends();
+          toast('已移除好友');
+        } catch (e2) { toast(e2.message); }
+      });
+    }
+    box.append(row);
   }
   box.append(el('div', {
     class: 'list-note',
@@ -463,6 +599,19 @@ function renderFriends() {
   }));
 }
 
+async function addFriendModal() {
+  const v = await promptModal('加好友', {
+    placeholder: '輸入對方的帳號（英文小寫）', maxlength: 20,
+  });
+  if (v === null || !v.trim()) return;
+  try {
+    const data = await api('/api/contacts', { method: 'POST', body: { username: v.trim() } });
+    await loadUsers();
+    renderFriends();
+    toast(`已加入「${data.user.displayName}」！`);
+  } catch (e2) { toast(e2.message); }
+}
+
 function showProfile(user) {
   const close = openModal(
     el('div', { class: 'modal' },
@@ -470,6 +619,7 @@ function showProfile(user) {
         el('div', { class: 'profile-card' },
           avatarEl(user, 88),
           el('div', { class: 'p-name', text: user.displayName }),
+          user.isAdmin ? el('div', { class: 'role-badge profile-badge', text: '👑 管理員' }) : null,
           user.statusMessage ? el('div', { class: 'p-status', text: user.statusMessage }) : null,
           el('div', { class: 'p-username', text: '@' + user.username }))),
       el('div', { class: 'modal-actions' },
@@ -562,6 +712,14 @@ function renderSettings() {
       })),
     setItem('字型', typefaceOf(state.typeface).name, openTypefacePicker)));
 
+  // 加入主畫面
+  if (canInstall()) {
+    box.append(el('div', { class: 'set-group' },
+      el('div', { class: 'set-group-title', text: '加入主畫面' }),
+      setItem('📲 把 CHAT 加到主畫面', null, doInstall),
+      el('div', { class: 'set-note', text: '加入後從主畫面圖示開啟，就像一般 App。Android 按下直接安裝；iPhone 會顯示 Safari 操作步驟。' })));
+  }
+
   // 通知
   const notifGroup = el('div', { class: 'set-group' },
     el('div', { class: 'set-group-title', text: '通知' }),
@@ -614,9 +772,21 @@ function renderSettings() {
         } catch (e2) { toast(e2.message); }
       },
     });
+    const privacySwitch = switchItem('好友名單隱私', true, async (on) => {
+      try {
+        await api('/api/admin/settings', { method: 'PATCH', body: { privacyContacts: on } });
+        toast(on ? '已開啟：親友需自行加好友才互相看得見' : '已關閉：所有成員互相看得見');
+      } catch (e2) { toast(e2.message); renderSettings(); }
+    });
+    api('/api/admin/settings').then((s2) => {
+      const input = privacySwitch.querySelector('input');
+      if (input) input.checked = !!s2.privacyContacts;
+    }).catch(() => {});
     box.append(el('div', { class: 'set-group' },
       el('div', { class: 'set-group-title', text: '管理員' }),
       el('div', { class: 'set-item' }, codeInput, saveBtn),
+      privacySwitch,
+      el('div', { class: 'set-note', text: '好友名單隱私開啟時：親友只看得到你、同聊天室的成員、以及自己輸入帳號加的好友；你（管理員）永遠看得到全部成員。' }),
       setItem('複製邀請訊息', null, async () => {
         try {
           const s = await api('/api/admin/settings');
@@ -725,6 +895,11 @@ function openConv(convId) {
   cancelRec();
   updateChatHeader(conv);
   updatePinBanner(convId);
+  applyWallpaper(conv);
+  const mineMember = conv.members.find((x) => x.userId === state.me.id);
+  state.unreadMarker = conv.unread > 0 && mineMember
+    ? { convId, afterId: mineMember.lastReadId }
+    : null;
 
   const cached = state.msgCache.get(convId);
   renderMessages(convId);
@@ -735,10 +910,24 @@ function openConv(convId) {
 
 function closeChat() {
   state.currentConv = null;
+  state.unreadMarker = null;
+  applyWallpaper(null);
   document.body.classList.remove('chat-open');
   $('chat-view').classList.add('hidden');
   $('chat-empty').classList.remove('hidden');
   hidePicker();
+}
+
+function applyWallpaper(conv) {
+  const sc = $('msg-scroll');
+  const w = conv && conv.wallpaper;
+  if (w && w.startsWith('c:')) {
+    sc.style.background = w.slice(2);
+  } else if (w) {
+    sc.style.background = `url("${w}") center / cover no-repeat`;
+  } else {
+    sc.style.background = '';
+  }
 }
 
 function updateChatHeader(conv) {
@@ -767,7 +956,9 @@ async function fetchMessages(convId) {
   if (state.currentConv === convId) {
     renderMessages(convId);
     updatePinBanner(convId);
-    scrollToBottom(false);
+    const sep = document.getElementById('unread-sep');
+    if (sep) $('msg-scroll').scrollTop = Math.max(0, sep.offsetTop - 72);
+    else scrollToBottom(false);
     sendReadIfNeeded(convId);
   }
 }
@@ -803,10 +994,49 @@ function buildMessageContent(m) {
       class: 'msg-img', src: m.content, alt: '圖片',
       onclick: () => openViewer(m.content),
     });
-  if (m.type === 'sticker') return el('div', { class: 'msg-sticker', text: m.content });
+  if (m.type === 'sticker') {
+    if (m.content.startsWith('sid:')) return buildCustomSticker(m.content.slice(4));
+    return el('div', { class: 'msg-sticker', text: m.content });
+  }
   if (m.type === 'audio') return buildAudioMsg(m);
   if (m.type === 'poll') return buildPollCard(m);
-  return el('div', { class: 'bubble' }, renderText(m.content));
+  const frag = document.createDocumentFragment();
+  frag.append(el('div', { class: 'bubble' }, renderText(m.content)));
+  if (m.meta && m.meta.link) {
+    const L = m.meta.link;
+    frag.append(el('a', {
+      class: 'link-card', href: safeHttpUrl(L.url) || '#', target: '_blank', rel: 'noopener noreferrer nofollow',
+    },
+      el('div', { class: 'lc-title', text: L.title }),
+      L.desc ? el('div', { class: 'lc-desc', text: L.desc }) : null,
+      el('div', { class: 'lc-site', text: L.site || '' })));
+  }
+  return frag;
+}
+
+function buildCustomSticker(sid) {
+  const id = Number(sid);
+  const src = state.stickerMap.get(id);
+  if (src) {
+    return el('img', {
+      class: 'msg-sticker-img', src, alt: '貼圖',
+      onclick: () => openViewer(src),
+    });
+  }
+  // 尚未載入貼圖清單：先放占位，載入完成後重畫
+  ensureStickers().then(() => {
+    if (state.currentConv) renderMessagesKeepScroll(state.currentConv);
+  }).catch(() => {});
+  return el('div', { class: 'msg-sticker-img loading', text: '…' });
+}
+
+function renderMessagesKeepScroll(convId) {
+  const sc = $('msg-scroll');
+  const atBottom = nearBottom();
+  const top = sc.scrollTop;
+  renderMessages(convId);
+  if (atBottom) scrollToBottom(false);
+  else sc.scrollTop = top;
 }
 
 function buildMessageNode(conv, cache, m, prev) {
@@ -865,7 +1095,13 @@ function renderMessages(convId) {
   $('btn-load-more').classList.toggle('hidden', !(cache && cache.hasMore));
   if (!conv || !cache) return;
   let prev = null;
+  let sepDone = !(state.unreadMarker && state.unreadMarker.convId === convId);
   for (const m of cache.messages) {
+    if (!sepDone && m.type !== 'system' && m.id > state.unreadMarker.afterId) {
+      list.append(el('div', { class: 'unread-sep', id: 'unread-sep' },
+        el('span', { text: '以下是未讀訊息' })));
+      sepDone = true;
+    }
     list.append(buildMessageNode(conv, cache, m, prev));
     prev = m;
   }
@@ -923,6 +1159,16 @@ function sendReadIfNeeded(convId) {
 /* ---------- 訊息選單（收回／複製） ---------- */
 
 const QUICK_REACTIONS = ['❤️', '👍', '😂', '😮', '😢', '🙏'];
+
+function bindLongPress(node, fn) {
+  node.addEventListener('contextmenu', (e) => { e.preventDefault(); fn(e); });
+  let timer = null;
+  node.addEventListener('touchstart', (e) => {
+    timer = setTimeout(() => fn(e), 550);
+  }, { passive: true });
+  ['touchend', 'touchmove', 'touchcancel'].forEach((evt) =>
+    node.addEventListener(evt, () => clearTimeout(timer), { passive: true }));
+}
 
 function attachMsgMenu(node, m) {
   if (m.type === 'system') return;
@@ -1018,11 +1264,27 @@ async function sendSticker(sticker) {
   catch (err) { toast(err.message); }
 }
 
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = () => reject(new Error('無法讀取檔案'));
+    r.readAsDataURL(file);
+  });
+}
+
 async function sendImageFile(file) {
   if (!state.currentConv || !file) return;
   try {
-    toast('圖片處理中…');
-    const dataUrl = await compressImage(file, 1280, 620000);
+    let dataUrl;
+    if (file.type === 'image/gif') {
+      // GIF 直接原檔傳送，保留動畫（經過 canvas 壓縮會變成靜態圖）
+      if (file.size > 1400000) throw new Error('GIF 檔太大（上限約 1.4MB），請選小一點的');
+      dataUrl = await fileToDataUrl(file);
+    } else {
+      toast('圖片處理中…');
+      dataUrl = await compressImage(file, 1280, 620000);
+    }
     await postMessage(state.currentConv, 'image', dataUrl);
   } catch (err) {
     toast(err.message || '圖片無法傳送');
@@ -1100,10 +1362,79 @@ function buildPicker() {
   for (const e of EMOJIS) {
     eg.append(el('button', { type: 'button', text: e, onclick: () => insertEmoji(e) }));
   }
+  rebuildStickerGrid();
+  ensureStickers().catch(() => {});
+}
+
+async function ensureStickers(force) {
+  if (!force && state.customStickers !== null) return;
+  const data = await api('/api/stickers');
+  state.customStickers = data.stickers;
+  state.stickerMap = new Map(data.stickers.map((x) => [x.id, x.image]));
+  rebuildStickerGrid();
+}
+
+function rebuildStickerGrid() {
+  if (!pickerBuilt) return;
   const sg = $('picker-sticker');
+  sg.textContent = '';
+
+  // 自訂貼圖（長按可刪除自己新增的）
+  for (const st of state.customStickers || []) {
+    const b = el('button', { type: 'button', class: 'sticker-tile', onclick: () => sendSticker('sid:' + st.id) },
+      el('img', { src: st.image, alt: '貼圖' }));
+    if (st.addedBy === state.me?.id || state.me?.isAdmin) {
+      bindLongPress(b, async () => {
+        if (!(await confirmModal('刪除貼圖', '要把這張貼圖從全家的貼圖包移除嗎？', true))) return;
+        try { await api(`/api/stickers/${st.id}`, { method: 'DELETE' }); await ensureStickers(true); }
+        catch (e2) { toast(e2.message); }
+      });
+    }
+    sg.append(b);
+  }
+
+  // 新增貼圖
+  const add = el('button', { type: 'button', class: 'sticker-tile sticker-add', title: '新增自訂貼圖' },
+    el('span', { text: '＋' }));
+  add.addEventListener('click', () => {
+    pickFile('image/*', async (file) => {
+      try {
+        toast('貼圖處理中…');
+        const dataUrl = await compressSticker(file);
+        await api('/api/stickers', { method: 'POST', body: { image: dataUrl } });
+        await ensureStickers(true);
+        toast('貼圖已加入，全家都能用！');
+      } catch (e2) { toast(e2.message || '無法新增貼圖'); }
+    });
+  });
+  sg.append(add);
+
   for (const s of STICKERS) {
     sg.append(el('button', { type: 'button', text: s, onclick: () => sendSticker(s) }));
   }
+}
+
+// 自訂貼圖壓縮：240px、保留透明（webp／png），退回 jpeg；小 GIF 原檔保留動畫
+async function compressSticker(file) {
+  if (!/^image\//.test(file.type)) throw new Error('請選擇圖片檔');
+  if (file.type === 'image/gif' && file.size <= 64000) {
+    return fileToDataUrl(file); // 動態貼圖！
+  }
+  let bitmap;
+  try { bitmap = await createImageBitmap(file); }
+  catch { throw new Error('不支援這種圖片格式'); }
+  const scale = Math.min(1, 240 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  let out = canvas.toDataURL('image/webp', 0.9);
+  if (!out.startsWith('data:image/webp') || out.length > 88000) {
+    const png = canvas.toDataURL('image/png');
+    out = png.length <= 88000 ? png : canvas.toDataURL('image/jpeg', 0.85);
+  }
+  if (out.length > 88000) throw new Error('圖片太複雜，請換一張或先裁小一點');
+  return out;
 }
 
 function insertEmoji(emoji) {
@@ -1179,7 +1510,20 @@ function chatInfoModal() {
 
   if (conv.type === 'dm') {
     const partner = dmPartner(conv);
-    if (partner && partner.id !== state.me.id) showProfile(partner);
+    const close = openModal(el('div', { class: 'modal' },
+      el('div', { class: 'modal-title', text: convTitle(conv) }),
+      el('div', { class: 'modal-body' },
+        partner && partner.id !== state.me.id ? el('button', {
+          class: 'set-item', onclick: () => { close(); showProfile(partner); },
+        }, el('span', { class: 'grow', text: '查看對方資料' })) : null,
+        el('button', {
+          class: 'set-item', onclick: () => { close(); toggleConvPin(conv); },
+        }, el('span', { class: 'grow', text: conv.pinnedChat ? '取消置頂' : '置頂聊天室' })),
+        el('button', {
+          class: 'set-item', onclick: () => { close(); wallpaperModal(conv); },
+        }, el('span', { class: 'grow', text: '聊天室背景' }))),
+      el('div', { class: 'modal-actions' },
+        el('button', { class: 'btn btn-ghost', text: '關閉', onclick: () => close() }))));
     return;
   }
 
@@ -1188,12 +1532,36 @@ function chatInfoModal() {
     return el('div', { class: 'row' },
       avatarEl(u, 44),
       el('div', { class: 'row-main' },
-        el('div', { class: 'row-name', text: (u ? u.displayName : '未知') + (m.userId === state.me.id ? '（我）' : '') })));
+        el('div', { class: 'row-name' },
+          el('span', { text: (u ? u.displayName : '未知') + (m.userId === state.me.id ? '（我）' : '') }),
+          u && u.isAdmin ? el('span', { class: 'role-badge', text: '👑 管理員' }) : null)));
+  });
+
+  const avatarWrap = el('div', { class: 'group-avatar-wrap' }, convAvatarEl(conv, 72));
+  avatarWrap.title = '更換群組照片';
+  avatarWrap.addEventListener('click', () => {
+    pickFile('image/*', async (file) => {
+      try {
+        toast('圖片處理中…');
+        const dataUrl = await compressImage(file, 256, 76000);
+        await api(`/api/conversations/${conv.id}`, { method: 'PATCH', body: { avatar: dataUrl } });
+        close();
+        loadConvs().catch(() => {});
+      } catch (e2) { toast(e2.message || '無法更換群組照片'); }
+    });
   });
 
   const close = openModal(el('div', { class: 'modal' },
     el('div', { class: 'modal-title', text: conv.name || '群組' }),
     el('div', { class: 'modal-body' },
+      el('div', { class: 'group-avatar-row' }, avatarWrap,
+        el('div', { class: 'set-note', text: '點照片可更換群組頭像' })),
+      el('button', {
+        class: 'set-item', onclick: () => { close(); toggleConvPin(conv); },
+      }, el('span', { class: 'grow', text: conv.pinnedChat ? '取消置頂' : '置頂聊天室' })),
+      el('button', {
+        class: 'set-item', onclick: () => { close(); wallpaperModal(conv); },
+      }, el('span', { class: 'grow', text: '聊天室背景' })),
       el('button', {
         class: 'set-item', onclick: async () => {
           const v = await promptModal('修改群組名稱', { value: conv.name || '', maxlength: 30 });
@@ -1432,6 +1800,12 @@ function handleWsEvent(ev) {
     case 'read': handleRead(ev); break;
     case 'typing': handleTyping(ev); break;
     case 'unsend': handleUnsend(ev); break;
+    case 'message-updated': handleMessageUpdated(ev.message); break;
+    case 'stickers-changed':
+      state.customStickers = null;
+      state.stickerMap = new Map();
+      if (pickerBuilt && !$('picker').classList.contains('hidden')) ensureStickers().catch(() => {});
+      break;
     case 'user': {
       state.users.set(ev.user.id, ev.user);
       if (state.me && ev.user.id === state.me.id) state.me = ev.user;
@@ -1439,9 +1813,20 @@ function handleWsEvent(ev) {
       renderChatList();
       if (state.tab === 'settings') renderSettings();
       const conv = state.currentConv && convById(state.currentConv);
-      if (conv) updateChatHeader(conv);
+      if (conv) {
+        updateChatHeader(conv);
+        // 訊息旁的頭像也即時換新（例如對方剛換了大頭貼）
+        renderMessagesKeepScroll(state.currentConv);
+      }
       break;
     }
+    case 'users-changed':
+      loadUsers().then(() => {
+        renderFriends();
+        renderChatList();
+        if (state.currentConv) renderMessagesKeepScroll(state.currentConv);
+      }).catch(() => {});
+      break;
     case 'conversations-changed': scheduleConvReload(); break;
     case 'reaction': handleReaction(ev); break;
     case 'vote': handleVote(ev); break;
@@ -1450,6 +1835,15 @@ function handleWsEvent(ev) {
     case 'events-changed': if (state.tab === 'tools' && state.toolTab === 'calendar') renderCalendar(); break;
     case 'event-reminder': handleEventReminder(ev); break;
   }
+}
+
+function handleMessageUpdated(m) {
+  const cache = state.msgCache.get(m.conversationId);
+  if (!cache) return;
+  const idx = cache.messages.findIndex((x) => x.id === m.id);
+  if (idx < 0) return;
+  cache.messages[idx] = m;
+  if (state.currentConv === m.conversationId) renderMessagesKeepScroll(m.conversationId);
 }
 
 function handleIncomingMessage(m, fromSelfPost) {
@@ -1645,6 +2039,7 @@ function beep(start, freq, dur) {
 
 // 可選風格：[代號, 名稱, 預覽底色, 預覽主色]
 const SKINS = [
+  ['techo', '手札', '#F0E9D8', '#B98A5E'],
   ['ocean', '海洋', '#E7EDF2', '#4A8FBF'],
   ['washi', '和紙抹茶', '#EAE6DD', '#5E9C6B'],
   ['classic', '經典綠', '#7b94bd', '#06C755'],
@@ -1801,7 +2196,7 @@ function applyAppearance() {
   const metaTheme = document.querySelector('meta[name="theme-color"]');
   if (metaTheme) {
     const panel = getComputedStyle(document.body).getPropertyValue('--panel').trim();
-    metaTheme.content = panel || (dark ? '#171E25' : '#F4F7FA');
+    metaTheme.content = panel || (dark ? '#201B12' : '#F6F1E3');
   }
   const iconLink = document.querySelector('link[rel="icon"]');
   if (iconLink) iconLink.href = state.stealth ? '/doc.svg' : '/icon.svg';
@@ -1825,6 +2220,55 @@ function skinRow() {
     }, dot, label));
   }
   return row;
+}
+
+/* ---------- 加入主畫面（PWA 安裝） ---------- */
+
+function isStandalone() {
+  return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+}
+
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function canInstall() {
+  return !isStandalone() && (state.installPrompt !== null || isIOS());
+}
+
+function updateInstallUi() {
+  const showBanner = canInstall() && !state.installDismissed && matchMedia('(max-width: 700px)').matches;
+  $('install-banner').classList.toggle('hidden', !showBanner);
+}
+
+async function doInstall() {
+  if (state.installPrompt) {
+    const ev = state.installPrompt;
+    ev.prompt();
+    const choice = await ev.userChoice.catch(() => null);
+    if (choice && choice.outcome === 'accepted') {
+      state.installPrompt = null;
+      updateInstallUi();
+    }
+    return;
+  }
+  if (isIOS()) {
+    const close = openModal(
+      el('div', { class: 'modal' },
+        el('div', { class: 'modal-title', text: '加入主畫面（iPhone）' }),
+        el('div', { class: 'modal-body' },
+          el('div', { class: 'install-steps' },
+            el('div', { class: 'install-step', text: '1️⃣ 用 Safari 開啟本網頁' }),
+            el('div', { class: 'install-step', text: '2️⃣ 點下方中間的「分享」按鈕（方框加向上箭頭）' }),
+            el('div', { class: 'install-step', text: '3️⃣ 往下捲，選「加入主畫面」' }),
+            el('div', { class: 'install-step', text: '4️⃣ 右上角按「新增」就完成了' }),
+            el('div', { class: 'set-note', text: '之後從主畫面的 CHAT 圖示開啟就是全螢幕 App，也才能開啟離線推播（Apple 的規定）。' }))),
+        el('div', { class: 'modal-actions' },
+          el('button', { class: 'btn btn-primary', text: '知道了', onclick: () => close() }))));
+    return;
+  }
+  toast('請用手機瀏覽器選單裡的「加到主畫面」');
 }
 
 function forceLogout(msg) {
@@ -2590,6 +3034,35 @@ function bindEvents() {
     localStorage.setItem('cim_notif_dismissed', '1');
     updateNotifBanner();
   });
+
+  // 一鍵加入主畫面
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    state.installPrompt = e;
+    updateInstallUi();
+  });
+  window.addEventListener('appinstalled', () => {
+    state.installPrompt = null;
+    toast('已加入主畫面 🎉');
+    updateInstallUi();
+  });
+  // 手機鍵盤彈出（可視區縮小）時，讓最新訊息貼齊輸入框上方
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+      if (state.currentConv && document.activeElement === $('input')) {
+        setTimeout(() => scrollToBottom(false), 60);
+      }
+    });
+  }
+
+  $('btn-add-friend').addEventListener('click', addFriendModal);
+  $('btn-install').addEventListener('click', doInstall);
+  $('btn-install-dismiss').addEventListener('click', () => {
+    state.installDismissed = true;
+    localStorage.setItem('cim_install_dismissed', '1');
+    updateInstallUi();
+  });
+  updateInstallUi();
 
   // 搜尋
   $('btn-search').addEventListener('click', () => toggleSearch());

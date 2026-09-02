@@ -6,7 +6,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
   <title>CHAT</title>
   <meta name="description" content="CHAT — 親友專屬聊天室">
-  <meta name="theme-color" content="#F4F7FA">
+  <meta name="theme-color" content="#F6F1E3">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
@@ -81,11 +81,21 @@
           <button id="btn-notif-on" class="btn btn-small btn-primary">開啟</button>
           <button id="btn-notif-dismiss" class="icon-btn" data-icon="x" aria-label="關閉"></button>
         </div>
+        <div id="install-banner" class="notif-banner hidden">
+          <span>把 CHAT 加到主畫面，之後像 App 一樣一鍵開啟</span>
+          <button id="btn-install" class="btn btn-small btn-primary">加入</button>
+          <button id="btn-install-dismiss" class="icon-btn" data-icon="x" aria-label="關閉"></button>
+        </div>
         <div id="chat-list" class="list"></div>
       </div>
 
       <div id="tab-friends" class="tab hidden">
-        <header class="panel-header"><h1>好友</h1></header>
+        <header class="panel-header">
+          <h1>好友</h1>
+          <div class="header-actions">
+            <button id="btn-add-friend" class="icon-btn hidden" data-icon="plus" aria-label="加好友" title="加好友"></button>
+          </div>
+        </header>
         <div id="friend-list" class="list"></div>
       </div>
 
