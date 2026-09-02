@@ -1638,6 +1638,11 @@ const SKINS = [
   ['classic', '經典綠', '#7b94bd', '#06C755'],
   ['sakura', '櫻花', '#F6ECEA', '#D77A8C'],
   ['sumi', '墨白', '#F1F0EE', '#4A4A46'],
+  ['americana', '美式復古', '#F3ECDD', '#C24D3A'],
+  ['aizome', '日式藍染', '#ECEBE2', '#35608D'],
+  ['techo', '手札', '#F0E7D8', '#9A6B45'],
+  ['lavender', '薰衣草', '#EEECF4', '#8B79C1'],
+  ['sunset', '夕陽', '#F9EDE2', '#D0703A'],
 ];
 
 let systemDarkMq = null;

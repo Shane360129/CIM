@@ -883,6 +883,156 @@ body.theme-dark.skin-sumi .btn-primary,
 body.theme-dark.skin-sumi .badge,
 body.theme-dark.skin-sumi .nav-badge { color: #1B1B19; }
 
+/* —— 美式復古：奶油紙 × 磚紅（復古餐館） —— */
+body.skin-americana {
+  --green: #C24D3A; --green-dark: #9E3A2A; --green-soft: #F7E5E0;
+  --room-bg: #F3ECDD;
+  --bubble-me: #F4D8A6; --bubble-me-ink: #4A331F;
+  --bubble-other: #ffffff; --bubble-line: #E8DFCC;
+  --ink: #3B342B; --sub: #93887A; --line: #E7DFCE;
+  --bg: #F8F3E7; --panel: #FDFAF2; --rail-bg: #F5EFE1;
+  --hover: #EFE7D4; --input-bg: #F0E9D8;
+  --icon: #6F6553; --nav-ink: #ABA08D; --time: #B0A692;
+  --meta-ink: #A4997F; --name-ink: #877B65;
+  --pill-bg: #E4D9C0; --pill-ink: #6F6553;
+  --accent-fill: rgba(194, 77, 58, .16);
+  --float-bg: rgba(255, 255, 255, .92); --float-ink: #6F6553;
+}
+body.theme-dark.skin-americana {
+  --green: #E07B5F; --green-dark: #EC9880; --green-soft: #3A241E;
+  --room-bg: #1C1712;
+  --bubble-me: #E5B778; --bubble-me-ink: #3A2913;
+  --bubble-other: #2B241C; --bubble-line: #382F24;
+  --ink: #EAE3D4; --sub: #9C9180; --line: #342C21;
+  --bg: #16120D; --panel: #1E1913; --rail-bg: #191510;
+  --hover: #2A231A; --input-bg: #2A231A;
+  --icon: #A99D89; --nav-ink: #75695A; --time: #7E7263;
+  --meta-ink: #87796A; --name-ink: #948871;
+  --pill-bg: #2D261C; --pill-ink: #A2967F;
+  --accent-fill: rgba(224, 123, 95, .25);
+  --float-bg: rgba(28, 22, 17, .9); --float-ink: #C9BEA9;
+}
+
+/* —— 日式藍染：生成り × 藍 —— */
+body.skin-aizome {
+  --green: #35608D; --green-dark: #274A70; --green-soft: #E2EAF2;
+  --room-bg: #ECEBE2;
+  --bubble-me: #C9D6E6; --bubble-me-ink: #1E2F45;
+  --bubble-other: #ffffff; --bubble-line: #E0DFD4;
+  --ink: #33383F; --sub: #8A8A82; --line: #E2E1D6;
+  --bg: #F2F1E9; --panel: #FBFAF4; --rail-bg: #F4F3EB;
+  --hover: #EAE9DE; --input-bg: #ECEBE0;
+  --icon: #5F6672; --nav-ink: #A0A09A; --time: #A8A79D;
+  --meta-ink: #9C9C90; --name-ink: #7E8282;
+  --pill-bg: #DDDCD0; --pill-ink: #666D75;
+  --accent-fill: rgba(53, 96, 141, .16);
+  --float-bg: rgba(255, 255, 255, .92); --float-ink: #5F6672;
+}
+body.theme-dark.skin-aizome {
+  --green: #7FA3CC; --green-dark: #9AB8DA; --green-soft: #1E2A3A;
+  --room-bg: #14181F;
+  --bubble-me: #A9C2DD; --bubble-me-ink: #14243A;
+  --bubble-other: #242932; --bubble-line: #303743;
+  --ink: #E4E6EA; --sub: #8E939C; --line: #2B303A;
+  --bg: #101419; --panel: #181D24; --rail-bg: #141920;
+  --hover: #222834; --input-bg: #222834;
+  --icon: #9FA7B3; --nav-ink: #6B7380; --time: #747C89;
+  --meta-ink: #7D8592; --name-ink: #8A929E;
+  --pill-bg: #232935; --pill-ink: #99A2AF;
+  --accent-fill: rgba(127, 163, 204, .25);
+  --float-bg: rgba(18, 23, 30, .9); --float-ink: #C0C9D5;
+}
+
+/* —— 手札：牛皮紙 × 焦糖（手帳筆記） —— */
+body.skin-techo {
+  --green: #9A6B45; --green-dark: #7C5434; --green-soft: #F2E7DB;
+  --room-bg: #F0E7D8;
+  --bubble-me: #EAD9B8; --bubble-me-ink: #43331D;
+  --bubble-other: #FFFDF7; --bubble-line: #E6DAC4;
+  --ink: #40372A; --sub: #99917E; --line: #E7DEC9;
+  --bg: #F6EFE1; --panel: #FCF8EE; --rail-bg: #F4EDDD;
+  --hover: #EEE5D1; --input-bg: #EFE7D4;
+  --icon: #74684F; --nav-ink: #AFA58D; --time: #B3A98F;
+  --meta-ink: #A79C81; --name-ink: #8A7E63;
+  --pill-bg: #E3D7BC; --pill-ink: #74684F;
+  --accent-fill: rgba(154, 107, 69, .15);
+  --float-bg: rgba(255, 253, 247, .92); --float-ink: #74684F;
+}
+body.theme-dark.skin-techo {
+  --green: #C6976C; --green-dark: #D6AC84; --green-soft: #35291C;
+  --room-bg: #1B1610;
+  --bubble-me: #D9B98D; --bubble-me-ink: #33240F;
+  --bubble-other: #2A241A; --bubble-line: #362E21;
+  --ink: #E9E1D0; --sub: #9C9280; --line: #332B1F;
+  --bg: #15110B; --panel: #1D1811; --rail-bg: #18140E;
+  --hover: #292217; --input-bg: #292217;
+  --icon: #A89C85; --nav-ink: #746A57; --time: #7D735F;
+  --meta-ink: #857A65; --name-ink: #92876F;
+  --pill-bg: #2C2517; --pill-ink: #A1957C;
+  --accent-fill: rgba(198, 151, 108, .25);
+  --float-bg: rgba(27, 22, 16, .9); --float-ink: #C7BBA3;
+}
+
+/* —— 薰衣草：淡紫 × 藤色 —— */
+body.skin-lavender {
+  --green: #8B79C1; --green-dark: #6F5FA6; --green-soft: #EEEAF7;
+  --room-bg: #EEECF4;
+  --bubble-me: #DCD4F0; --bubble-me-ink: #322A4E;
+  --bubble-other: #ffffff; --bubble-line: #E5E1F0;
+  --ink: #3C3948; --sub: #908C9C; --line: #E6E3EE;
+  --bg: #F4F2F9; --panel: #FCFBFE; --rail-bg: #F6F4FA;
+  --hover: #ECE9F3; --input-bg: #EDEAF4;
+  --icon: #6C6779; --nav-ink: #A6A2B2; --time: #ACA8B8;
+  --meta-ink: #9D98AC; --name-ink: #837E92;
+  --pill-bg: #E0DCEB; --pill-ink: #6C6779;
+  --accent-fill: rgba(139, 121, 193, .16);
+  --float-bg: rgba(255, 255, 255, .92); --float-ink: #6C6779;
+}
+body.theme-dark.skin-lavender {
+  --green: #A99AD9; --green-dark: #BDB0E4; --green-soft: #2A2438;
+  --room-bg: #171420;
+  --bubble-me: #C3B6E6; --bubble-me-ink: #251C42;
+  --bubble-other: #282433; --bubble-line: #343040;
+  --ink: #E6E3EE; --sub: #938FA0; --line: #2E2A3A;
+  --bg: #121017; --panel: #1A1723; --rail-bg: #15121D;
+  --hover: #262231; --input-bg: #262231;
+  --icon: #A29EB0; --nav-ink: #6F6B7D; --time: #787488;
+  --meta-ink: #817D8F; --name-ink: #8E8A9C;
+  --pill-bg: #272334; --pill-ink: #9E99AE;
+  --accent-fill: rgba(169, 154, 217, .25);
+  --float-bg: rgba(22, 19, 30, .9); --float-ink: #C5C1D2;
+}
+
+/* —— 夕陽：暖橘 × 蜜柑 —— */
+body.skin-sunset {
+  --green: #D0703A; --green-dark: #B05A2A; --green-soft: #FBEADF;
+  --room-bg: #F9EDE2;
+  --bubble-me: #FAD9BC; --bubble-me-ink: #4C2E17;
+  --bubble-other: #ffffff; --bubble-line: #F0DFD0;
+  --ink: #45382E; --sub: #A08D7E; --line: #F0E2D4;
+  --bg: #FBF2E9; --panel: #FFFBF6; --rail-bg: #FAF1E7;
+  --hover: #F4E6D8; --input-bg: #F5E8DA;
+  --icon: #7C6A5B; --nav-ink: #B7A492; --time: #BCA994;
+  --meta-ink: #B29B85; --name-ink: #937F6C;
+  --pill-bg: #EEDCC8; --pill-ink: #7C6A5B;
+  --accent-fill: rgba(208, 112, 58, .16);
+  --float-bg: rgba(255, 255, 255, .92); --float-ink: #7C6A5B;
+}
+body.theme-dark.skin-sunset {
+  --green: #E89A66; --green-dark: #F0B084; --green-soft: #3B2618;
+  --room-bg: #1E1611;
+  --bubble-me: #F0BE92; --bubble-me-ink: #3E2510;
+  --bubble-other: #2D231B; --bubble-line: #3A2E23;
+  --ink: #EFE3D7; --sub: #A29181; --line: #372B20;
+  --bg: #17110C; --panel: #201812; --rail-bg: #1A140E;
+  --hover: #2C2218; --input-bg: #2C2218;
+  --icon: #AE9C8A; --nav-ink: #79695A; --time: #837262;
+  --meta-ink: #8B7A69; --name-ink: #988672;
+  --pill-bg: #2F2519; --pill-ink: #A8967F;
+  --accent-fill: rgba(232, 154, 102, .25);
+  --float-bg: rgba(30, 22, 16, .9); --float-ink: #CDBCA9;
+}
+
 /* —— 風格色票列 —— */
 .skin-row { display: flex; gap: 10px; flex-wrap: wrap; padding: 4px 16px 14px; }
 .skin-swatch {
