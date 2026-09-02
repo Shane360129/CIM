@@ -31,6 +31,19 @@
   --danger: #C4614F;
   --nav-h: 56px;
   --panel-w: clamp(264px, 28vw, 380px);
+
+  /* 字型堆疊（設定 → 外觀 → 字型 可切換；預設＝標題粉圓、內文思源黑體） */
+  --tf-sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --tf-round: "Huninn", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --tf-serif: "Noto Serif TC", "Songti TC", "PMingLiU", "Noto Sans TC", "Microsoft JhengHei", serif;
+  --tf-kai: "LXGW WenKai TC", "Kaiti TC", "DFKai-SB", "Noto Sans TC", "Microsoft JhengHei", serif;
+  --tf-hand: "Iansui", "Huninn", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --tf-system: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei",
+    "Helvetica Neue", Arial, sans-serif;
+  --font-body: var(--tf-sans);
+  --font-display: var(--tf-round);
+  --display-weight: 400;
   --fs-msg: 15px;
   --fs-list: 15.5px;
   --fs-sticker: 58px;
@@ -75,8 +88,7 @@ body.font-xl { --fs-msg: 19.5px; --fs-list: 19px; --fs-sticker: 74px; }
 html, body { height: 100%; }
 body {
   margin: 0;
-  font-family: "Noto Sans TC", "Huninn", -apple-system, BlinkMacSystemFont, "Segoe UI",
-    "PingFang TC", "Microsoft JhengHei", "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-body);
   letter-spacing: .012em;
   color: var(--ink);
   background: var(--bg);
@@ -204,7 +216,8 @@ input, textarea { font-family: inherit; font-size: 15px; color: var(--ink); }
 .row-main { flex: 1; min-width: 0; }
 .row-title-line { display: flex; align-items: baseline; gap: 8px; }
 .row-name {
-  font-size: var(--fs-list); font-weight: 600; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  font-size: calc(var(--fs-list) * var(--tf-scale, 1)); font-weight: 600;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
 }
 .row-count { color: var(--sub); font-size: 13px; flex: none; }
 .row-sub {
@@ -279,7 +292,7 @@ input, textarea { font-family: inherit; font-size: 15px; color: var(--ink); }
 .mine .msg-line { flex-direction: row-reverse; }
 
 .bubble {
-  padding: 8px 12px; border-radius: 17px; font-size: var(--fs-msg); line-height: 1.5;
+  padding: 8px 12px; border-radius: 17px; font-size: calc(var(--fs-msg) * var(--tf-scale, 1)); line-height: 1.5;
   word-break: break-word; overflow-wrap: anywhere; white-space: pre-wrap; min-width: 0;
 }
 .theirs .bubble { background: var(--bubble-other); border: 1px solid var(--bubble-line); border-top-left-radius: 5px; }
@@ -317,7 +330,8 @@ input, textarea { font-family: inherit; font-size: 15px; color: var(--ink); }
   background: var(--panel); border-top: 1px solid var(--line); flex: none;
 }
 .composer textarea {
-  flex: 1; resize: none; border: 0; outline: none; background: var(--input-bg); color: var(--ink); font-size: var(--fs-msg);
+  flex: 1; resize: none; border: 0; outline: none; background: var(--input-bg); color: var(--ink);
+  font-size: calc(var(--fs-msg) * var(--tf-scale, 1));
   border-radius: 18px; padding: 9px 14px; max-height: 120px; line-height: 1.45;
 }
 .icon-btn.send { color: var(--green); }
@@ -753,14 +767,49 @@ body.theme-dark .rchip.own { color: var(--green); }
 .panel-header h1, .chat-title, .modal-title, .auth-title, .nav-label,
 .btn, .auth-tabs button, .tool-tabs button, .seg button, .picker-tabs button,
 .list-section, .rec-time {
-  font-family: "Huninn", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  font-family: var(--font-display);
 }
-.panel-header h1 { font-weight: 400; letter-spacing: .08em; font-size: 19px; }
-.chat-title { font-weight: 400; letter-spacing: .04em; }
-.modal-title { font-weight: 400; letter-spacing: .05em; }
+.panel-header h1 { font-weight: var(--display-weight); letter-spacing: .08em; font-size: 19px; }
+.chat-title { font-weight: var(--display-weight); letter-spacing: .04em; }
+.modal-title { font-weight: var(--display-weight); letter-spacing: .05em; }
 .nav-label { letter-spacing: .06em; }
-.btn { font-weight: 400; letter-spacing: .05em; }
+.btn { font-weight: var(--display-weight); letter-spacing: .05em; }
 .list-section { letter-spacing: .08em; }
+
+/* ---------- 字型切換（只套用在本機；JS 依設定套 body class） ---------- */
+
+body.typeface-sans { --font-display: var(--tf-sans); --display-weight: 600; }
+body.typeface-serif { --font-body: var(--tf-serif); --font-display: var(--tf-serif); --display-weight: 700; }
+body.typeface-kai { --font-body: var(--tf-kai); --font-display: var(--tf-kai); --display-weight: 700; }
+body.typeface-hand { --font-body: var(--tf-hand); --font-display: var(--tf-hand); --display-weight: 400; }
+body.typeface-system { --font-body: var(--tf-system); --font-display: var(--tf-system); --display-weight: 600; }
+/* 楷書、手寫字型的字面偏小，內文稍微放大以維持相同的閱讀感 */
+body.typeface-kai, body.typeface-hand { --tf-scale: 1.06; }
+
+/* 字型選擇器：每一列直接用該字型顯示名稱與範例，所見即所得 */
+.tf-list { display: flex; flex-direction: column; gap: 8px; padding: 2px 0 6px; }
+.tf-row {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  padding: 12px 14px; min-height: 68px; border-radius: 14px;
+  border: 1.5px solid var(--line); background: var(--panel); color: var(--ink);
+}
+.tf-row.active { border-color: var(--green); background: var(--green-soft); }
+.tf-row .tf-main { flex: 1; min-width: 0; }
+.tf-row .tf-name { font-size: 15.5px; font-weight: 600; }
+.tf-row .tf-sample { font-size: 17px; line-height: 1.45; margin-top: 2px; word-break: keep-all; }
+.tf-row .tf-desc { font-size: 12px; color: var(--sub); margin-top: 3px; }
+.tf-row .tf-check {
+  width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--line); flex: none;
+  display: flex; align-items: center; justify-content: center; color: transparent;
+}
+.tf-row.active .tf-check { background: var(--green); border-color: var(--green); color: #fff; }
+.tf-row.loading .tf-check {
+  border-color: var(--green); border-top-color: transparent; background: transparent; color: transparent;
+  animation: tf-spin .8s linear infinite;
+}
+@keyframes tf-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .tf-row.loading .tf-check { animation: none; } }
+@media (hover: hover) and (pointer: fine) { .tf-row:not(.active):hover { background: var(--hover); } }
 
 /* ==================== 風格切換（設定 → 外觀 → 風格） ==================== */
 

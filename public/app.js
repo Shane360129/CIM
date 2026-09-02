@@ -135,6 +135,7 @@ const state = {
   theme: localStorage.getItem('cim_theme') || 'auto',
   skin: localStorage.getItem('cim_skin') || 'ocean',
   fontSize: localStorage.getItem('cim_font') || 'md',
+  typeface: localStorage.getItem('cim_typeface') || 'default',
   stealth: localStorage.getItem('cim_stealth') === '1',
   pushOn: localStorage.getItem('cim_push') === '1',
   replyTarget: null,          // { id, convId, name, preview }
@@ -558,7 +559,8 @@ function renderSettings() {
         localStorage.setItem('cim_font', v);
         applyAppearance();
         renderSettings();
-      }))));
+      })),
+    setItem('字型', typefaceOf(state.typeface).name, openTypefacePicker)));
 
   // 通知
   const notifGroup = el('div', { class: 'set-group' },
@@ -1655,12 +1657,139 @@ const SKINS = [
   ['sunset', '夕陽', '#F9EDE2', '#D0703A'],
 ];
 
+/* ---------- 字型（設定 → 外觀 → 字型） ----------
+ * 只套用在本機（localStorage）。字型檔按需從 Google Fonts 下載：
+ *  - 選擇器打開時，只下載「預覽會用到的那幾十個字」的子集（text= 參數），幾 KB 而已
+ *  - 真正選用某個字型時才載入完整字型；系統字體完全不需下載
+ */
+const TF_SAMPLE = '親友專屬聊天室 Aa 123';
+const TYPEFACES = [
+  { key: 'default', name: '粉圓＋黑體', desc: '標題圓潤、內文清楚（預設）',
+    families: ['Huninn', 'Noto Sans TC:wght@300;400;500;700'], display: '--tf-round', body: '--tf-sans' },
+  { key: 'sans', name: '黑體', desc: '全部用思源黑體，最清楚好讀，長輩推薦',
+    families: ['Noto Sans TC:wght@300;400;500;700'], display: '--tf-sans', body: '--tf-sans' },
+  { key: 'serif', name: '宋體', desc: '思源宋體，書卷氣',
+    families: ['Noto Serif TC:wght@400;600;700'], display: '--tf-serif', body: '--tf-serif' },
+  { key: 'kai', name: '楷書', desc: '霞鶩文楷，像用毛筆寫的字',
+    families: ['LXGW WenKai TC:wght@400;700'], display: '--tf-kai', body: '--tf-kai' },
+  { key: 'hand', name: '手寫', desc: '芫荽，輕鬆的手寫感',
+    families: ['Iansui'], display: '--tf-hand', body: '--tf-hand' },
+  { key: 'system', name: '系統字體', desc: '用手機／電腦內建字體，開啟最快、不需下載',
+    families: [], display: '--tf-system', body: '--tf-system' },
+];
+const typefaceOf = (key) => TYPEFACES.find((t) => t.key === key) || TYPEFACES[0];
+const familyName = (f) => f.split(':')[0];
+const fontsUrl = (families, text) =>
+  'https://fonts.googleapis.com/css2?' +
+  families.map((f) => 'family=' + f.replace(/ /g, '+')).join('&') +
+  (text ? '&text=' + encodeURIComponent(text) : '') + '&display=swap';
+
+// 已載入完整字型的 family（index.html 靜態載入的預設字型也算）
+const loadedFamilies = new Set();
+for (const link of document.querySelectorAll('link[href*="fonts.googleapis.com"]')) {
+  if (link.href.includes('text=')) continue;
+  for (const m of link.href.matchAll(/family=([^&:]+)/g))
+    loadedFamilies.add(decodeURIComponent(m[1]).replace(/\+/g, ' '));
+}
+const fontLinkPromises = new Map();
+function addFontLink(href) {
+  if (fontLinkPromises.has(href)) return fontLinkPromises.get(href);
+  const p = new Promise((resolve, reject) => {
+    const link = el('link', { rel: 'stylesheet', href });
+    link.onload = () => resolve();
+    link.onerror = () => reject(new Error('font css failed'));
+    document.head.append(link);
+  });
+  fontLinkPromises.set(href, p);
+  return p;
+}
+
+// 載入某個字型的完整檔案；回傳的 Promise 在字型真的可用時才 resolve
+async function ensureTypefaceLoaded(key) {
+  const tf = typefaceOf(key);
+  const missing = tf.families.filter((f) => !loadedFamilies.has(familyName(f)));
+  if (!missing.length) return;
+  await addFontLink(fontsUrl(missing));
+  for (const f of missing) loadedFamilies.add(familyName(f));
+  if (document.fonts && document.fonts.load) {
+    await Promise.all(missing.map((f) => document.fonts.load(`16px "${familyName(f)}"`, TF_SAMPLE)));
+  }
+}
+
+// 選擇器預覽：只下載預覽字串用到的字元子集
+let previewFontsRequested = false;
+function loadTypefacePreviews() {
+  if (previewFontsRequested) return;
+  previewFontsRequested = true;
+  const fams = [];
+  for (const tf of TYPEFACES)
+    for (const f of tf.families)
+      if (!loadedFamilies.has(familyName(f)) && !fams.includes(f)) fams.push(f);
+  if (!fams.length) return;
+  const text = [...new Set((TYPEFACES.map((t) => t.name).join('') + TF_SAMPLE + '（預設）').split(''))].join('');
+  addFontLink(fontsUrl(fams, text)).catch(() => {});
+}
+
+function openTypefacePicker() {
+  loadTypefacePreviews();
+  const list = el('div', { class: 'tf-list', role: 'radiogroup', 'aria-label': '字型' });
+  const loading = new Set();
+  const render = () => {
+    list.textContent = '';
+    for (const tf of TYPEFACES) {
+      const active = state.typeface === tf.key;
+      const name = el('div', { class: 'tf-name', text: tf.name + (tf.key === 'default' ? '（預設）' : '') });
+      const sample = el('div', { class: 'tf-sample', text: TF_SAMPLE });
+      name.style.fontFamily = `var(${tf.display})`;
+      sample.style.fontFamily = `var(${tf.body})`;
+      list.append(el('button', {
+        type: 'button', role: 'radio', 'aria-checked': String(active),
+        class: 'tf-row' + (active ? ' active' : '') + (loading.has(tf.key) ? ' loading' : ''),
+        onclick: () => choose(tf.key),
+      },
+        el('div', { class: 'tf-main' }, name, sample, el('div', { class: 'tf-desc', text: tf.desc })),
+        el('span', { class: 'tf-check' }, icon('check', 14))));
+    }
+  };
+  const choose = async (key) => {
+    if (state.typeface === key) return;
+    state.typeface = key;
+    localStorage.setItem('cim_typeface', key);
+    applyAppearance();       // 立即套用（字型下載完成前先以備用字體顯示）
+    renderSettings();        // 更新設定頁「字型」欄位的值
+    const tf = typefaceOf(key);
+    const needsDownload = tf.families.some((f) => !loadedFamilies.has(familyName(f)));
+    if (needsDownload) loading.add(key);
+    render();
+    if (!needsDownload) return;
+    try {
+      await ensureTypefaceLoaded(key);
+    } catch {
+      toast('字型下載失敗，先用備用字體顯示');
+    } finally {
+      loading.delete(key);
+      if (list.isConnected) render();
+    }
+  };
+  render();
+  const close = openModal(el('div', { class: 'modal' },
+    el('div', { class: 'modal-title', text: '字型' }),
+    el('div', { class: 'modal-body' },
+      el('p', { text: '點一下就會立即套用，只影響這台裝置。第一次使用某個字型需要下載，可能要等幾秒。' }),
+      list),
+    el('div', { class: 'modal-actions' },
+      el('button', { class: 'btn btn-primary', text: '完成', onclick: () => close() }))));
+}
+
 let systemDarkMq = null;
 function applyAppearance() {
   document.body.classList.remove('font-sm', 'font-lg', 'font-xl');
   if (state.fontSize !== 'md') document.body.classList.add('font-' + state.fontSize);
   for (const [key] of SKINS) document.body.classList.remove('skin-' + key);
   if (state.skin !== 'washi') document.body.classList.add('skin-' + state.skin);
+  for (const t of TYPEFACES) document.body.classList.remove('typeface-' + t.key);
+  if (state.typeface !== 'default') document.body.classList.add('typeface-' + state.typeface);
+  ensureTypefaceLoaded(state.typeface).catch(() => {});
   if (!systemDarkMq) {
     systemDarkMq = matchMedia('(prefers-color-scheme: dark)');
     systemDarkMq.addEventListener('change', () => {
