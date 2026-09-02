@@ -144,7 +144,7 @@ const state = {
 };
 
 const userOf = (id) => state.users.get(id) || null;
-const nameOf = (id) => (userOf(id) ? userOf(id).displayName : '未知');
+const nameOf = (id, fallback) => { const u = userOf(id); return u ? u.displayName : (fallback || '未知'); };
 const convById = (id) => state.convs.find((c) => c.id === id) || null;
 const isMemo = (conv) => conv.type === 'dm' && conv.members.length === 1;
 
@@ -358,7 +358,11 @@ async function loadConvs() {
 let convsChangedTimer = null;
 function scheduleConvReload() {
   clearTimeout(convsChangedTimer);
-  convsChangedTimer = setTimeout(() => loadConvs().catch(() => {}), 200);
+  convsChangedTimer = setTimeout(async () => {
+    await loadUsers().catch(() => {});
+    await loadConvs().catch(() => {});
+    renderFriends();
+  }, 200);
 }
 
 /* ---------- 分頁切換 ---------- */
@@ -450,6 +454,12 @@ function renderFriends() {
         el('div', { class: 'row-name', text: u.displayName + (u.isAdmin ? '　👑' : '') }),
         el('div', { class: 'row-sub', text: u.statusMessage || '@' + u.username }))));
   }
+  box.append(el('div', {
+    class: 'list-note',
+    text: state.me.isAdmin
+      ? '你是管理員，看得到所有成員。其他成員只會看到你，以及跟他同一個群組的人。'
+      : '為了保護隱私，這裡只會顯示管理員，以及跟你同一個群組的成員。',
+  }));
 }
 
 function showProfile(user) {
@@ -2126,7 +2136,7 @@ async function renderShopping() {
         check,
         el('div', { class: 'tmain' },
           el('div', { class: 'ttext', text: it.text }),
-          el('div', { class: 'tsub', text: it.done ? `${nameOf(it.doneBy)} 已買到` : `${nameOf(it.createdBy)} 新增` })),
+          el('div', { class: 'tsub', text: it.done ? `${nameOf(it.doneBy, it.doneByName)} 已買到` : `${nameOf(it.createdBy, it.createdByName)} 新增` })),
         el('button', {
           class: 'icon-btn', type: 'button', 'aria-label': '刪除',
           onclick: () => api(`/api/shopping/${it.id}`, { method: 'DELETE' })
@@ -2141,7 +2151,7 @@ function eventSub(ev2) {
   const parts = [`週${WEEKDAYS[d.getDay()]}`];
   if (ev2.time) parts.push(ev2.time);
   if (ev2.note) parts.push(ev2.note);
-  parts.push(`${nameOf(ev2.createdBy)} 建立`);
+  parts.push(`${nameOf(ev2.createdBy, ev2.createdByName)} 建立`);
   return parts.join(' · ');
 }
 

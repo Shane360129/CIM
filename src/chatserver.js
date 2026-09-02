@@ -257,7 +257,7 @@ export class ChatServer {
     if (method === 'GET' && pathname === '/api/me') return json({ user: pubUser(me) });
     if (method === 'PATCH' && pathname === '/api/me') return this.updateMe(request, me);
     if (method === 'POST' && pathname === '/api/me/password') return this.changePassword(request, me);
-    if (method === 'GET' && pathname === '/api/users') return this.listUsers();
+    if (method === 'GET' && pathname === '/api/users') return this.listUsers(me);
     if (method === 'GET' && pathname === '/api/conversations') return this.listConversations(me);
     if (method === 'POST' && pathname === '/api/conversations') return this.createConversation(request, me);
     if (method === 'GET' && pathname === '/api/search') return this.search(url, me);
@@ -463,7 +463,7 @@ export class ChatServer {
       }
     }
 
-    this.broadcastAll({ type: 'user', user: pubUser(row) });
+    this.sendToUsers(this.audienceOf(row), { type: 'user', user: pubUser(row) });
     const token = this.createSession(row.id);
     return json({ token, user: pubUser(row) });
   }
@@ -534,7 +534,7 @@ export class ChatServer {
     const row = this.sql
       .exec(`UPDATE users SET ${sets.join(', ')} WHERE id = ? RETURNING *`, ...args, me.id)
       .one();
-    this.broadcastAll({ type: 'user', user: pubUser(row) });
+    this.sendToUsers(this.audienceOf(row), { type: 'user', user: pubUser(row) });
     return json({ user: pubUser(row) });
   }
 
@@ -555,9 +555,56 @@ export class ChatServer {
     return json({ ok: true });
   }
 
-  listUsers() {
+  // ---------- 成員可見性 ----------
+  // 規則：管理員看得到所有人；一般成員只看得到「管理員」與「跟自己同一個聊天室的人」。
+  // 親友之間若沒被管理員拉進同一個群組，彼此完全看不到對方的帳號。
+
+  adminIds() {
+    return this.sql.exec(`SELECT id FROM users WHERE is_admin = 1`).toArray().map((r) => r.id);
+  }
+
+  // 與 userId 同在任一聊天室的其他成員 id
+  coMemberIds(userId) {
+    return this.sql
+      .exec(
+        `SELECT DISTINCT m2.user_id AS id FROM members m1
+         JOIN members m2 ON m2.conversation_id = m1.conversation_id
+         WHERE m1.user_id = ? AND m2.user_id != ?`, userId, userId)
+      .toArray()
+      .map((r) => r.id);
+  }
+
+  // me 看得到的使用者 id 集合；管理員回傳 null 代表「全部」
+  visibleUserIds(me) {
+    if (me.is_admin) return null;
+    return new Set([me.id, ...this.adminIds(), ...this.coMemberIds(me.id)]);
+  }
+
+  canSee(me, userId) {
+    if (me.is_admin || userId === me.id) return true;
+    return this.visibleUserIds(me).has(userId);
+  }
+
+  // 哪些人看得到 userRow（決定 'user' 即時事件要推播給誰）
+  audienceOf(userRow) {
+    if (userRow.is_admin)
+      return this.sql.exec(`SELECT id FROM users`).toArray().map((r) => r.id);
+    return [...new Set([userRow.id, ...this.adminIds(), ...this.coMemberIds(userRow.id)])];
+  }
+
+  // id → 暱稱（購物清單／行事曆為全家共用，建立者可能不在對方的可見名單內，所以直接附上名字）
+  userNames() {
+    const map = new Map();
+    for (const r of this.sql.exec(`SELECT id, display_name FROM users`).toArray())
+      map.set(r.id, r.display_name);
+    return map;
+  }
+
+  listUsers(me) {
     const rows = this.sql.exec(`SELECT * FROM users ORDER BY created_at`).toArray();
-    return json({ users: rows.map(pubUser) });
+    const visible = this.visibleUserIds(me);
+    const list = visible ? rows.filter((r) => visible.has(r.id)) : rows;
+    return json({ users: list.map(pubUser) });
   }
 
   // ---------- 聊天室 ----------
@@ -656,6 +703,7 @@ export class ChatServer {
       const otherId = Number(body.userId);
       const other = this.sql.exec(`SELECT id FROM users WHERE id = ?`, otherId).toArray()[0];
       if (!other) throw new HttpError(404, '找不到這位使用者');
+      if (!this.canSee(me, otherId)) throw new HttpError(403, '你無法與這位使用者建立聊天室');
       const conv = this.ensureDm(me.id, otherId);
       if (otherId !== me.id) this.sendToUsers([otherId], { type: 'conversations-changed' });
       return json({ conversation: this.convFor(conv, me.id) });
@@ -669,9 +717,11 @@ export class ChatServer {
         (Array.isArray(body.memberIds) ? body.memberIds : []).map(Number).filter(Number.isInteger));
       ids.add(me.id);
       if (ids.size < 2) throw new HttpError(400, '請至少選擇一位成員');
-      for (const uid of ids)
+      for (const uid of ids) {
         if (!this.sql.exec(`SELECT id FROM users WHERE id = ?`, uid).toArray().length)
           throw new HttpError(404, '有成員不存在，請重新整理後再試');
+        if (!this.canSee(me, uid)) throw new HttpError(403, '只能邀請你看得到的成員加入群組');
+      }
 
       const now = Date.now();
       const conv = this.ctx.storage.transactionSync(() => {
@@ -927,6 +977,7 @@ export class ChatServer {
     for (const uid of new Set(ids)) {
       const user = this.sql.exec(`SELECT * FROM users WHERE id = ?`, uid).toArray()[0];
       if (!user || this.memberOf(conversationId, uid)) continue;
+      if (!this.canSee(me, uid)) throw new HttpError(403, '只能邀請你看得到的成員加入群組');
       this.sql.exec(
         `INSERT INTO members (conversation_id, user_id, joined_at) VALUES (?, ?, ?)`,
         conversationId, uid, now);
@@ -1121,17 +1172,20 @@ export class ChatServer {
 
   // ---------- 購物清單 ----------
 
-  pubShopping(row) {
+  pubShopping(row, names = this.userNames()) {
     return {
       id: row.id, text: row.text, done: !!row.done,
       createdBy: row.created_by, createdAt: row.created_at, doneBy: row.done_by,
+      createdByName: names.get(row.created_by) || null,
+      doneByName: row.done_by ? names.get(row.done_by) || null : null,
     };
   }
 
   listShopping() {
     const rows = this.sql
       .exec(`SELECT * FROM shopping ORDER BY done ASC, id DESC LIMIT 200`).toArray();
-    return json({ items: rows.map((r) => this.pubShopping(r)) });
+    const names = this.userNames();
+    return json({ items: rows.map((r) => this.pubShopping(r, names)) });
   }
 
   async addShopping(request, me) {
@@ -1168,17 +1222,19 @@ export class ChatServer {
 
   // ---------- 家庭行事曆（DO Alarm 到時提醒）----------
 
-  pubEvent(row) {
+  pubEvent(row, names = this.userNames()) {
     return {
       id: row.id, title: row.title, date: row.date, time: row.time, note: row.note,
       remindAt: row.remind_at, createdBy: row.created_by, createdAt: row.created_at,
       reminded: !!row.reminded,
+      createdByName: names.get(row.created_by) || null,
     };
   }
 
   listEvents() {
     const rows = this.sql.exec(`SELECT * FROM events ORDER BY remind_at ASC LIMIT 200`).toArray();
-    return json({ events: rows.map((r) => this.pubEvent(r)) });
+    const names = this.userNames();
+    return json({ events: rows.map((r) => this.pubEvent(r, names)) });
   }
 
   async addEvent(request, me) {
@@ -1252,7 +1308,7 @@ export class ChatServer {
     for (const ws of this.ctx.getWebSockets(`u:${userId}`)) {
       try { ws.close(4003, 'removed'); } catch {}
     }
-    this.broadcastAll({ type: 'user', user: pubUser(updated) });
+    this.sendToUsers(this.audienceOf(updated), { type: 'user', user: pubUser(updated) });
     return json({ ok: true });
   }
 
