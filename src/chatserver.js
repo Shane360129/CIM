@@ -15,7 +15,8 @@ const MAX_REACTION = 16;
 const MAX_STICKER_IMG = 90000; // 自訂貼圖 data URL 上限（約 65KB 圖檔）
 const MAX_STICKERS = 100;
 const MAX_WALLPAPER = 450000; // 聊天室背景 data URL 上限（約 330KB 圖檔）
-const LINK_FETCH_BYTES = 131072; // 連結預覽最多讀 128KB HTML
+const LINK_FETCH_BYTES = 262144; // 連結預覽最多讀 256KB HTML
+const LINK_IMAGE_BYTES = 3000000; // 連結預覽縮圖代理上限（約 3MB）
 const PUSH_THROTTLE = 60000; // 每人離線推播最小間隔
 
 const SCHEMA = `
@@ -195,32 +196,122 @@ CREATE TABLE IF NOT EXISTS contacts (
 );
 `;
 
-const URL_RE = /https?:\/\/[^\s<>"']+/;
+// 訊息中的網址：http(s):// 或 www. 開頭，遇到空白、引號或中文標點即結束
+// （與前端 public/app.js 的 URL_RE / trimUrlTail 保持一致）
+const URL_RE = /(?:https?:\/\/|www\.)[^\s<>"'`\u3000、，。！？：；（）「」『』【】《》〈〉…]+/i;
 
-// 訊息中第一個可安全抓取預覽的網址（擋 IP、無點主機名、帳密夾帶）
-function firstHttpUrl(text) {
-  const m = text.match(URL_RE);
-  if (!m) return null;
+// 去掉黏在網址尾端的英文標點（句號、逗號、右括號…）；
+// 成對括號內的右括號保留，例如維基百科的 /wiki/Foo_(bar)
+function trimUrlTail(u) {
+  for (;;) {
+    const last = u[u.length - 1];
+    if (!last) return u;
+    if ('.,;:!?\'"'.includes(last)) { u = u.slice(0, -1); continue; }
+    const open = { ')': '(', ']': '[', '}': '{' }[last];
+    if (open && u.split(open).length < u.split(last).length) { u = u.slice(0, -1); continue; }
+    return u;
+  }
+}
+
+// www. 開頭的網址補上 https://
+function normalizeUrl(raw) {
+  const u = trimUrlTail(raw);
+  return /^https?:\/\//i.test(u) ? u : 'https://' + u;
+}
+
+// 可安全由伺服器抓取的網址（只允許 http/https；擋 IP、無點主機名、帳密夾帶、內網名稱）
+function safeRemoteUrl(str) {
   try {
-    const u = new URL(m[0]);
+    const u = new URL(str);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
     if (u.username || u.password) return null;
     const host = u.hostname;
-    if (!host.includes('.') || /^[\d.]+$/.test(host) || /^\[/.test(host) || host.endsWith('.local'))
+    if (!host.includes('.') || /^[\d.]+$/.test(host) || /^\[/.test(host) ||
+        /\.(local|localhost|internal|lan|home|arpa)$/i.test(host))
       return null;
     return u.href;
   } catch { return null; }
 }
 
+// 訊息中第一個可抓取預覽的網址
+function firstHttpUrl(text) {
+  const m = String(text).match(URL_RE);
+  return m ? safeRemoteUrl(normalizeUrl(m[0])) : null;
+}
+
+// 帶逾時的 fetch：外站沒回應時不拖住 Durable Object
+async function fetchWithTimeout(url, ms, init) {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), ms);
+  try {
+    return await fetch(url, { ...init, signal: ac.signal });
+  } finally { clearTimeout(timer); }
+}
+
+// 最多讀取 max 位元組後就取消串流（不把整個大檔載入記憶體）
+async function readCapped(body, max) {
+  const reader = body.getReader();
+  const chunks = [];
+  let size = 0;
+  while (size < max) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    size += value.byteLength;
+  }
+  try { await reader.cancel(); } catch {}
+  const out = new Uint8Array(size);
+  let off = 0;
+  for (const c of chunks) { out.set(c, off); off += c.byteLength; }
+  return out;
+}
+
 function htmlDecode(str) {
-  return str.replace(/&(amp|lt|gt|quot|#39|#x27|nbsp);/g, (x, k) =>
-    ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'", '#x27': "'", nbsp: ' ' }[k] || x));
+  const named = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+  return str.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (x, k) => {
+    if (k[0] === '#') {
+      const code = k[1] === 'x' || k[1] === 'X' ? parseInt(k.slice(2), 16) : parseInt(k.slice(1), 10);
+      return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : x;
+    }
+    return named[k.toLowerCase()] ?? x;
+  });
 }
 
 function ogTag(html, prop) {
-  const tag = html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${prop}["'][^>]*>`, 'i'));
-  if (!tag) return null;
-  const c = tag[0].match(/content=["']([^"']*)["']/i);
-  return c && c[1] ? htmlDecode(c[1]).trim() : null;
+  const re = new RegExp(`<meta\\s[^>]*?(?:property|name)\\s*=\\s*["']?${prop.replace(/[.:]/g, '\\$&')}["'\\s][^>]*>`, 'gi');
+  let m;
+  while ((m = re.exec(html))) {
+    const c = m[0].match(/content\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/i);
+    const v = c && (c[1] ?? c[2] ?? c[3]);
+    if (v && v.trim()) return htmlDecode(v).trim();
+  }
+  return null;
+}
+
+// 依序嘗試多個 meta 名稱，回傳第一個有值的
+function metaOf(html, names) {
+  for (const n of names) {
+    const v = ogTag(html, n);
+    if (v) return v;
+  }
+  return null;
+}
+
+// 從 content-type 或 HTML <meta charset> 取得編碼；Workers 的 TextDecoder 支援 big5/gbk 等
+function pickCharset(ctype, headBytes) {
+  const fromHeader = ctype.match(/charset=["']?([\w-]+)/i);
+  if (fromHeader) return fromHeader[1];
+  const ascii = new TextDecoder('latin1').decode(headBytes.subarray(0, 4096));
+  const fromMeta = ascii.match(/<meta[^>]+charset=["']?([\w-]+)/i);
+  return fromMeta ? fromMeta[1] : 'utf-8';
+}
+
+// 將 base64url 字串解回位元組；格式不合回傳 null
+function fromB64url(str) {
+  try {
+    const b64 = str.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (str.length % 4)) % 4);
+    return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  } catch { return null; }
 }
 
 const pubMessage = (row) => ({
@@ -252,6 +343,8 @@ function previewOf(row) {
   }
   return String(row.content).slice(0, 60);
 }
+
+export { firstHttpUrl, trimUrlTail, normalizeUrl, safeRemoteUrl, ogTag, metaOf, pickCharset, fromB64url };
 
 export class ChatServer {
   constructor(ctx, env) {
@@ -311,6 +404,7 @@ export class ChatServer {
 
     // 公開端點
     if (method === 'GET' && pathname === '/api/app-info') return this.appInfo();
+    if (method === 'GET' && pathname === '/api/link-image') return this.serveLinkImage(request, url);
     if (method === 'POST' && pathname === '/api/register') return this.register(request);
     if (method === 'POST' && pathname === '/api/login') return this.login(request);
 
@@ -1015,45 +1109,11 @@ export class ChatServer {
     return json({ message });
   }
 
-  // 送出含網址的訊息後，背景抓取網頁標題／摘要，補進 meta.link 並廣播更新
+  // 送出含網址的訊息後，背景抓取網頁標題／摘要／縮圖，補進 meta.link 並廣播更新
   async attachLinkPreview(messageId, conversationId, url) {
     try {
-      const ac = new AbortController();
-      const timer = setTimeout(() => ac.abort(), 6000);
-      let resp;
-      try {
-        resp = await fetch(url, {
-          signal: ac.signal,
-          redirect: 'follow',
-          headers: { 'user-agent': 'Mozilla/5.0 (compatible; CHAT-LinkPreview)', accept: 'text/html' },
-        });
-      } finally { clearTimeout(timer); }
-      const ctype = resp.headers.get('content-type') || '';
-      if (!resp.ok || !ctype.includes('text/html') || !resp.body) return;
-      const reader = resp.body.getReader();
-      const dec = new TextDecoder();
-      let html = '', size = 0;
-      while (size < LINK_FETCH_BYTES) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        size += value.byteLength;
-        html += dec.decode(value, { stream: true });
-      }
-      try { await reader.cancel(); } catch {}
-      let title = ogTag(html, 'og:title');
-      if (!title) {
-        const t = html.match(/<title[^>]*>([^<]*)<\/title>/i);
-        title = t && t[1] ? htmlDecode(t[1]).trim() : null;
-      }
-      if (!title) return;
-      const desc = ogTag(html, 'og:description') || ogTag(html, 'description');
-      const site = ogTag(html, 'og:site_name');
-      const link = {
-        url,
-        title: [...title].slice(0, 120).join(''),
-        desc: desc ? [...desc].slice(0, 200).join('') : null,
-        site: [...(site || new URL(url).hostname)].slice(0, 60).join(''),
-      };
+      const link = await this.fetchLinkPreview(url);
+      if (!link) return;
       const row = this.sql.exec(`SELECT * FROM messages WHERE id = ?`, messageId).toArray()[0];
       if (!row || row.deleted) return;
       const meta = row.meta ? JSON.parse(row.meta) : {};
@@ -1061,7 +1121,123 @@ export class ChatServer {
       this.sql.exec(`UPDATE messages SET meta = ? WHERE id = ?`, JSON.stringify(meta), messageId);
       const message = this.attachExtras([pubMessage({ ...row, meta: JSON.stringify(meta) })])[0];
       this.sendToUsers(this.memberIds(conversationId), { type: 'message-updated', message });
-    } catch {}
+    } catch (e) {
+      console.warn('link preview failed:', url, e && e.message);
+    }
+  }
+
+  // 抓取網頁並解析 Open Graph／Twitter Card／<title>；沒有標題就不做卡片
+  async fetchLinkPreview(url) {
+    const resp = await fetchWithTimeout(url, 6000, {
+      redirect: 'follow',
+      headers: {
+        'user-agent': 'Mozilla/5.0 (compatible; CHAT-LinkPreview/1.0; +https://github.com/Shane360129/CIM)',
+        accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5',
+        'accept-language': 'zh-TW,zh;q=0.9,en;q=0.7',
+      },
+    });
+    const ctype = resp.headers.get('content-type') || '';
+    if (!resp.ok || !/text\/html|application\/xhtml/i.test(ctype) || !resp.body) return null;
+    const bytes = await readCapped(resp.body, LINK_FETCH_BYTES);
+    let html;
+    try { html = new TextDecoder(pickCharset(ctype, bytes)).decode(bytes); }
+    catch { html = new TextDecoder().decode(bytes); }
+    // 只看 <body> 之前的部分即可，避免正文裡的假 meta
+    const headEnd = html.search(/<body[\s>]/i);
+    const head = headEnd > 0 ? html.slice(0, headEnd) : html;
+
+    let title = metaOf(head, ['og:title', 'twitter:title']);
+    if (!title) {
+      const t = head.match(/<title[^>]*>([^<]*)<\/title>/i);
+      title = t && t[1] ? htmlDecode(t[1]).trim() : null;
+    }
+    if (!title) return null;
+    const desc = metaOf(head, ['og:description', 'twitter:description', 'description']);
+    const site = metaOf(head, ['og:site_name', 'application-name']);
+    const finalUrl = safeRemoteUrl(resp.url) || url;
+
+    // 縮圖：解析相對路徑、只留可安全代理的 http(s) 圖片，並簽章後經由 /api/link-image 供應
+    let image = null;
+    const rawImg = metaOf(head, ['og:image:secure_url', 'og:image', 'og:image:url', 'twitter:image', 'twitter:image:src']);
+    if (rawImg) {
+      try {
+        const abs = safeRemoteUrl(new URL(rawImg, finalUrl).href);
+        if (abs && abs.length <= 2000) image = await this.signLinkImage(abs);
+      } catch {}
+    }
+    return {
+      url,
+      title: [...title].slice(0, 120).join(''),
+      desc: desc ? [...desc.replace(/\s+/g, ' ')].slice(0, 200).join('') : null,
+      site: [...(site || new URL(finalUrl).hostname)].slice(0, 60).join(''),
+      image,
+    };
+  }
+
+  // 縮圖代理簽章金鑰：首次使用時隨機產生並存入 settings，之後所有實例共用
+  async linkImageKey() {
+    if (this._linkImageKey) return this._linkImageKey;
+    let secret = this.getSetting('link_image_secret');
+    if (!secret) {
+      secret = randomHex(32);
+      this.setSetting('link_image_secret', secret);
+    }
+    this._linkImageKey = await crypto.subtle.importKey(
+      'raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
+    return this._linkImageKey;
+  }
+
+  async signLinkImage(imgUrl) {
+    const key = await this.linkImageKey();
+    const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(imgUrl));
+    return `/api/link-image?u=${encodeURIComponent(imgUrl)}&s=${b64url(sig)}`;
+  }
+
+  // 連結預覽縮圖代理：瀏覽器的 <img> 不會帶登入權杖，改以 HMAC 簽章驗證，
+  // 只有伺服器產生預覽時簽過的網址才能透過這裡取圖（不是開放代理）。
+  // 好處：CSP 維持只允許同源圖片、外站看不到親友的 IP、可被 Cloudflare 快取。
+  async serveLinkImage(request, url) {
+    const target = url.searchParams.get('u') || '';
+    const sigBytes = fromB64url(url.searchParams.get('s') || '');
+    if (!target || !sigBytes || sigBytes.length !== 32) throw new HttpError(403, '簽章無效');
+    const key = await this.linkImageKey();
+    const ok = await crypto.subtle.verify('HMAC', key, sigBytes, new TextEncoder().encode(target));
+    if (!ok) throw new HttpError(403, '簽章無效');
+    if (!safeRemoteUrl(target)) throw new HttpError(400, '網址不合法');
+
+    let cache = null;
+    try { cache = caches.default; } catch {}
+    if (cache) {
+      const hit = await cache.match(request.url).catch(() => null);
+      if (hit) return hit;
+    }
+
+    let resp;
+    try {
+      resp = await fetchWithTimeout(target, 8000, {
+        redirect: 'follow',
+        headers: { 'user-agent': 'Mozilla/5.0 (compatible; CHAT-LinkPreview/1.0)', accept: 'image/*' },
+      });
+    } catch { throw new HttpError(502, '無法取得圖片'); }
+    const ctype = (resp.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+    if (!resp.ok || !resp.body || !/^image\/(jpeg|png|gif|webp|avif)$/.test(ctype))
+      throw new HttpError(502, '不是支援的圖片');
+    const declared = Number(resp.headers.get('content-length'));
+    if (declared > LINK_IMAGE_BYTES) throw new HttpError(502, '圖片過大');
+    const bytes = await readCapped(resp.body, LINK_IMAGE_BYTES + 1);
+    if (bytes.byteLength > LINK_IMAGE_BYTES) throw new HttpError(502, '圖片過大');
+
+    const out = new Response(bytes, {
+      headers: {
+        'content-type': ctype,
+        'cache-control': 'public, max-age=604800, immutable',
+        'x-content-type-options': 'nosniff',
+        'content-security-policy': "default-src 'none'",
+        'content-disposition': 'inline',
+      },
+    });
+    if (cache) this.ctx.waitUntil(cache.put(request.url, out.clone()).catch(() => {}));
+    return out;
   }
 
   // 個人化設定：聊天室置頂、聊天室背景（只影響自己，跨裝置同步）

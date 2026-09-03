@@ -47,6 +47,7 @@ const ICONS = {
   pause: '<rect x="5" y="4" width="5" height="16" rx="1"/><rect x="14" y="4" width="5" height="16" rx="1"/>',
   trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
   reply: '<polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
 };
 
 function iconSvg(name) {
@@ -99,7 +100,23 @@ function toast(msg) {
   setTimeout(() => t.remove(), 2600);
 }
 
-const URL_RE = /(https?:\/\/[^\s<>"']+)/g;
+// 訊息中的網址：http(s):// 或 www. 開頭，遇到空白、引號或中文標點即結束
+// （與伺服器 src/chatserver.js 的 URL_RE / trimUrlTail 保持一致）
+const URL_RE = /(?:https?:\/\/|www\.)[^\s<>"'`\u3000、，。！？：；（）「」『』【】《》〈〉…]+/gi;
+
+// 去掉黏在網址尾端的英文標點（句號、逗號、右括號…）；
+// 成對括號內的右括號保留，例如維基百科的 /wiki/Foo_(bar)
+function trimUrlTail(u) {
+  for (;;) {
+    const last = u[u.length - 1];
+    if (!last) return u;
+    if ('.,;:!?\'"'.includes(last)) { u = u.slice(0, -1); continue; }
+    const open = { ')': '(', ']': '[', '}': '{' }[last];
+    if (open && u.split(open).length < u.split(last).length) { u = u.slice(0, -1); continue; }
+    return u;
+  }
+}
+
 // 只允許 http/https 連結；擋掉 javascript:/data: 等偽裝網址（避免點擊執行程式碼）。
 // 協定驗證通過就回傳原字串，保留使用者看到的網址原樣（不做正規化）
 function safeHttpUrl(u) {
@@ -109,14 +126,22 @@ function safeHttpUrl(u) {
   } catch { return null; }
 }
 
+// 把文字中的網址轉成可點的超連結（新分頁開啟），其餘維持純文字
 function renderText(text) {
   const frag = document.createDocumentFragment();
-  const parts = text.split(URL_RE);
-  parts.forEach((part, i) => {
-    const href = i % 2 === 1 ? safeHttpUrl(part) : null;
-    if (href) frag.append(el('a', { href, target: '_blank', rel: 'noopener noreferrer nofollow', text: part }));
-    else if (part) frag.append(part);
-  });
+  let last = 0;
+  for (const m of text.matchAll(URL_RE)) {
+    const raw = trimUrlTail(m[0]);
+    if (!raw) continue;
+    const href = safeHttpUrl(/^https?:\/\//i.test(raw) ? raw : 'https://' + raw);
+    if (!href) continue;
+    if (m.index > last) frag.append(text.slice(last, m.index));
+    frag.append(el('a', {
+      class: 'msg-link', href, target: '_blank', rel: 'noopener noreferrer nofollow', text: raw,
+    }));
+    last = m.index + raw.length;
+  }
+  if (last < text.length) frag.append(text.slice(last));
   return frag;
 }
 
@@ -1002,16 +1027,32 @@ function buildMessageContent(m) {
   if (m.type === 'poll') return buildPollCard(m);
   const frag = document.createDocumentFragment();
   frag.append(el('div', { class: 'bubble' }, renderText(m.content)));
-  if (m.meta && m.meta.link) {
-    const L = m.meta.link;
-    frag.append(el('a', {
-      class: 'link-card', href: safeHttpUrl(L.url) || '#', target: '_blank', rel: 'noopener noreferrer nofollow',
-    },
-      el('div', { class: 'lc-title', text: L.title }),
-      L.desc ? el('div', { class: 'lc-desc', text: L.desc }) : null,
-      el('div', { class: 'lc-site', text: L.site || '' })));
-  }
+  if (m.meta && m.meta.link && m.meta.link.title) frag.append(buildLinkCard(m.meta.link));
   return frag;
+}
+
+// 連結預覽卡片：縮圖（由伺服器簽章的同源代理供應）＋標題／摘要／站名，整張可點
+function buildLinkCard(L) {
+  const href = safeHttpUrl(L.url);
+  if (!href) return null;
+  let host = L.site || '';
+  if (!host) { try { host = new URL(href).hostname; } catch {} }
+  // 只接受伺服器產生的代理路徑，避免載入任意外站圖片（CSP 也只允許同源）
+  const imgSrc = typeof L.image === 'string' && L.image.startsWith('/api/link-image?') ? L.image : null;
+  const card = el('a', {
+    class: 'link-card' + (imgSrc ? ' has-img' : ''), href, target: '_blank',
+    rel: 'noopener noreferrer nofollow', title: href,
+  });
+  if (imgSrc) {
+    const img = el('img', { class: 'lc-img', src: imgSrc, alt: '', loading: 'lazy', decoding: 'async' });
+    img.addEventListener('error', () => { img.remove(); card.classList.remove('has-img'); });
+    card.append(img);
+  }
+  card.append(el('div', { class: 'lc-body' },
+    el('div', { class: 'lc-title', text: L.title }),
+    L.desc ? el('div', { class: 'lc-desc', text: L.desc }) : null,
+    el('div', { class: 'lc-site' }, icon('globe', 12), el('span', { class: 'lc-host', text: host }))));
+  return card;
 }
 
 function buildCustomSticker(sid) {
