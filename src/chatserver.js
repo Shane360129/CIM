@@ -743,19 +743,26 @@ export class ChatServer {
   }
 
   // me 看得到的使用者 id 集合；管理員回傳 null 代表「全部」
+  // 管理員設定「好友名單隱私」：開啟（預設）時親友只看得到管理員與同群組成員；關閉則全部互相可見
+  privacyOn() {
+    return this.getSetting('privacy_contacts') !== '0';
+  }
+
+  // me 看得見哪些使用者；null 代表全部
   visibleUserIds(me) {
-    if (me.is_admin) return null;
+    if (me.is_admin || !this.privacyOn()) return null;
     return new Set([me.id, ...this.adminIds(), ...this.coMemberIds(me.id)]);
   }
 
   canSee(me, userId) {
     if (me.is_admin || userId === me.id) return true;
-    return this.visibleUserIds(me).has(userId);
+    const visible = this.visibleUserIds(me);
+    return !visible || visible.has(userId);
   }
 
   // 哪些人看得到 userRow（決定 'user' 即時事件要推播給誰）
   audienceOf(userRow) {
-    if (userRow.is_admin)
+    if (userRow.is_admin || !this.privacyOn())
       return this.sql.exec(`SELECT id FROM users`).toArray().map((r) => r.id);
     return [...new Set([userRow.id, ...this.adminIds(), ...this.coMemberIds(userRow.id)])];
   }

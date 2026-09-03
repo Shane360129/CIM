@@ -41,6 +41,15 @@
   --tf-serif: "Noto Serif TC", "Songti TC", "PMingLiU", "Noto Sans TC", "Microsoft JhengHei", serif;
   --tf-kai: "LXGW WenKai TC", "Kaiti TC", "DFKai-SB", "Noto Sans TC", "Microsoft JhengHei", serif;
   --tf-hand: "Iansui", "Huninn", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  /* 自架手寫字（public/fonts/）：缺字依序退到芫荽、黑體 */
+  --tf-chenyu: "Chenyuluoyan", "Iansui", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --tf-jason: "JasonHandwriting", "Iansui", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --tf-marker: "LXGW Marker Gothic", "Iansui", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  /* 日系手寫：缺的繁體字自動退到芫荽 */
+  --tf-klee: "Klee One", "Iansui", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --tf-yomogi: "Yomogi", "Iansui", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --tf-hachi: "Hachi Maru Pop", "Iansui", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --tf-yuji: "Yuji Syuku", "Iansui", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
   --tf-system: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei",
     "Helvetica Neue", Arial, sans-serif;
   --font-body: var(--tf-sans);
@@ -897,11 +906,48 @@ body.typeface-serif { --font-body: var(--tf-serif); --font-display: var(--tf-ser
 body.typeface-kai { --font-body: var(--tf-kai); --font-display: var(--tf-kai); --display-weight: 700; }
 body.typeface-hand { --font-body: var(--tf-hand); --font-display: var(--tf-hand); --display-weight: 400; }
 body.typeface-system { --font-body: var(--tf-system); --font-display: var(--tf-system); --display-weight: 600; }
+body.typeface-chenyu { --font-body: var(--tf-chenyu); --font-display: var(--tf-chenyu); --display-weight: 400; }
+body.typeface-jason { --font-body: var(--tf-jason); --font-display: var(--tf-jason); --display-weight: 400; }
+body.typeface-marker { --font-body: var(--tf-marker); --font-display: var(--tf-marker); --display-weight: 400; }
+body.typeface-klee { --font-body: var(--tf-klee); --font-display: var(--tf-klee); --display-weight: 400; }
+body.typeface-yomogi { --font-body: var(--tf-yomogi); --font-display: var(--tf-yomogi); --display-weight: 400; }
+body.typeface-hachi { --font-body: var(--tf-hachi); --font-display: var(--tf-hachi); --display-weight: 400; }
+body.typeface-yuji { --font-body: var(--tf-yuji); --font-display: var(--tf-yuji); --display-weight: 400; }
 /* 楷書、手寫字型的字面偏小，內文稍微放大以維持相同的閱讀感 */
-body.typeface-kai, body.typeface-hand { --tf-scale: 1.06; }
+/* 手寫字型的字面通常偏小、筆畫細，整體放大一點才好讀 */
+body.typeface-kai, body.typeface-hand, body.typeface-marker, body.typeface-klee { --tf-scale: 1.06; }
+body.typeface-chenyu, body.typeface-jason, body.typeface-yomogi, body.typeface-hachi, body.typeface-yuji { --tf-scale: 1.1; }
+/* 辰宇落雁體是 Thin 字重，筆畫很細：加一點描邊讓小字在手機上也看得清 */
+body.typeface-chenyu { -webkit-text-stroke: .22px currentColor; }
 
 /* 字型選擇器：每一列直接用該字型顯示名稱與範例，所見即所得 */
+.modal-tf { max-width: 440px; }
 .tf-list { display: flex; flex-direction: column; gap: 8px; padding: 2px 0 6px; }
+.tf-group { padding: 12px 2px 2px; }
+.tf-group:first-child { padding-top: 4px; }
+.tf-group-name { font-size: 12.5px; font-weight: 700; letter-spacing: .08em; color: var(--sub); }
+.tf-group-note { font-size: 12px; color: var(--meta-ink); margin-top: 3px; line-height: 1.5; }
+.tf-tag {
+  display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+  font-size: 11px; font-weight: 600; background: var(--pill-bg); color: var(--pill-ink); vertical-align: 1px;
+}
+/* 選擇器頂端的即時對話預覽 */
+.tf-preview {
+  border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px 12px; margin: 4px 0 2px;
+  background: var(--room-bg); display: flex; flex-direction: column; gap: 6px;
+}
+.tfp-name { font-family: var(--font-display); font-weight: var(--display-weight, 600); font-size: 13px; color: var(--sub); margin-bottom: 2px; }
+.tfp-line { display: flex; }
+.tfp-line.mine { justify-content: flex-end; }
+.tfp-bubble {
+  font-family: var(--font-body); font-size: calc(15.5px * var(--tf-scale, 1)); line-height: 1.5;
+  padding: 7px 11px; border-radius: 15px; max-width: 82%;
+  background: var(--bubble-other); border: 1px solid var(--bubble-line); border-top-left-radius: 5px;
+}
+.tfp-line.mine .tfp-bubble {
+  background: var(--bubble-me); color: var(--bubble-me-ink); border-color: transparent;
+  border-top-left-radius: 15px; border-top-right-radius: 5px;
+}
 .tf-row {
   display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
   padding: 12px 14px; min-height: 68px; border-radius: 14px;

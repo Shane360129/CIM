@@ -671,6 +671,15 @@ async function openDmWith(userId) {
 
 /* ---------- 設定 ---------- */
 
+// 設定頁的「字型」列：值用該字型本身顯示
+function typefaceSettingItem() {
+  const tf = typefaceOf(state.typeface);
+  const item = setItem('字型', tf.name, openTypefacePicker);
+  const value = item.querySelector('.value');
+  if (value) value.style.fontFamily = `var(${tf.body})`;
+  return item;
+}
+
 function setItem(label, value, onclick) {
   return el('button', { class: 'set-item', onclick },
     el('span', { class: 'grow', text: label }),
@@ -735,7 +744,7 @@ function renderSettings() {
         applyAppearance();
         renderSettings();
       })),
-    setItem('字型', typefaceOf(state.typeface).name, openTypefacePicker)));
+    typefaceSettingItem()));
 
   // 加入主畫面
   if (canInstall()) {
@@ -2094,24 +2103,52 @@ const SKINS = [
 ];
 
 /* ---------- 字型（設定 → 外觀 → 字型） ----------
- * 只套用在本機（localStorage）。字型檔按需從 Google Fonts 下載：
- *  - 選擇器打開時，只下載「預覽會用到的那幾十個字」的子集（text= 參數），幾 KB 而已
- *  - 真正選用某個字型時才載入完整字型；系統字體完全不需下載
+ * 只套用在本機（localStorage）。字型檔按需下載：
+ *  - Google Fonts 字型：選擇器打開時只下載「預覽會用到的那幾十個字」的子集（text= 參數），
+ *    真正選用時才載入完整字型
+ *  - 自架字型（public/fonts/）：已切成上百個 woff2 小檔，CSS 以 unicode-range 標示，
+ *    瀏覽器只抓畫面上真的用到的那幾片，第一次看到的字才下載
+ *  - 系統字體完全不需下載
+ * 日系手寫字缺少的繁體字（你、說、嗎…）會自動改用芫荽顯示，所以一併載入芫荽當備援。
  */
-const TF_SAMPLE = '親友專屬聊天室 Aa 123';
+const TF_SAMPLE = '晚餐吃什麼？記得帶傘喔 Aa 123';
+const TF_GROUPS = [
+  { key: 'basic', name: '基本', note: null },
+  { key: 'hand', name: '手寫・繁體完整', note: '台灣設計、免費開源的手寫字，每個繁體字都有。' },
+  { key: 'jp', name: '日系手寫', note: '日本字型，少數繁體字會自動改用「芫荽」顯示。' },
+];
 const TYPEFACES = [
-  { key: 'default', name: '粉圓＋黑體', desc: '標題圓潤、內文清楚（預設）',
+  // 基本
+  { key: 'default', group: 'basic', name: '粉圓＋黑體', desc: '標題圓潤、內文清楚（預設）',
     families: ['Huninn', 'Noto Sans TC:wght@300;400;500;700'], display: '--tf-round', body: '--tf-sans' },
-  { key: 'sans', name: '黑體', desc: '全部用思源黑體，最清楚好讀，長輩推薦',
+  { key: 'sans', group: 'basic', name: '黑體', desc: '全部用思源黑體，最清楚好讀，長輩推薦',
     families: ['Noto Sans TC:wght@300;400;500;700'], display: '--tf-sans', body: '--tf-sans' },
-  { key: 'serif', name: '宋體', desc: '思源宋體，書卷氣',
+  { key: 'serif', group: 'basic', name: '宋體', desc: '思源宋體，書卷氣',
     families: ['Noto Serif TC:wght@400;600;700'], display: '--tf-serif', body: '--tf-serif' },
-  { key: 'kai', name: '楷書', desc: '霞鶩文楷，像用毛筆寫的字',
+  { key: 'kai', group: 'basic', name: '楷書', desc: '霞鶩文楷，像用毛筆寫的字',
     families: ['LXGW WenKai TC:wght@400;700'], display: '--tf-kai', body: '--tf-kai' },
-  { key: 'hand', name: '手寫', desc: '芫荽，輕鬆的手寫感',
-    families: ['Iansui'], display: '--tf-hand', body: '--tf-hand' },
-  { key: 'system', name: '系統字體', desc: '用手機／電腦內建字體，開啟最快、不需下載',
+  { key: 'system', group: 'basic', name: '系統字體', desc: '用手機／電腦內建字體，開啟最快、不需下載',
     families: [], display: '--tf-system', body: '--tf-system' },
+  // 手寫（繁體完整）
+  { key: 'hand', group: 'hand', name: '芫荽', desc: '輕鬆自然的手寫感，筆畫清楚',
+    families: ['Iansui'], display: '--tf-hand', body: '--tf-hand' },
+  { key: 'chenyu', group: 'hand', name: '辰宇落雁體', desc: '台灣人氣手寫字，秀氣又工整',
+    families: [], css: '/fonts/chenyuluoyan.css', local: 'Chenyuluoyan',
+    display: '--tf-chenyu', body: '--tf-chenyu' },
+  { key: 'jason', group: 'hand', name: '清松手寫體', desc: '隨性的日常筆跡，像朋友寫的便條',
+    families: [], css: '/fonts/jason-handwriting.css', local: 'JasonHandwriting',
+    display: '--tf-jason', body: '--tf-jason' },
+  { key: 'marker', group: 'hand', name: '霞鶩漫黑', desc: '麥克筆手寫感，筆畫粗一點更好讀',
+    families: ['LXGW Marker Gothic'], display: '--tf-marker', body: '--tf-marker' },
+  // 日系手寫（缺字以芫荽補）
+  { key: 'klee', group: 'jp', name: 'Klee 硬筆', desc: '像用鉛筆寫在筆記本上，整齊',
+    families: ['Klee One', 'Iansui'], display: '--tf-klee', body: '--tf-klee' },
+  { key: 'yomogi', group: 'jp', name: 'Yomogi 隨筆', desc: '隨手寫的鉛筆字，輕鬆',
+    families: ['Yomogi', 'Iansui'], display: '--tf-yomogi', body: '--tf-yomogi' },
+  { key: 'hachi', group: 'jp', name: '八丸 POP', desc: '圓圓的可愛少女字',
+    families: ['Hachi Maru Pop', 'Iansui'], display: '--tf-hachi', body: '--tf-hachi' },
+  { key: 'yuji', group: 'jp', name: 'Yuji 毛筆', desc: '毛筆書法，適合寫祝福',
+    families: ['Yuji Syuku', 'Iansui'], display: '--tf-yuji', body: '--tf-yuji' },
 ];
 const typefaceOf = (key) => TYPEFACES.find((t) => t.key === key) || TYPEFACES[0];
 const familyName = (f) => f.split(':')[0];
@@ -2140,51 +2177,96 @@ function addFontLink(href) {
   return p;
 }
 
+// 這個字型是否還有東西要下載
+function typefaceNeedsDownload(tf) {
+  if (tf.css && !loadedFamilies.has(tf.local)) return true;
+  return tf.families.some((f) => !loadedFamilies.has(familyName(f)));
+}
+
 // 載入某個字型的完整檔案；回傳的 Promise 在字型真的可用時才 resolve
 async function ensureTypefaceLoaded(key) {
   const tf = typefaceOf(key);
+  const jobs = [];
+  if (tf.css && !loadedFamilies.has(tf.local)) {
+    jobs.push(addFontLink(tf.css).then(() => { loadedFamilies.add(tf.local); }));
+  }
   const missing = tf.families.filter((f) => !loadedFamilies.has(familyName(f)));
-  if (!missing.length) return;
-  await addFontLink(fontsUrl(missing));
-  for (const f of missing) loadedFamilies.add(familyName(f));
+  if (missing.length) {
+    jobs.push(addFontLink(fontsUrl(missing)).then(() => {
+      for (const f of missing) loadedFamilies.add(familyName(f));
+    }));
+  }
+  if (!jobs.length) return;
+  await Promise.all(jobs);
   if (document.fonts && document.fonts.load) {
-    await Promise.all(missing.map((f) => document.fonts.load(`16px "${familyName(f)}"`, TF_SAMPLE)));
+    const fams = [...missing.map(familyName), ...(tf.local ? [tf.local] : [])];
+    await Promise.all(fams.map((f) => document.fonts.load(`16px "${f}"`, TF_SAMPLE)));
   }
 }
 
-// 選擇器預覽：只下載預覽字串用到的字元子集
+// 選擇器預覽：Google 字型只下載預覽字串用到的字元子集；自架字型掛上 CSS 即可（只會抓用到的切片）
 let previewFontsRequested = false;
 function loadTypefacePreviews() {
   if (previewFontsRequested) return;
   previewFontsRequested = true;
   const fams = [];
-  for (const tf of TYPEFACES)
+  for (const tf of TYPEFACES) {
+    if (tf.css) addFontLink(tf.css).then(() => { loadedFamilies.add(tf.local); }).catch(() => {});
     for (const f of tf.families)
       if (!loadedFamilies.has(familyName(f)) && !fams.includes(f)) fams.push(f);
+  }
   if (!fams.length) return;
   const text = [...new Set((TYPEFACES.map((t) => t.name).join('') + TF_SAMPLE + '（預設）').split(''))].join('');
   addFontLink(fontsUrl(fams, text)).catch(() => {});
 }
 
+// 選擇器頂端的即時預覽：用目前選到的字型畫兩句對話
+function buildTypefacePreview(tf) {
+  const line = (mine, text) => el('div', { class: 'tfp-line' + (mine ? ' mine' : '') },
+    el('div', { class: 'tfp-bubble', text }));
+  const box = el('div', { class: 'tf-preview', 'aria-hidden': 'true' },
+    el('div', { class: 'tfp-name', text: '家庭群組' }),
+    line(false, '晚餐吃什麼？'),
+    line(true, '想吃火鍋 🍲 記得帶傘喔'));
+  box.style.setProperty('--font-body', `var(${tf.body})`);
+  box.style.setProperty('--font-display', `var(${tf.display})`);
+  box.style.setProperty('--tf-scale', tf.group === 'basic' ? '1' : '1.08');
+  return box;
+}
+
 function openTypefacePicker() {
   loadTypefacePreviews();
+  const preview = el('div');
   const list = el('div', { class: 'tf-list', role: 'radiogroup', 'aria-label': '字型' });
   const loading = new Set();
   const render = () => {
+    preview.textContent = '';
+    preview.append(buildTypefacePreview(typefaceOf(state.typeface)));
     list.textContent = '';
-    for (const tf of TYPEFACES) {
-      const active = state.typeface === tf.key;
-      const name = el('div', { class: 'tf-name', text: tf.name + (tf.key === 'default' ? '（預設）' : '') });
-      const sample = el('div', { class: 'tf-sample', text: TF_SAMPLE });
-      name.style.fontFamily = `var(${tf.display})`;
-      sample.style.fontFamily = `var(${tf.body})`;
-      list.append(el('button', {
-        type: 'button', role: 'radio', 'aria-checked': String(active),
-        class: 'tf-row' + (active ? ' active' : '') + (loading.has(tf.key) ? ' loading' : ''),
-        onclick: () => choose(tf.key),
-      },
-        el('div', { class: 'tf-main' }, name, sample, el('div', { class: 'tf-desc', text: tf.desc })),
-        el('span', { class: 'tf-check' }, icon('check', 14))));
+    for (const g of TF_GROUPS) {
+      list.append(el('div', { class: 'tf-group' },
+        el('div', { class: 'tf-group-name', text: g.name }),
+        g.note ? el('div', { class: 'tf-group-note', text: g.note }) : null));
+      for (const tf of TYPEFACES) {
+        if (tf.group !== g.key) continue;
+        const active = state.typeface === tf.key;
+        const name = el('div', { class: 'tf-name', text: tf.name + (tf.key === 'default' ? '（預設）' : '') });
+        const sample = el('div', { class: 'tf-sample', text: TF_SAMPLE });
+        name.style.fontFamily = `var(${tf.display})`;
+        sample.style.fontFamily = `var(${tf.body})`;
+        const tags = [];
+        if (!tf.families.length && !tf.css) tags.push('免下載');
+        else if (loading.has(tf.key)) tags.push('下載中…');
+        list.append(el('button', {
+          type: 'button', role: 'radio', 'aria-checked': String(active),
+          class: 'tf-row' + (active ? ' active' : '') + (loading.has(tf.key) ? ' loading' : ''),
+          onclick: () => choose(tf.key),
+        },
+          el('div', { class: 'tf-main' }, name, sample,
+            el('div', { class: 'tf-desc' }, tf.desc,
+              tags.map((t) => el('span', { class: 'tf-tag', text: t })))),
+          el('span', { class: 'tf-check' }, icon('check', 14))));
+      }
     }
   };
   const choose = async (key) => {
@@ -2194,7 +2276,7 @@ function openTypefacePicker() {
     applyAppearance();       // 立即套用（字型下載完成前先以備用字體顯示）
     renderSettings();        // 更新設定頁「字型」欄位的值
     const tf = typefaceOf(key);
-    const needsDownload = tf.families.some((f) => !loadedFamilies.has(familyName(f)));
+    const needsDownload = typefaceNeedsDownload(tf);
     if (needsDownload) loading.add(key);
     render();
     if (!needsDownload) return;
@@ -2208,10 +2290,11 @@ function openTypefacePicker() {
     }
   };
   render();
-  const close = openModal(el('div', { class: 'modal' },
+  const close = openModal(el('div', { class: 'modal modal-tf' },
     el('div', { class: 'modal-title', text: '字型' }),
     el('div', { class: 'modal-body' },
-      el('p', { text: '點一下就會立即套用，只影響這台裝置。第一次使用某個字型需要下載，可能要等幾秒。' }),
+      preview,
+      el('p', { text: '點一下立即套用，只影響這台裝置。第一次使用某個字型需要下載，可能要等幾秒。' }),
       list),
     el('div', { class: 'modal-actions' },
       el('button', { class: 'btn btn-primary', text: '完成', onclick: () => close() }))));
