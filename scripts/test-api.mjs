@@ -136,6 +136,94 @@ r = await j(`/api/conversations/${groupId}/messages`, {}, TC);
 check('讀訊息會一起帶出遊戲狀態',
   r.data.messages?.filter((m) => m.type === 'game').every((m) => m.game && m.game.kind));
 
+// 四子棋：只指定直行，棋子自己落到底；連成四顆就贏
+r = await newGame('connect4', TA);
+const c4 = r.data.message?.id;
+check('開一局四子棋（7×6 空盤）', r.data.message?.game?.board?.length === 42);
+await act(c4, { action: 'join' }, TB);
+const drop = (tok, col) => act(c4, { action: 'move', col }, tok);
+check('沒有這一行會被擋', (await drop(TA, 9)).status === 400);
+for (let k = 0; k < 3; k++) { await drop(TA, k); await drop(TB, 6); }
+r = await drop(TA, 3);
+check('底列連成四顆就贏', r.data.game?.winner === 0 && r.data.game?.line?.length === 4);
+
+// 黑白棋：只能下在夾得到對手棋子的地方
+r = await newGame('reversi', TA);
+const rv = r.data.message?.id;
+check('黑白棋開局中央四子＋四個合法點',
+  r.data.message?.game?.counts?.join() === '2,2' && r.data.message?.game?.legal?.length === 4);
+await act(rv, { action: 'join' }, TB);
+check('夾不到的位置被擋', (await act(rv, { action: 'move', i: 0 }, TA)).status === 400);
+r = await act(rv, { action: 'move', i: 19 }, TA);
+check('夾住就翻面（黑 4 白 1）', r.data.game?.counts?.join() === '4,1' && r.data.game?.turn === 1);
+
+// 記憶翻翻樂：蓋著的牌伺服器不會送牌面
+r = await newGame('memory', TA);
+const mem = r.data.message?.id;
+check('記憶翻翻樂發 20 張、全部蓋著',
+  r.data.message?.game?.cards?.length === 20 &&
+  r.data.message.game.cards.every((c) => c === null));
+await act(mem, { action: 'join' }, TB);
+r = await act(mem, { action: 'move', i: 0 }, TA);
+check('翻開的那張才看得到圖案',
+  typeof r.data.game?.cards?.[0] === 'string' && r.data.game.cards[1] === null);
+check('同一張不能翻兩次', (await act(mem, { action: 'move', i: 0 }, TA)).status === 400);
+
+// 踩地雷：雷區不會外洩，第一下保證安全
+r = await newGame('mine', TA);
+const ms = r.data.message?.id;
+check('踩地雷開局 81 格全蓋著、沒有雷區資料',
+  r.data.message?.game?.view?.length === 81 &&
+  r.data.message.game.view.every((v) => v === null) &&
+  r.data.message.game.layout === undefined);
+r = await act(ms, { action: 'move', i: 40 }, TA);
+check('第一下一定不會爆炸', r.data.game?.over === false && r.data.game?.view?.[40] !== 'X');
+check('傳給前端的狀態仍然不含雷區', r.data.game?.layout === undefined);
+r = await act(ms, { action: 'move', i: 0, flag: true }, TA);
+check('可以插旗', r.data.game?.view?.[0] === 'F');
+check('不是操作者不能翻', (await act(ms, { action: 'move', i: 8 }, TB)).status === 403);
+
+// 猜數字：大家都能猜，答案不會先送出去
+r = await newGame('guess', TA);
+const gs = r.data.message?.id;
+check('猜數字開局不會洩漏答案', r.data.message?.game?.secret === null);
+check('位數不對被擋', (await act(gs, { action: 'move', guess: '123' }, TB)).status === 400);
+check('數字重複被擋', (await act(gs, { action: 'move', guess: '1123' }, TB)).status === 400);
+r = await act(gs, { action: 'move', guess: '0123' }, TC);
+const hint = r.data.game?.guesses?.[0];
+check('任何成員都能猜，並算出 A／B',
+  hint?.userId === IC && hint.a + hint.b <= 4 && r.data.game.secret === null);
+// 用 A／B 回饋一路縮小候選，驗證猜中會公布答案（通常 6～8 次就中）
+const ab = (secret, guess) => {
+  let a = 0, b = 0;
+  for (let i = 0; i < secret.length; i++) {
+    if (guess[i] === secret[i]) a++;
+    else if (secret.includes(guess[i])) b++;
+  }
+  return a + '/' + b;
+};
+let cands = [];
+for (const p1 of '0123456789') for (const p2 of '0123456789') for (const p3 of '0123456789') for (const p4 of '0123456789') {
+  const g4 = p1 + p2 + p3 + p4;
+  if (new Set(g4).size === 4) cands.push(g4);
+}
+let solved = null;
+let tries = 0;
+let guess = cands[0];
+while (!solved && tries < 12 && cands.length) {
+  tries++;
+  const res = await act(gs, { action: 'move', guess }, TA);
+  if (res.data.game?.winner) { solved = res.data.game; break; }
+  const last = res.data.game.guesses.at(-1);
+  const want = last.a + '/' + last.b;
+  cands = cands.filter((c) => ab(c, guess) === want);
+  guess = cands[0];
+}
+check(`用 A／B 提示 ${tries} 次內猜中，並公布答案`, solved?.winner === IA && typeof solved?.secret === 'string');
+check('猜中後不能再猜', (await act(gs, { action: 'move', guess: '9876' }, TB)).status === 400);
+r = await act(gs, { action: 'restart' }, TB);
+check('換一題會重新出題', r.data.game?.round === 2 && r.data.game?.guesses?.length === 0 && r.data.game?.secret === null);
+
 // 收尾：關閉邀請碼
 await j('/api/admin/settings', { method: 'PATCH', body: { inviteCode: '' } }, A0);
 

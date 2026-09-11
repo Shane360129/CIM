@@ -326,28 +326,55 @@ function fromB64url(str) {
 }
 
 // ---------- 小遊戲 ----------
-// 三款遊戲共用一套「狀態放伺服器、動作由伺服器判定」的作法：
-// 對戰型（圈圈叉叉、五子棋）有兩個座位，輪流下；
-// 合作型（2048）大家共用一盤，同一時間只有一位「操作者」能動，其他人只能看。
+// 所有遊戲共用一套「狀態放伺服器、動作由伺服器判定」的作法，分三種玩法：
+//   versus  兩個座位輪流下（圈圈叉叉、五子棋、四子棋、黑白棋、記憶翻翻樂）
+//   coop    大家共用一盤，同一時間只有一位「操作者」能動（2048、踩地雷）
+//   open    不分座位，聊天室裡誰都能出手（猜數字 1A2B）
+// 有藏資訊的遊戲（記憶翻翻樂的牌面、踩地雷的雷區、猜數字的答案）一律經
+// publicGame() 過濾後才送給前端，免得有人直接看 WebSocket 封包作弊。
 
 const GAME_KINDS = {
-  ooxx: { title: '圈圈叉叉', mode: 'versus', size: 3, need: 3 },
-  gomoku: { title: '五子棋', mode: 'versus', size: 13, need: 5 },
-  '2048': { title: '2048', mode: 'coop', size: 4 },
+  ooxx: { title: '圈圈叉叉', mode: 'versus', cols: 3, rows: 3, need: 3 },
+  gomoku: { title: '五子棋', mode: 'versus', cols: 13, rows: 13, need: 5 },
+  connect4: { title: '四子棋', mode: 'versus', cols: 7, rows: 6, need: 4 },
+  reversi: { title: '黑白棋', mode: 'versus', cols: 8, rows: 8 },
+  memory: { title: '記憶翻翻樂', mode: 'versus', cols: 5, rows: 4 },
+  '2048': { title: '2048', mode: 'coop', cols: 4, rows: 4 },
+  mine: { title: '踩地雷', mode: 'coop', cols: 9, rows: 9, mines: 10 },
+  guess: { title: '猜數字 1A2B', mode: 'open', len: 4 },
 };
 const GAME_IDLE = 60000; // 合作遊戲：操作者閒置超過 1 分鐘，其他人可直接接手
+const MEMORY_FACES = [
+  '🍎', '🍌', '🍇', '🍓', '🍑', '🍉', '🥝', '🍍', '🥑', '🌽',
+  '🍔', '🍟', '🍕', '🍩', '🍰', '🍦', '🧋', '☕', '🐶', '🐱',
+  '🐼', '🐸', '🐧', '🐙', '🦄', '⚽', '🚗', '🚀', '⭐', '🌈',
+];
 
-// 從 idx 往四個方向數同色棋子，達到 need 顆就回傳整條連線（圈圈叉叉＝3 顆、五子棋＝5 顆）
-function winLine(board, size, idx, player, need) {
-  const r0 = Math.floor(idx / size);
-  const c0 = idx % size;
+// 舊資料只存 size（正方形盤）；新資料存 cols／rows，讀取時一律正規化
+const dimsOf = (g) => ({ cols: g.cols || g.size, rows: g.rows || g.size });
+
+const randInt = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = randInt(i + 1);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// 從 idx 往四個方向數同色棋子，達到 need 顆就回傳整條連線
+// （圈圈叉叉 3 顆、四子棋 4 顆、五子棋 5 顆）
+function winLine(board, cols, rows, idx, player, need) {
+  const r0 = Math.floor(idx / cols);
+  const c0 = idx % cols;
   for (const [dr, dc] of [[0, 1], [1, 0], [1, 1], [1, -1]]) {
     const cells = [idx];
     for (const sign of [1, -1]) {
       let r = r0 + dr * sign;
       let c = c0 + dc * sign;
-      while (r >= 0 && r < size && c >= 0 && c < size && board[r * size + c] === player) {
-        cells.push(r * size + c);
+      while (r >= 0 && r < rows && c >= 0 && c < cols && board[r * cols + c] === player) {
+        cells.push(r * cols + c);
         r += dr * sign;
         c += dc * sign;
       }
@@ -406,9 +433,8 @@ function spawnTile(tiles) {
   const empty = [];
   tiles.forEach((v, i) => { if (!v) empty.push(i); });
   if (!empty.length) return -1;
-  const rnd = crypto.getRandomValues(new Uint32Array(2));
-  const idx = empty[rnd[0] % empty.length];
-  tiles[idx] = rnd[1] % 10 === 0 ? 4 : 2;
+  const idx = empty[randInt(empty.length)];
+  tiles[idx] = randInt(10) === 0 ? 4 : 2;
   return idx;
 }
 
@@ -425,31 +451,185 @@ function stuck2048(tiles, size) {
   return true;
 }
 
+// 黑白棋：往八個方向找「一段對手棋子後接自己棋子」，回傳所有會被夾住翻面的位置
+const REVERSI_DIRS = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
+
+function reversiFlips(board, size, idx, player) {
+  const flips = [];
+  if (board[idx]) return flips;
+  const r0 = Math.floor(idx / size);
+  const c0 = idx % size;
+  const other = player === 1 ? 2 : 1;
+  for (const [dr, dc] of REVERSI_DIRS) {
+    const run = [];
+    let r = r0 + dr;
+    let c = c0 + dc;
+    while (r >= 0 && r < size && c >= 0 && c < size && board[r * size + c] === other) {
+      run.push(r * size + c);
+      r += dr;
+      c += dc;
+    }
+    if (run.length && r >= 0 && r < size && c >= 0 && c < size && board[r * size + c] === player)
+      flips.push(...run);
+  }
+  return flips;
+}
+
+const reversiLegal = (board, size, player) => {
+  const out = [];
+  for (let i = 0; i < board.length; i++)
+    if (!board[i] && reversiFlips(board, size, i, player).length) out.push(i);
+  return out;
+};
+
+const reversiCounts = (board) => [
+  board.filter((v) => v === 1).length,
+  board.filter((v) => v === 2).length,
+];
+
+function reversiStart(size) {
+  const board = new Array(size * size).fill(0);
+  const m = size / 2;
+  board[(m - 1) * size + (m - 1)] = 2;
+  board[(m - 1) * size + m] = 1;
+  board[m * size + (m - 1)] = 1;
+  board[m * size + m] = 2;
+  return board;
+}
+
+// 記憶翻翻樂：抽 N 種圖案、每種兩張，洗牌後發下去
+function newMemoryCards(cols, rows) {
+  const faces = shuffle(MEMORY_FACES.slice()).slice(0, (cols * rows) / 2);
+  return shuffle([...faces, ...faces]);
+}
+
+// 踩地雷：第一次點開之後才佈雷，保證第一下與它周圍八格一定安全
+const mineNeighbors = (cols, rows, i) => {
+  const r0 = Math.floor(i / cols);
+  const c0 = i % cols;
+  const out = [];
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let dc = -1; dc <= 1; dc++) {
+      if (!dr && !dc) continue;
+      const r = r0 + dr;
+      const c = c0 + dc;
+      if (r >= 0 && r < rows && c >= 0 && c < cols) out.push(r * cols + c);
+    }
+  }
+  return out;
+};
+
+function mineLayout(cols, rows, mines, safeIdx) {
+  const safe = new Set([safeIdx, ...mineNeighbors(cols, rows, safeIdx)]);
+  const pool = [];
+  for (let i = 0; i < cols * rows; i++) if (!safe.has(i)) pool.push(i);
+  shuffle(pool);
+  const layout = new Array(cols * rows).fill(0);
+  for (const i of pool.slice(0, Math.min(mines, pool.length))) layout[i] = 1;
+  return layout;
+}
+
+const mineNear = (layout, cols, rows, i) =>
+  mineNeighbors(cols, rows, i).filter((n) => layout[n]).length;
+
+// 點到空白（周圍 0 顆雷）就一路往外翻開
+function mineFlood(g, start) {
+  const { cols, rows } = dimsOf(g);
+  const queue = [start];
+  while (queue.length) {
+    const i = queue.pop();
+    if (g.revealed[i]) continue;
+    g.revealed[i] = 1;
+    g.flags[i] = 0;
+    if (mineNear(g.layout, cols, rows, i) === 0)
+      for (const n of mineNeighbors(cols, rows, i)) if (!g.revealed[n]) queue.push(n);
+  }
+}
+
+// 踩地雷送給前端的樣子：沒翻開的格子不透露有沒有雷（結束才全部掀開）
+function mineView(g) {
+  const { cols, rows } = dimsOf(g);
+  return g.revealed.map((rev, i) => {
+    if (g.over && g.layout && g.layout[i]) return i === g.boom ? 'X' : 'M';
+    if (rev) return mineNear(g.layout || [], cols, rows, i);
+    if (g.flags[i]) return 'F';
+    return null;
+  });
+}
+
+// 猜數字：不重複的 len 位數字；A＝位置與數字都對，B＝數字有但位置不對
+const newSecret = (len) => shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).slice(0, len).join('');
+
+function abOf(secret, guess) {
+  let a = 0;
+  let b = 0;
+  for (let i = 0; i < secret.length; i++) {
+    if (guess[i] === secret[i]) a++;
+    else if (secret.includes(guess[i])) b++;
+  }
+  return { a, b };
+}
+
 function newGameState(kind, creatorId) {
   const def = GAME_KINDS[kind];
+  const cells = def.cols * def.rows;
   if (def.mode === 'versus') {
-    return {
-      kind, mode: 'versus', size: def.size, need: def.need,
-      board: new Array(def.size * def.size).fill(0),
-      seats: [creatorId, null], // 座位 0 先手；board 的值 1／2 對應座位 0／1
+    const g = {
+      kind, mode: 'versus', cols: def.cols, rows: def.rows, need: def.need || null,
+      seats: [creatorId, null], // 座位 0 先手；盤面的 1／2 對應座位 0／1
       turn: 0, first: 0, winner: null, line: [], last: null, moves: 0,
       score: [0, 0], draws: 0, round: 1,
     };
+    if (kind === 'memory') {
+      g.cards = newMemoryCards(def.cols, def.rows);
+      g.owner = new Array(cells).fill(0);
+      g.flipped = [];
+      g.pairs = [0, 0];
+    } else if (kind === 'reversi') {
+      g.board = reversiStart(def.cols);
+      g.counts = reversiCounts(g.board);
+      g.legal = reversiLegal(g.board, def.cols, 1);
+      g.passed = false;
+    } else {
+      g.board = new Array(cells).fill(0);
+    }
+    return g;
   }
-  const tiles = new Array(def.size * def.size).fill(0);
-  spawnTile(tiles);
-  spawnTile(tiles);
+  if (def.mode === 'coop') {
+    const g = {
+      kind, mode: 'coop', cols: def.cols, rows: def.rows,
+      over: false, won: false, moves: 0,
+      holder: creatorId, holderAt: Date.now(), contrib: {},
+    };
+    if (kind === 'mine') {
+      g.mines = def.mines;
+      g.layout = null; // 第一次翻開才佈雷
+      g.revealed = new Array(cells).fill(0);
+      g.flags = new Array(cells).fill(0);
+      g.boom = -1;
+      g.cleared = 0;
+      g.best = 0; // 最快通關秒數
+      g.startedAt = 0;
+    } else {
+      g.tiles = new Array(cells).fill(0);
+      spawnTile(g.tiles);
+      spawnTile(g.tiles);
+      g.score = 0;
+      g.best = 0;
+    }
+    return g;
+  }
   return {
-    kind, mode: 'coop', size: def.size, tiles,
-    score: 0, best: 0, over: false, won: false, moves: 0,
-    holder: creatorId, holderAt: Date.now(), contrib: {},
+    kind, mode: 'open', len: def.len, secret: newSecret(def.len),
+    guesses: [], winner: null, round: 1, moves: 0,
   };
 }
 
-// 再來一局：對戰型換先手、保留戰績；合作型保留最佳分數
+// 再來一局：對戰型換先手、保留戰績；合作型保留最佳紀錄
 function resetGameState(g) {
+  const { cols, rows } = dimsOf(g);
+  const cells = cols * rows;
   if (g.mode === 'versus') {
-    g.board = new Array(g.size * g.size).fill(0);
     g.first = g.first ? 0 : 1;
     g.turn = g.first;
     g.winner = null;
@@ -457,18 +637,202 @@ function resetGameState(g) {
     g.last = null;
     g.moves = 0;
     g.round += 1;
-  } else {
-    g.best = Math.max(g.best || 0, g.score || 0);
-    g.tiles = new Array(g.size * g.size).fill(0);
-    spawnTile(g.tiles);
-    spawnTile(g.tiles);
-    g.score = 0;
+    if (g.kind === 'memory') {
+      g.cards = newMemoryCards(cols, rows);
+      g.owner = new Array(cells).fill(0);
+      g.flipped = [];
+      g.pairs = [0, 0];
+    } else if (g.kind === 'reversi') {
+      g.board = reversiStart(cols);
+      g.counts = reversiCounts(g.board);
+      g.legal = reversiLegal(g.board, cols, g.turn + 1);
+      g.passed = false;
+    } else {
+      g.board = new Array(cells).fill(0);
+    }
+    return g;
+  }
+  if (g.mode === 'coop') {
     g.over = false;
     g.won = false;
     g.moves = 0;
-    g.contrib = {};
+    if (g.kind === 'mine') {
+      g.layout = null;
+      g.revealed = new Array(cells).fill(0);
+      g.flags = new Array(cells).fill(0);
+      g.boom = -1;
+      g.cleared = 0;
+      g.startedAt = 0;
+    } else {
+      g.best = Math.max(g.best || 0, g.score || 0);
+      g.tiles = new Array(cells).fill(0);
+      spawnTile(g.tiles);
+      spawnTile(g.tiles);
+      g.score = 0;
+      g.contrib = {};
+    }
+    return g;
   }
+  g.secret = newSecret(g.len);
+  g.guesses = [];
+  g.winner = null;
+  g.moves = 0;
+  g.round += 1;
   return g;
+}
+
+// 送給前端前先把藏起來的資訊拿掉（牌面、雷區、答案）
+function publicGame(g) {
+  if (!g) return null;
+  if (g.kind === 'memory') {
+    const shown = new Set(g.flipped || []);
+    return { ...g, cards: g.cards.map((face, i) => (g.owner[i] || shown.has(i) ? face : null)) };
+  }
+  if (g.kind === 'mine') {
+    const { layout, ...rest } = g;
+    return { ...rest, view: mineView(g) };
+  }
+  if (g.kind === 'guess') return g.winner ? g : { ...g, secret: null };
+  return g;
+}
+
+// 圈圈叉叉／五子棋：落子後判斷連線或平手
+function applyLineMove(g, seat, i) {
+  const { cols, rows } = dimsOf(g);
+  if (!Number.isInteger(i) || i < 0 || i >= cols * rows) throw new HttpError(400, '位置不正確');
+  if (g.board[i]) throw new HttpError(400, '這一格已經有人下了');
+  placePiece(g, seat, i, cols, rows);
+}
+
+// 四子棋：只指定要投哪一直行，棋子自己落到該行最底下的空格
+function applyDropMove(g, seat, col) {
+  const { cols, rows } = dimsOf(g);
+  if (!Number.isInteger(col) || col < 0 || col >= cols) throw new HttpError(400, '沒有這一行');
+  for (let r = rows - 1; r >= 0; r--) {
+    const i = r * cols + col;
+    if (!g.board[i]) return placePiece(g, seat, i, cols, rows);
+  }
+  throw new HttpError(400, '這一行滿了，換一行吧');
+}
+
+function placePiece(g, seat, i, cols, rows) {
+  g.board[i] = seat + 1;
+  g.last = i;
+  g.moves += 1;
+  const line = winLine(g.board, cols, rows, i, seat + 1, g.need);
+  if (line) {
+    g.winner = seat;
+    g.line = line;
+    g.score[seat] += 1;
+  } else if (g.board.every((v) => v)) {
+    g.winner = 'draw';
+    g.draws += 1;
+  } else {
+    g.turn = seat ? 0 : 1;
+  }
+}
+
+// 黑白棋：下的地方必須夾得到對手的棋子；沒地方下就自動 pass，兩邊都沒得下就數子
+function applyReversiMove(g, seat, i) {
+  const { cols } = dimsOf(g);
+  const player = seat + 1;
+  if (!Number.isInteger(i) || i < 0 || i >= g.board.length) throw new HttpError(400, '位置不正確');
+  const flips = reversiFlips(g.board, cols, i, player);
+  if (!flips.length) throw new HttpError(400, '這裡夾不到對方的棋子，換一格');
+  g.board[i] = player;
+  for (const f of flips) g.board[f] = player;
+  g.last = i;
+  g.line = flips;
+  g.moves += 1;
+  g.counts = reversiCounts(g.board);
+
+  const next = seat ? 0 : 1;
+  const nextLegal = reversiLegal(g.board, cols, next + 1);
+  if (nextLegal.length) {
+    g.turn = next;
+    g.legal = nextLegal;
+    g.passed = false;
+    return;
+  }
+  const mineAgain = reversiLegal(g.board, cols, player);
+  if (mineAgain.length) { // 對手沒得下 → 跳過對手，自己再下一手
+    g.turn = seat;
+    g.legal = mineAgain;
+    g.passed = true;
+    return;
+  }
+  g.legal = [];
+  g.passed = false;
+  const [black, white] = g.counts;
+  if (black === white) {
+    g.winner = 'draw';
+    g.draws += 1;
+  } else {
+    g.winner = black > white ? 0 : 1;
+    g.score[g.winner] += 1;
+  }
+}
+
+// 記憶翻翻樂：翻兩張，配對成功就收下並繼續翻；翻錯換人（錯的兩張留在桌上到下次翻牌）
+function applyMemoryMove(g, seat, i) {
+  if (!Number.isInteger(i) || i < 0 || i >= g.cards.length) throw new HttpError(400, '沒有這張牌');
+  if (g.flipped.length >= 2) g.flipped = []; // 上一輪沒配對到的兩張，這時蓋回去
+  if (g.owner[i]) throw new HttpError(400, '這張已經被收走了');
+  if (g.flipped.includes(i)) throw new HttpError(400, '這張已經翻開了');
+  g.flipped.push(i);
+  g.last = i;
+  g.moves += 1;
+  if (g.flipped.length < 2) return;
+  const [a, b] = g.flipped;
+  if (g.cards[a] === g.cards[b]) {
+    g.owner[a] = seat + 1;
+    g.owner[b] = seat + 1;
+    g.pairs[seat] += 1;
+    g.flipped = [];
+    if (g.owner.every((v) => v)) {
+      if (g.pairs[0] === g.pairs[1]) {
+        g.winner = 'draw';
+        g.draws += 1;
+      } else {
+        g.winner = g.pairs[0] > g.pairs[1] ? 0 : 1;
+        g.score[g.winner] += 1;
+      }
+    }
+    return; // 配對成功可以繼續翻
+  }
+  g.turn = seat ? 0 : 1;
+}
+
+// 踩地雷：flag 為插旗／拔旗，否則是翻開
+function applyMineMove(g, i, flag, now) {
+  const { cols, rows } = dimsOf(g);
+  if (!Number.isInteger(i) || i < 0 || i >= cols * rows) throw new HttpError(400, '位置不正確');
+  if (g.revealed[i]) throw new HttpError(400, '這一格已經翻開了');
+  if (flag) {
+    g.flags[i] = g.flags[i] ? 0 : 1;
+    return;
+  }
+  if (g.flags[i]) throw new HttpError(400, '這格插了旗，要先拔旗才能翻');
+  if (!g.layout) {
+    g.layout = mineLayout(cols, rows, g.mines, i);
+    g.startedAt = now;
+  }
+  g.moves += 1;
+  if (g.layout[i]) {
+    g.revealed[i] = 1;
+    g.boom = i;
+    g.over = true;
+    return;
+  }
+  mineFlood(g, i);
+  g.cleared = g.revealed.filter(Boolean).length;
+  if (g.cleared >= cols * rows - g.mines) {
+    g.over = true;
+    g.won = true;
+    const secs = Math.max(1, Math.round((now - (g.startedAt || now)) / 1000));
+    g.best = g.best ? Math.min(g.best, secs) : secs;
+    g.time = secs;
+  }
 }
 
 const pubMessage = (row) => ({
@@ -508,7 +872,7 @@ function previewOf(row) {
 }
 
 export { firstHttpUrl, trimUrlTail, normalizeUrl, safeRemoteUrl, ogTag, metaOf, pickCharset, fromB64url };
-export { winLine, move2048, stuck2048, GAME_KINDS };
+export { winLine, move2048, stuck2048, GAME_KINDS, reversiFlips, reversiLegal, reversiStart, abOf, newSecret, mineLayout, mineNear, mineNeighbors };
 
 export class ChatServer {
   constructor(ctx, env) {
@@ -1194,7 +1558,7 @@ export class ChatServer {
       for (const m of messages) {
         if (m.type !== 'game' || m.deleted) continue;
         const raw = byId.get(m.id);
-        try { m.game = raw ? JSON.parse(raw) : null; } catch { m.game = null; }
+        try { m.game = raw ? publicGame(JSON.parse(raw)) : null; } catch { m.game = null; }
       }
     }
     return messages;
@@ -1747,18 +2111,20 @@ export class ChatServer {
     const now = Date.now();
 
     if (g.mode === 'versus') this.applyVersusAction(g, me, action, body);
-    else this.applyCoopAction(g, me, action, body, now);
+    else if (g.mode === 'coop') this.applyCoopAction(g, me, action, body, now);
+    else this.applyOpenAction(g, me, action, body);
 
     this.sql.exec(
       `UPDATE games SET state = ?, updated_at = ? WHERE message_id = ?`,
       JSON.stringify(g), now, messageId);
+    const game = publicGame(g);
     this.sendToUsers(this.memberIds(row.conversation_id), {
-      type: 'game', conversationId: row.conversation_id, messageId, game: g,
+      type: 'game', conversationId: row.conversation_id, messageId, game,
     });
-    return json({ game: g });
+    return json({ game });
   }
 
-  // 對戰型（圈圈叉叉、五子棋）：兩個座位輪流下，其他成員只能看
+  // 對戰型（圈圈叉叉、五子棋、四子棋、黑白棋、記憶翻翻樂）：兩個座位輪流，其他成員只能看
   applyVersusAction(g, me, action, body) {
     const seat = g.seats.indexOf(me.id);
     if (action === 'join') {
@@ -1785,27 +2151,32 @@ export class ChatServer {
     if (g.winner !== null) throw new HttpError(400, '這一局結束了，按「再來一局」吧');
     if (g.seats.some((x) => x === null)) throw new HttpError(400, '等對手加入才能開始');
     if (g.turn !== seat) throw new HttpError(400, '還沒輪到你');
-    const i = Number(body.i);
-    if (!Number.isInteger(i) || i < 0 || i >= g.board.length)
-      throw new HttpError(400, '位置不正確');
-    if (g.board[i]) throw new HttpError(400, '這一格已經有人下了');
-    g.board[i] = seat + 1;
-    g.last = i;
-    g.moves += 1;
-    const line = winLine(g.board, g.size, i, seat + 1, g.need);
-    if (line) {
-      g.winner = seat;
-      g.line = line;
-      g.score[seat] += 1;
-    } else if (g.board.every((v) => v)) {
-      g.winner = 'draw';
-      g.draws += 1;
-    } else {
-      g.turn = seat ? 0 : 1;
-    }
+    if (g.kind === 'connect4') applyDropMove(g, seat, Number(body.col));
+    else if (g.kind === 'reversi') applyReversiMove(g, seat, Number(body.i));
+    else if (g.kind === 'memory') applyMemoryMove(g, seat, Number(body.i));
+    else applyLineMove(g, seat, Number(body.i));
   }
 
-  // 合作型（2048）：同一時間只有一位操作者，其他人要等他換手（閒置 1 分鐘可接手）
+  // 開放型（猜數字）：不分座位，聊天室裡誰都能猜
+  applyOpenAction(g, me, action, body) {
+    if (action === 'restart') {
+      resetGameState(g);
+      return;
+    }
+    if (action !== 'move') throw new HttpError(400, '不支援的動作');
+    if (g.winner) throw new HttpError(400, '這題被猜中了，按「換一題」再來一局');
+    const guess = String(body.guess || '').trim();
+    if (!new RegExp(`^\\d{${g.len}}$`).test(guess))
+      throw new HttpError(400, `請輸入 ${g.len} 個數字`);
+    if (new Set(guess).size !== g.len) throw new HttpError(400, '數字不能重複');
+    const { a, b } = abOf(g.secret, guess);
+    g.guesses.push({ userId: me.id, guess, a, b, at: Date.now() });
+    if (g.guesses.length > 60) g.guesses = g.guesses.slice(-60);
+    g.moves += 1;
+    if (a === g.len) g.winner = me.id;
+  }
+
+  // 合作型（2048、踩地雷）：同一時間只有一位操作者，其他人要等他換手（閒置 1 分鐘可接手）
   applyCoopAction(g, me, action, body, now) {
     const idle = now - (g.holderAt || 0) > GAME_IDLE;
     const blocked = g.holder && g.holder !== me.id && !idle;
@@ -1835,18 +2206,23 @@ export class ChatServer {
         : '請先按「我要玩」接手操作');
     }
     if (g.over) throw new HttpError(400, '這局結束了，按「重新開始」再來一次');
+    g.holderAt = now;
+    g.contrib[me.id] = (g.contrib[me.id] || 0) + 1;
+    if (g.kind === 'mine') {
+      applyMineMove(g, Number(body.i), !!body.flag, now);
+      return;
+    }
     const dir = String(body.dir || '');
     if (!['up', 'down', 'left', 'right'].includes(dir)) throw new HttpError(400, '方向不正確');
-    const r = move2048(g.tiles, g.size, dir);
-    g.holderAt = now;
+    const { cols } = dimsOf(g);
+    const r = move2048(g.tiles, cols, dir);
     if (!r.moved) return; // 這個方向推不動：不算一步
     g.tiles = r.tiles;
     g.score += r.gained;
     g.moves += 1;
-    g.contrib[me.id] = (g.contrib[me.id] || 0) + 1;
     spawnTile(g.tiles);
     if (g.tiles.some((v) => v >= 2048)) g.won = true;
-    if (stuck2048(g.tiles, g.size)) g.over = true;
+    if (stuck2048(g.tiles, cols)) g.over = true;
     g.best = Math.max(g.best || 0, g.score);
   }
 

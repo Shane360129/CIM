@@ -2870,15 +2870,51 @@ function foodPickModal(conv) {
   draw();
 }
 
-/* ---------- 小遊戲（圈圈叉叉、五子棋、2048） ----------
+/* ---------- 小遊戲 ----------
    盤面由伺服器保管、動作由伺服器判定，所以聊天室裡每個人看到的都是同一盤。
-   對戰型有兩個座位輪流下；2048 是大家共用一盤，同一時間只有一位「操作者」能動。 */
+   三種玩法：對戰（兩個座位輪流）、一起玩（輪流接手操作）、大家一起（誰都能出手）。
+   會藏資訊的遊戲（記憶翻翻樂的牌面、踩地雷的雷區、猜數字的答案）由伺服器過濾後才送來。 */
 
 const GAME_DEFS = {
-  ooxx: { title: '圈圈叉叉', emoji: '⭕', desc: '3×3 連成一線就贏', tag: '兩人對戰', marks: ['⭕', '❌'] },
-  gomoku: { title: '五子棋', emoji: '⚫', desc: '13 路棋盤，先連成五顆就贏', tag: '兩人對戰', marks: ['⚫', '⚪'] },
-  '2048': { title: '2048', emoji: '🔢', desc: '滑動合併數字，一起挑戰高分', tag: '輪流接手一起玩' },
+  ooxx: {
+    title: '圈圈叉叉', emoji: '⭕', desc: '3×3 連成一線就贏', tag: '兩人對戰',
+    marks: ['⭕', '❌'],
+  },
+  connect4: {
+    title: '四子棋', emoji: '🔴', desc: '投進直行，先連成四顆就贏', tag: '兩人對戰',
+    marks: ['🔴', '🟡'],
+  },
+  gomoku: {
+    title: '五子棋', emoji: '⚫', desc: '13 路棋盤，先連成五顆就贏', tag: '兩人對戰',
+    marks: ['⚫', '⚪'],
+  },
+  reversi: {
+    title: '黑白棋', emoji: '🔳', desc: '夾住就翻面，最後子多的贏', tag: '兩人對戰',
+    marks: ['⚫', '⚪'],
+  },
+  memory: {
+    title: '記憶翻翻樂', emoji: '🃏', desc: '翻兩張配對，配到就再翻一次', tag: '兩人對戰',
+    marks: ['🟣', '🟠'],
+  },
+  '2048': {
+    title: '2048', emoji: '🔢', desc: '滑動合併數字，一起挑戰高分', tag: '輪流接手',
+  },
+  mine: {
+    title: '踩地雷', emoji: '💣', desc: '9×9 十顆雷，一起把安全格翻完', tag: '輪流接手',
+  },
+  guess: {
+    title: '猜數字 1A2B', emoji: '🔡', desc: '猜 4 位不重複數字，誰先猜中誰贏', tag: '大家一起猜',
+  },
 };
+
+// 對戰型遊戲在選單裡排前面，合作／開放型排後面
+const GAME_GROUPS = [
+  { label: '兩人對戰（兩個座位輪流）', kinds: ['ooxx', 'connect4', 'gomoku', 'reversi', 'memory'] },
+  { label: '大家一起玩', kinds: ['2048', 'mine', 'guess'] },
+];
+
+// 伺服器早期版本只存 size（正方形盤），新版存 cols／rows
+const gameDims = (g) => ({ cols: g.cols || g.size, rows: g.rows || g.size });
 
 function gameKindOf(m) {
   if (m.game && m.game.kind) return m.game.kind;
@@ -2895,18 +2931,24 @@ function gameAct(m, body) {
     .catch((e) => toast(e.message));
 }
 
+/* ----- 狀態文字 ----- */
+
 function versusStatus(g) {
   if (g.winner === 'draw') return { text: '平手，再來一局！', hot: false };
-  if (g.winner !== null) {
+  if (g.winner !== null && g.winner !== undefined) {
     const w = g.seats[g.winner];
     return { text: w === state.me.id ? '你贏了 🎉' : `${nameOf(w)} 獲勝 🎉`, hot: true };
   }
   if (g.seats.some((x) => x === null)) return { text: '等一位對手加入…', hot: false };
   const who = g.seats[g.turn];
-  return { text: who === state.me.id ? '輪到你了' : `輪到 ${nameOf(who)}`, hot: who === state.me.id };
+  const mine = who === state.me.id;
+  const pass = g.kind === 'reversi' && g.passed ? '（對方沒地方下，跳過）' : '';
+  return { text: (mine ? '輪到你了' : `輪到 ${nameOf(who)}`) + pass, hot: mine };
 }
 
 function coopStatus(g) {
+  if (g.kind === 'mine' && g.over)
+    return { text: g.won ? `全部排完，${g.time || 0} 秒 🎉` : '踩到地雷了 💥', hot: g.won };
   if (g.over) return { text: `結束了，這局 ${g.score} 分`, hot: false };
   if (!g.holder) return { text: '還沒人接手 — 按「我要玩」開始', hot: true };
   return g.holder === state.me.id
@@ -2914,13 +2956,32 @@ function coopStatus(g) {
     : { text: `現在由 ${nameOf(g.holder)} 操作，請等他換手`, hot: false };
 }
 
+function openStatus(g) {
+  if (g.winner)
+    return {
+      text: (g.winner === state.me.id ? '你猜中了 🎉' : `${nameOf(g.winner)} 猜中了 🎉`) +
+        `　答案 ${g.secret || ''}`,
+      hot: true,
+    };
+  return { text: `已經猜了 ${g.guesses.length} 次 — 大家都能猜`, hot: false };
+}
+
+const gameStatus = (g) =>
+  g.mode === 'versus' ? versusStatus(g) : g.mode === 'coop' ? coopStatus(g) : openStatus(g);
+
+/* ----- 座位與盤面 ----- */
+
 // 對戰型的兩張座位牌：空位可以直接點進去坐
 function seatPills(m, g) {
   const def = GAME_DEFS[g.kind];
   const wrap = el('div', { class: 'g-seats' });
   g.seats.forEach((uid, i) => {
     const active = g.winner === null && !g.seats.some((x) => x === null) && g.turn === i;
-    const pill = el('button', {
+    // 黑白棋看目前子數、記憶翻翻樂看收到幾對，其他看累積勝場
+    const num = g.kind === 'reversi' ? (g.counts || [0, 0])[i]
+      : g.kind === 'memory' ? (g.pairs || [0, 0])[i]
+        : g.score[i];
+    wrap.append(el('button', {
       class: 'g-seat' + (active ? ' turn' : '') + (uid === state.me.id ? ' me' : '') +
         (g.winner === i ? ' win' : ''),
       type: 'button',
@@ -2928,23 +2989,24 @@ function seatPills(m, g) {
     },
       el('span', { class: 'g-mark', text: def.marks[i] }),
       el('span', { class: 'g-seat-name', text: uid ? nameOf(uid) : '空位（點我加入）' }),
-      el('span', { class: 'g-seat-score', text: String(g.score[i]) }));
-    wrap.append(pill);
+      el('span', { class: 'g-seat-score', text: String(num) })));
   });
   return wrap;
 }
 
-function versusBoard(m, g, interactive) {
+// 圈圈叉叉、五子棋：點格子落子
+function lineBoard(m, g, interactive) {
   const def = GAME_DEFS[g.kind];
+  const { cols } = gameDims(g);
   const board = el('div', { class: 'g-board ' + g.kind });
-  board.style.setProperty('--n', g.size);
+  board.style.setProperty('--n', cols);
   const mySeat = g.seats.indexOf(state.me.id);
   const myTurn = interactive && g.winner === null && mySeat >= 0 && g.turn === mySeat &&
     !g.seats.some((x) => x === null);
   g.board.forEach((v, i) => {
     const cell = el('button', {
       class: 'g-cell' + (g.line.includes(i) ? ' win' : '') + (g.last === i ? ' last' : ''),
-      type: 'button', 'aria-label': `第 ${i + 1} 格`,
+      type: 'button', 'aria-label': `第 ${Math.floor(i / cols) + 1} 列第 ${i % cols + 1} 格`,
     });
     if (v) {
       cell.append(g.kind === 'ooxx'
@@ -2962,17 +3024,172 @@ function versusBoard(m, g, interactive) {
   return board;
 }
 
-function coopBoard(m, g, interactive) {
+// 四子棋：點哪一直行，棋子就掉到那一行最底下
+function connect4Board(m, g, interactive) {
+  const { cols } = gameDims(g);
+  const board = el('div', { class: 'g-board connect4' });
+  board.style.setProperty('--n', cols);
+  const mySeat = g.seats.indexOf(state.me.id);
+  const myTurn = interactive && g.winner === null && mySeat >= 0 && g.turn === mySeat &&
+    !g.seats.some((x) => x === null);
+  g.board.forEach((v, i) => {
+    const col = i % cols;
+    const full = g.board[col] !== 0; // 該行最上面一格有子就是滿了
+    const cell = el('button', {
+      class: 'g-hole' + (v ? ' p' + v : '') + (g.line.includes(i) ? ' win' : '') +
+        (g.last === i ? ' last' : ''),
+      type: 'button', 'aria-label': `第 ${col + 1} 行`,
+    });
+    if (myTurn && !full) {
+      cell.addEventListener('click', (e) => { e.stopPropagation(); gameAct(m, { action: 'move', col }); });
+    } else {
+      cell.disabled = true;
+    }
+    board.append(cell);
+  });
+  return board;
+}
+
+// 黑白棋：輪到自己時，合法的落點會標出來
+function reversiBoard(m, g, interactive) {
+  const { cols } = gameDims(g);
+  const board = el('div', { class: 'g-board reversi' });
+  board.style.setProperty('--n', cols);
+  const mySeat = g.seats.indexOf(state.me.id);
+  const myTurn = interactive && g.winner === null && mySeat >= 0 && g.turn === mySeat &&
+    !g.seats.some((x) => x === null);
+  const legal = new Set(myTurn ? (g.legal || []) : []);
+  g.board.forEach((v, i) => {
+    const cell = el('button', {
+      class: 'g-cell' + (g.last === i ? ' last' : '') + (legal.has(i) ? ' hint' : ''),
+      type: 'button', 'aria-label': `第 ${Math.floor(i / cols) + 1} 列第 ${i % cols + 1} 格`,
+    });
+    if (v) cell.append(el('span', { class: 'g-stone s' + v + (g.line.includes(i) ? ' flip' : '') }));
+    if (legal.has(i)) {
+      cell.addEventListener('click', (e) => { e.stopPropagation(); gameAct(m, { action: 'move', i }); });
+    } else {
+      cell.disabled = true;
+    }
+    board.append(cell);
+  });
+  return board;
+}
+
+// 記憶翻翻樂：蓋著的牌伺服器不會送牌面過來，所以看不到也偷不到
+function memoryBoard(m, g, interactive) {
+  const { cols } = gameDims(g);
+  const board = el('div', { class: 'g-board memory' });
+  board.style.setProperty('--n', cols);
+  const mySeat = g.seats.indexOf(state.me.id);
+  const myTurn = interactive && g.winner === null && mySeat >= 0 && g.turn === mySeat &&
+    !g.seats.some((x) => x === null);
+  const flipped = new Set(g.flipped || []);
+  g.cards.forEach((face, i) => {
+    const owned = g.owner[i];
+    const open = owned || flipped.has(i);
+    const cell = el('button', {
+      class: 'g-card' + (open ? ' open' : '') + (owned ? ' owned o' + owned : ''),
+      type: 'button', 'aria-label': open ? `${face}` : '蓋著的牌',
+    }, el('span', { class: 'g-face', text: open ? (face || '⬜') : '' }));
+    if (myTurn && !open) {
+      cell.addEventListener('click', (e) => { e.stopPropagation(); gameAct(m, { action: 'move', i }); });
+    } else {
+      cell.disabled = true;
+    }
+    board.append(cell);
+  });
+  return board;
+}
+
+// 2048
+function tilesBoard(m, g, interactive) {
+  const { cols } = gameDims(g);
   const board = el('div', { class: 'g-board g2048' });
-  board.style.setProperty('--n', g.size);
+  board.style.setProperty('--n', cols);
   for (const v of g.tiles) {
     board.append(el('div', {
       class: 'g-tile' + (v ? ' v' + (v > 2048 ? 'max' : v) : ' empty'),
       text: v ? String(v) : '',
     }));
   }
-  if (interactive && g.holder === state.me.id && !g.over) bindSwipe(board, (dir) => gameAct(m, { action: 'move', dir }));
+  if (interactive && g.holder === state.me.id && !g.over)
+    bindSwipe(board, (dir) => gameAct(m, { action: 'move', dir }));
   return board;
+}
+
+// 踩地雷：插旗模式打開時，點格子是插旗而不是翻開
+const MINE_COLORS = ['', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8'];
+
+function mineBoard(m, g, interactive, flagMode) {
+  const { cols } = gameDims(g);
+  const board = el('div', { class: 'g-board sweeper' });
+  board.style.setProperty('--n', cols);
+  const canPlay = interactive && g.holder === state.me.id && !g.over;
+  (g.view || []).forEach((v, i) => {
+    const hidden = v === null || v === 'F';
+    const cell = el('button', {
+      class: 'g-mcell' + (hidden ? ' covered' : ' open') +
+        (typeof v === 'number' && v > 0 ? ' ' + MINE_COLORS[v] : '') +
+        (v === 'X' ? ' boom' : ''),
+      type: 'button', 'aria-label': `第 ${Math.floor(i / cols) + 1} 列第 ${i % cols + 1} 格`,
+    });
+    if (v === 'F') cell.textContent = '🚩';
+    else if (v === 'M' || v === 'X') cell.textContent = '💣';
+    else if (typeof v === 'number' && v > 0) cell.textContent = String(v);
+    if (canPlay && hidden) {
+      cell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        gameAct(m, { action: 'move', i, flag: flagMode });
+      });
+    } else {
+      cell.disabled = true;
+    }
+    board.append(cell);
+  });
+  return board;
+}
+
+// 猜數字：誰都能猜，下面列出猜過的紀錄
+function guessPanel(m, g, interactive) {
+  const wrap = el('div', { class: 'g-guess' });
+  const list = el('div', { class: 'g-glist' });
+  const rows = g.guesses.slice(-8);
+  if (!rows.length) {
+    list.append(el('div', { class: 'g-ghint', text: `我出了一組 ${g.len} 位不重複的數字，猜猜看！` }));
+  }
+  for (const r of rows) {
+    list.append(el('div', { class: 'g-grow' + (r.a === g.len ? ' hit' : '') },
+      el('span', { class: 'g-gnum', text: r.guess }),
+      el('span', { class: 'g-gab', text: `${r.a}A${r.b}B` }),
+      el('span', { class: 'g-gwho', text: nameOf(r.userId) })));
+  }
+  wrap.append(list);
+  if (g.guesses.length > rows.length)
+    wrap.append(el('div', { class: 'g-foot', text: `（只顯示最近 ${rows.length} 次，共猜了 ${g.guesses.length} 次）` }));
+  if (!interactive || g.winner) return wrap;
+
+  const input = el('input', {
+    class: 'g-ginput', inputmode: 'numeric', maxlength: g.len,
+    placeholder: '0'.repeat(g.len).slice(0, g.len), 'aria-label': '輸入你猜的數字',
+  });
+  const send = () => {
+    const guess = input.value.trim();
+    if (guess.length !== g.len) return toast(`請輸入 ${g.len} 個數字`);
+    if (new Set(guess).size !== g.len) return toast('數字不能重複');
+    input.value = '';
+    gameAct(m, { action: 'move', guess });
+  };
+  input.addEventListener('keydown', (e) => {
+    e.stopPropagation();
+    if (e.key === 'Enter') { e.preventDefault(); send(); }
+  });
+  input.addEventListener('click', (e) => e.stopPropagation());
+  wrap.append(el('div', { class: 'g-gform' }, input,
+    el('button', {
+      class: 'btn btn-primary btn-small', type: 'button', text: '猜！',
+      onclick: (e) => { e.stopPropagation(); send(); },
+    })));
+  return wrap;
 }
 
 // 觸控滑動：位移超過 24px 就當成一次方向操作
@@ -2995,10 +3212,14 @@ function bindSwipe(node, onDir) {
 
 function dpad(m, g) {
   const enabled = g.holder === state.me.id && !g.over;
-  const btn = (dir, label) => el('button', {
-    class: 'g-dir', type: 'button', 'aria-label': label, disabled: !enabled,
-    onclick: (e) => { e.stopPropagation(); gameAct(m, { action: 'move', dir }); },
-  }, label);
+  const btn = (dir, label) => {
+    const b = el('button', {
+      class: 'g-dir', type: 'button', 'aria-label': label,
+      onclick: (e) => { e.stopPropagation(); gameAct(m, { action: 'move', dir }); },
+    }, label);
+    b.disabled = !enabled;
+    return b;
+  };
   return el('div', { class: 'g-dpad' },
     el('div', {}, btn('up', '↑')),
     el('div', {}, btn('left', '←'), btn('down', '↓'), btn('right', '→')));
@@ -3009,6 +3230,31 @@ function gameButton(label, onclick, cls) {
     class: 'btn btn-small ' + (cls || 'btn-ghost'), type: 'button',
     onclick: (e) => { e.stopPropagation(); onclick(); },
   }, label);
+}
+
+// 踩地雷的插旗模式：盤面每次收到更新都會重畫，開關狀態要記在卡片外面
+const flagModes = new Map();
+
+function gameBoard(m, g, interactive, opts) {
+  if (g.kind === 'connect4') return connect4Board(m, g, interactive);
+  if (g.kind === 'reversi') return reversiBoard(m, g, interactive);
+  if (g.kind === 'memory') return memoryBoard(m, g, interactive);
+  if (g.kind === 'mine') return mineBoard(m, g, interactive, opts.flagMode);
+  if (g.kind === 'guess') return guessPanel(m, g, interactive);
+  if (g.mode === 'coop') return tilesBoard(m, g, interactive);
+  return lineBoard(m, g, interactive);
+}
+
+// 每種遊戲的小計分列（2048 分數、踩地雷剩幾顆雷…）
+function gameScores(g) {
+  if (g.kind === '2048') {
+    return [['分數', g.score], ['最佳', g.best || 0]];
+  }
+  if (g.kind === 'mine') {
+    const flags = (g.view || []).filter((v) => v === 'F').length;
+    return [['剩餘雷數', Math.max(0, g.mines - flags)], ['最佳秒數', g.best || '—']];
+  }
+  return null;
 }
 
 function buildGameCard(m, big) {
@@ -3023,25 +3269,50 @@ function buildGameCard(m, big) {
   card.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
 
   const versus = g.mode === 'versus';
-  const st = versus ? versusStatus(g) : coopStatus(g);
-
+  const st = gameStatus(g);
+  const rightLabel = versus ? `第 ${g.round} 局`
+    : g.kind === 'guess' ? `第 ${g.round} 題` : `${g.moves} 步`;
   card.append(el('div', { class: 'g-head' },
     el('span', { class: 'g-title', text: `${def.emoji} ${def.title}` }),
-    el('span', { class: 'g-round', text: versus ? `第 ${g.round} 局` : `${g.moves} 步` })));
+    el('span', { class: 'g-round', text: rightLabel })));
 
-  if (versus) {
-    card.append(seatPills(m, g));
-  } else {
-    card.append(el('div', { class: 'g-scores' },
-      el('div', { class: 'g-score' }, el('b', { text: String(g.score) }), el('span', { text: '分數' })),
-      el('div', { class: 'g-score' }, el('b', { text: String(g.best || 0) }), el('span', { text: '最佳' }))));
+  if (versus) card.append(seatPills(m, g));
+  const scores = gameScores(g);
+  if (scores) {
+    card.append(el('div', { class: 'g-scores' }, scores.map(([label, val]) =>
+      el('div', { class: 'g-score' }, el('b', { text: String(val) }), el('span', { text: label })))));
   }
 
   card.append(el('div', { class: 'g-status' + (st.hot ? ' hot' : ''), text: st.text }));
 
-  const interactive = big || kind !== 'gomoku'; // 五子棋格子小，泡泡裡只看、放大才下
-  card.append(versus ? versusBoard(m, g, interactive) : coopBoard(m, g, interactive));
-  if (!versus) card.append(dpad(m, g));
+  // 五子棋、黑白棋、踩地雷格子小，泡泡裡只顯示，按「放大遊玩」才好操作
+  const interactive = big || !['gomoku', 'reversi', 'mine'].includes(kind);
+  const boardWrap = el('div', { class: 'g-boardwrap' });
+  const drawBoard = () => {
+    boardWrap.textContent = '';
+    boardWrap.append(gameBoard(m, g, interactive, { flagMode: flagModes.get(m.id) === true }));
+  };
+  drawBoard();
+  card.append(boardWrap);
+
+  if (g.kind === 'mine' && interactive && g.holder === state.me.id && !g.over) {
+    const label = (on) => (on ? '🚩 插旗模式（開）' : '🚩 插旗模式');
+    const on = flagModes.get(m.id) === true;
+    const flagBtn = el('button', {
+      class: 'g-flag' + (on ? ' on' : ''), type: 'button', 'aria-pressed': String(on),
+    }, label(on));
+    flagBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const next = flagModes.get(m.id) !== true;
+      flagModes.set(m.id, next); // 記在卡片外面，插完旗重畫也不會被關掉
+      flagBtn.classList.toggle('on', next);
+      flagBtn.setAttribute('aria-pressed', String(next));
+      flagBtn.textContent = label(next);
+      drawBoard();
+    });
+    card.append(flagBtn);
+  }
+  if (g.kind === '2048') card.append(dpad(m, g));
 
   const acts = el('div', { class: 'g-acts' });
   if (versus) {
@@ -3052,29 +3323,48 @@ function buildGameCard(m, big) {
       acts.append(gameButton('再來一局', () => gameAct(m, { action: 'restart' }), 'btn-primary'));
     else if (mySeat >= 0 && g.moves > 0)
       acts.append(gameButton('重新開始', async () => {
-        if (await confirmModal('重新開始', '這一局的棋子會全部清掉，確定嗎？')) gameAct(m, { action: 'restart' });
+        if (await confirmModal('重新開始', '這一局會全部清掉重來，確定嗎？')) gameAct(m, { action: 'restart' });
       }));
     if (mySeat >= 0 && g.winner === null)
       acts.append(gameButton('離開座位', () => gameAct(m, { action: 'leave' })));
-  } else {
+  } else if (g.mode === 'coop') {
     if (g.holder === state.me.id) acts.append(gameButton('換人玩', () => gameAct(m, { action: 'release' })));
     else acts.append(gameButton('我要玩', () => gameAct(m, { action: 'claim' }), 'btn-primary'));
-    acts.append(gameButton('重新開始', async () => {
-      if (await confirmModal('重新開始', '目前的分數會歸零（最佳分數會留著），確定嗎？')) gameAct(m, { action: 'restart' });
-    }));
+    acts.append(gameButton(g.over ? '再來一局' : '重新開始', async () => {
+      if (g.over || await confirmModal('重新開始', '目前的進度會歸零（最佳紀錄會留著），確定嗎？'))
+        gameAct(m, { action: 'restart' });
+    }, g.over ? 'btn-primary' : 'btn-ghost'));
+  } else {
+    acts.append(gameButton('換一題',
+      async () => {
+        if (g.winner || await confirmModal('換一題', '現在這題會作廢，重新出一組數字，確定嗎？'))
+          gameAct(m, { action: 'restart' });
+      }, g.winner ? 'btn-primary' : 'btn-ghost'));
   }
   if (!big) acts.append(gameButton('放大遊玩', () => openGameModal(m)));
   card.append(acts);
 
-  if (!versus && big) {
+  if (big) {
+    const hint = gameHint(g);
+    if (hint) card.append(el('div', { class: 'g-foot', text: hint }));
+  }
+  return card;
+}
+
+function gameHint(g) {
+  if (g.kind === 'gomoku') return `先連成五顆就贏 · 已下 ${g.moves} 手`;
+  if (g.kind === 'connect4') return '點任一直行投下棋子，先連成四顆（橫、直、斜）就贏';
+  if (g.kind === 'reversi') return '只能下在夾得到對方棋子的地方；沒地方下就自動跳過';
+  if (g.kind === 'memory') return '配對成功可以再翻一次；翻錯的兩張會留到下次翻牌才蓋回去';
+  if (g.kind === 'mine') return '數字代表周圍有幾顆雷；懷疑有雷就開「插旗模式」標起來';
+  if (g.kind === 'guess') return 'A＝數字和位置都對，B＝數字對但位置不對';
+  if (g.mode === 'coop') {
     const who = Object.entries(g.contrib || {})
       .map(([uid, n]) => `${nameOf(Number(uid))} ${n} 步`)
       .join('、');
-    card.append(el('div', { class: 'g-foot', text: who ? '出手：' + who : '用方向鍵、按鈕或滑動都可以操作' }));
+    return who ? '出手：' + who : '用方向鍵、按鈕或滑動都可以操作';
   }
-  if (versus && big && kind === 'gomoku')
-    card.append(el('div', { class: 'g-foot', text: `先連成五顆就贏 · 已下 ${g.moves} 手` }));
-  return card;
+  return '';
 }
 
 function findMessage(convId, mid) {
@@ -3089,13 +3379,19 @@ function openGameModal(m) {
   const body = el('div', { class: 'modal-body game-modal-body' });
   const render = () => {
     const cur = findMessage(convId, m.id) || m;
+    const focused = document.activeElement && document.activeElement.classList.contains('g-ginput');
+    const typed = focused ? document.activeElement.value : null;
     body.textContent = '';
     body.append(buildGameCard(cur, true));
+    if (typed !== null) {
+      const input = body.querySelector('.g-ginput');
+      if (input) { input.value = typed; input.focus(); }
+    }
   };
   const onKey = (e) => {
     const dir = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[e.key];
     const cur = findMessage(convId, m.id);
-    if (!dir || !cur || !cur.game || cur.game.mode !== 'coop') return;
+    if (!dir || !cur || !cur.game || cur.game.kind !== '2048') return;
     if (cur.game.holder !== state.me.id || cur.game.over) return;
     e.preventDefault();
     gameAct(cur, { action: 'move', dir });
@@ -3130,23 +3426,30 @@ function handleGame(ev) {
 
 // 聊天室選單 →「小遊戲」：選一款就在聊天室裡開一局，成員都能加入
 function gamePickModal(conv) {
-  const rows = Object.entries(GAME_DEFS).map(([kind, def]) => el('button', {
-    class: 'game-pick', type: 'button',
-    onclick: async () => {
-      close();
-      try {
-        const msg = await postMessage(conv.id, 'game', '', { game: { kind } });
-        if (msg) openGameModal(msg);
-      } catch (e) { toast(e.message); }
-    },
-  },
-    el('span', { class: 'gp-emoji', text: def.emoji }),
-    el('span', { class: 'gp-main' },
-      el('span', { class: 'gp-title', text: def.title }),
-      el('span', { class: 'gp-desc', text: def.desc })),
-    el('span', { class: 'gp-tag', text: def.tag })));
+  const rows = [];
+  for (const group of GAME_GROUPS) {
+    rows.push(el('div', { class: 'list-section', text: group.label }));
+    for (const kind of group.kinds) {
+      const def = GAME_DEFS[kind];
+      rows.push(el('button', {
+        class: 'game-pick', type: 'button',
+        onclick: async () => {
+          close();
+          try {
+            const msg = await postMessage(conv.id, 'game', '', { game: { kind } });
+            if (msg) openGameModal(msg);
+          } catch (e) { toast(e.message); }
+        },
+      },
+        el('span', { class: 'gp-emoji', text: def.emoji }),
+        el('span', { class: 'gp-main' },
+          el('span', { class: 'gp-title', text: def.title }),
+          el('span', { class: 'gp-desc', text: def.desc })),
+        el('span', { class: 'gp-tag', text: def.tag })));
+    }
+  }
 
-  const close = openModal(el('div', { class: 'modal' },
+  const close = openModal(el('div', { class: 'modal modal-games' },
     el('div', { class: 'modal-title', text: '🎮 小遊戲' }),
     el('div', { class: 'modal-body' },
       el('p', { text: '選一款開局，聊天室裡的大家都看得到，也能一起玩。' }),

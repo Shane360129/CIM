@@ -955,6 +955,108 @@ body.theme-dark .g-tile.empty { background: rgba(238, 228, 218, .13); }
 .game-card.big .g-tile.v128, .game-card.big .g-tile.v256, .game-card.big .g-tile.v512 { font-size: 20px; }
 .game-card.big .g-tile.v1024, .game-card.big .g-tile.v2048, .game-card.big .g-tile.vmax { font-size: 16px; }
 
+/* 四子棋：投進直行，棋子落到底 */
+.g-board.connect4 {
+  width: min(252px, 66vw); aspect-ratio: 7 / 6; gap: 4px; padding: 5px;
+  background: #3C6BB0; border-radius: 10px;
+}
+.game-card.big .g-board.connect4 { width: min(310px, 78vw); }
+body.theme-dark .g-board.connect4 { background: #2C4C7C; }
+.g-hole {
+  aspect-ratio: 1; border-radius: 50%; background: #EAEFF7; padding: 0;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .25);
+}
+body.theme-dark .g-hole { background: #1D2733; }
+.g-hole.p1 { background: radial-gradient(circle at 32% 28%, #F08B7F, #D6524A 72%); }
+.g-hole.p2 { background: radial-gradient(circle at 32% 28%, #F7D98A, #E0A93B 72%); }
+.g-hole.last { box-shadow: 0 0 0 2px #fff; }
+.g-hole.win { box-shadow: 0 0 0 3px #fff, 0 0 8px rgba(255, 255, 255, .7); }
+
+/* 黑白棋：綠色棋盤，輪到自己時標出可以下的點 */
+.g-board.reversi {
+  width: min(256px, 68vw); gap: 1px; background: #1F5E3D; padding: 3px; border-radius: 8px;
+}
+.game-card.big .g-board.reversi { width: min(320px, 80vw); }
+.g-board.reversi .g-cell { background: #2F8A58; border-radius: 0; }
+body.theme-dark .g-board.reversi .g-cell { background: #27704A; }
+.g-board.reversi .g-cell.last { box-shadow: inset 0 0 0 2px #F3D86B; }
+.g-board.reversi .g-cell.hint::after {
+  content: ''; width: 26%; height: 26%; border-radius: 50%; background: rgba(255, 255, 255, .55);
+}
+.g-stone.flip { box-shadow: 0 0 0 2px rgba(243, 216, 107, .8); }
+
+/* 記憶翻翻樂 */
+.g-board.memory { width: min(260px, 68vw); aspect-ratio: 5 / 4; gap: 6px; }
+.game-card.big .g-board.memory { width: min(320px, 80vw); }
+.g-card {
+  aspect-ratio: 1; border-radius: 9px; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #7C8BB0, #5E6B90); font-size: 21px; padding: 0;
+  transition: background-color .15s ease;
+}
+.g-card.open { background: #FFFDF6; box-shadow: inset 0 0 0 1px var(--line); }
+body.theme-dark .g-card.open { background: #2E2B24; }
+.g-card.owned.o1 { background: #E8DCF2; box-shadow: inset 0 0 0 2px #9B85AD; }
+.g-card.owned.o2 { background: #FBE6D2; box-shadow: inset 0 0 0 2px #C9803F; }
+body.theme-dark .g-card.owned.o1 { background: #3A2F46; }
+body.theme-dark .g-card.owned.o2 { background: #46341F; }
+.g-card .g-face { line-height: 1; }
+.game-card.big .g-card { font-size: 26px; }
+
+/* 踩地雷 */
+.g-board.sweeper { width: min(268px, 72vw); gap: 2px; }
+.game-card.big .g-board.sweeper { width: min(330px, 82vw); }
+.g-mcell {
+  aspect-ratio: 1; border-radius: 4px; font-weight: 800; font-size: 13px; padding: 0;
+  display: flex; align-items: center; justify-content: center; line-height: 1;
+}
+.game-card.big .g-mcell { font-size: 15px; }
+.g-mcell.covered { background: #B9C0CB; box-shadow: inset -2px -2px 0 rgba(0, 0, 0, .12), inset 2px 2px 0 rgba(255, 255, 255, .5); }
+.g-mcell.open { background: rgba(120, 130, 145, .16); }
+body.theme-dark .g-mcell.covered { background: #555C68; }
+.g-mcell.boom { background: #D6524A; }
+.g-mcell.n1 { color: #2A62C4; }
+.g-mcell.n2 { color: #2E8B57; }
+.g-mcell.n3 { color: #C4443A; }
+.g-mcell.n4 { color: #26418F; }
+.g-mcell.n5 { color: #8B3A2E; }
+.g-mcell.n6 { color: #1F7A7A; }
+.g-mcell.n7 { color: #4A4A4A; }
+.g-mcell.n8 { color: #8A8A8A; }
+body.theme-dark .g-mcell.n1 { color: #7FA8F0; }
+body.theme-dark .g-mcell.n4 { color: #8FA4E8; }
+body.theme-dark .g-mcell.n7 { color: #C9C9C9; }
+.g-flag {
+  margin-top: 8px; font-size: 12.5px; padding: 6px 12px; border-radius: 999px;
+  border: 1px solid var(--line); color: var(--sub);
+}
+.g-flag.on { border-color: var(--green); background: var(--green-soft); color: var(--green-dark); font-weight: 700; }
+body.theme-dark .g-flag.on { color: var(--green); }
+
+/* 猜數字 1A2B */
+.g-guess { width: 100%; max-width: 300px; margin: 0 auto; }
+.g-glist { display: flex; flex-direction: column; gap: 4px; }
+.g-ghint { font-size: 12.5px; color: var(--sub); text-align: center; padding: 10px 0; }
+.mine .g-ghint { color: var(--bubble-me-ink); }
+.g-grow {
+  display: flex; align-items: center; gap: 8px; font-size: 13.5px;
+  background: rgba(120, 130, 145, .12); border-radius: 8px; padding: 5px 10px;
+}
+.g-grow.hit { background: var(--accent-fill); font-weight: 700; }
+.g-gnum { font-weight: 800; letter-spacing: .18em; font-variant-numeric: tabular-nums; }
+.g-gab { color: var(--green-dark); font-weight: 700; }
+body.theme-dark .g-gab { color: var(--green); }
+.g-gwho { margin-left: auto; font-size: 11.5px; color: var(--sub); }
+.g-gform { display: flex; gap: 6px; margin-top: 10px; }
+.g-ginput {
+  flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--input-bg);
+  border-radius: 10px; padding: 8px 12px; outline: none;
+  font-size: 17px; letter-spacing: .3em; text-align: center; font-variant-numeric: tabular-nums;
+}
+.g-ginput:focus { border-color: var(--green); }
+
+.g-boardwrap { display: flex; justify-content: center; width: 100%; }
+.modal-games { max-height: min(88vh, 720px); max-height: min(88dvh, 720px); }
+
 .g-dpad { margin-top: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .g-dpad > div { display: flex; gap: 6px; }
 .g-dir {
