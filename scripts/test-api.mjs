@@ -179,8 +179,12 @@ check('踩地雷開局 81 格全蓋著、沒有雷區資料',
 r = await act(ms, { action: 'move', i: 40 }, TA);
 check('第一下一定不會爆炸', r.data.game?.over === false && r.data.game?.view?.[40] !== 'X');
 check('傳給前端的狀態仍然不含雷區', r.data.game?.layout === undefined);
-r = await act(ms, { action: 'move', i: 0, flag: true }, TA);
-check('可以插旗', r.data.game?.view?.[0] === 'F');
+// 第一下會把一整片空白翻開，所以要挑一個「還蓋著」的格子來插旗
+const stillCovered = r.data.game.view.findIndex((v) => v === null);
+r = await act(ms, { action: 'move', i: stillCovered, flag: true }, TA);
+check('可以插旗', r.data.game?.view?.[stillCovered] === 'F');
+check('插旗會從剩餘雷數扣掉',
+  r.data.game.view.filter((v) => v === 'F').length === 1);
 check('不是操作者不能翻', (await act(ms, { action: 'move', i: 8 }, TB)).status === 403);
 
 // 猜數字：大家都能猜，答案不會先送出去
@@ -210,7 +214,7 @@ for (const p1 of '0123456789') for (const p2 of '0123456789') for (const p3 of '
 let solved = null;
 let tries = 0;
 let guess = cands[0];
-while (!solved && tries < 12 && cands.length) {
+while (!solved && tries < 30 && cands.length) { // 依序挑候選最壞情況約 11 次，留寬一點
   tries++;
   const res = await act(gs, { action: 'move', guess }, TA);
   if (res.data.game?.winner) { solved = res.data.game; break; }

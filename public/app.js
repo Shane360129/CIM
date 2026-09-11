@@ -1699,14 +1699,20 @@ function inviteToGroupModal(conv) {
 
 /* ---------- 彈窗基礎 ---------- */
 
+let openModals = 0;
+
 function openModal(modalNode, onClose) {
   const backdrop = el('div', { class: 'modal-backdrop' }, modalNode);
   let closed = false;
+  openModals++;
+  document.body.classList.add('modal-open');
   const close = () => {
     if (closed) return;
     closed = true;
     backdrop.remove();
     document.removeEventListener('keydown', onKey);
+    openModals = Math.max(0, openModals - 1);
+    if (!openModals) document.body.classList.remove('modal-open');
     if (onClose) onClose();
   };
   const onKey = (e) => { if (e.key === 'Escape') close(); };
@@ -3164,6 +3170,7 @@ function guessPanel(m, g, interactive) {
       el('span', { class: 'g-gwho', text: nameOf(r.userId) })));
   }
   wrap.append(list);
+  setTimeout(() => { list.scrollTop = list.scrollHeight; }, 0); // 固定高度的紀錄區，永遠看最新一筆
   if (g.guesses.length > rows.length)
     wrap.append(el('div', { class: 'g-foot', text: `（只顯示最近 ${rows.length} 次，共猜了 ${g.guesses.length} 次）` }));
   if (!interactive || g.winner) return wrap;
@@ -3381,8 +3388,10 @@ function openGameModal(m) {
     const cur = findMessage(convId, m.id) || m;
     const focused = document.activeElement && document.activeElement.classList.contains('g-ginput');
     const typed = focused ? document.activeElement.value : null;
+    const top = body.scrollTop;
     body.textContent = '';
     body.append(buildGameCard(cur, true));
+    body.scrollTop = top; // 更新盤面不把畫面彈回最上面
     if (typed !== null) {
       const input = body.querySelector('.g-ginput');
       if (input) { input.value = typed; input.focus(); }
@@ -3397,20 +3406,33 @@ function openGameModal(m) {
     gameAct(cur, { action: 'move', dir });
   };
   render();
-  const close = openModal(
-    el('div', { class: 'modal modal-game' },
-      el('div', { class: 'modal-title', text: `${def.emoji} ${def.title}` }),
-      body,
-      el('div', { class: 'modal-actions' },
-        el('button', {
-          class: 'btn btn-ghost', text: '換個遊戲',
-          onclick: () => { close(); const c = convById(convId); if (c) gamePickModal(c); },
-        }),
-        el('button', { class: 'btn btn-primary', text: '關閉', onclick: () => close() }))),
-    () => {
-      state.openGame = null;
-      document.removeEventListener('keydown', onKey);
-    });
+  const win = el('div', { class: 'modal modal-game' },
+    el('div', { class: 'modal-title', text: `${def.emoji} ${def.title}` }),
+    body,
+    el('div', { class: 'modal-actions' },
+      el('button', {
+        class: 'btn btn-ghost', text: '換個遊戲',
+        onclick: () => { close(); const c = convById(convId); if (c) gamePickModal(c); },
+      }),
+      el('button', { class: 'btn btn-primary', text: '關閉', onclick: () => close() })));
+  // 量一次高度就定住：視窗剛好包住這款遊戲，之後盤面更新都不會改變大小
+  const freeze = () => {
+    win.style.height = '';
+    let h = Math.ceil(win.getBoundingClientRect().height);
+    win.style.height = h + 'px';
+    // 寫死高度後內容區可能被壓縮幾像素，補回去（超過 CSS 的 max-height 就讓它捲）
+    for (let i = 0; i < 3 && body.scrollHeight > body.clientHeight; i++) {
+      h += body.scrollHeight - body.clientHeight;
+      win.style.height = h + 'px';
+    }
+  };
+  const close = openModal(win, () => {
+    state.openGame = null;
+    document.removeEventListener('keydown', onKey);
+    window.removeEventListener('resize', freeze);
+  });
+  requestAnimationFrame(freeze);
+  window.addEventListener('resize', freeze); // 轉向或視窗縮放後重新量一次
   state.openGame = { id: m.id, convId, render };
   document.addEventListener('keydown', onKey);
 }

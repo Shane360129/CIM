@@ -502,14 +502,17 @@ body.theme-dark .theirs .bubble a { color: #8ab8ff; }
 .modal-backdrop {
   position: fixed; inset: 0; background: rgba(15, 20, 30, .45); z-index: 50;
   display: flex; align-items: center; justify-content: center; padding: 18px;
+  overscroll-behavior: contain;
 }
+/* 彈窗開著的時候，背後的畫面不捲動 */
+body.modal-open { overflow: hidden; }
 .modal {
   background: var(--panel); border-radius: 18px; width: 100%; max-width: 400px;
   max-height: min(78vh, 640px); max-height: min(78dvh, 640px);
   display: flex; flex-direction: column; overflow: hidden;
 }
 .modal-title { font-size: 16.5px; font-weight: 700; padding: 18px 20px 6px; }
-.modal-body { padding: 8px 20px; overflow-y: auto; }
+.modal-body { padding: 8px 20px; overflow-y: auto; overscroll-behavior: contain; }
 .modal-body p { color: var(--sub); font-size: 14px; line-height: 1.6; margin: 6px 0; }
 .modal-body input {
   width: 100%; padding: 11px 13px; border: 1px solid var(--line); border-radius: 10px;
@@ -889,17 +892,27 @@ body.theme-dark .g-seat-score { color: var(--green); }
 .g-score span { font-size: 11px; color: var(--sub); }
 .mine .g-score span { color: var(--bubble-me-ink); opacity: .7; }
 
-.g-status { font-size: 12.5px; color: var(--sub); margin: 8px 0 6px; text-align: center; }
+.g-status {
+  font-size: 12.5px; color: var(--sub); margin: 8px 0 6px; text-align: center;
+  /* 固定高度：狀態文字從一行變兩行時，下面的盤面不會跟著移動 */
+  min-height: 2.6em; display: flex; align-items: center; justify-content: center;
+}
 .g-status.hot { color: var(--green-dark); font-weight: 700; }
 body.theme-dark .g-status.hot { color: var(--green); }
 .mine .g-status { color: var(--bubble-me-ink); opacity: .8; }
 
 .g-board {
   display: grid; grid-template-columns: repeat(var(--n), 1fr);
-  aspect-ratio: 1; margin: 0 auto; touch-action: manipulation;
+  aspect-ratio: 1; margin: 0 auto;
+  /* 盤面上的觸控只當成點擊或（2048）滑動，不捲動頁面也不雙指放大 */
+  touch-action: none;
 }
+.game-card {
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+.game-card input { -webkit-user-select: text; user-select: text; }
 .g-board.ooxx { width: min(200px, 56vw); gap: 5px; }
-.game-card.big .g-board.ooxx { width: min(280px, 72vw); }
+.game-card.big .g-board.ooxx { width: min(280px, 72vw, 38dvh); }
 .g-cell {
   display: flex; align-items: center; justify-content: center;
   background: rgba(120, 130, 145, .13); border-radius: 8px; font-size: 22px;
@@ -914,7 +927,7 @@ body.theme-dark .g-status.hot { color: var(--green); }
   width: min(268px, 72vw); gap: 1px; background: #C9A063;
   padding: 3px; border-radius: 8px;
 }
-.game-card.big .g-board.gomoku { width: min(330px, 80vw); }
+.game-card.big .g-board.gomoku { width: min(300px, 78vw, 40dvh); }
 body.theme-dark .g-board.gomoku { background: #7C6242; }
 .g-board.gomoku .g-cell { background: #E8C48C; border-radius: 0; }
 body.theme-dark .g-board.gomoku .g-cell { background: #A78458; }
@@ -933,7 +946,7 @@ body.theme-dark .g-board.gomoku .g-cell { background: #A78458; }
 }
 body.theme-dark .g-board.g2048 { background: #6E6459; }
 body.theme-dark .g-tile.empty { background: rgba(238, 228, 218, .13); }
-.game-card.big .g-board.g2048 { width: min(272px, 70vw); }
+.game-card.big .g-board.g2048 { width: min(272px, 70vw, 34dvh); }
 .g-tile {
   display: flex; align-items: center; justify-content: center;
   border-radius: 6px; font-weight: 800; font-size: 17px; color: #776E65;
@@ -960,7 +973,7 @@ body.theme-dark .g-tile.empty { background: rgba(238, 228, 218, .13); }
   width: min(252px, 66vw); aspect-ratio: 7 / 6; gap: 4px; padding: 5px;
   background: #3C6BB0; border-radius: 10px;
 }
-.game-card.big .g-board.connect4 { width: min(310px, 78vw); }
+.game-card.big .g-board.connect4 { width: min(294px, 76vw, 46dvh); }
 body.theme-dark .g-board.connect4 { background: #2C4C7C; }
 .g-hole {
   aspect-ratio: 1; border-radius: 50%; background: #EAEFF7; padding: 0;
@@ -976,7 +989,7 @@ body.theme-dark .g-hole { background: #1D2733; }
 .g-board.reversi {
   width: min(256px, 68vw); gap: 1px; background: #1F5E3D; padding: 3px; border-radius: 8px;
 }
-.game-card.big .g-board.reversi { width: min(320px, 80vw); }
+.game-card.big .g-board.reversi { width: min(300px, 78vw, 40dvh); }
 .g-board.reversi .g-cell { background: #2F8A58; border-radius: 0; }
 body.theme-dark .g-board.reversi .g-cell { background: #27704A; }
 .g-board.reversi .g-cell.last { box-shadow: inset 0 0 0 2px #F3D86B; }
@@ -987,7 +1000,7 @@ body.theme-dark .g-board.reversi .g-cell { background: #27704A; }
 
 /* 記憶翻翻樂 */
 .g-board.memory { width: min(260px, 68vw); aspect-ratio: 5 / 4; gap: 6px; }
-.game-card.big .g-board.memory { width: min(320px, 80vw); }
+.game-card.big .g-board.memory { width: min(300px, 78vw, 46dvh); }
 .g-card {
   aspect-ratio: 1; border-radius: 9px; display: flex; align-items: center; justify-content: center;
   background: linear-gradient(135deg, #7C8BB0, #5E6B90); font-size: 21px; padding: 0;
@@ -1004,7 +1017,7 @@ body.theme-dark .g-card.owned.o2 { background: #46341F; }
 
 /* 踩地雷 */
 .g-board.sweeper { width: min(268px, 72vw); gap: 2px; }
-.game-card.big .g-board.sweeper { width: min(330px, 82vw); }
+.game-card.big .g-board.sweeper { width: min(300px, 78vw, 38dvh); }
 .g-mcell {
   aspect-ratio: 1; border-radius: 4px; font-weight: 800; font-size: 13px; padding: 0;
   display: flex; align-items: center; justify-content: center; line-height: 1;
@@ -1034,7 +1047,11 @@ body.theme-dark .g-flag.on { color: var(--green); }
 
 /* 猜數字 1A2B */
 .g-guess { width: 100%; max-width: 300px; margin: 0 auto; }
-.g-glist { display: flex; flex-direction: column; gap: 4px; }
+.g-glist {
+  display: flex; flex-direction: column; gap: 4px;
+  height: 200px; overflow-y: auto; overscroll-behavior: contain;
+}
+.game-card.big .g-glist { height: 280px; }
 .g-ghint { font-size: 12.5px; color: var(--sub); text-align: center; padding: 10px 0; }
 .mine .g-ghint { color: var(--bubble-me-ink); }
 .g-grow {
@@ -1069,8 +1086,21 @@ body.theme-dark .g-gab { color: var(--green); }
 .g-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; justify-content: center; }
 .g-foot { font-size: 11.5px; color: var(--sub); margin-top: 8px; text-align: center; }
 
-.modal-game { max-width: 420px; max-height: min(92vh, 780px); max-height: min(92dvh, 780px); }
-.game-modal-body { display: flex; justify-content: center; padding-top: 12px; }
+.modal-game {
+  /* 開起來量一次高度就定住（openGameModal 會寫死 style.height）：
+     視窗剛好包住這款遊戲，之後盤面怎麼更新都不會變大小、盤面也就不會跳。
+     max-height 也要一起覆寫，否則會被 .modal 的 78vh 壓回去。 */
+  max-width: 400px;
+  max-height: min(92vh, 680px); max-height: min(92dvh, 680px);
+}
+.game-modal-body {
+  display: flex; justify-content: center; align-items: flex-start; padding-top: 12px;
+  overscroll-behavior: contain;
+}
+/* 網頁（桌機）版：固定一個小視窗，不隨視窗大小伸縮 */
+@media (min-width: 700px) {
+  .modal-game { width: 392px; }
+}
 
 .game-pick {
   display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
