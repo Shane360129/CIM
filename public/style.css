@@ -105,7 +105,8 @@ body.font-xl { --fs-msg: 19.5px; --fs-list: 19px; --fs-sticker: 74px; }
 *::-webkit-scrollbar-track { background: transparent; }
 *::-webkit-scrollbar-thumb { background: var(--pill-bg); border-radius: 999px; }
 *::-webkit-scrollbar-thumb:hover { background: var(--sub); }
-html, body { height: 100%; }
+/* 關掉手機「點兩下放大」（雙指縮放保留，長輩要放大看字時還用得到） */
+html, body { height: 100%; touch-action: manipulation; }
 body {
   margin: 0;
   font-family: var(--font-body);
@@ -902,7 +903,10 @@ body.theme-dark .g-status.hot { color: var(--green); }
 .mine .g-status { color: var(--bubble-me-ink); opacity: .8; }
 
 .g-board {
-  display: grid; grid-template-columns: repeat(var(--n), 1fr);
+  display: grid;
+  /* 欄列都平均分配：空白的格子不會因為沒有內容而被壓扁 */
+  grid-template-columns: repeat(var(--n), 1fr);
+  grid-template-rows: repeat(var(--rows, var(--n)), 1fr);
   aspect-ratio: 1; margin: 0 auto;
   /* 盤面上的觸控只當成點擊或（2048）滑動，不捲動頁面也不雙指放大 */
   touch-action: none;
@@ -951,6 +955,7 @@ body.theme-dark .g-tile.empty { background: rgba(238, 228, 218, .13); }
   display: flex; align-items: center; justify-content: center;
   border-radius: 6px; font-weight: 800; font-size: 17px; color: #776E65;
   background: rgba(238, 228, 218, .35);
+  aspect-ratio: 1; /* 空格沒有文字，少了這行就會被壓扁 */
 }
 .game-card.big .g-tile { font-size: 22px; }
 .g-tile.v2 { background: #EEE4DA; }

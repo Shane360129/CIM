@@ -2977,6 +2977,14 @@ const gameStatus = (g) =>
 
 /* ----- 座位與盤面 ----- */
 
+// 明確告訴 grid 有幾欄幾列：列高平均分配，沒有內容的格子（例如 2048 的空格）
+// 才不會被壓扁成一條
+function sizeBoard(board, g) {
+  const { cols, rows } = gameDims(g);
+  board.style.setProperty('--n', cols);
+  board.style.setProperty('--rows', rows);
+}
+
 // 對戰型的兩張座位牌：空位可以直接點進去坐
 function seatPills(m, g) {
   const def = GAME_DEFS[g.kind];
@@ -3005,7 +3013,7 @@ function lineBoard(m, g, interactive) {
   const def = GAME_DEFS[g.kind];
   const { cols } = gameDims(g);
   const board = el('div', { class: 'g-board ' + g.kind });
-  board.style.setProperty('--n', cols);
+  sizeBoard(board, g);
   const mySeat = g.seats.indexOf(state.me.id);
   const myTurn = interactive && g.winner === null && mySeat >= 0 && g.turn === mySeat &&
     !g.seats.some((x) => x === null);
@@ -3034,7 +3042,7 @@ function lineBoard(m, g, interactive) {
 function connect4Board(m, g, interactive) {
   const { cols } = gameDims(g);
   const board = el('div', { class: 'g-board connect4' });
-  board.style.setProperty('--n', cols);
+  sizeBoard(board, g);
   const mySeat = g.seats.indexOf(state.me.id);
   const myTurn = interactive && g.winner === null && mySeat >= 0 && g.turn === mySeat &&
     !g.seats.some((x) => x === null);
@@ -3060,7 +3068,7 @@ function connect4Board(m, g, interactive) {
 function reversiBoard(m, g, interactive) {
   const { cols } = gameDims(g);
   const board = el('div', { class: 'g-board reversi' });
-  board.style.setProperty('--n', cols);
+  sizeBoard(board, g);
   const mySeat = g.seats.indexOf(state.me.id);
   const myTurn = interactive && g.winner === null && mySeat >= 0 && g.turn === mySeat &&
     !g.seats.some((x) => x === null);
@@ -3085,7 +3093,7 @@ function reversiBoard(m, g, interactive) {
 function memoryBoard(m, g, interactive) {
   const { cols } = gameDims(g);
   const board = el('div', { class: 'g-board memory' });
-  board.style.setProperty('--n', cols);
+  sizeBoard(board, g);
   const mySeat = g.seats.indexOf(state.me.id);
   const myTurn = interactive && g.winner === null && mySeat >= 0 && g.turn === mySeat &&
     !g.seats.some((x) => x === null);
@@ -3111,7 +3119,7 @@ function memoryBoard(m, g, interactive) {
 function tilesBoard(m, g, interactive) {
   const { cols } = gameDims(g);
   const board = el('div', { class: 'g-board g2048' });
-  board.style.setProperty('--n', cols);
+  sizeBoard(board, g);
   for (const v of g.tiles) {
     board.append(el('div', {
       class: 'g-tile' + (v ? ' v' + (v > 2048 ? 'max' : v) : ' empty'),
@@ -3129,7 +3137,7 @@ const MINE_COLORS = ['', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8'];
 function mineBoard(m, g, interactive, flagMode) {
   const { cols } = gameDims(g);
   const board = el('div', { class: 'g-board sweeper' });
-  board.style.setProperty('--n', cols);
+  sizeBoard(board, g);
   const canPlay = interactive && g.holder === state.me.id && !g.over;
   (g.view || []).forEach((v, i) => {
     const hidden = v === null || v === 'F';
