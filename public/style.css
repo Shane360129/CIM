@@ -703,7 +703,7 @@ body.theme-dark .theirs .bubble a { color: #8ab8ff; }
   background: none; color: var(--green); font-weight: 700;
 }
 
-/* ---------- 小工具（購物清單、行事曆） ---------- */
+/* ---------- 聊天室小工具（待辦清單、行事曆） ---------- */
 
 .tool-tabs { display: flex; border-bottom: 1px solid var(--line); flex: none; }
 .tool-tabs button {
@@ -847,6 +847,178 @@ body.theme-dark .rchip.own { color: var(--green); }
 .poll-opt.voted { border-color: var(--green); font-weight: 700; }
 .poll-total { font-size: 11.5px; color: var(--sub); margin-top: 8px; }
 .mine .poll-total { color: var(--bubble-me-ink); opacity: .7; }
+
+/* ---------- 小遊戲（圈圈叉叉、五子棋、2048） ---------- */
+
+.game-card {
+  background: var(--bubble-other); border-radius: 17px; padding: 12px 14px;
+  min-width: min(260px, 66vw); max-width: 100%;
+}
+.mine .game-card { background: var(--bubble-me); color: var(--bubble-me-ink); }
+.game-card.big {
+  background: none; padding: 0; min-width: 0; width: 100%;
+  display: flex; flex-direction: column; align-items: center;
+}
+.g-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; width: 100%; }
+/* 放大遊玩時標題已經在彈窗上方，卡片裡只留局數／步數 */
+.game-card.big .g-head { justify-content: center; }
+.game-card.big .g-title { display: none; }
+.g-title { font-weight: 700; font-size: var(--fs-msg); }
+.g-round { font-size: 11.5px; color: var(--sub); flex: none; }
+.mine .g-round { color: var(--bubble-me-ink); opacity: .7; }
+
+.g-seats { display: flex; gap: 6px; margin-top: 8px; width: 100%; }
+.g-seat {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px;
+  border: 1px solid rgba(120, 130, 145, .35); border-radius: 10px;
+  padding: 6px 8px; font-size: 12.5px; text-align: left;
+}
+.g-seat.turn { border-color: var(--green); background: var(--accent-fill); font-weight: 700; }
+.g-seat.win { border-color: var(--green); background: var(--accent-fill); }
+.g-seat-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.g-seat-score { flex: none; font-weight: 700; color: var(--green-dark); }
+body.theme-dark .g-seat-score { color: var(--green); }
+.g-mark { font-size: 14px; line-height: 1; flex: none; }
+
+.g-scores { display: flex; gap: 8px; margin-top: 8px; width: 100%; }
+.g-score {
+  flex: 1; background: rgba(120, 130, 145, .12); border-radius: 10px;
+  padding: 5px 8px; text-align: center; line-height: 1.3;
+}
+.g-score b { display: block; font-size: 16px; }
+.g-score span { font-size: 11px; color: var(--sub); }
+.mine .g-score span { color: var(--bubble-me-ink); opacity: .7; }
+
+.g-status { font-size: 12.5px; color: var(--sub); margin: 8px 0 6px; text-align: center; }
+.g-status.hot { color: var(--green-dark); font-weight: 700; }
+body.theme-dark .g-status.hot { color: var(--green); }
+.mine .g-status { color: var(--bubble-me-ink); opacity: .8; }
+
+.g-board {
+  display: grid; grid-template-columns: repeat(var(--n), 1fr);
+  aspect-ratio: 1; margin: 0 auto; touch-action: manipulation;
+}
+.g-board.ooxx { width: min(200px, 56vw); gap: 5px; }
+.game-card.big .g-board.ooxx { width: min(280px, 72vw); }
+.g-cell {
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(120, 130, 145, .13); border-radius: 8px; font-size: 22px;
+  aspect-ratio: 1; padding: 0;
+}
+.g-cell.open { background: rgba(120, 130, 145, .18); }
+.g-cell.win { background: var(--accent-fill); box-shadow: inset 0 0 0 2px var(--green); }
+.game-card.big .g-cell { font-size: 30px; }
+.g-cell[disabled] { opacity: 1; }
+
+.g-board.gomoku {
+  width: min(268px, 72vw); gap: 1px; background: #C9A063;
+  padding: 3px; border-radius: 8px;
+}
+.game-card.big .g-board.gomoku { width: min(330px, 80vw); }
+body.theme-dark .g-board.gomoku { background: #7C6242; }
+.g-board.gomoku .g-cell { background: #E8C48C; border-radius: 0; }
+body.theme-dark .g-board.gomoku .g-cell { background: #A78458; }
+.g-board.gomoku .g-cell.last { box-shadow: inset 0 0 0 1.5px var(--danger); }
+.g-board.gomoku .g-cell.win { background: var(--green-soft); box-shadow: none; }
+.g-stone {
+  width: 82%; height: 82%; border-radius: 50%;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .3);
+}
+.g-stone.s1 { background: radial-gradient(circle at 32% 28%, #6a6a6a, #131313 70%); }
+.g-stone.s2 { background: radial-gradient(circle at 32% 28%, #ffffff, #cfcabf 75%); }
+
+.g-board.g2048 {
+  width: min(230px, 62vw); gap: 6px; background: #BBADA0;
+  padding: 6px; border-radius: 10px;
+}
+body.theme-dark .g-board.g2048 { background: #6E6459; }
+body.theme-dark .g-tile.empty { background: rgba(238, 228, 218, .13); }
+.game-card.big .g-board.g2048 { width: min(272px, 70vw); }
+.g-tile {
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 6px; font-weight: 800; font-size: 17px; color: #776E65;
+  background: rgba(238, 228, 218, .35);
+}
+.game-card.big .g-tile { font-size: 22px; }
+.g-tile.v2 { background: #EEE4DA; }
+.g-tile.v4 { background: #EDE0C8; }
+.g-tile.v8 { background: #F2B179; color: #F9F6F2; }
+.g-tile.v16 { background: #F59563; color: #F9F6F2; }
+.g-tile.v32 { background: #F67C5F; color: #F9F6F2; }
+.g-tile.v64 { background: #F65E3B; color: #F9F6F2; }
+.g-tile.v128 { background: #EDCF72; color: #F9F6F2; font-size: 15px; }
+.g-tile.v256 { background: #EDCC61; color: #F9F6F2; font-size: 15px; }
+.g-tile.v512 { background: #EDC850; color: #F9F6F2; font-size: 15px; }
+.g-tile.v1024 { background: #EDC53F; color: #F9F6F2; font-size: 12.5px; }
+.g-tile.v2048 { background: #EDC22E; color: #F9F6F2; font-size: 12.5px; }
+.g-tile.vmax { background: #3C3A32; color: #F9F6F2; font-size: 12.5px; }
+.game-card.big .g-tile.v128, .game-card.big .g-tile.v256, .game-card.big .g-tile.v512 { font-size: 20px; }
+.game-card.big .g-tile.v1024, .game-card.big .g-tile.v2048, .game-card.big .g-tile.vmax { font-size: 16px; }
+
+.g-dpad { margin-top: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.g-dpad > div { display: flex; gap: 6px; }
+.g-dir {
+  width: 46px; height: 36px; border-radius: 10px; font-size: 17px;
+  background: rgba(120, 130, 145, .16); color: var(--ink);
+}
+.mine .g-dir { color: var(--bubble-me-ink); }
+.g-dir[disabled] { opacity: .4; }
+
+.g-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; justify-content: center; }
+.g-foot { font-size: 11.5px; color: var(--sub); margin-top: 8px; text-align: center; }
+
+.modal-game { max-width: 420px; max-height: min(92vh, 780px); max-height: min(92dvh, 780px); }
+.game-modal-body { display: flex; justify-content: center; padding-top: 12px; }
+
+.game-pick {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  padding: 12px 10px; border-radius: 12px; border: 1px solid var(--line); margin: 8px 0;
+}
+.game-pick:active { background: var(--hover); }
+.gp-emoji { font-size: 24px; flex: none; }
+.gp-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.gp-title { font-weight: 700; font-size: 15px; }
+.gp-desc { font-size: 12.5px; color: var(--sub); }
+.gp-tag {
+  flex: none; font-size: 11px; color: var(--green-dark); background: var(--green-soft);
+  border-radius: 999px; padding: 3px 9px;
+}
+body.theme-dark .gp-tag { color: var(--green); }
+
+/* ---------- 今天吃什麼 ---------- */
+
+.modal-food { max-width: 420px; }
+.food-result {
+  font-size: 30px; font-weight: 800; text-align: center; padding: 22px 10px 8px;
+  min-height: 46px; word-break: break-word; font-family: var(--font-display);
+}
+.food-result.spinning { opacity: .45; }
+.food-result.pop { animation: food-pop .28s ease both; }
+@keyframes food-pop { from { transform: scale(.82); opacity: .4; } to { transform: scale(1); opacity: 1; } }
+.food-note { font-size: 12.5px; color: var(--sub); text-align: center; margin-bottom: 12px; }
+.food-acts { display: flex; flex-direction: column; gap: 8px; }
+.food-sec { font-size: 12.5px; color: var(--sub); font-weight: 600; margin: 16px 0 8px; }
+.food-chips { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 4px; }
+.food-chip {
+  font-size: 12.5px; padding: 6px 11px; border-radius: 999px;
+  border: 1px solid var(--line); color: var(--sub); background: none;
+}
+.food-chip.on {
+  border-color: var(--green); background: var(--green-soft); color: var(--green-dark); font-weight: 700;
+}
+body.theme-dark .food-chip.on { color: var(--green); }
+
+/* ---------- 聊天室功能選單與小工具彈窗 ---------- */
+
+.feature-item { align-items: center; gap: 12px; }
+.feature-emoji { font-size: 20px; flex: none; }
+.feature-item .grow { display: flex; flex-direction: column; }
+.feature-label { font-size: 15px; }
+.feature-sub { font-size: 12px; color: var(--sub); }
+
+.modal-tools { max-width: 460px; height: min(78vh, 640px); height: min(78dvh, 640px); }
+.tools-modal-body { padding: 0; display: flex; flex: 1; min-height: 0; overflow: hidden; }
+.tools-panel { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 
 .audio-msg {
   display: flex; align-items: center; gap: 10px;

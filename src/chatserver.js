@@ -196,6 +196,17 @@ CREATE TABLE IF NOT EXISTS contacts (
 );
 `;
 
+// v5：聊天室小遊戲（圈圈叉叉、五子棋、2048）——狀態獨立存放，不佔訊息內容
+const SCHEMA_V5 = `
+CREATE TABLE IF NOT EXISTS games (
+  message_id INTEGER PRIMARY KEY,
+  conversation_id INTEGER NOT NULL,
+  kind TEXT NOT NULL,
+  state TEXT NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+`;
+
 // 訊息中的網址：http(s):// 或 www. 開頭，遇到空白、引號或中文標點即結束
 // （與前端 public/app.js 的 URL_RE / trimUrlTail 保持一致）
 const URL_RE = /(?:https?:\/\/|www\.)[^\s<>"'`\u3000、，。！？：；（）「」『』【】《》〈〉…]+/i;
@@ -314,6 +325,152 @@ function fromB64url(str) {
   } catch { return null; }
 }
 
+// ---------- 小遊戲 ----------
+// 三款遊戲共用一套「狀態放伺服器、動作由伺服器判定」的作法：
+// 對戰型（圈圈叉叉、五子棋）有兩個座位，輪流下；
+// 合作型（2048）大家共用一盤，同一時間只有一位「操作者」能動，其他人只能看。
+
+const GAME_KINDS = {
+  ooxx: { title: '圈圈叉叉', mode: 'versus', size: 3, need: 3 },
+  gomoku: { title: '五子棋', mode: 'versus', size: 13, need: 5 },
+  '2048': { title: '2048', mode: 'coop', size: 4 },
+};
+const GAME_IDLE = 60000; // 合作遊戲：操作者閒置超過 1 分鐘，其他人可直接接手
+
+// 從 idx 往四個方向數同色棋子，達到 need 顆就回傳整條連線（圈圈叉叉＝3 顆、五子棋＝5 顆）
+function winLine(board, size, idx, player, need) {
+  const r0 = Math.floor(idx / size);
+  const c0 = idx % size;
+  for (const [dr, dc] of [[0, 1], [1, 0], [1, 1], [1, -1]]) {
+    const cells = [idx];
+    for (const sign of [1, -1]) {
+      let r = r0 + dr * sign;
+      let c = c0 + dc * sign;
+      while (r >= 0 && r < size && c >= 0 && c < size && board[r * size + c] === player) {
+        cells.push(r * size + c);
+        r += dr * sign;
+        c += dc * sign;
+      }
+    }
+    if (cells.length >= need) return cells.sort((a, b) => a - b);
+  }
+  return null;
+}
+
+// 2048：依移動方向把每一列／行拆成「由前往後」的索引順序
+function linesFor(size, dir) {
+  const lines = [];
+  for (let a = 0; a < size; a++) {
+    const line = [];
+    for (let b = 0; b < size; b++) {
+      let r, c;
+      if (dir === 'left') { r = a; c = b; }
+      else if (dir === 'right') { r = a; c = size - 1 - b; }
+      else if (dir === 'up') { r = b; c = a; }
+      else { r = size - 1 - b; c = a; }
+      line.push(r * size + c);
+    }
+    lines.push(line);
+  }
+  return lines;
+}
+
+// 2048：把數字往 dir 推、相同的合併一次，回傳新盤面與這一步得分
+function move2048(tiles, size, dir) {
+  const out = tiles.slice();
+  let gained = 0;
+  let moved = false;
+  for (const line of linesFor(size, dir)) {
+    const vals = line.map((i) => out[i]).filter((v) => v);
+    const merged = [];
+    for (let k = 0; k < vals.length; k++) {
+      if (k + 1 < vals.length && vals[k] === vals[k + 1]) {
+        merged.push(vals[k] * 2);
+        gained += vals[k] * 2;
+        k++;
+      } else {
+        merged.push(vals[k]);
+      }
+    }
+    while (merged.length < size) merged.push(0);
+    line.forEach((idx, k) => {
+      if (out[idx] !== merged[k]) moved = true;
+      out[idx] = merged[k];
+    });
+  }
+  return { tiles: out, gained, moved };
+}
+
+// 2048：在空格隨機長出一個 2（九成）或 4（一成）
+function spawnTile(tiles) {
+  const empty = [];
+  tiles.forEach((v, i) => { if (!v) empty.push(i); });
+  if (!empty.length) return -1;
+  const rnd = crypto.getRandomValues(new Uint32Array(2));
+  const idx = empty[rnd[0] % empty.length];
+  tiles[idx] = rnd[1] % 10 === 0 ? 4 : 2;
+  return idx;
+}
+
+// 2048：沒有空格、也沒有相鄰同數字可合併 → 結束
+function stuck2048(tiles, size) {
+  if (tiles.some((v) => !v)) return false;
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const v = tiles[r * size + c];
+      if (c + 1 < size && tiles[r * size + c + 1] === v) return false;
+      if (r + 1 < size && tiles[(r + 1) * size + c] === v) return false;
+    }
+  }
+  return true;
+}
+
+function newGameState(kind, creatorId) {
+  const def = GAME_KINDS[kind];
+  if (def.mode === 'versus') {
+    return {
+      kind, mode: 'versus', size: def.size, need: def.need,
+      board: new Array(def.size * def.size).fill(0),
+      seats: [creatorId, null], // 座位 0 先手；board 的值 1／2 對應座位 0／1
+      turn: 0, first: 0, winner: null, line: [], last: null, moves: 0,
+      score: [0, 0], draws: 0, round: 1,
+    };
+  }
+  const tiles = new Array(def.size * def.size).fill(0);
+  spawnTile(tiles);
+  spawnTile(tiles);
+  return {
+    kind, mode: 'coop', size: def.size, tiles,
+    score: 0, best: 0, over: false, won: false, moves: 0,
+    holder: creatorId, holderAt: Date.now(), contrib: {},
+  };
+}
+
+// 再來一局：對戰型換先手、保留戰績；合作型保留最佳分數
+function resetGameState(g) {
+  if (g.mode === 'versus') {
+    g.board = new Array(g.size * g.size).fill(0);
+    g.first = g.first ? 0 : 1;
+    g.turn = g.first;
+    g.winner = null;
+    g.line = [];
+    g.last = null;
+    g.moves = 0;
+    g.round += 1;
+  } else {
+    g.best = Math.max(g.best || 0, g.score || 0);
+    g.tiles = new Array(g.size * g.size).fill(0);
+    spawnTile(g.tiles);
+    spawnTile(g.tiles);
+    g.score = 0;
+    g.over = false;
+    g.won = false;
+    g.moves = 0;
+    g.contrib = {};
+  }
+  return g;
+}
+
 const pubMessage = (row) => ({
   id: row.id,
   conversationId: row.conversation_id,
@@ -341,10 +498,17 @@ function previewOf(row) {
   if (row.type === 'poll') {
     try { return '[投票] ' + JSON.parse(row.content).q; } catch { return '[投票]'; }
   }
+  if (row.type === 'game') {
+    try {
+      const def = GAME_KINDS[JSON.parse(row.content).kind];
+      return '[小遊戲] ' + (def ? def.title : '');
+    } catch { return '[小遊戲]'; }
+  }
   return String(row.content).slice(0, 60);
 }
 
 export { firstHttpUrl, trimUrlTail, normalizeUrl, safeRemoteUrl, ogTag, metaOf, pickCharset, fromB64url };
+export { winLine, move2048, stuck2048, GAME_KINDS };
 
 export class ChatServer {
   constructor(ctx, env) {
@@ -367,6 +531,10 @@ export class ChatServer {
       if (v < 4) {
         this.sql.exec(SCHEMA_V4);
         this.setSetting('schema_version', '4');
+      }
+      if (v < 5) {
+        this.sql.exec(SCHEMA_V5);
+        this.setSetting('schema_version', '5');
       }
     });
     // 心跳不喚醒 DO：客戶端送 "ping"，執行環境自動回 "pong"
@@ -468,6 +636,8 @@ export class ChatServer {
       return this.react(request, me, +m[1]);
     if ((m = pathname.match(/^\/api\/messages\/(\d+)\/vote$/)) && method === 'POST')
       return this.vote(request, me, +m[1]);
+    if ((m = pathname.match(/^\/api\/messages\/(\d+)\/game$/)) && method === 'POST')
+      return this.gameAction(request, me, +m[1]);
     if ((m = pathname.match(/^\/api\/conversations\/(\d+)\/pin$/)) && method === 'POST')
       return this.pinMessage(request, me, +m[1]);
     if ((m = pathname.match(/^\/api\/admin\/users\/(\d+)$/)) && method === 'DELETE') {
@@ -1014,6 +1184,19 @@ export class ChatServer {
       if (m.type === 'poll')
         m.votes = votes.filter((v) => v.message_id === m.id).map((v) => ({ userId: v.user_id, opt: v.opt }));
     }
+    const gameIds = messages.filter((m) => m.type === 'game' && !m.deleted).map((m) => m.id);
+    if (gameIds.length) {
+      const gph = gameIds.map(() => '?').join(',');
+      const rows = this.sql
+        .exec(`SELECT message_id, state FROM games WHERE message_id IN (${gph})`, ...gameIds)
+        .toArray();
+      const byId = new Map(rows.map((r) => [r.message_id, r.state]));
+      for (const m of messages) {
+        if (m.type !== 'game' || m.deleted) continue;
+        const raw = byId.get(m.id);
+        try { m.game = raw ? JSON.parse(raw) : null; } catch { m.game = null; }
+      }
+    }
     return messages;
   }
 
@@ -1041,6 +1224,7 @@ export class ChatServer {
     const body = await this.readJson(request, MAX_GIF + 100000);
     const type = String(body.type || 'text');
     let content = String(body.content || '');
+    let gameKind = null;
     const meta = {};
 
     if (type === 'text') {
@@ -1079,6 +1263,10 @@ export class ChatServer {
       if (options.some((o) => [...o].length > 30))
         throw new HttpError(400, '每個選項最長 30 個字');
       content = JSON.stringify({ q, options });
+    } else if (type === 'game') {
+      gameKind = String((body.game && body.game.kind) || '');
+      if (!GAME_KINDS[gameKind]) throw new HttpError(400, '不支援的遊戲');
+      content = JSON.stringify({ kind: gameKind });
     } else {
       throw new HttpError(400, '不支援的訊息類型');
     }
@@ -1101,6 +1289,13 @@ export class ChatServer {
         conversationId, me.id, type, content, Date.now(),
         replyTo, Object.keys(meta).length ? JSON.stringify(meta) : null)
       .one();
+    if (gameKind) {
+      this.sql.exec(
+        `INSERT INTO games (message_id, conversation_id, kind, state, updated_at)
+         VALUES (?, ?, ?, ?, ?)`,
+        row.id, conversationId, gameKind,
+        JSON.stringify(newGameState(gameKind, me.id)), Date.now());
+    }
     // 自己送出的訊息視同已讀
     this.sql.exec(
       `UPDATE members SET last_read_id = MAX(last_read_id, ?)
@@ -1425,6 +1620,7 @@ export class ChatServer {
       throw new HttpError(403, '已超過 24 小時，無法收回');
     this.sql.exec(
       `UPDATE messages SET deleted = 1, content = '' WHERE id = ?`, messageId);
+    if (row.type === 'game') this.sql.exec(`DELETE FROM games WHERE message_id = ?`, messageId);
     const conv = this.sql
       .exec(`SELECT pinned_message_id FROM conversations WHERE id = ?`, row.conversation_id)
       .toArray()[0];
@@ -1528,6 +1724,130 @@ export class ChatServer {
       type: 'vote', conversationId: row.conversation_id, messageId, votes,
     });
     return json({ votes });
+  }
+
+  // ---------- 小遊戲 ----------
+
+  gameStateOf(messageId) {
+    const row = this.sql
+      .exec(`SELECT state FROM games WHERE message_id = ?`, messageId).toArray()[0];
+    if (!row) return null;
+    try { return JSON.parse(row.state); } catch { return null; }
+  }
+
+  // 加入座位／落子／滑動／接手／重來，全部由伺服器判定後廣播給聊天室成員
+  async gameAction(request, me, messageId) {
+    const row = this.sql.exec(`SELECT * FROM messages WHERE id = ?`, messageId).toArray()[0];
+    if (!row || row.deleted || row.type !== 'game') throw new HttpError(404, '找不到這個遊戲');
+    this.requireMember(row.conversation_id, me.id);
+    const g = this.gameStateOf(messageId);
+    if (!g) throw new HttpError(404, '找不到這個遊戲');
+    const body = await this.readJson(request, 5000);
+    const action = String(body.action || '');
+    const now = Date.now();
+
+    if (g.mode === 'versus') this.applyVersusAction(g, me, action, body);
+    else this.applyCoopAction(g, me, action, body, now);
+
+    this.sql.exec(
+      `UPDATE games SET state = ?, updated_at = ? WHERE message_id = ?`,
+      JSON.stringify(g), now, messageId);
+    this.sendToUsers(this.memberIds(row.conversation_id), {
+      type: 'game', conversationId: row.conversation_id, messageId, game: g,
+    });
+    return json({ game: g });
+  }
+
+  // 對戰型（圈圈叉叉、五子棋）：兩個座位輪流下，其他成員只能看
+  applyVersusAction(g, me, action, body) {
+    const seat = g.seats.indexOf(me.id);
+    if (action === 'join') {
+      if (seat >= 0) throw new HttpError(400, '你已經在場上了');
+      const free = g.seats.indexOf(null);
+      if (free < 0) throw new HttpError(400, '兩個位子都有人了，先看他們下這局吧');
+      g.seats[free] = me.id;
+      return;
+    }
+    if (action === 'leave') {
+      if (seat < 0) throw new HttpError(400, '你本來就不在場上');
+      g.seats[seat] = null;
+      return;
+    }
+    if (action === 'restart') {
+      if (seat < 0 && g.seats.some((x) => x !== null))
+        throw new HttpError(403, '只有場上的兩位可以重新開始');
+      resetGameState(g);
+      if (seat < 0) g.seats[0] = me.id;
+      return;
+    }
+    if (action !== 'move') throw new HttpError(400, '不支援的動作');
+    if (seat < 0) throw new HttpError(403, '先按「加入對戰」才能下');
+    if (g.winner !== null) throw new HttpError(400, '這一局結束了，按「再來一局」吧');
+    if (g.seats.some((x) => x === null)) throw new HttpError(400, '等對手加入才能開始');
+    if (g.turn !== seat) throw new HttpError(400, '還沒輪到你');
+    const i = Number(body.i);
+    if (!Number.isInteger(i) || i < 0 || i >= g.board.length)
+      throw new HttpError(400, '位置不正確');
+    if (g.board[i]) throw new HttpError(400, '這一格已經有人下了');
+    g.board[i] = seat + 1;
+    g.last = i;
+    g.moves += 1;
+    const line = winLine(g.board, g.size, i, seat + 1, g.need);
+    if (line) {
+      g.winner = seat;
+      g.line = line;
+      g.score[seat] += 1;
+    } else if (g.board.every((v) => v)) {
+      g.winner = 'draw';
+      g.draws += 1;
+    } else {
+      g.turn = seat ? 0 : 1;
+    }
+  }
+
+  // 合作型（2048）：同一時間只有一位操作者，其他人要等他換手（閒置 1 分鐘可接手）
+  applyCoopAction(g, me, action, body, now) {
+    const idle = now - (g.holderAt || 0) > GAME_IDLE;
+    const blocked = g.holder && g.holder !== me.id && !idle;
+    if (action === 'claim') {
+      if (blocked) throw new HttpError(400, '現在是別人在玩，等他按「換人玩」再接手');
+      g.holder = me.id;
+      g.holderAt = now;
+      return;
+    }
+    if (action === 'release') {
+      if (g.holder !== me.id) throw new HttpError(400, '你現在不是操作的人');
+      g.holder = null;
+      g.holderAt = now;
+      return;
+    }
+    if (action === 'restart') {
+      if (blocked) throw new HttpError(403, '現在由別人操作，不能重新開始');
+      resetGameState(g);
+      g.holder = me.id;
+      g.holderAt = now;
+      return;
+    }
+    if (action !== 'move') throw new HttpError(400, '不支援的動作');
+    if (g.holder !== me.id) {
+      throw new HttpError(403, g.holder
+        ? '現在由別人操作，先請他按「換人玩」'
+        : '請先按「我要玩」接手操作');
+    }
+    if (g.over) throw new HttpError(400, '這局結束了，按「重新開始」再來一次');
+    const dir = String(body.dir || '');
+    if (!['up', 'down', 'left', 'right'].includes(dir)) throw new HttpError(400, '方向不正確');
+    const r = move2048(g.tiles, g.size, dir);
+    g.holderAt = now;
+    if (!r.moved) return; // 這個方向推不動：不算一步
+    g.tiles = r.tiles;
+    g.score += r.gained;
+    g.moves += 1;
+    g.contrib[me.id] = (g.contrib[me.id] || 0) + 1;
+    spawnTile(g.tiles);
+    if (g.tiles.some((v) => v >= 2048)) g.won = true;
+    if (stuck2048(g.tiles, g.size)) g.over = true;
+    g.best = Math.max(g.best || 0, g.score);
   }
 
   async pinMessage(request, me, conversationId) {

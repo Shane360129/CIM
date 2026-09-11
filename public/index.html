@@ -53,9 +53,6 @@
       <button class="nav-btn" data-tab="friends" aria-label="好友">
         <span class="ic" data-icon="users"></span><span class="nav-label">好友</span>
       </button>
-      <button class="nav-btn" data-tab="tools" aria-label="小工具">
-        <span class="ic" data-icon="tools"></span><span class="nav-label">小工具</span>
-      </button>
       <button class="nav-btn" data-tab="settings" aria-label="設定">
         <span class="ic" data-icon="gear"></span><span class="nav-label">設定</span>
       </button>
@@ -97,27 +94,6 @@
           </div>
         </header>
         <div id="friend-list" class="list"></div>
-      </div>
-
-      <div id="tab-tools" class="tab hidden">
-        <header class="panel-header"><h1>小工具</h1></header>
-        <div class="tool-tabs">
-          <button id="tool-tab-shopping" class="active">購物清單</button>
-          <button id="tool-tab-calendar">行事曆</button>
-        </div>
-        <div id="tool-shopping" class="tool-body">
-          <form id="shopping-form" class="tool-add">
-            <input id="shopping-input" placeholder="要買什麼？全家人都看得到" maxlength="60" autocomplete="off">
-            <button type="submit" class="btn btn-small btn-primary">加入</button>
-          </form>
-          <div id="shopping-list" class="list"></div>
-        </div>
-        <div id="tool-calendar" class="tool-body hidden">
-          <div class="tool-add">
-            <button id="btn-add-event" class="btn btn-primary btn-block">＋ 新增事項（生日、聚餐、提醒…）</button>
-          </div>
-          <div id="event-list" class="list"></div>
-        </div>
       </div>
 
       <div id="tab-settings" class="tab hidden">
@@ -184,6 +160,29 @@
         </footer>
       </div>
     </main>
+  </div>
+
+  <!-- 待辦清單與行事曆：平常收在這裡，從聊天室選單開啟時整塊搬進彈窗 -->
+  <div id="tools-holder" hidden>
+    <div id="tools-panel" class="tools-panel">
+      <div class="tool-tabs">
+        <button id="tool-tab-shopping" class="active">待辦清單</button>
+        <button id="tool-tab-calendar">行事曆</button>
+      </div>
+      <div id="tool-shopping" class="tool-body">
+        <form id="shopping-form" class="tool-add">
+          <input id="shopping-input" placeholder="要做什麼、要買什麼？" maxlength="60" autocomplete="off">
+          <button type="submit" class="btn btn-small btn-primary">加入</button>
+        </form>
+        <div id="shopping-list" class="list"></div>
+      </div>
+      <div id="tool-calendar" class="tool-body hidden">
+        <div class="tool-add">
+          <button id="btn-add-event" class="btn btn-primary btn-block">＋ 新增事項（生日、聚餐、提醒…）</button>
+        </div>
+        <div id="event-list" class="list"></div>
+      </div>
+    </div>
   </div>
 
   <div id="modal-root"></div>

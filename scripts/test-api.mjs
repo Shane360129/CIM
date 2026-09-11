@@ -97,6 +97,45 @@ check('正確密碼登入 → 200', (await j('/api/login', { method: 'POST', bod
 r = await j('/api/shopping', { method: 'POST', body: { text: '測試品項 ' + suffix } }, TC);
 check('購物清單附上建立者名稱', r.data.item?.createdByName === '朋友C');
 
+console.log('\n--- 小遊戲 ---');
+const newGame = (kind, tok) =>
+  j(`/api/conversations/${groupId}/messages`, { method: 'POST', body: { type: 'game', content: '', game: { kind } } }, tok);
+const act = (mid, body, tok) => j(`/api/messages/${mid}/game`, { method: 'POST', body }, tok);
+
+r = await newGame('ooxx', TA);
+const ooxxId = r.data.message?.id;
+check('開一局圈圈叉叉，開局者自動入座', r.status === 200 && r.data.message?.game?.seats?.[0] === IA);
+check('不支援的遊戲被擋', (await newGame('chess', TA)).status === 400);
+check('非成員不能在別人的聊天室開遊戲', (await j(`/api/conversations/${dmAdminA.id}/messages`, { method: 'POST', body: { type: 'game', content: '', game: { kind: 'ooxx' } } }, TB)).status === 404);
+check('沒入座不能下', (await act(ooxxId, { action: 'move', i: 0 }, TC)).status === 403);
+check('對手加入座位', (await act(ooxxId, { action: 'join' }, TB)).data.game?.seats?.[1] === IB);
+check('座位滿了不能再加入', (await act(ooxxId, { action: 'join' }, TC)).status === 400);
+await act(ooxxId, { action: 'move', i: 0 }, TA);
+check('還沒輪到不能下', (await act(ooxxId, { action: 'move', i: 1 }, TA)).status === 400);
+check('已經有子的格子不能下', (await act(ooxxId, { action: 'move', i: 0 }, TB)).status === 400);
+await act(ooxxId, { action: 'move', i: 3 }, TB);
+await act(ooxxId, { action: 'move', i: 1 }, TA);
+await act(ooxxId, { action: 'move', i: 4 }, TB);
+r = await act(ooxxId, { action: 'move', i: 2 }, TA);
+check('連成一線就判勝', r.data.game?.winner === 0 && r.data.game?.score?.[0] === 1 && r.data.game?.line?.length === 3);
+check('分出勝負後不能再下', (await act(ooxxId, { action: 'move', i: 5 }, TB)).status === 400);
+r = await act(ooxxId, { action: 'restart' }, TB);
+check('再來一局：換先手、戰績留著', r.data.game?.turn === 1 && r.data.game?.round === 2 && r.data.game?.score?.[0] === 1);
+
+r = await newGame('2048', TA);
+const g2048 = r.data.message?.id;
+check('開一局 2048（開局兩格、開局者先操作）',
+  r.data.message?.game?.tiles?.filter(Boolean).length === 2 && r.data.message?.game?.holder === IA);
+check('不是操作者不能動', (await act(g2048, { action: 'move', dir: 'left' }, TB)).status === 403);
+check('別人操作中不能硬搶', (await act(g2048, { action: 'claim' }, TB)).status === 400);
+check('方向不合法被擋', (await act(g2048, { action: 'move', dir: 'sideways' }, TA)).status === 400);
+check('操作者可以換手', (await act(g2048, { action: 'release' }, TA)).status === 200);
+check('換手後別人接得到', (await act(g2048, { action: 'claim' }, TB)).data.game?.holder === IB);
+check('接手後可以操作', (await act(g2048, { action: 'move', dir: 'left' }, TB)).status === 200);
+r = await j(`/api/conversations/${groupId}/messages`, {}, TC);
+check('讀訊息會一起帶出遊戲狀態',
+  r.data.messages?.filter((m) => m.type === 'game').every((m) => m.game && m.game.kind));
+
 // 收尾：關閉邀請碼
 await j('/api/admin/settings', { method: 'PATCH', body: { inviteCode: '' } }, A0);
 

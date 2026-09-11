@@ -14,6 +14,8 @@ function el(tag, attrs, ...children) {
       else if (k === 'text') n.textContent = v;
       else if (k === 'html') n.innerHTML = v; // 只用於內建 SVG 圖示
       else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+      else if (v === true) n.setAttribute(k, ''); // disabled、hidden 這類布林屬性
+      else if (v === false) continue;             // false 代表不要這個屬性
       else n.setAttribute(k, v);
     }
   }
@@ -180,6 +182,9 @@ const state = {
   customStickers: null,       // 自訂貼圖清單（懶載入）
   stickerMap: new Map(),      // sticker id -> data URL
   toolTab: 'shopping',
+  toolsOpen: false,          // 聊天室小工具彈窗是否開著（決定要不要即時重畫）
+  openGame: null,            // 放大遊玩中的小遊戲：{ id, convId, render }
+  foodGroups: null,          // 「今天吃什麼」勾選的類別（懶載入自 localStorage）
   rec: null,                  // 錄音中：{ recorder, chunks, timer, seconds, stream }
   audio: null,                // 播放中：{ el, mid, posEl, btnEl }
 };
@@ -212,6 +217,7 @@ function msgPreview(m) {
   if (m.type === 'poll') {
     try { return '[投票] ' + JSON.parse(m.content).q; } catch { return '[投票]'; }
   }
+  if (m.type === 'game') return '[小遊戲] ' + gameTitle(m);
   return m.content.replace(/\n/g, ' ');
 }
 
@@ -423,11 +429,9 @@ function switchTab(tab) {
     b.classList.toggle('active', b.dataset.tab === tab));
   $('tab-chats').classList.toggle('hidden', tab !== 'chats');
   $('tab-friends').classList.toggle('hidden', tab !== 'friends');
-  $('tab-tools').classList.toggle('hidden', tab !== 'tools');
   $('tab-settings').classList.toggle('hidden', tab !== 'settings');
   if (tab === 'friends') renderFriends();
   if (tab === 'settings') renderSettings();
-  if (tab === 'tools') renderTools();
   document.body.classList.remove('chat-open');
 }
 
@@ -1034,6 +1038,7 @@ function buildMessageContent(m) {
   }
   if (m.type === 'audio') return buildAudioMsg(m);
   if (m.type === 'poll') return buildPollCard(m);
+  if (m.type === 'game') return buildGameCard(m, false);
   const frag = document.createDocumentFragment();
   frag.append(el('div', { class: 'bubble' }, renderText(m.content)));
   if (m.meta && m.meta.link && m.meta.link.title) frag.append(buildLinkCard(m.meta.link));
@@ -1305,6 +1310,7 @@ async function postMessage(convId, type, content, extra = {}) {
   const data = await api(`/api/conversations/${convId}/messages`, { method: 'POST', body });
   clearReply();
   handleIncomingMessage(data.message, true);
+  return data.message;
 }
 
 async function sendSticker(sticker) {
@@ -1554,6 +1560,24 @@ function newGroupModal() {
       }))));
 }
 
+// 聊天室選單裡的功能區：吃什麼、小遊戲、待辦、行事曆（私訊與群組都有）
+function chatFeatureItems(conv, close) {
+  const item = (emoji, label, sub, onclick) => el('button', {
+    class: 'set-item feature-item', onclick: () => { close(); onclick(); },
+  },
+    el('span', { class: 'feature-emoji', text: emoji }),
+    el('span', { class: 'grow' },
+      el('span', { class: 'feature-label', text: label }),
+      el('span', { class: 'feature-sub', text: sub })));
+  return [
+    el('div', { class: 'list-section', text: '聊天室功能' }),
+    item('🍽️', '今天吃什麼', '隨機抽一個類別，省得想破頭', () => foodPickModal(conv)),
+    item('🎮', '小遊戲', '圈圈叉叉、五子棋、2048，大家一起玩', () => gamePickModal(conv)),
+    item('✅', '待辦清單', '要做的、要買的，成員都看得到', () => openToolsModal('shopping')),
+    item('📅', '行事曆', '生日、聚餐、提醒，到時通知大家', () => openToolsModal('calendar')),
+  ];
+}
+
 function chatInfoModal() {
   const conv = convById(state.currentConv);
   if (!conv) return;
@@ -1571,7 +1595,8 @@ function chatInfoModal() {
         }, el('span', { class: 'grow', text: conv.pinnedChat ? '取消置頂' : '置頂聊天室' })),
         el('button', {
           class: 'set-item', onclick: () => { close(); wallpaperModal(conv); },
-        }, el('span', { class: 'grow', text: '聊天室背景' }))),
+        }, el('span', { class: 'grow', text: '聊天室背景' })),
+        chatFeatureItems(conv, () => close())),
       el('div', { class: 'modal-actions' },
         el('button', { class: 'btn btn-ghost', text: '關閉', onclick: () => close() }))));
     return;
@@ -1628,6 +1653,7 @@ function chatInfoModal() {
       el('button', {
         class: 'set-item', onclick: () => { close(); pollCreateModal(conv); },
       }, el('span', { class: 'grow', text: '發起投票' })),
+      chatFeatureItems(conv, () => close()),
       el('div', { class: 'list-section', text: `成員 ${conv.members.length}` }),
       el('div', { class: 'member-list' }, memberRows)),
     el('div', { class: 'modal-actions' },
@@ -1673,11 +1699,15 @@ function inviteToGroupModal(conv) {
 
 /* ---------- 彈窗基礎 ---------- */
 
-function openModal(modalNode) {
+function openModal(modalNode, onClose) {
   const backdrop = el('div', { class: 'modal-backdrop' }, modalNode);
+  let closed = false;
   const close = () => {
+    if (closed) return;
+    closed = true;
     backdrop.remove();
     document.removeEventListener('keydown', onKey);
+    if (onClose) onClose();
   };
   const onKey = (e) => { if (e.key === 'Escape') close(); };
   backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
@@ -1881,8 +1911,9 @@ function handleWsEvent(ev) {
     case 'reaction': handleReaction(ev); break;
     case 'vote': handleVote(ev); break;
     case 'pin': handlePin(ev); break;
-    case 'shopping-changed': if (state.tab === 'tools' && state.toolTab === 'shopping') renderShopping(); break;
-    case 'events-changed': if (state.tab === 'tools' && state.toolTab === 'calendar') renderCalendar(); break;
+    case 'game': handleGame(ev); break;
+    case 'shopping-changed': if (state.toolsOpen && state.toolTab === 'shopping') renderShopping(); break;
+    case 'events-changed': if (state.toolsOpen && state.toolTab === 'calendar') renderCalendar(); break;
     case 'event-reminder': handleEventReminder(ev); break;
   }
 }
@@ -2688,6 +2719,442 @@ function pollCreateModal(conv) {
       }))));
 }
 
+/* ---------- 今天吃什麼（隨機選餐） ----------
+   只列「類別大項」（乾鍋、海鮮粥…），不列單一菜名；可以先勾要不要哪幾類再抽。 */
+
+const FOOD_GROUPS = [
+  { key: 'tw', label: '台式小吃', items: [
+    '滷肉飯', '雞肉飯', '爌肉飯', '排骨飯', '牛肉麵', '擔仔麵', '陽春麵', '乾麵',
+    '米粉湯', '大腸麵線', '肉羹', '碗粿', '肉圓', '刈包', '蔥油餅', '蛋餅',
+    '水餃', '鍋貼', '鹹酥雞', '雞排', '臭豆腐', '夜市小吃', '便當', '自助餐'] },
+  { key: 'hot', label: '鍋物', items: [
+    '火鍋', '麻辣鍋', '乾鍋', '涮涮鍋', '薑母鴨', '羊肉爐', '藥燉排骨',
+    '酸菜白肉鍋', '壽喜燒', '部隊鍋', '石頭火鍋', '關東煮', '麻辣燙', '酸菜魚'] },
+  { key: 'soup', label: '粥品湯品', items: [
+    '海鮮粥', '廣東粥', '地瓜粥', '清粥小菜', '魷魚羹', '雞湯', '魚湯', '牛肉湯'] },
+  { key: 'cn', label: '中式', items: [
+    '熱炒快炒', '川菜', '粵菜', '江浙菜', '客家菜', '上海菜', '雲南料理',
+    '港式茶餐廳', '港式飲茶', '小籠包', '北方麵食', '烤鴨', '燒臘',
+    '炒飯', '燴飯', '煲仔飯'] },
+  { key: 'jp', label: '日式', items: [
+    '壽司', '生魚片', '丼飯', '日式咖哩', '豬排飯', '天婦羅', '拉麵', '烏龍麵',
+    '蕎麥麵', '燒肉', '居酒屋', '鐵板燒', '日式定食', '串燒'] },
+  { key: 'kr', label: '韓式', items: [
+    '韓式烤肉', '韓式炸雞', '石鍋拌飯', '辣炒年糕', '韓式炸醬麵', '韓式湯飯'] },
+  { key: 'sea', label: '南洋・南亞', items: [
+    '泰式料理', '越南河粉', '越式法國麵包', '印尼料理', '馬來料理',
+    '新加坡叻沙', '南洋咖哩', '印度咖哩', '中東烤肉'] },
+  { key: 'west', label: '西式', items: [
+    '美式漢堡', '披薩', '牛排', '義大利麵', '義式料理', '法式料理', '早午餐',
+    '三明治', '潛艇堡', '墨西哥捲餅', '炸雞', '速食', '沙威瑪', '焗烤', '鐵板麵'] },
+  { key: 'light', label: '輕食健康', items: [
+    '沙拉', '健康餐盒', '舒肥餐', '水煮餐', '素食', '蔬食自助', '日式便當'] },
+  { key: 'night', label: '早餐宵夜', items: [
+    '豆漿店', '早餐店', '飯糰', '鹹豆漿', '燒烤攤', '宵夜熱炒', '鹽水雞',
+    '便利商店', '泡麵'] },
+  { key: 'sweet', label: '甜點飲料', items: [
+    '甜點下午茶', '鬆餅', '蛋糕', '剉冰', '豆花', '甜湯', '手搖飲', '咖啡簡餐', '冰淇淋'] },
+];
+
+function foodGroupKeys() {
+  if (!state.foodGroups) {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem('cim_food_groups') || 'null'); } catch {}
+    const all = FOOD_GROUPS.map((g) => g.key);
+    const keep = Array.isArray(saved) ? saved.filter((k) => all.includes(k)) : [];
+    state.foodGroups = new Set(keep.length ? keep : all);
+  }
+  return state.foodGroups;
+}
+
+function saveFoodGroups() {
+  try { localStorage.setItem('cim_food_groups', JSON.stringify([...foodGroupKeys()])); } catch {}
+}
+
+function foodPool() {
+  const on = foodGroupKeys();
+  const pool = FOOD_GROUPS.filter((g) => on.has(g.key)).flatMap((g) => g.items);
+  return pool.length ? pool : FOOD_GROUPS.flatMap((g) => g.items);
+}
+
+const pickOne = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+// 抽 n 個不重複的類別（不夠就有幾個給幾個）
+function pickMany(arr, n) {
+  const rest = arr.slice();
+  const out = [];
+  while (out.length < n && rest.length) out.push(rest.splice(Math.floor(Math.random() * rest.length), 1)[0]);
+  return out;
+}
+
+function foodPickModal(conv) {
+  let current = null;
+  let timer = null;
+  const result = el('div', { class: 'food-result', text: '？' });
+  const note = el('div', { class: 'food-note', text: '按下面的按鈕，讓它幫你決定' });
+  const chips = el('div', { class: 'food-chips' });
+
+  const renderChips = () => {
+    const on = foodGroupKeys();
+    chips.textContent = '';
+    for (const g of FOOD_GROUPS) {
+      chips.append(el('button', {
+        class: 'food-chip' + (on.has(g.key) ? ' on' : ''), type: 'button',
+        onclick: () => {
+          if (on.has(g.key)) on.delete(g.key); else on.add(g.key);
+          if (!on.size) on.add(g.key); // 至少留一類，免得抽不出東西
+          saveFoodGroups();
+          renderChips();
+        },
+      }, `${g.label} ${g.items.length}`));
+    }
+  };
+  renderChips();
+
+  const draw = () => {
+    const pool = foodPool();
+    clearInterval(timer);
+    result.classList.add('spinning');
+    let ticks = 0;
+    timer = setInterval(() => {
+      result.textContent = pickOne(pool);
+      if (++ticks < 14) return;
+      clearInterval(timer);
+      timer = null;
+      current = pickOne(pool);
+      result.textContent = current;
+      result.classList.remove('spinning');
+      result.classList.remove('pop');
+      void result.offsetWidth;
+      result.classList.add('pop');
+      note.textContent = `從 ${pool.length} 個類別裡抽中的 — 不喜歡就再抽一次`;
+      shareBtn.disabled = false;
+    }, 65);
+  };
+
+  const shareBtn = el('button', {
+    class: 'btn btn-primary', text: '分享到聊天室', disabled: true,
+    onclick: async () => {
+      if (!current) return;
+      try {
+        await postMessage(conv.id, 'text', `🍽️ 今天吃「${current}」！（隨機抽的）`);
+        close();
+      } catch (e) { toast(e.message); }
+    },
+  });
+
+  const close = openModal(el('div', { class: 'modal modal-food' },
+    el('div', { class: 'modal-title', text: '🍽️ 今天吃什麼' }),
+    el('div', { class: 'modal-body' },
+      result, note,
+      el('div', { class: 'food-acts' },
+        el('button', { class: 'btn btn-primary btn-block', text: '隨機抽一個！', onclick: draw }),
+        el('button', {
+          class: 'btn btn-ghost btn-block', text: '抽 3 個給大家投票',
+          onclick: async () => {
+            const options = pickMany(foodPool(), 3);
+            if (options.length < 2) return;
+            try {
+              await postMessage(conv.id, 'poll', '', { poll: { q: '今天吃什麼？', options } });
+              close();
+            } catch (e) { toast(e.message); }
+          },
+        })),
+      el('div', { class: 'food-sec', text: '要抽哪幾類（點一下開關）' }),
+      chips),
+    el('div', { class: 'modal-actions' },
+      el('button', { class: 'btn btn-ghost', text: '關閉', onclick: () => close() }),
+      shareBtn)),
+    () => clearInterval(timer));
+
+  draw();
+}
+
+/* ---------- 小遊戲（圈圈叉叉、五子棋、2048） ----------
+   盤面由伺服器保管、動作由伺服器判定，所以聊天室裡每個人看到的都是同一盤。
+   對戰型有兩個座位輪流下；2048 是大家共用一盤，同一時間只有一位「操作者」能動。 */
+
+const GAME_DEFS = {
+  ooxx: { title: '圈圈叉叉', emoji: '⭕', desc: '3×3 連成一線就贏', tag: '兩人對戰', marks: ['⭕', '❌'] },
+  gomoku: { title: '五子棋', emoji: '⚫', desc: '13 路棋盤，先連成五顆就贏', tag: '兩人對戰', marks: ['⚫', '⚪'] },
+  '2048': { title: '2048', emoji: '🔢', desc: '滑動合併數字，一起挑戰高分', tag: '輪流接手一起玩' },
+};
+
+function gameKindOf(m) {
+  if (m.game && m.game.kind) return m.game.kind;
+  try { return JSON.parse(m.content).kind; } catch { return null; }
+}
+
+function gameTitle(m) {
+  const def = GAME_DEFS[gameKindOf(m)];
+  return def ? def.title : '小遊戲';
+}
+
+function gameAct(m, body) {
+  return api(`/api/messages/${m.id}/game`, { method: 'POST', body })
+    .catch((e) => toast(e.message));
+}
+
+function versusStatus(g) {
+  if (g.winner === 'draw') return { text: '平手，再來一局！', hot: false };
+  if (g.winner !== null) {
+    const w = g.seats[g.winner];
+    return { text: w === state.me.id ? '你贏了 🎉' : `${nameOf(w)} 獲勝 🎉`, hot: true };
+  }
+  if (g.seats.some((x) => x === null)) return { text: '等一位對手加入…', hot: false };
+  const who = g.seats[g.turn];
+  return { text: who === state.me.id ? '輪到你了' : `輪到 ${nameOf(who)}`, hot: who === state.me.id };
+}
+
+function coopStatus(g) {
+  if (g.over) return { text: `結束了，這局 ${g.score} 分`, hot: false };
+  if (!g.holder) return { text: '還沒人接手 — 按「我要玩」開始', hot: true };
+  return g.holder === state.me.id
+    ? { text: '現在由你操作', hot: true }
+    : { text: `現在由 ${nameOf(g.holder)} 操作，請等他換手`, hot: false };
+}
+
+// 對戰型的兩張座位牌：空位可以直接點進去坐
+function seatPills(m, g) {
+  const def = GAME_DEFS[g.kind];
+  const wrap = el('div', { class: 'g-seats' });
+  g.seats.forEach((uid, i) => {
+    const active = g.winner === null && !g.seats.some((x) => x === null) && g.turn === i;
+    const pill = el('button', {
+      class: 'g-seat' + (active ? ' turn' : '') + (uid === state.me.id ? ' me' : '') +
+        (g.winner === i ? ' win' : ''),
+      type: 'button',
+      onclick: (e) => { e.stopPropagation(); if (!uid) gameAct(m, { action: 'join' }); },
+    },
+      el('span', { class: 'g-mark', text: def.marks[i] }),
+      el('span', { class: 'g-seat-name', text: uid ? nameOf(uid) : '空位（點我加入）' }),
+      el('span', { class: 'g-seat-score', text: String(g.score[i]) }));
+    wrap.append(pill);
+  });
+  return wrap;
+}
+
+function versusBoard(m, g, interactive) {
+  const def = GAME_DEFS[g.kind];
+  const board = el('div', { class: 'g-board ' + g.kind });
+  board.style.setProperty('--n', g.size);
+  const mySeat = g.seats.indexOf(state.me.id);
+  const myTurn = interactive && g.winner === null && mySeat >= 0 && g.turn === mySeat &&
+    !g.seats.some((x) => x === null);
+  g.board.forEach((v, i) => {
+    const cell = el('button', {
+      class: 'g-cell' + (g.line.includes(i) ? ' win' : '') + (g.last === i ? ' last' : ''),
+      type: 'button', 'aria-label': `第 ${i + 1} 格`,
+    });
+    if (v) {
+      cell.append(g.kind === 'ooxx'
+        ? el('span', { class: 'g-mark', text: def.marks[v - 1] })
+        : el('span', { class: 'g-stone s' + v }));
+    }
+    if (myTurn && !v) {
+      cell.classList.add('open');
+      cell.addEventListener('click', (e) => { e.stopPropagation(); gameAct(m, { action: 'move', i }); });
+    } else {
+      cell.disabled = true;
+    }
+    board.append(cell);
+  });
+  return board;
+}
+
+function coopBoard(m, g, interactive) {
+  const board = el('div', { class: 'g-board g2048' });
+  board.style.setProperty('--n', g.size);
+  for (const v of g.tiles) {
+    board.append(el('div', {
+      class: 'g-tile' + (v ? ' v' + (v > 2048 ? 'max' : v) : ' empty'),
+      text: v ? String(v) : '',
+    }));
+  }
+  if (interactive && g.holder === state.me.id && !g.over) bindSwipe(board, (dir) => gameAct(m, { action: 'move', dir }));
+  return board;
+}
+
+// 觸控滑動：位移超過 24px 就當成一次方向操作
+function bindSwipe(node, onDir) {
+  let sx = 0;
+  let sy = 0;
+  node.addEventListener('touchstart', (e) => {
+    const t = e.touches[0];
+    sx = t.clientX;
+    sy = t.clientY;
+  }, { passive: true });
+  node.addEventListener('touchend', (e) => {
+    const t = e.changedTouches[0];
+    const dx = t.clientX - sx;
+    const dy = t.clientY - sy;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+    onDir(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+  }, { passive: true });
+}
+
+function dpad(m, g) {
+  const enabled = g.holder === state.me.id && !g.over;
+  const btn = (dir, label) => el('button', {
+    class: 'g-dir', type: 'button', 'aria-label': label, disabled: !enabled,
+    onclick: (e) => { e.stopPropagation(); gameAct(m, { action: 'move', dir }); },
+  }, label);
+  return el('div', { class: 'g-dpad' },
+    el('div', {}, btn('up', '↑')),
+    el('div', {}, btn('left', '←'), btn('down', '↓'), btn('right', '→')));
+}
+
+function gameButton(label, onclick, cls) {
+  return el('button', {
+    class: 'btn btn-small ' + (cls || 'btn-ghost'), type: 'button',
+    onclick: (e) => { e.stopPropagation(); onclick(); },
+  }, label);
+}
+
+function buildGameCard(m, big) {
+  const g = m.game;
+  const kind = gameKindOf(m);
+  const def = GAME_DEFS[kind];
+  if (!g || !def) return el('div', { class: 'bubble', text: '[小遊戲]' });
+
+  const card = el('div', { class: 'game-card' + (big ? ' big' : '') });
+  // 遊戲卡自己吃掉長按／右鍵，免得下棋時跳出訊息選單
+  card.addEventListener('contextmenu', (e) => e.stopPropagation());
+  card.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+
+  const versus = g.mode === 'versus';
+  const st = versus ? versusStatus(g) : coopStatus(g);
+
+  card.append(el('div', { class: 'g-head' },
+    el('span', { class: 'g-title', text: `${def.emoji} ${def.title}` }),
+    el('span', { class: 'g-round', text: versus ? `第 ${g.round} 局` : `${g.moves} 步` })));
+
+  if (versus) {
+    card.append(seatPills(m, g));
+  } else {
+    card.append(el('div', { class: 'g-scores' },
+      el('div', { class: 'g-score' }, el('b', { text: String(g.score) }), el('span', { text: '分數' })),
+      el('div', { class: 'g-score' }, el('b', { text: String(g.best || 0) }), el('span', { text: '最佳' }))));
+  }
+
+  card.append(el('div', { class: 'g-status' + (st.hot ? ' hot' : ''), text: st.text }));
+
+  const interactive = big || kind !== 'gomoku'; // 五子棋格子小，泡泡裡只看、放大才下
+  card.append(versus ? versusBoard(m, g, interactive) : coopBoard(m, g, interactive));
+  if (!versus) card.append(dpad(m, g));
+
+  const acts = el('div', { class: 'g-acts' });
+  if (versus) {
+    const mySeat = g.seats.indexOf(state.me.id);
+    if (mySeat < 0 && g.seats.some((x) => x === null))
+      acts.append(gameButton('加入對戰', () => gameAct(m, { action: 'join' }), 'btn-primary'));
+    if (g.winner !== null)
+      acts.append(gameButton('再來一局', () => gameAct(m, { action: 'restart' }), 'btn-primary'));
+    else if (mySeat >= 0 && g.moves > 0)
+      acts.append(gameButton('重新開始', async () => {
+        if (await confirmModal('重新開始', '這一局的棋子會全部清掉，確定嗎？')) gameAct(m, { action: 'restart' });
+      }));
+    if (mySeat >= 0 && g.winner === null)
+      acts.append(gameButton('離開座位', () => gameAct(m, { action: 'leave' })));
+  } else {
+    if (g.holder === state.me.id) acts.append(gameButton('換人玩', () => gameAct(m, { action: 'release' })));
+    else acts.append(gameButton('我要玩', () => gameAct(m, { action: 'claim' }), 'btn-primary'));
+    acts.append(gameButton('重新開始', async () => {
+      if (await confirmModal('重新開始', '目前的分數會歸零（最佳分數會留著），確定嗎？')) gameAct(m, { action: 'restart' });
+    }));
+  }
+  if (!big) acts.append(gameButton('放大遊玩', () => openGameModal(m)));
+  card.append(acts);
+
+  if (!versus && big) {
+    const who = Object.entries(g.contrib || {})
+      .map(([uid, n]) => `${nameOf(Number(uid))} ${n} 步`)
+      .join('、');
+    card.append(el('div', { class: 'g-foot', text: who ? '出手：' + who : '用方向鍵、按鈕或滑動都可以操作' }));
+  }
+  if (versus && big && kind === 'gomoku')
+    card.append(el('div', { class: 'g-foot', text: `先連成五顆就贏 · 已下 ${g.moves} 手` }));
+  return card;
+}
+
+function findMessage(convId, mid) {
+  const cache = state.msgCache.get(convId);
+  return cache ? cache.messages.find((x) => x.id === mid) || null : null;
+}
+
+// 放大遊玩：彈窗裡的盤面會跟著 WebSocket 事件即時更新
+function openGameModal(m) {
+  const convId = m.conversationId;
+  const def = GAME_DEFS[gameKindOf(m)] || { title: '小遊戲', emoji: '🎮' };
+  const body = el('div', { class: 'modal-body game-modal-body' });
+  const render = () => {
+    const cur = findMessage(convId, m.id) || m;
+    body.textContent = '';
+    body.append(buildGameCard(cur, true));
+  };
+  const onKey = (e) => {
+    const dir = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[e.key];
+    const cur = findMessage(convId, m.id);
+    if (!dir || !cur || !cur.game || cur.game.mode !== 'coop') return;
+    if (cur.game.holder !== state.me.id || cur.game.over) return;
+    e.preventDefault();
+    gameAct(cur, { action: 'move', dir });
+  };
+  render();
+  const close = openModal(
+    el('div', { class: 'modal modal-game' },
+      el('div', { class: 'modal-title', text: `${def.emoji} ${def.title}` }),
+      body,
+      el('div', { class: 'modal-actions' },
+        el('button', {
+          class: 'btn btn-ghost', text: '換個遊戲',
+          onclick: () => { close(); const c = convById(convId); if (c) gamePickModal(c); },
+        }),
+        el('button', { class: 'btn btn-primary', text: '關閉', onclick: () => close() }))),
+    () => {
+      state.openGame = null;
+      document.removeEventListener('keydown', onKey);
+    });
+  state.openGame = { id: m.id, convId, render };
+  document.addEventListener('keydown', onKey);
+}
+
+function handleGame(ev) {
+  const m = findMessage(ev.conversationId, ev.messageId);
+  if (m) {
+    m.game = ev.game;
+    rerenderMessage(ev.conversationId, ev.messageId);
+  }
+  if (state.openGame && state.openGame.id === ev.messageId) state.openGame.render();
+}
+
+// 聊天室選單 →「小遊戲」：選一款就在聊天室裡開一局，成員都能加入
+function gamePickModal(conv) {
+  const rows = Object.entries(GAME_DEFS).map(([kind, def]) => el('button', {
+    class: 'game-pick', type: 'button',
+    onclick: async () => {
+      close();
+      try {
+        const msg = await postMessage(conv.id, 'game', '', { game: { kind } });
+        if (msg) openGameModal(msg);
+      } catch (e) { toast(e.message); }
+    },
+  },
+    el('span', { class: 'gp-emoji', text: def.emoji }),
+    el('span', { class: 'gp-main' },
+      el('span', { class: 'gp-title', text: def.title }),
+      el('span', { class: 'gp-desc', text: def.desc })),
+    el('span', { class: 'gp-tag', text: def.tag })));
+
+  const close = openModal(el('div', { class: 'modal' },
+    el('div', { class: 'modal-title', text: '🎮 小遊戲' }),
+    el('div', { class: 'modal-body' },
+      el('p', { text: '選一款開局，聊天室裡的大家都看得到，也能一起玩。' }),
+      ...rows),
+    el('div', { class: 'modal-actions' },
+      el('button', { class: 'btn btn-ghost', text: '取消', onclick: () => close() }))));
+}
+
 /* ---------- 訊息搜尋 ---------- */
 
 let searchTimer = null;
@@ -2799,10 +3266,25 @@ async function openConvAt(convId, mid) {
   } catch (e) { toast(e.message); }
 }
 
-/* ---------- 小工具：購物清單與行事曆 ---------- */
+/* ---------- 聊天室小工具：待辦清單與行事曆 ---------- */
 
-function renderTools() {
-  setToolTab(state.toolTab);
+// 待辦與行事曆從獨立分頁搬進聊天室：面板平常收在 #tools-holder，
+// 開啟時整塊搬進彈窗（節點不重建，綁好的事件與捲動位置都留著）。
+function openToolsModal(tab) {
+  if (state.toolsOpen) return;
+  const panel = $('tools-panel');
+  const close = openModal(
+    el('div', { class: 'modal modal-tools' },
+      el('div', { class: 'modal-title', text: '待辦・行事曆' }),
+      el('div', { class: 'modal-body tools-modal-body' }, panel),
+      el('div', { class: 'modal-actions' },
+        el('button', { class: 'btn btn-ghost', text: '關閉', onclick: () => close() }))),
+    () => {
+      state.toolsOpen = false;
+      $('tools-holder').append(panel); // 收回暫存區，下次還能再開
+    });
+  state.toolsOpen = true;
+  setToolTab(tab || state.toolTab);
 }
 
 function setToolTab(tab) {
@@ -2947,7 +3429,7 @@ function handleEventReminder(ev) {
       n.onclick = () => { window.focus(); n.close(); };
     } catch {}
   }
-  if (state.tab === 'tools' && state.toolTab === 'calendar') renderCalendar();
+  if (state.toolsOpen && state.toolTab === 'calendar') renderCalendar();
 }
 
 /* ---------- 離線推播（客戶端） ---------- */
@@ -3193,7 +3675,7 @@ function bindEvents() {
   $('btn-search-close').addEventListener('click', () => toggleSearch(false));
   $('search-input').addEventListener('input', runSearch);
 
-  // 小工具
+  // 聊天室小工具（待辦清單／行事曆）：面板只有一份，事件在這裡綁一次
   $('tool-tab-shopping').addEventListener('click', () => setToolTab('shopping'));
   $('tool-tab-calendar').addEventListener('click', () => setToolTab('calendar'));
   $('shopping-form').addEventListener('submit', async (e) => {
