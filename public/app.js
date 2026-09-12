@@ -1038,7 +1038,7 @@ function buildMessageContent(m) {
   }
   if (m.type === 'audio') return buildAudioMsg(m);
   if (m.type === 'poll') return buildPollCard(m);
-  if (m.type === 'game') return buildGameCard(m, false);
+  if (m.type === 'game') return buildGameChip(m);
   const frag = document.createDocumentFragment();
   frag.append(el('div', { class: 'bubble' }, renderText(m.content)));
   if (m.meta && m.meta.link && m.meta.link.title) frag.append(buildLinkCard(m.meta.link));
@@ -2729,37 +2729,88 @@ function pollCreateModal(conv) {
    只列「類別大項」（乾鍋、海鮮粥…），不列單一菜名；可以先勾要不要哪幾類再抽。 */
 
 const FOOD_GROUPS = [
-  { key: 'tw', label: '台式小吃', items: [
-    '滷肉飯', '雞肉飯', '爌肉飯', '排骨飯', '牛肉麵', '擔仔麵', '陽春麵', '乾麵',
-    '米粉湯', '大腸麵線', '肉羹', '碗粿', '肉圓', '刈包', '蔥油餅', '蛋餅',
-    '水餃', '鍋貼', '鹹酥雞', '雞排', '臭豆腐', '夜市小吃', '便當', '自助餐'] },
+  { key: 'breakfast', label: '早餐', items: [
+    '中式早餐店', '西式早餐店', '豆漿店', '燒餅油條', '鹹豆漿', '飯糰', '蛋餅',
+    '蘿蔔糕', '清粥小菜', '早午餐', '美式早餐', '三明治', '貝果', '可頌',
+    '吐司專賣', '法式吐司', '麥片燕麥', '水果優格', '包子饅頭', '油條'] },
+  { key: 'latenight', label: '宵夜', items: [
+    '鹹酥雞', '鹽水雞', '雞排', '滷味', '熱滷味', '燒烤攤', '串燒', '烤肉串',
+    '熱炒宵夜', '麻辣燙', '關東煮', '夜市小吃', '宵夜粥', '泡麵', '便利商店',
+    '炸物拼盤', '烤玉米', '蔥抓餅', '雞蛋糕'] },
+  { key: 'snack', label: '台式小吃', items: [
+    '滷肉飯', '雞肉飯', '爌肉飯', '排骨飯', '雞腿飯', '控肉飯', '肉燥飯',
+    '牛肉麵', '擔仔麵', '陽春麵', '切仔麵', '乾麵', '米粉湯', '米苔目',
+    '大腸麵線', '肉羹', '魷魚羹', '花枝羹', '碗粿', '肉圓', '刈包', '蔥油餅',
+    '水餃', '鍋貼', '小籠包', '臭豆腐', '蚵仔煎', '蚵仔麵線', '棺材板',
+    '筒仔米糕', '油飯', '甜不辣', '黑白切'] },
+  { key: 'rice', label: '飯食・便當', items: [
+    '便當', '自助餐', '快餐', '燴飯', '炒飯', '咖哩飯', '豬排飯', '雞排飯',
+    '焗烤飯', '煲仔飯', '油雞飯', '海南雞飯', '蛋包飯', '牛丼',
+    '親子丼', '咖哩烏龍'] },
+  { key: 'noodle', label: '麵食', items: [
+    '拉麵', '烏龍麵', '蕎麥麵', '義大利麵', '刀削麵', '炸醬麵', '涼麵',
+    '炒麵', '炒米粉', '麻醬麵', '酸辣粉', '米線', '河粉', '意麵',
+    '鐵板麵', '手工麵疙瘩'] },
   { key: 'hot', label: '鍋物', items: [
-    '火鍋', '麻辣鍋', '乾鍋', '涮涮鍋', '薑母鴨', '羊肉爐', '藥燉排骨',
-    '酸菜白肉鍋', '壽喜燒', '部隊鍋', '石頭火鍋', '關東煮', '麻辣燙', '酸菜魚'] },
-  { key: 'soup', label: '粥品湯品', items: [
-    '海鮮粥', '廣東粥', '地瓜粥', '清粥小菜', '魷魚羹', '雞湯', '魚湯', '牛肉湯'] },
-  { key: 'cn', label: '中式', items: [
-    '熱炒快炒', '川菜', '粵菜', '江浙菜', '客家菜', '上海菜', '雲南料理',
-    '港式茶餐廳', '港式飲茶', '小籠包', '北方麵食', '烤鴨', '燒臘',
-    '炒飯', '燴飯', '煲仔飯'] },
+    '火鍋', '麻辣鍋', '乾鍋', '涮涮鍋', '個人小火鍋', '石頭火鍋', '酸菜白肉鍋',
+    '藥膳鍋', '薑母鴨', '羊肉爐', '藥燉排骨', '壽喜燒', '起司鍋',
+    '泰式酸辣鍋', '牛奶鍋', '酸菜魚', '海鮮鍋'] },
+  { key: 'soup', label: '粥品・湯品', items: [
+    '海鮮粥', '廣東粥', '地瓜粥', '皮蛋瘦肉粥', '白粥配菜', '雞湯', '魚湯',
+    '牛肉湯', '藥燉湯品', '四神湯', '貢丸湯', '味噌湯定食', '燉湯專賣'] },
+  { key: 'taiwanese', label: '台菜・合菜', items: [
+    '台菜餐廳', '熱炒快炒', '客家菜', '眷村菜', '桌菜合菜', '辦桌菜',
+    '土雞城', '甕仔雞', '三杯料理', '古早味餐廳'] },
+  { key: 'chinese', label: '中式各省', items: [
+    '川菜', '粵菜', '江浙菜', '上海菜', '湘菜', '北平菜', '東北菜', '雲南料理',
+    '新疆料理', '北方麵食', '烤鴨', '獅子頭', '麻辣香鍋', '水煮魚', '宮保料理'] },
+  { key: 'hk', label: '港式', items: [
+    '港式茶餐廳', '港式飲茶', '燒臘', '叉燒飯', '港式蘿蔔糕', '腸粉', '雲吞麵',
+    '煲湯', '菠蘿油', '絲襪奶茶簡餐'] },
   { key: 'jp', label: '日式', items: [
-    '壽司', '生魚片', '丼飯', '日式咖哩', '豬排飯', '天婦羅', '拉麵', '烏龍麵',
-    '蕎麥麵', '燒肉', '居酒屋', '鐵板燒', '日式定食', '串燒'] },
+    '壽司', '迴轉壽司', '生魚片', '丼飯', '日式咖哩', '炸豬排', '天婦羅',
+    '燒肉', '居酒屋', '鐵板燒', '日式定食', '大阪燒', '章魚燒',
+    '日式火鍋', '鰻魚飯', '日式家庭料理'] },
   { key: 'kr', label: '韓式', items: [
-    '韓式烤肉', '韓式炸雞', '石鍋拌飯', '辣炒年糕', '韓式炸醬麵', '韓式湯飯'] },
-  { key: 'sea', label: '南洋・南亞', items: [
-    '泰式料理', '越南河粉', '越式法國麵包', '印尼料理', '馬來料理',
-    '新加坡叻沙', '南洋咖哩', '印度咖哩', '中東烤肉'] },
-  { key: 'west', label: '西式', items: [
-    '美式漢堡', '披薩', '牛排', '義大利麵', '義式料理', '法式料理', '早午餐',
-    '三明治', '潛艇堡', '墨西哥捲餅', '炸雞', '速食', '沙威瑪', '焗烤', '鐵板麵'] },
-  { key: 'light', label: '輕食健康', items: [
-    '沙拉', '健康餐盒', '舒肥餐', '水煮餐', '素食', '蔬食自助', '日式便當'] },
-  { key: 'night', label: '早餐宵夜', items: [
-    '豆漿店', '早餐店', '飯糰', '鹹豆漿', '燒烤攤', '宵夜熱炒', '鹽水雞',
-    '便利商店', '泡麵'] },
-  { key: 'sweet', label: '甜點飲料', items: [
-    '甜點下午茶', '鬆餅', '蛋糕', '剉冰', '豆花', '甜湯', '手搖飲', '咖啡簡餐', '冰淇淋'] },
+    '韓式烤肉', '韓式炸雞', '石鍋拌飯', '辣炒年糕', '韓式炸醬麵', '韓式湯飯',
+    '部隊鍋', '韓式定食', '泡菜鍋', '韓式小吃'] },
+  { key: 'sea', label: '東南亞', items: [
+    '泰式料理', '泰式打拋飯', '越南河粉', '越式法國麵包', '越式料理',
+    '印尼料理', '馬來料理', '新加坡叻沙', '南洋咖哩', '海南料理', '緬甸料理'] },
+  { key: 'india', label: '印度・中東', items: [
+    '印度咖哩', '印度烤餅', '坦都里烤雞', '中東烤肉', '沙威瑪', '土耳其料理',
+    '印度素食', '中東拌盤'] },
+  { key: 'us', label: '美式', items: [
+    '美式漢堡', '美式餐廳', '炸雞', '熱狗堡', '潛艇堡', '美式烤肉',
+    '肋排', '美式三明治', '美式家庭餐廳', '雞翅'] },
+  { key: 'eu', label: '義式・歐陸', items: [
+    '義式料理', '披薩', '燉飯', '焗烤', '法式料理', '法式小館', '西班牙料理',
+    '德式豬腳', '地中海料理', '希臘料理', '歐式自助餐'] },
+  { key: 'latin', label: '墨西哥・中南美', items: [
+    '墨西哥捲餅', '塔可', '墨西哥料理', '巴西烤肉', '祕魯料理', '拉丁風味餐'] },
+  { key: 'steak', label: '牛排・排餐', items: [
+    '牛排', '平價牛排', '夜市牛排', '排餐', '豬排餐', '雞排餐', '海陸大餐',
+    '鐵板排餐'] },
+  { key: 'sea_food', label: '海鮮', items: [
+    '海產店', '生魚片丼', '烤魚', '清蒸海鮮', '螃蟹料理', '蝦料理', '生蠔',
+    '海鮮燒烤', '龍蝦餐', '漁港小吃'] },
+  { key: 'bbq', label: '燒烤・BBQ', items: [
+    '中式燒烤', '碳烤', '烤肉吃到飽', '美式 BBQ', '烤全雞', '鹽烤台式'] },
+  { key: 'veg', label: '素食・蔬食', items: [
+    '素食自助餐', '蔬食料理', '素食麵店', '素食火鍋', '蔬食早午餐', '純素餐廳',
+    '養生餐', '素食便當'] },
+  { key: 'light', label: '輕食・健康', items: [
+    '沙拉', '健康餐盒', '舒肥餐', '水煮餐', '低卡便當', '減脂餐', '生酮餐',
+    '高蛋白餐', '穀物碗', '希臘優格餐'] },
+  { key: 'fast', label: '速食・炸物', items: [
+    '速食店', '連鎖速食', '炸物專賣', '薯條漢堡', '熱狗堡攤',
+    '炸雞塊', '熱壓吐司'] },
+  { key: 'sweet', label: '甜點・下午茶', items: [
+    '甜點店', '蛋糕', '鬆餅', '可麗餅', '冰淇淋', '剉冰', '豆花', '甜湯',
+    '燒仙草', '紅豆湯', '蛋塔', '泡芙', '布丁', '銅鑼燒', '下午茶套餐'] },
+  { key: 'drink', label: '飲料・咖啡', items: [
+    '手搖飲', '珍珠奶茶', '咖啡廳', '咖啡簡餐', '果汁', '冰沙', '氣泡飲',
+    '茶館', '豆漿米漿', '調酒小酌'] },
 ];
 
 function foodGroupKeys() {
@@ -2799,6 +2850,14 @@ function foodPickModal(conv) {
   const result = el('div', { class: 'food-result', text: '？' });
   const note = el('div', { class: 'food-note', text: '按下面的按鈕，讓它幫你決定' });
   const chips = el('div', { class: 'food-chips' });
+  const poolNote = el('div', { class: 'food-poolnote' });
+  const setAll = (all) => {
+    const on = foodGroupKeys();
+    on.clear();
+    if (all) for (const g of FOOD_GROUPS) on.add(g.key);
+    saveFoodGroups();
+    renderChips();
+  };
 
   const renderChips = () => {
     const on = foodGroupKeys();
@@ -2808,12 +2867,13 @@ function foodPickModal(conv) {
         class: 'food-chip' + (on.has(g.key) ? ' on' : ''), type: 'button',
         onclick: () => {
           if (on.has(g.key)) on.delete(g.key); else on.add(g.key);
-          if (!on.size) on.add(g.key); // 至少留一類，免得抽不出東西
           saveFoodGroups();
           renderChips();
         },
       }, `${g.label} ${g.items.length}`));
     }
+    poolNote.textContent = `目前會從 ${foodPool().length} 個選項裡抽` +
+      (on.size ? '' : '（沒勾＝全部都抽）');
   };
   renderChips();
 
@@ -2833,7 +2893,7 @@ function foodPickModal(conv) {
       result.classList.remove('pop');
       void result.offsetWidth;
       result.classList.add('pop');
-      note.textContent = `從 ${pool.length} 個類別裡抽中的 — 不喜歡就再抽一次`;
+      note.textContent = `從 ${pool.length} 個選項裡抽中的 — 不喜歡就再抽一次`;
       shareBtn.disabled = false;
     }, 65);
   };
@@ -2866,7 +2926,11 @@ function foodPickModal(conv) {
             } catch (e) { toast(e.message); }
           },
         })),
-      el('div', { class: 'food-sec', text: '要抽哪幾類（點一下開關）' }),
+      el('div', { class: 'food-sec' },
+        el('span', { class: 'grow', text: '要抽哪幾類（點一下開關）' }),
+        el('button', { class: 'food-all', type: 'button', text: '全選', onclick: () => setAll(true) }),
+        el('button', { class: 'food-all', type: 'button', text: '全不選', onclick: () => setAll(false) })),
+      poolNote,
       chips),
     el('div', { class: 'modal-actions' },
       el('button', { class: 'btn btn-ghost', text: '關閉', onclick: () => close() }),
@@ -3272,13 +3336,32 @@ function gameScores(g) {
   return null;
 }
 
-function buildGameCard(m, big) {
+// 聊天室裡只放一張小卡：寫清楚是誰開的、現在什麼狀況，按「開啟遊戲」才進去玩
+function buildGameChip(m) {
+  const g = m.game;
+  const def = GAME_DEFS[gameKindOf(m)];
+  if (!g || !def) return el('div', { class: 'bubble', text: '[小遊戲]' });
+  const st = gameStatus(g);
+  const chip = el('button', {
+    class: 'game-chip', type: 'button',
+    onclick: (e) => { e.stopPropagation(); openGameModal(m); },
+  },
+    el('span', { class: 'gc-emoji', text: def.emoji }),
+    el('span', { class: 'gc-main' },
+      el('span', { class: 'gc-title', text: def.title }),
+      el('span', { class: 'gc-status' + (st.hot ? ' hot' : ''), text: st.text })),
+    el('span', { class: 'gc-go', text: '開啟' }));
+  chip.addEventListener('contextmenu', (e) => e.stopPropagation());
+  return chip;
+}
+
+function buildGameCard(m) {
   const g = m.game;
   const kind = gameKindOf(m);
   const def = GAME_DEFS[kind];
   if (!g || !def) return el('div', { class: 'bubble', text: '[小遊戲]' });
 
-  const card = el('div', { class: 'game-card' + (big ? ' big' : '') });
+  const card = el('div', { class: 'game-card big' });
   // 遊戲卡自己吃掉長按／右鍵，免得下棋時跳出訊息選單
   card.addEventListener('contextmenu', (e) => e.stopPropagation());
   card.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
@@ -3300,8 +3383,7 @@ function buildGameCard(m, big) {
 
   card.append(el('div', { class: 'g-status' + (st.hot ? ' hot' : ''), text: st.text }));
 
-  // 五子棋、黑白棋、踩地雷格子小，泡泡裡只顯示，按「放大遊玩」才好操作
-  const interactive = big || !['gomoku', 'reversi', 'mine'].includes(kind);
+  const interactive = true; // 盤面只出現在遊戲視窗裡，一律可以操作
   const boardWrap = el('div', { class: 'g-boardwrap' });
   const drawBoard = () => {
     boardWrap.textContent = '';
@@ -3356,13 +3438,10 @@ function buildGameCard(m, big) {
           gameAct(m, { action: 'restart' });
       }, g.winner ? 'btn-primary' : 'btn-ghost'));
   }
-  if (!big) acts.append(gameButton('放大遊玩', () => openGameModal(m)));
   card.append(acts);
 
-  if (big) {
-    const hint = gameHint(g);
-    if (hint) card.append(el('div', { class: 'g-foot', text: hint }));
-  }
+  const hint = gameHint(g);
+  if (hint) card.append(el('div', { class: 'g-foot', text: hint }));
   return card;
 }
 
@@ -3398,7 +3477,7 @@ function openGameModal(m) {
     const typed = focused ? document.activeElement.value : null;
     const top = body.scrollTop;
     body.textContent = '';
-    body.append(buildGameCard(cur, true));
+    body.append(buildGameCard(cur));
     body.scrollTop = top; // 更新盤面不把畫面彈回最上面
     if (typed !== null) {
       const input = body.querySelector('.g-ginput');
@@ -3454,9 +3533,40 @@ function handleGame(ev) {
   if (state.openGame && state.openGame.id === ev.messageId) state.openGame.render();
 }
 
+// 還沒分出勝負／還沒結束的那幾局
+const gameLive = (g) =>
+  g.mode === 'versus' ? g.winner === null : g.mode === 'coop' ? !g.over : !g.winner;
+
+function ongoingGames(conv) {
+  const cache = state.msgCache.get(conv.id);
+  if (!cache) return [];
+  return cache.messages
+    .filter((m) => m.type === 'game' && !m.deleted && m.game && gameLive(m.game))
+    .slice(-5).reverse();
+}
+
 // 聊天室選單 →「小遊戲」：選一款就在聊天室裡開一局，成員都能加入
 function gamePickModal(conv) {
   const rows = [];
+  const live = ongoingGames(conv);
+  if (live.length) {
+    rows.push(el('div', { class: 'list-section', text: '這個聊天室進行中的遊戲' }));
+    for (const m of live) {
+      const def = GAME_DEFS[gameKindOf(m)];
+      if (!def) continue;
+      const st = gameStatus(m.game);
+      rows.push(el('button', {
+        class: 'game-pick live', type: 'button',
+        onclick: () => { close(); openGameModal(m); },
+      },
+        el('span', { class: 'gp-emoji', text: def.emoji }),
+        el('span', { class: 'gp-main' },
+          el('span', { class: 'gp-title', text: def.title }),
+          el('span', { class: 'gp-desc', text: st.text })),
+        el('span', { class: 'gp-tag', text: '回到這局' })));
+    }
+    rows.push(el('div', { class: 'list-section', text: '開新的一局' }));
+  }
   for (const group of GAME_GROUPS) {
     rows.push(el('div', { class: 'list-section', text: group.label }));
     for (const kind of group.kinds) {

@@ -854,6 +854,31 @@ body.theme-dark .rchip.own { color: var(--green); }
 
 /* ---------- 小遊戲（圈圈叉叉、五子棋、2048） ---------- */
 
+/* 聊天室裡只放這張小卡，盤面一律在遊戲視窗裡玩 */
+.game-chip {
+  display: flex; align-items: center; gap: 10px; text-align: left;
+  background: var(--bubble-other); border-radius: 17px; padding: 10px 12px;
+  min-width: min(230px, 60vw); max-width: 100%;
+}
+.mine .game-chip { background: var(--bubble-me); color: var(--bubble-me-ink); }
+.gc-emoji { font-size: 22px; flex: none; line-height: 1; }
+.gc-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.gc-title { font-weight: 700; font-size: var(--fs-msg); }
+.gc-status {
+  font-size: 12px; color: var(--sub);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gc-status.hot { color: var(--green-dark); font-weight: 700; }
+body.theme-dark .gc-status.hot { color: var(--green); }
+.mine .gc-status { color: var(--bubble-me-ink); opacity: .8; }
+.gc-go {
+  flex: none; font-size: 12.5px; font-weight: 700; color: var(--green-dark);
+  background: var(--green-soft); border-radius: 999px; padding: 5px 12px;
+}
+body.theme-dark .gc-go { color: var(--green); }
+
+.game-pick.live { border-color: var(--green); }
+
 .game-card {
   background: var(--bubble-other); border-radius: 17px; padding: 12px 14px;
   min-width: min(260px, 66vw); max-width: 100%;
@@ -1134,7 +1159,15 @@ body.theme-dark .gp-tag { color: var(--green); }
 @keyframes food-pop { from { transform: scale(.82); opacity: .4; } to { transform: scale(1); opacity: 1; } }
 .food-note { font-size: 12.5px; color: var(--sub); text-align: center; margin-bottom: 12px; }
 .food-acts { display: flex; flex-direction: column; gap: 8px; }
-.food-sec { font-size: 12.5px; color: var(--sub); font-weight: 600; margin: 16px 0 8px; }
+.food-sec {
+  font-size: 12.5px; color: var(--sub); font-weight: 600; margin: 16px 0 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+.food-all {
+  font-size: 12px; padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--line); color: var(--sub); flex: none;
+}
+.food-poolnote { font-size: 11.5px; color: var(--sub); margin-bottom: 8px; }
 .food-chips { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 4px; }
 .food-chip {
   font-size: 12.5px; padding: 6px 11px; border-radius: 999px;
