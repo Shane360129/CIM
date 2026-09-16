@@ -1038,6 +1038,15 @@ const pubMessage = (row) => ({
   meta: row.deleted || !row.meta ? null : JSON.parse(row.meta),
 });
 
+// 聊天室清單只需要「[圖片]」「[語音訊息]」這種一行預覽，不必把整包 data URL
+// 一起送。原本一個結尾是圖片的聊天室，光清單就要傳幾百 KB。
+const HEAVY_TYPES = new Set(['image', 'audio']);
+const pubMessageLite = (row) => {
+  const m = pubMessage(row);
+  if (HEAVY_TYPES.has(m.type)) m.content = '';
+  return m;
+};
+
 const b64url = (buf) =>
   btoa(String.fromCharCode(...new Uint8Array(buf)))
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -1565,7 +1574,7 @@ export class ChatServer {
       pinnedChat: mineRow ? !!mineRow.pinned : false,
       wallpaper: (mineRow && mineRow.wallpaper) || null,
       members,
-      lastMessage: last ? pubMessage(last) : null,
+      lastMessage: last ? pubMessageLite(last) : null,
       lastActivity: last ? last.created_at : conv.created_at,
       unread,
     };

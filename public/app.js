@@ -1162,6 +1162,24 @@ function renderMessages(convId) {
   }
 }
 
+// 只換掉一則訊息的節點。連結預覽回來、對方改了訊息時原本會整張清單重畫，
+// 聊天室裡有圖片時一次要花 ~38ms，而且所有圖片都會閃一下重新解碼。
+function replaceMessageNode(convId, m) {
+  const conv = convById(convId);
+  const cache = state.msgCache.get(convId);
+  if (!conv || !cache) return false;
+  const row = $('msg-list').querySelector(`[data-mid="${m.id}"]`);
+  if (!row) return false;
+  const idx = cache.messages.findIndex((x) => x.id === m.id);
+  if (idx < 0) return false;
+  const frag = buildMessageNode(conv, cache, m, idx > 0 ? cache.messages[idx - 1] : null);
+  // buildMessageNode 會順便帶出日期分隔線，但就地替換時那條線已經在畫面上了
+  const first = frag.firstChild;
+  if (first && first.classList && first.classList.contains('date-sep')) first.remove();
+  row.replaceWith(frag);
+  return true;
+}
+
 function appendMessage(convId, m) {
   const conv = convById(convId);
   const cache = state.msgCache.get(convId);
@@ -1930,7 +1948,13 @@ function handleMessageUpdated(m) {
   const idx = cache.messages.findIndex((x) => x.id === m.id);
   if (idx < 0) return;
   cache.messages[idx] = m;
-  if (state.currentConv === m.conversationId) renderMessagesKeepScroll(m.conversationId);
+  if (state.currentConv !== m.conversationId) return;
+  const sc = $('msg-scroll');
+  const atBottom = nearBottom();
+  const top = sc.scrollTop;
+  if (!replaceMessageNode(m.conversationId, m)) return renderMessagesKeepScroll(m.conversationId);
+  if (atBottom) scrollToBottom(false);
+  else sc.scrollTop = top;
 }
 
 function handleIncomingMessage(m, fromSelfPost) {
