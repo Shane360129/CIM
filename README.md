@@ -214,6 +214,7 @@ ChatServer Durable Object（src/chatserver.js）
 | 本機開發預覽 | `npm run dev` → http://localhost:8787 |
 | 跑 API 煙霧測試 | 另開終端機 `npm test`（驗證隱私規則、權限、核心流程與小遊戲動作；需先 `npm run dev`，建議用乾淨資料 `rm -rf .wrangler/state`） |
 | 跑小遊戲規則測試 | `npm run test:games`（2048 合併與死局、連線判定、黑白棋夾翻、1A2B 的 A／B、踩地雷佈雷、數獨出題唯一解、推盤可解性、關燈翻牌；不需要啟動伺服器） |
+| 跑資安測試 | `npm run test:security`（用攻擊者視角實際打伺服器：未登入／假 token、跨聊天室越權、非管理員提權、XSS 與 SQL injection、搜尋範圍、連結縮圖代理的簽章與 SSRF、遊戲隱藏資訊、暴力破解鎖定、token 生命週期；需先 `npm run dev`，務必用乾淨資料） |
 | 部署／更新 | `npx wrangler deploy` |
 | 重新產生 App 圖示 | `npm run icons`（改 `scripts/gen-icons.mjs` 配色後執行） |
 | 備份聊天資料 | 網頁「設定」→「管理員」→「下載聊天備份」 |
