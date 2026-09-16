@@ -259,6 +259,24 @@ async function fetchWithTimeout(url, ms, init) {
   } finally { clearTimeout(timer); }
 }
 
+// 自己跟轉址：每一跳都要重新通過 safeRemoteUrl 檢查。
+// 交給 fetch 的 redirect:'follow' 只會檢查第一個網址，外站可以用 302 把我們
+// 導去內網（例如 http://127.0.0.1/），把不該外流的內容變成聊天室裡的預覽卡。
+async function fetchSafeFollow(url, ms, init, maxHops = 3) {
+  let current = url;
+  for (let hop = 0; ; hop++) {
+    const resp = await fetchWithTimeout(current, ms, { ...init, redirect: 'manual' });
+    if (![301, 302, 303, 307, 308].includes(resp.status)) return { resp, finalUrl: current };
+    const loc = resp.headers.get('location');
+    if (!loc) return { resp, finalUrl: current };
+    if (hop >= maxHops) throw new HttpError(400, '轉址太多次');
+    let next;
+    try { next = safeRemoteUrl(new URL(loc, current).href); } catch { next = null; }
+    if (!next) throw new HttpError(400, '轉址到不允許的網址');
+    current = next;
+  }
+}
+
 // 最多讀取 max 位元組後就取消串流（不把整個大檔載入記憶體）
 async function readCapped(body, max) {
   const reader = body.getReader();
@@ -1303,7 +1321,7 @@ export class ChatServer {
         throw new HttpError(429, '嘗試次數過多，請 15 分鐘後再試');
       const invite = this.getSetting('invite_code');
       if (!invite) throw new HttpError(403, '目前未開放註冊，請聯絡管理員');
-      if (String(body.inviteCode || '').trim() !== invite) {
+      if (!timingSafeEqual(String(body.inviteCode || '').trim(), invite)) {
         const g = this.registerGuard.get(ip) || { fails: 0, lockedUntil: 0 };
         g.fails += 1;
         if (g.fails >= 5) {
@@ -1868,8 +1886,7 @@ export class ChatServer {
 
   // 抓取網頁並解析 Open Graph／Twitter Card／<title>；沒有標題就不做卡片
   async fetchLinkPreview(url) {
-    const resp = await fetchWithTimeout(url, 6000, {
-      redirect: 'follow',
+    const { resp, finalUrl: landed } = await fetchSafeFollow(url, 6000, {
       headers: {
         'user-agent': 'Mozilla/5.0 (compatible; CHAT-LinkPreview/1.0; +https://github.com/Shane360129/CIM)',
         accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5',
@@ -1894,7 +1911,7 @@ export class ChatServer {
     if (!title) return null;
     const desc = metaOf(head, ['og:description', 'twitter:description', 'description']);
     const site = metaOf(head, ['og:site_name', 'application-name']);
-    const finalUrl = safeRemoteUrl(resp.url) || url;
+    const finalUrl = landed || url;
 
     // 縮圖：解析相對路徑、只留可安全代理的 http(s) 圖片，並簽章後經由 /api/link-image 供應
     let image = null;
@@ -1954,11 +1971,13 @@ export class ChatServer {
 
     let resp;
     try {
-      resp = await fetchWithTimeout(target, 8000, {
-        redirect: 'follow',
+      ({ resp } = await fetchSafeFollow(target, 8000, {
         headers: { 'user-agent': 'Mozilla/5.0 (compatible; CHAT-LinkPreview/1.0)', accept: 'image/*' },
-      });
-    } catch { throw new HttpError(502, '無法取得圖片'); }
+      }));
+    } catch (e) {
+      if (e instanceof HttpError) throw e;
+      throw new HttpError(502, '無法取得圖片');
+    }
     const ctype = (resp.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
     if (!resp.ok || !resp.body || !/^image\/(jpeg|png|gif|webp|avif)$/.test(ctype))
       throw new HttpError(502, '不是支援的圖片');
