@@ -5,6 +5,8 @@
 
 const SESSION_TTL = 1000 * 60 * 60 * 24 * 60; // 60 天未使用即需重新登入
 const UNSEND_WINDOW = 1000 * 60 * 60 * 24; // 送出後 24 小時內可收回
+const DAY = 86400000;
+const MEDIA_TTL_DAYS = 30; // 圖片／語音簽章網址的有效天數
 const MAX_TEXT = 4000;
 const MAX_IMAGE = 700000; // data URL 長度上限（約 500KB 圖檔）
 const MAX_GIF = 1900000; // GIF 原檔直傳以保留動畫，上限約 1.4MB 檔案
@@ -207,6 +209,19 @@ CREATE TABLE IF NOT EXISTS games (
 );
 `;
 
+// v6：登入／邀請碼的失敗次數改存資料庫。原本放在記憶體裡，Durable Object
+// 一被回收就整個歸零，等於鎖定可以被繞過。
+const SCHEMA_V6 = `
+CREATE TABLE IF NOT EXISTS guards (
+  scope TEXT NOT NULL,
+  key TEXT NOT NULL,
+  fails INTEGER NOT NULL DEFAULT 0,
+  locked_until INTEGER NOT NULL DEFAULT 0,
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY (scope, key)
+);
+`;
+
 // 訊息中的網址：http(s):// 或 www. 開頭，遇到空白、引號或中文標點即結束
 // （與前端 public/app.js 的 URL_RE / trimUrlTail 保持一致）
 const URL_RE = /(?:https?:\/\/|www\.)[^\s<>"'`\u3000、，。！？：；（）「」『』【】《》〈〉…]+/i;
@@ -335,6 +350,15 @@ function pickCharset(ctype, headBytes) {
   return fromMeta ? fromMeta[1] : 'utf-8';
 }
 
+// 把 data:image/jpeg;base64,xxxx 拆成 { mime, bytes }；格式不符回傳 null
+function parseDataUrl(str) {
+  const m = /^data:([a-z]+\/[a-z0-9.+-]+);base64,(.*)$/is.exec(str || '');
+  if (!m) return null;
+  try {
+    return { mime: m[1].toLowerCase(), bytes: Uint8Array.from(atob(m[2]), (c) => c.charCodeAt(0)) };
+  } catch { return null; }
+}
+
 // 將 base64url 字串解回位元組；格式不合回傳 null
 function fromB64url(str) {
   try {
@@ -362,7 +386,7 @@ const GAME_KINDS = {
   guess: { title: '猜數字 1A2B', mode: 'open', len: 4 },
   sudoku: { title: '數獨', mode: 'solo', cols: 9, rows: 9, holes: 45 },
   slide: { title: '數字推盤', mode: 'solo', cols: 4, rows: 4 },
-  lights: { title: '關燈遊戲', mode: 'solo', cols: 5, rows: 5, presses: 8 },
+  lights: { title: '關燈遊戲', mode: 'solo', cols: 5, rows: 5, minPresses: 6, maxPresses: 14 },
 };
 const GAME_IDLE = 60000; // 合作遊戲：操作者閒置超過 1 分鐘，其他人可直接接手
 const MEMORY_FACES = [
@@ -695,10 +719,15 @@ function lightsToggle(cells, size, i) {
   }
 }
 
-function newLights(size, presses) {
+// 出題：從全暗開始亂按幾下，按出來的盤面保證解得開。
+// 按的次數固定的話題目變化太少（固定 8 下大約一千多題就開始重複），
+// 所以每題隨機取 min–max 下。
+function newLights(size, minPresses, maxPresses = minPresses) {
   const cells = new Array(size * size).fill(0);
+  const span = Math.max(1, maxPresses - minPresses + 1);
   do {
     cells.fill(0);
+    const presses = minPresses + randInt(span);
     for (let k = 0; k < presses; k++) lightsToggle(cells, size, randInt(size * size));
   } while (cells.every((v) => !v));
   return cells;
@@ -707,7 +736,7 @@ function newLights(size, presses) {
 function newSoloPuzzle(kind, def) {
   if (kind === 'sudoku') return newSudoku(def.holes);
   if (kind === 'slide') return { puzzle: newSlide(def.cols), solution: null };
-  return { puzzle: newLights(def.cols, def.presses), solution: null };
+  return { puzzle: newLights(def.cols, def.minPresses, def.maxPresses), solution: null };
 }
 
 // 每個人自己的一盤：board 是他的進度，score 是個人最佳（都是越小越好）
@@ -1080,8 +1109,6 @@ export class ChatServer {
     this.ctx = ctx;
     this.env = env;
     this.sql = ctx.storage.sql;
-    this.loginGuard = new Map(); // username -> {fails, lockedUntil}（記憶體內、盡力而為）
-    this.registerGuard = new Map(); // ip -> {fails, lockedUntil}：防邀請碼暴力猜測
     ctx.blockConcurrencyWhile(async () => {
       this.sql.exec(SCHEMA);
       const v = Number(this.getSetting('schema_version') || 1);
@@ -1100,6 +1127,10 @@ export class ChatServer {
       if (v < 5) {
         this.sql.exec(SCHEMA_V5);
         this.setSetting('schema_version', '5');
+      }
+      if (v < 6) {
+        this.sql.exec(SCHEMA_V6);
+        this.setSetting('schema_version', '6');
       }
     });
     // 心跳不喚醒 DO：客戶端送 "ping"，執行環境自動回 "pong"
@@ -1132,18 +1163,21 @@ export class ChatServer {
   async route(request, url) {
     const { pathname } = url;
     const method = request.method;
+    let m;
 
     if (pathname === '/ws') return this.handleWs(request);
 
     // 公開端點
     if (method === 'GET' && pathname === '/api/app-info') return this.appInfo();
     if (method === 'GET' && pathname === '/api/link-image') return this.serveLinkImage(request, url);
+    // 圖片／語音：<img>、<audio> 帶不了登入權杖，改以簽章網址取用（授權仍每次重查）
+    if (method === 'GET' && (m = pathname.match(/^\/api\/media\/(\d+)$/)))
+      return this.serveMedia(request, url, +m[1]);
     if (method === 'POST' && pathname === '/api/register') return this.register(request);
     if (method === 'POST' && pathname === '/api/login') return this.login(request);
 
     // 其餘皆需登入
     const me = this.requireAuth(request);
-    let m;
 
     if (method === 'POST' && pathname === '/api/logout') return this.logout(me);
     if (method === 'GET' && pathname === '/api/me') return json({ user: pubUser(me) });
@@ -1325,22 +1359,15 @@ export class ChatServer {
     const count = this.userCount();
     if (count > 0) {
       const ip = request.headers.get('CF-Connecting-IP') || 'local';
-      const guard = this.registerGuard.get(ip);
-      if (guard && guard.lockedUntil > Date.now())
+      if (this.guardLocked('register', ip))
         throw new HttpError(429, '嘗試次數過多，請 15 分鐘後再試');
       const invite = this.getSetting('invite_code');
       if (!invite) throw new HttpError(403, '目前未開放註冊，請聯絡管理員');
       if (!timingSafeEqual(String(body.inviteCode || '').trim(), invite)) {
-        const g = this.registerGuard.get(ip) || { fails: 0, lockedUntil: 0 };
-        g.fails += 1;
-        if (g.fails >= 5) {
-          g.lockedUntil = Date.now() + 1000 * 60 * 15;
-          g.fails = 0;
-        }
-        this.registerGuard.set(ip, g);
+        this.guardFail('register', ip, 5, 1000 * 60 * 15);
         throw new HttpError(403, '邀請碼不正確');
       }
-      this.registerGuard.delete(ip);
+      this.guardClear('register', ip);
     }
     if (this.sql.exec(`SELECT id FROM users WHERE username = ?`, username).toArray().length)
       throw new HttpError(409, '這個帳號已經有人使用了');
@@ -1377,23 +1404,16 @@ export class ChatServer {
     const password = String(body.password || '');
     const now = Date.now();
 
-    const guard = this.loginGuard.get(username);
-    if (guard && guard.lockedUntil > now)
+    if (this.guardLocked('login', username, now))
       throw new HttpError(429, '嘗試次數過多，請 10 分鐘後再試');
 
     const row = this.sql.exec(`SELECT * FROM users WHERE username = ?`, username).toArray()[0];
     const hash = row ? await hashPassword(password, row.salt) : null;
     if (!row || !timingSafeEqual(hash, row.password_hash)) {
-      const g = this.loginGuard.get(username) || { fails: 0, lockedUntil: 0 };
-      g.fails += 1;
-      if (g.fails >= 8) {
-        g.lockedUntil = now + 1000 * 60 * 10;
-        g.fails = 0;
-      }
-      this.loginGuard.set(username, g);
+      this.guardFail('login', username, 8, 1000 * 60 * 10, now);
       throw new HttpError(401, '帳號或密碼錯誤');
     }
-    this.loginGuard.delete(username);
+    this.guardClear('login', username);
     if (row.disabled) throw new HttpError(403, '這個帳號已被管理員停用');
     const token = this.createSession(row.id);
     return json({ token, user: pubUser(row) });
@@ -1660,7 +1680,7 @@ export class ChatServer {
     throw new HttpError(400, '不支援的聊天室類型');
   }
 
-  listMessages(url, me, conversationId) {
+  async listMessages(url, me, conversationId) {
     const conv = this.requireMember(conversationId, me.id);
     const before = Number(url.searchParams.get('before')) || null;
     const around = Number(url.searchParams.get('around')) || null;
@@ -1712,14 +1732,14 @@ export class ChatServer {
     if (conv.pinned_message_id) {
       const p = this.sql
         .exec(`SELECT * FROM messages WHERE id = ?`, conv.pinned_message_id).toArray()[0];
-      if (p && !p.deleted) pinned = pubMessage(p);
+      if (p && !p.deleted) pinned = (await this.attachExtras([pubMessage(p)], me.id))[0];
     }
     return json({
       conversation: {
         id: conv.id, type: conv.type, name: conv.name,
         pinnedMessageId: conv.pinned_message_id || null,
       },
-      messages: this.attachExtras(rows.map(pubMessage), me.id),
+      messages: await this.attachExtras(rows.map(pubMessage), me.id),
       members,
       hasMore,
       hasNewer,
@@ -1728,8 +1748,19 @@ export class ChatServer {
   }
 
   // 一次補上訊息的表情回應與投票資料
-  attachExtras(messages, viewerId) {
+  // 圖片／語音不再把整包 data URL 塞進訊息裡，只給一個簽給這位收件者的網址。
+  // 原本打開一個有 30 張圖的聊天室，一次要傳 18MB。
+  async attachExtras(messages, viewerId) {
     if (!messages.length) return messages;
+    if (viewerId) {
+      await Promise.all(messages.map(async (m) => {
+        if (m.deleted || (m.type !== 'image' && m.type !== 'audio')) return;
+        // 舊資料若不是標準的 base64 data URL，/api/media 解不開，就維持原樣內嵌
+        if (!parseDataUrl(m.content)) return;
+        m.meta = { ...(m.meta || {}), media: await this.signMedia(m.id, viewerId) };
+        m.content = '';
+      }));
+    }
     const ids = messages.map((m) => m.id);
     const ph = ids.map(() => '?').join(',');
     const reactions = this.sql
@@ -1763,6 +1794,48 @@ export class ChatServer {
       }
     }
     return messages;
+  }
+
+  // 廣播一則訊息：圖片／語音的網址是按收件者簽的，所以逐一送
+  async sendMessageToMembers(conversationId, evType, row) {
+    for (const uid of this.memberIds(conversationId)) {
+      const message = (await this.attachExtras([pubMessage(row)], uid))[0];
+      this.sendToUsers([uid], { type: evType, message });
+    }
+  }
+
+  // ---------- 失敗次數鎖定（存資料庫，DO 被回收也不會歸零）----------
+
+  guardOf(scope, key) {
+    const row = this.sql
+      .exec(`SELECT fails, locked_until FROM guards WHERE scope = ? AND key = ?`, scope, key)
+      .toArray()[0];
+    return row ? { fails: row.fails, lockedUntil: row.locked_until } : { fails: 0, lockedUntil: 0 };
+  }
+
+  guardLocked(scope, key, now = Date.now()) {
+    return this.guardOf(scope, key).lockedUntil > now;
+  }
+
+  // 記一次失敗；累積到 max 次就鎖 lockMs 毫秒並把計數歸零
+  guardFail(scope, key, max, lockMs, now = Date.now()) {
+    const g = this.guardOf(scope, key);
+    g.fails += 1;
+    if (g.fails >= max) {
+      g.lockedUntil = now + lockMs;
+      g.fails = 0;
+    }
+    this.sql.exec(
+      `INSERT INTO guards (scope, key, fails, locked_until, updated_at) VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(scope, key) DO UPDATE SET fails = ?, locked_until = ?, updated_at = ?`,
+      scope, key, g.fails, g.lockedUntil, now, g.fails, g.lockedUntil, now);
+    // 順手清掉一天以上沒動過、也沒在鎖定中的舊資料
+    this.sql.exec(
+      `DELETE FROM guards WHERE updated_at < ? AND locked_until < ?`, now - DAY, now);
+  }
+
+  guardClear(scope, key) {
+    this.sql.exec(`DELETE FROM guards WHERE scope = ? AND key = ?`, scope, key);
   }
 
   reactionsOf(messageId) {
@@ -1866,13 +1939,14 @@ export class ChatServer {
       `UPDATE members SET last_read_id = MAX(last_read_id, ?)
        WHERE conversation_id = ? AND user_id = ?`, row.id, conversationId, me.id);
 
-    const message = this.attachExtras([pubMessage(row)], me.id)[0];
-    this.sendToUsers(this.memberIds(conversationId), { type: 'message', message });
+    // 每位收件者拿到的是簽給自己的圖片網址，所以逐一送出
+    await this.sendMessageToMembers(conversationId, 'message', row);
     this.notifyOffline(conversationId, me.id);
     if (type === 'text') {
       const url = firstHttpUrl(content);
       if (url) this.ctx.waitUntil(this.attachLinkPreview(row.id, conversationId, url));
     }
+    const message = (await this.attachExtras([pubMessage(row)], me.id))[0];
     return json({ message });
   }
 
@@ -1886,8 +1960,8 @@ export class ChatServer {
       const meta = row.meta ? JSON.parse(row.meta) : {};
       meta.link = link;
       this.sql.exec(`UPDATE messages SET meta = ? WHERE id = ?`, JSON.stringify(meta), messageId);
-      const message = this.attachExtras([pubMessage({ ...row, meta: JSON.stringify(meta) })])[0];
-      this.sendToUsers(this.memberIds(conversationId), { type: 'message-updated', message });
+      await this.sendMessageToMembers(
+        conversationId, 'message-updated', { ...row, meta: JSON.stringify(meta) });
     } catch (e) {
       console.warn('link preview failed:', url, e && e.message);
     }
@@ -1938,6 +2012,73 @@ export class ChatServer {
       site: [...(site || new URL(finalUrl).hostname)].slice(0, 60).join(''),
       image,
     };
+  }
+
+  // 圖片／語音簽章金鑰（與縮圖代理分開，互不牽連）
+  async mediaKey() {
+    if (this._mediaKey) return this._mediaKey;
+    let secret = this.getSetting('media_secret');
+    if (!secret) {
+      secret = randomHex(32);
+      this.setSetting('media_secret', secret);
+    }
+    this._mediaKey = await crypto.subtle.importKey(
+      'raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
+    return this._mediaKey;
+  }
+
+  // 圖片／語音的取用網址。<img src> 帶不了登入權杖，所以改用 HMAC 簽章，
+  // 並把收件者綁進簽章裡；到期時間以「天」對齊，同一個人一整天拿到的網址
+  // 都一樣，瀏覽器才快取得住（不然每次列訊息都會重抓一次圖）。
+  async signMedia(messageId, userId) {
+    const exp = (Math.floor(Date.now() / DAY) + MEDIA_TTL_DAYS) * DAY;
+    const sig = await crypto.subtle.sign(
+      'HMAC', await this.mediaKey(), new TextEncoder().encode(`${messageId}.${userId}.${exp}`));
+    return `/api/media/${messageId}?u=${userId}&e=${exp}&s=${b64url(sig)}`;
+  }
+
+  // 供應訊息裡的圖片／語音。簽章只說明「這個網址指向哪一則訊息、是簽給誰的」，
+  // 真正的授權仍然每次重新檢查：帳號還在、沒被停用、而且現在仍是該聊天室的成員。
+  // 所以把人移出聊天室或停用帳號之後，舊網址會立刻失效。
+  async serveMedia(request, url, messageId) {
+    const uid = Number(url.searchParams.get('u'));
+    const exp = Number(url.searchParams.get('e'));
+    const sigBytes = fromB64url(url.searchParams.get('s') || '');
+    if (!Number.isInteger(uid) || !Number.isFinite(exp) || !sigBytes || sigBytes.length !== 32)
+      throw new HttpError(403, '簽章無效');
+    if (exp < Date.now()) throw new HttpError(403, '網址已過期，請重新整理');
+    const ok = await crypto.subtle.verify(
+      'HMAC', await this.mediaKey(), sigBytes, new TextEncoder().encode(`${messageId}.${uid}.${exp}`));
+    if (!ok) throw new HttpError(403, '簽章無效');
+
+    const row = this.sql
+      .exec(`SELECT * FROM messages WHERE id = ?`, messageId).toArray()[0];
+    if (!row || row.deleted || (row.type !== 'image' && row.type !== 'audio'))
+      throw new HttpError(404, '找不到這個檔案');
+    const user = this.sql
+      .exec(`SELECT id, disabled FROM users WHERE id = ?`, uid).toArray()[0];
+    if (!user || user.disabled) throw new HttpError(403, '沒有權限');
+    const member = this.sql
+      .exec(`SELECT 1 AS ok FROM members WHERE conversation_id = ? AND user_id = ?`,
+        row.conversation_id, uid).toArray()[0];
+    if (!member) throw new HttpError(403, '沒有權限');
+
+    const parsed = parseDataUrl(row.content);
+    if (!parsed) throw new HttpError(404, '找不到這個檔案');
+    const prefix = row.type === 'image' ? 'image/' : 'audio/';
+    if (!parsed.mime.startsWith(prefix)) throw new HttpError(404, '找不到這個檔案');
+
+    return new Response(parsed.bytes, {
+      headers: {
+        'content-type': parsed.mime,
+        // 訊息內容不會變，簽章網址本身就帶版本資訊，可以放心長快取
+        'cache-control': 'private, max-age=604800, immutable',
+        'content-length': String(parsed.bytes.byteLength),
+        'x-content-type-options': 'nosniff',
+        'content-security-policy': "default-src 'none'",
+        'content-disposition': 'inline',
+      },
+    });
   }
 
   // 縮圖代理簽章金鑰：首次使用時隨機產生並存入 settings，之後所有實例共用
@@ -2493,12 +2634,13 @@ export class ChatServer {
       if (!row || row.deleted || row.type === 'system')
         throw new HttpError(404, '找不到要設為公告的訊息');
       this.sql.exec(`UPDATE conversations SET pinned_message_id = ? WHERE id = ?`, mid, conversationId);
-      pinned = pubMessage(row);
+      pinned = row;
       this.addSystemMessage(conversationId, `${me.display_name} 設定了新公告`);
     }
-    this.sendToUsers(this.memberIds(conversationId), {
-      type: 'pin', conversationId, pinned,
-    });
+    for (const uid of this.memberIds(conversationId)) {
+      const forUser = pinned ? (await this.attachExtras([pubMessage(pinned)], uid))[0] : null;
+      this.sendToUsers([uid], { type: 'pin', conversationId, pinned: forUser });
+    }
     return json({ ok: true });
   }
 

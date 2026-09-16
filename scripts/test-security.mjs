@@ -125,6 +125,40 @@ for (const bad of ['http://127.0.0.1/admin', 'http://169.254.169.254/latest/meta
     (await j('/api/link-image?u=' + encodeURIComponent(bad) + '&s=' + 'a'.repeat(43))).status === 403);
 }
 
+console.log('\n--- 圖片端點（簽章網址）---');
+// 一張最小的合法 JPEG（1×1 灰點）
+const TINY_JPG = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAARCAABAAEDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3+iiigD//2Q==';
+const gconv = (await j('/api/conversations', { method: 'POST', body: { type: 'group', name: '相簿', memberIds: [IA, IC] } }, ADMIN)).data.conversation;
+const imgMsg = (await j(`/api/conversations/${gconv.id}/messages`, { method: 'POST', body: { type: 'image', content: TINY_JPG } }, ADMIN)).data.message;
+const mediaUrl = imgMsg.meta && imgMsg.meta.media;
+const raw = async (path, token) => {
+  const r = await fetch(B + path, { headers: token ? { authorization: 'Bearer ' + token } : {} });
+  return { status: r.status, ctype: r.headers.get('content-type') || '', len: (await r.arrayBuffer()).byteLength };
+};
+check('訊息清單不再夾帶圖片內容', imgMsg.content === '' && typeof mediaUrl === 'string' && mediaUrl.startsWith('/api/media/'));
+const good = await raw(mediaUrl);
+check('簽章正確就拿得到圖（而且是二進位、不是 base64）', good.status === 200 && good.ctype === 'image/jpeg' && good.len > 0 && good.len < TINY_JPG.length);
+check('沒有簽章不給拿', (await raw(`/api/media/${imgMsg.id}`)).status === 403);
+check('竄改簽章不給拿', (await raw(mediaUrl.replace(/&s=./, '&s=A'))).status === 403);
+check('改成別人的 id 不給拿（簽章綁了收件者）',
+  (await raw(mediaUrl.replace(/u=\d+/, `u=${IC}`))).status === 403);
+check('把到期日改長一點不給拿', (await raw(mediaUrl.replace(/e=\d+/, 'e=99999999999999'))).status === 403);
+check('過期的網址不給拿', await (async () => {
+  // 拿一個「已經過期」但其他部分合法的網址：伺服器先看到期日就會擋
+  const expired = mediaUrl.replace(/e=\d+/, 'e=1');
+  return (await raw(expired)).status === 403;
+})());
+check('不存在的訊息拿不到', (await raw(mediaUrl.replace(/\/api\/media\/\d+/, '/api/media/999999'))).status === 403);
+// 把管理員以外的人移出聊天室後，他手上的舊網址要立刻失效
+const cUrl = ((await j(`/api/conversations/${gconv.id}/messages`, {}, TC)).data.messages || [])
+  .filter((m) => m.type === 'image').pop().meta.media;
+check('成員自己的網址本來拿得到', (await raw(cUrl)).status === 200);
+await j(`/api/conversations/${gconv.id}/leave`, { method: 'POST' }, TC);
+check('退出聊天室後，手上的舊網址立刻失效', (await raw(cUrl)).status === 403);
+// 收回訊息後也不該再拿得到
+await j(`/api/messages/${imgMsg.id}/unsend`, { method: 'POST' }, ADMIN);
+check('訊息收回後圖片也拿不到', (await raw(mediaUrl)).status === 404);
+
 console.log('\n--- 遊戲：藏起來的資訊 ---');
 const grp = (await j('/api/conversations', { method: 'POST', body: { type: 'group', name: '資安測試群', memberIds: [IA, IC] } }, ADMIN)).data.conversation;
 const newGame = (kind, tok) => j(`/api/conversations/${grp.id}/messages`, { method: 'POST', body: { type: 'game', content: '', game: { kind } } }, tok);

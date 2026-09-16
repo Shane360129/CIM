@@ -1025,13 +1025,23 @@ function readLabelFor(conv, cache, m) {
   return conv.type === 'group' ? `已讀 ${readers}` : '已讀';
 }
 
+// 圖片／語音的來源：優先用伺服器簽的同源網址，沒有才退回訊息內容裡的 data URL
+function mediaSrc(m) {
+  const media = m.meta && m.meta.media;
+  if (typeof media === 'string' && media.startsWith('/api/media/')) return media;
+  return m.content;
+}
+
 function buildMessageContent(m) {
   if (m.deleted) return el('div', { class: 'bubble deleted', text: '已收回訊息' });
-  if (m.type === 'image')
+  if (m.type === 'image') {
+    // 伺服器只給簽章網址（舊訊息或剛送出的本地訊息才會有 data URL）
+    const src = mediaSrc(m);
     return el('img', {
-      class: 'msg-img', src: m.content, alt: '圖片',
-      onclick: () => openViewer(m.content),
+      class: 'msg-img', src, alt: '圖片', loading: 'lazy', decoding: 'async',
+      onclick: () => openViewer(src),
     });
+  }
   if (m.type === 'sticker') {
     if (m.content.startsWith('sid:')) return buildCustomSticker(m.content.slice(4));
     return el('div', { class: 'msg-sticker', text: m.content });
@@ -2589,7 +2599,7 @@ function buildAudioMsg(m) {
     e.stopPropagation();
     if (state.audio && state.audio.mid === m.id) { stopAudio(); return; }
     stopAudio();
-    const a = new Audio(m.content);
+    const a = new Audio(mediaSrc(m));
     state.audio = { el: a, mid: m.id, posEl: pos, btnEl: playBtn };
     playBtn.textContent = '';
     playBtn.append(icon('pause', 18));

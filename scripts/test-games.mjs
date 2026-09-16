@@ -133,8 +133,12 @@ check('推盤完成判定', slideSolved([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0])
 check('推盤：不可解的排法會被擋掉',
   slideSolvable([1,2,3,4,5,6,7,8,9,10,11,12,13,15,14,0], 4), false);
 
-const lt = newLights(5, GAME_KINDS.lights.presses);
+const { minPresses, maxPresses } = GAME_KINDS.lights;
+const lt = newLights(5, minPresses, maxPresses);
 check('關燈：開局不是全暗', lt.some((v) => v), true);
+// 出題按的次數是隨機的，題目才不會一千多題就開始重複
+check('關燈：出題盤面會變化', new Set(
+  [...Array(200).keys()].map(() => newLights(5, minPresses, maxPresses).join(''))).size > 150, true);
 const cells = [0,0,0, 0,0,0, 0,0,0];
 lightsToggle(cells, 3, 4);
 check('關燈：按中間會連十字一起翻', cells, [0,1,0, 1,1,1, 0,1,0]);
