@@ -342,6 +342,9 @@ const GAME_KINDS = {
   '2048': { title: '2048', mode: 'coop', cols: 4, rows: 4 },
   mine: { title: '踩地雷', mode: 'coop', cols: 9, rows: 9, mines: 10 },
   guess: { title: '猜數字 1A2B', mode: 'open', len: 4 },
+  sudoku: { title: '數獨', mode: 'solo', cols: 9, rows: 9, holes: 45 },
+  slide: { title: '數字推盤', mode: 'solo', cols: 4, rows: 4 },
+  lights: { title: '關燈遊戲', mode: 'solo', cols: 5, rows: 5, presses: 8 },
 };
 const GAME_IDLE = 60000; // 合作遊戲：操作者閒置超過 1 分鐘，其他人可直接接手
 const MEMORY_FACES = [
@@ -570,6 +573,146 @@ function abOf(secret, guess) {
   return { a, b };
 }
 
+// ---------- 單人邏輯題（大家解同一題，比誰快／誰步數少） ----------
+
+// 數獨：先用隨機回溯填出一張完整解答，再一格一格挖洞，
+// 每挖一格就確認「解答仍然唯一」，不唯一就把數字放回去。
+function sudokuCands(board, i) {
+  const r = Math.floor(i / 9);
+  const c = i % 9;
+  const br = Math.floor(r / 3) * 3;
+  const bc = Math.floor(c / 3) * 3;
+  const used = new Set();
+  for (let k = 0; k < 9; k++) {
+    used.add(board[r * 9 + k]);
+    used.add(board[k * 9 + c]);
+    used.add(board[(br + Math.floor(k / 3)) * 9 + bc + (k % 3)]);
+  }
+  const out = [];
+  for (let v = 1; v <= 9; v++) if (!used.has(v)) out.push(v);
+  return out;
+}
+
+function sudokuFill(board) {
+  const i = board.indexOf(0);
+  if (i < 0) return true;
+  for (const v of shuffle(sudokuCands(board, i))) {
+    board[i] = v;
+    if (sudokuFill(board)) return true;
+    board[i] = 0;
+  }
+  return false;
+}
+
+// 數最多 limit 個解就提早收工（只想知道「是不是唯一解」）
+function sudokuCount(board, limit) {
+  let best = -1;
+  let bestCands = null;
+  for (let i = 0; i < 81; i++) {
+    if (board[i]) continue;
+    const cands = sudokuCands(board, i);
+    if (!cands.length) return 0;
+    if (!bestCands || cands.length < bestCands.length) {
+      best = i;
+      bestCands = cands;
+      if (cands.length === 1) break;
+    }
+  }
+  if (best < 0) return 1; // 填滿了
+  let found = 0;
+  for (const v of bestCands) {
+    board[best] = v;
+    found += sudokuCount(board, limit - found);
+    board[best] = 0;
+    if (found >= limit) break;
+  }
+  return found;
+}
+
+function newSudoku(holes) {
+  const solution = new Array(81).fill(0);
+  sudokuFill(solution);
+  const puzzle = solution.slice();
+  let removed = 0;
+  for (const i of shuffle([...Array(81).keys()])) {
+    if (removed >= holes) break;
+    const keep = puzzle[i];
+    puzzle[i] = 0;
+    if (sudokuCount(puzzle.slice(), 2) === 1) removed++;
+    else puzzle[i] = keep;
+  }
+  return { puzzle, solution };
+}
+
+// 數字推盤：0 是空格，完成時是 1..n-1 後面接 0
+const slideSolved = (tiles) =>
+  tiles.every((v, i) => (i === tiles.length - 1 ? v === 0 : v === i + 1));
+
+// 逆序數判斷可解性（不可解的排法永遠拼不回來）
+function slideSolvable(tiles, size) {
+  const arr = tiles.filter((v) => v);
+  let inv = 0;
+  for (let i = 0; i < arr.length; i++)
+    for (let j = i + 1; j < arr.length; j++) if (arr[i] > arr[j]) inv++;
+  if (size % 2) return inv % 2 === 0;
+  const fromBottom = size - Math.floor(tiles.indexOf(0) / size);
+  return (fromBottom % 2 === 0) !== (inv % 2 === 0);
+}
+
+function newSlide(size) {
+  let tiles;
+  do {
+    tiles = shuffle([...Array(size * size).keys()]);
+  } while (!slideSolvable(tiles, size) || slideSolved(tiles));
+  return tiles;
+}
+
+// 關燈：從全暗開始亂按幾下，按出來的盤面一定有解
+function lightsToggle(cells, size, i) {
+  const r = Math.floor(i / size);
+  const c = i % size;
+  for (const [rr, cc] of [[r, c], [r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]]) {
+    if (rr < 0 || rr >= size || cc < 0 || cc >= size) continue;
+    cells[rr * size + cc] ^= 1;
+  }
+}
+
+function newLights(size, presses) {
+  const cells = new Array(size * size).fill(0);
+  do {
+    cells.fill(0);
+    for (let k = 0; k < presses; k++) lightsToggle(cells, size, randInt(size * size));
+  } while (cells.every((v) => !v));
+  return cells;
+}
+
+function newSoloPuzzle(kind, def) {
+  if (kind === 'sudoku') return newSudoku(def.holes);
+  if (kind === 'slide') return { puzzle: newSlide(def.cols), solution: null };
+  return { puzzle: newLights(def.cols, def.presses), solution: null };
+}
+
+// 每個人自己的一盤：board 是他的進度，score 是個人最佳（都是越小越好）
+const newRun = (g, now) => ({
+  board: g.puzzle.slice(), moves: 0, startedAt: now, doneAt: null, lastScore: null,
+});
+
+const soloBest = (g) => Object.entries(g.players || {})
+  .filter(([, p]) => p.score != null)
+  .map(([uid, p]) => ({ userId: Number(uid), score: p.score, seconds: p.seconds, doneAt: p.doneAt }))
+  .sort((a, b) => a.score - b.score || a.seconds - b.seconds || a.doneAt - b.doneAt);
+
+function soloFinish(g, p, now) {
+  const seconds = Math.max(1, Math.round((now - p.startedAt) / 1000));
+  // 數獨比時間，推盤與關燈比步數（同分再比時間）
+  const score = g.kind === 'sudoku' ? seconds : p.moves;
+  p.doneAt = now;
+  p.lastScore = score;
+  p.seconds = p.score == null || score < p.score ? seconds : p.seconds;
+  p.score = p.score == null ? score : Math.min(p.score, score);
+  p.plays = (p.plays || 0) + 1;
+}
+
 function newGameState(kind, creatorId) {
   const def = GAME_KINDS[kind];
   const cells = def.cols * def.rows;
@@ -619,9 +762,16 @@ function newGameState(kind, creatorId) {
     }
     return g;
   }
+  if (def.mode === 'open') {
+    return {
+      kind, mode: 'open', len: def.len, secret: newSecret(def.len),
+      guesses: [], winner: null, round: 1, moves: 0,
+    };
+  }
+  const { puzzle, solution } = newSoloPuzzle(kind, def);
   return {
-    kind, mode: 'open', len: def.len, secret: newSecret(def.len),
-    guesses: [], winner: null, round: 1, moves: 0,
+    kind, mode: 'solo', cols: def.cols, rows: def.rows,
+    puzzle, solution, players: {}, round: 1, createdBy: creatorId,
   };
 }
 
@@ -673,17 +823,40 @@ function resetGameState(g) {
     }
     return g;
   }
-  g.secret = newSecret(g.len);
-  g.guesses = [];
-  g.winner = null;
-  g.moves = 0;
+  if (g.mode === 'open') {
+    g.secret = newSecret(g.len);
+    g.guesses = [];
+    g.winner = null;
+    g.moves = 0;
+    g.round += 1;
+    return g;
+  }
+  const fresh = newSoloPuzzle(g.kind, GAME_KINDS[g.kind]);
+  g.puzzle = fresh.puzzle;
+  g.solution = fresh.solution;
+  g.players = {}; // 換新題目，排行榜跟著重來
   g.round += 1;
   return g;
 }
 
 // 送給前端前先把藏起來的資訊拿掉（牌面、雷區、答案）
-function publicGame(g) {
+function publicGame(g, viewerId) {
   if (!g) return null;
+  if (g.mode === 'solo') {
+    const { solution, players, ...rest } = g;
+    const mine = players && viewerId != null ? players[viewerId] : null;
+    return {
+      ...rest,
+      board: mine ? mine.board : null,
+      mine: mine
+        ? { moves: mine.moves, startedAt: mine.startedAt, doneAt: mine.doneAt,
+            score: mine.score ?? null, seconds: mine.seconds ?? null,
+            lastScore: mine.lastScore ?? null, plays: mine.plays || 0 }
+        : null,
+      leaderboard: soloBest(g),
+      playing: Object.keys(players || {}).length,
+    };
+  }
   if (g.kind === 'memory') {
     const shown = new Set(g.flipped || []);
     return { ...g, cards: g.cards.map((face, i) => (g.owner[i] || shown.has(i) ? face : null)) };
@@ -873,6 +1046,7 @@ function previewOf(row) {
 
 export { firstHttpUrl, trimUrlTail, normalizeUrl, safeRemoteUrl, ogTag, metaOf, pickCharset, fromB64url };
 export { winLine, move2048, stuck2048, GAME_KINDS, reversiFlips, reversiLegal, reversiStart, abOf, newSecret, mineLayout, mineNear, mineNeighbors };
+export { newSudoku, sudokuCount, newSlide, slideSolvable, slideSolved, newLights, lightsToggle };
 
 export class ChatServer {
   constructor(ctx, env) {
@@ -1518,7 +1692,7 @@ export class ChatServer {
         id: conv.id, type: conv.type, name: conv.name,
         pinnedMessageId: conv.pinned_message_id || null,
       },
-      messages: this.attachExtras(rows.map(pubMessage)),
+      messages: this.attachExtras(rows.map(pubMessage), me.id),
       members,
       hasMore,
       hasNewer,
@@ -1527,7 +1701,7 @@ export class ChatServer {
   }
 
   // 一次補上訊息的表情回應與投票資料
-  attachExtras(messages) {
+  attachExtras(messages, viewerId) {
     if (!messages.length) return messages;
     const ids = messages.map((m) => m.id);
     const ph = ids.map(() => '?').join(',');
@@ -1558,7 +1732,7 @@ export class ChatServer {
       for (const m of messages) {
         if (m.type !== 'game' || m.deleted) continue;
         const raw = byId.get(m.id);
-        try { m.game = raw ? publicGame(JSON.parse(raw)) : null; } catch { m.game = null; }
+        try { m.game = raw ? publicGame(JSON.parse(raw), viewerId) : null; } catch { m.game = null; }
       }
     }
     return messages;
@@ -1665,7 +1839,7 @@ export class ChatServer {
       `UPDATE members SET last_read_id = MAX(last_read_id, ?)
        WHERE conversation_id = ? AND user_id = ?`, row.id, conversationId, me.id);
 
-    const message = this.attachExtras([pubMessage(row)])[0];
+    const message = this.attachExtras([pubMessage(row)], me.id)[0];
     this.sendToUsers(this.memberIds(conversationId), { type: 'message', message });
     this.notifyOffline(conversationId, me.id);
     if (type === 'text') {
@@ -2112,16 +2286,21 @@ export class ChatServer {
 
     if (g.mode === 'versus') this.applyVersusAction(g, me, action, body);
     else if (g.mode === 'coop') this.applyCoopAction(g, me, action, body, now);
-    else this.applyOpenAction(g, me, action, body);
+    else if (g.mode === 'open') this.applyOpenAction(g, me, action, body);
+    else this.applySoloAction(g, me, action, body, now);
 
     this.sql.exec(
       `UPDATE games SET state = ?, updated_at = ? WHERE message_id = ?`,
       JSON.stringify(g), now, messageId);
-    const game = publicGame(g);
-    this.sendToUsers(this.memberIds(row.conversation_id), {
-      type: 'game', conversationId: row.conversation_id, messageId, game,
-    });
-    return json({ game });
+    const members = this.memberIds(row.conversation_id);
+    const ev = { type: 'game', conversationId: row.conversation_id, messageId };
+    if (g.mode === 'solo') {
+      // 每個人自己一盤，所以要各送各的（排行榜大家都看得到）
+      for (const uid of members) this.sendToUsers([uid], { ...ev, game: publicGame(g, uid) });
+    } else {
+      this.sendToUsers(members, { ...ev, game: publicGame(g) });
+    }
+    return json({ game: publicGame(g, me.id) });
   }
 
   // 對戰型（圈圈叉叉、五子棋、四子棋、黑白棋、記憶翻翻樂）：兩個座位輪流，其他成員只能看
@@ -2174,6 +2353,52 @@ export class ChatServer {
     if (g.guesses.length > 60) g.guesses = g.guesses.slice(-60);
     g.moves += 1;
     if (a === g.len) g.winner = me.id;
+  }
+
+  // 單人題（數獨、數字推盤、關燈）：大家解同一題，各自一盤、各自計時
+  applySoloAction(g, me, action, body, now) {
+    const { cols } = dimsOf(g);
+    if (action === 'restart') {
+      resetGameState(g);
+      return;
+    }
+    if (action === 'start') { // 開始挑戰／重來（自己這盤）
+      g.players[me.id] = { ...newRun(g, now), score: g.players[me.id]?.score ?? null,
+        seconds: g.players[me.id]?.seconds ?? null, plays: g.players[me.id]?.plays || 0 };
+      return;
+    }
+    if (action !== 'move') throw new HttpError(400, '不支援的動作');
+    const p = g.players[me.id];
+    if (!p) throw new HttpError(400, '請先按「開始挑戰」');
+    if (p.doneAt) throw new HttpError(400, '你已經完成這題了，按「再挑戰一次」可以刷新紀錄');
+    const i = Number(body.i);
+    if (!Number.isInteger(i) || i < 0 || i >= p.board.length)
+      throw new HttpError(400, '位置不正確');
+
+    if (g.kind === 'sudoku') {
+      if (g.puzzle[i]) throw new HttpError(400, '題目本來就有的數字不能改');
+      const v = Number(body.v);
+      if (!Number.isInteger(v) || v < 0 || v > 9) throw new HttpError(400, '只能填 1–9');
+      if (p.board[i] === v) return;
+      p.board[i] = v;
+      p.moves += 1;
+      if (p.board.every((x, k) => x === g.solution[k])) soloFinish(g, p, now);
+      return;
+    }
+    if (g.kind === 'slide') {
+      const blank = p.board.indexOf(0);
+      const near = Math.abs(Math.floor(i / cols) - Math.floor(blank / cols)) +
+        Math.abs((i % cols) - (blank % cols));
+      if (near !== 1) throw new HttpError(400, '只能推動空格旁邊的數字');
+      p.board[blank] = p.board[i];
+      p.board[i] = 0;
+      p.moves += 1;
+      if (slideSolved(p.board)) soloFinish(g, p, now);
+      return;
+    }
+    lightsToggle(p.board, cols, i);
+    p.moves += 1;
+    if (p.board.every((x) => !x)) soloFinish(g, p, now);
   }
 
   // 合作型（2048、踩地雷）：同一時間只有一位操作者，其他人要等他換手（閒置 1 分鐘可接手）

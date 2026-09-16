@@ -2975,12 +2975,22 @@ const GAME_DEFS = {
   guess: {
     title: '猜數字 1A2B', emoji: '🔡', desc: '猜 4 位不重複數字，誰先猜中誰贏', tag: '大家一起猜',
   },
+  sudoku: {
+    title: '數獨', emoji: '🔢', desc: '9×9 填數字，全家解同一題比誰快', tag: '單人・比時間',
+  },
+  slide: {
+    title: '數字推盤', emoji: '🧩', desc: '把 1–15 推回順序，比誰步數少', tag: '單人・比步數',
+  },
+  lights: {
+    title: '關燈遊戲', emoji: '💡', desc: '按一下連旁邊一起翻，把燈全部關掉', tag: '單人・比步數',
+  },
 };
 
 // 對戰型遊戲在選單裡排前面，合作／開放型排後面
 const GAME_GROUPS = [
   { label: '兩人對戰（兩個座位輪流）', kinds: ['ooxx', 'connect4', 'gomoku', 'reversi', 'memory'] },
   { label: '大家一起玩', kinds: ['2048', 'mine', 'guess'] },
+  { label: '一個人玩・比排行榜（大家解同一題）', kinds: ['sudoku', 'slide', 'lights'] },
 ];
 
 // 伺服器早期版本只存 size（正方形盤），新版存 cols／rows
@@ -3037,7 +3047,171 @@ function openStatus(g) {
 }
 
 const gameStatus = (g) =>
-  g.mode === 'versus' ? versusStatus(g) : g.mode === 'coop' ? coopStatus(g) : openStatus(g);
+  g.mode === 'versus' ? versusStatus(g)
+    : g.mode === 'coop' ? coopStatus(g)
+      : g.mode === 'solo' ? soloStatus(g) : openStatus(g);
+
+/* ----- 單人邏輯題（數獨、數字推盤、關燈）：大家解同一題，比分數 ----- */
+
+// 數獨要選格子再按數字；選到哪一格記在卡片外面，盤面更新後不會跑掉
+const soloSel = new Map();
+let soloTimer = null; // 計時中的那顆計時器（同時只會有一個遊戲視窗）
+
+const fmtSec = (s) => (s >= 60 ? `${Math.floor(s / 60)} 分 ${s % 60} 秒` : `${s} 秒`);
+
+const soloScoreText = (g, r) =>
+  g.kind === 'sudoku' ? fmtSec(r.score) : `${r.score} 步・${fmtSec(r.seconds || 0)}`;
+
+function soloStatus(g) {
+  const m = g.mine;
+  if (!m) return { text: '按「開始挑戰」就開始計時', hot: true };
+  if (m.doneAt) {
+    const rank = (g.leaderboard || []).findIndex((r) => r.userId === state.me.id) + 1;
+    const best = soloScoreText(g, { score: m.score, seconds: m.seconds });
+    return { text: `完成了！目前第 ${rank} 名・最佳 ${best}`, hot: true };
+  }
+  return { text: g.kind === 'sudoku' ? '計時中…' : `進行中・已經走了 ${m.moves} 步`, hot: true };
+}
+
+// 排行榜：前三名，自己沒進前三就補在後面
+function leaderboardList(g) {
+  const rows = g.leaderboard || [];
+  const wrap = el('div', { class: 'g-rank' });
+  wrap.append(el('div', { class: 'g-rank-head' },
+    el('span', { class: 'grow', text: rows.length ? `排行榜（${rows.length} 人完成）` : '還沒有人完成，第一名等你拿' }),
+    el('span', { text: g.kind === 'sudoku' ? '比時間' : '比步數' })));
+  const show = rows.slice(0, 3);
+  const myIdx = rows.findIndex((r) => r.userId === state.me.id);
+  if (myIdx >= 3) show.push(rows[myIdx]);
+  for (const r of show) {
+    const idx = rows.indexOf(r);
+    wrap.append(el('div', { class: 'g-rank-row' + (r.userId === state.me.id ? ' me' : '') },
+      el('span', { class: 'g-rank-no', text: ['🥇', '🥈', '🥉'][idx] || `${idx + 1}` }),
+      el('span', { class: 'g-rank-name', text: nameOf(r.userId) }),
+      el('span', { class: 'g-rank-score', text: soloScoreText(g, r) })));
+  }
+  return wrap;
+}
+
+// 同一列／行／宮裡重複的數字（自己填錯會標紅）
+function sudokuBad(board) {
+  const bad = new Set();
+  const mark = (cells) => {
+    const seen = new Map();
+    for (const i of cells) {
+      const v = board[i];
+      if (!v) continue;
+      if (seen.has(v)) { bad.add(i); bad.add(seen.get(v)); } else seen.set(v, i);
+    }
+  };
+  for (let k = 0; k < 9; k++) {
+    mark([...Array(9).keys()].map((x) => k * 9 + x));
+    mark([...Array(9).keys()].map((x) => x * 9 + k));
+    const br = Math.floor(k / 3) * 3;
+    const bc = (k % 3) * 3;
+    mark([...Array(9).keys()].map((x) => (br + Math.floor(x / 3)) * 9 + bc + (x % 3)));
+  }
+  return bad;
+}
+
+function sudokuBoard(m, g, redraw) {
+  const wrap = el('div', { class: 'g-sudoku' });
+  const board = g.board;
+  const playing = !!board && !(g.mine && g.mine.doneAt);
+  const grid = el('div', { class: 'g-board sudoku' });
+  sizeBoard(grid, g);
+  const sel = soloSel.get(m.id);
+  const bad = board ? sudokuBad(board) : new Set();
+  const show = board || g.puzzle;
+  show.forEach((v, i) => {
+    const given = !!g.puzzle[i];
+    const r = Math.floor(i / 9);
+    const c = i % 9;
+    const cell = el('button', {
+      class: 'g-scell' + (given ? ' given' : '') + (bad.has(i) && !given ? ' bad' : '') +
+        (sel === i ? ' sel' : '') +
+        (sel != null && show[sel] && show[sel] === v ? ' same' : '') +
+        (c % 3 === 2 && c !== 8 ? ' rb' : '') + (r % 3 === 2 && r !== 8 ? ' bb' : ''),
+      type: 'button', text: v ? String(v) : '',
+      'aria-label': `第 ${r + 1} 列第 ${c + 1} 格`,
+    });
+    if (playing && !given) {
+      cell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        soloSel.set(m.id, sel === i ? null : i);
+        redraw();
+      });
+    } else {
+      cell.disabled = true;
+    }
+    grid.append(cell);
+  });
+  wrap.append(grid);
+
+  const pad = el('div', { class: 'g-pad' });
+  const key = (label, cls, onPress) => {
+    const b = el('button', { class: 'g-padkey' + cls, type: 'button', text: label });
+    if (playing) b.addEventListener('click', (e) => { e.stopPropagation(); onPress(); });
+    else b.disabled = true;
+    return b;
+  };
+  for (let v = 1; v <= 9; v++) {
+    pad.append(key(String(v), '', () => {
+      const at = soloSel.get(m.id);
+      if (at == null) return toast('先點一個空格，再按數字');
+      gameAct(m, { action: 'move', i: at, v });
+    }));
+  }
+  pad.append(key('⌫', ' erase', () => {
+    const at = soloSel.get(m.id);
+    if (at == null) return toast('先點一個要清掉的格子');
+    gameAct(m, { action: 'move', i: at, v: 0 });
+  }));
+  wrap.append(pad);
+  return wrap;
+}
+
+function slideBoard(m, g) {
+  const { cols } = gameDims(g);
+  const grid = el('div', { class: 'g-board slide' });
+  sizeBoard(grid, g);
+  const board = g.board || g.puzzle;
+  const playing = !!g.board && !(g.mine && g.mine.doneAt);
+  const blank = board.indexOf(0);
+  board.forEach((v, i) => {
+    const near = Math.abs(Math.floor(i / cols) - Math.floor(blank / cols)) +
+      Math.abs((i % cols) - (blank % cols)) === 1;
+    const cell = el('button', {
+      class: 'g-stile' + (v ? '' : ' blank') + (v && v === i + 1 ? ' home' : ''),
+      type: 'button', text: v ? String(v) : '',
+    });
+    if (playing && v && near) {
+      cell.addEventListener('click', (e) => { e.stopPropagation(); gameAct(m, { action: 'move', i }); });
+    } else {
+      cell.disabled = true;
+    }
+    grid.append(cell);
+  });
+  return grid;
+}
+
+function lightsBoard(m, g) {
+  const grid = el('div', { class: 'g-board lights' });
+  sizeBoard(grid, g);
+  const board = g.board || g.puzzle;
+  const playing = !!g.board && !(g.mine && g.mine.doneAt);
+  board.forEach((v, i) => {
+    const cell = el('button', { class: 'g-bulb' + (v ? ' on' : ''), type: 'button',
+      'aria-label': `第 ${Math.floor(i / 5) + 1} 列第 ${i % 5 + 1} 盞` });
+    if (playing) {
+      cell.addEventListener('click', (e) => { e.stopPropagation(); gameAct(m, { action: 'move', i }); });
+    } else {
+      cell.disabled = true;
+    }
+    grid.append(cell);
+  });
+  return grid;
+}
 
 /* ----- 座位與盤面 ----- */
 
@@ -3315,6 +3489,9 @@ function gameButton(label, onclick, cls) {
 const flagModes = new Map();
 
 function gameBoard(m, g, interactive, opts) {
+  if (g.kind === 'sudoku') return sudokuBoard(m, g, opts.redraw);
+  if (g.kind === 'slide') return slideBoard(m, g);
+  if (g.kind === 'lights') return lightsBoard(m, g);
   if (g.kind === 'connect4') return connect4Board(m, g, interactive);
   if (g.kind === 'reversi') return reversiBoard(m, g, interactive);
   if (g.kind === 'memory') return memoryBoard(m, g, interactive);
@@ -3362,6 +3539,8 @@ function buildGameCard(m) {
   if (!g || !def) return el('div', { class: 'bubble', text: '[小遊戲]' });
 
   const card = el('div', { class: 'game-card big' });
+  clearInterval(soloTimer); // 重畫就把上一顆計時器收掉
+  soloTimer = null;
   // 遊戲卡自己吃掉長按／右鍵，免得下棋時跳出訊息選單
   card.addEventListener('contextmenu', (e) => e.stopPropagation());
   card.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
@@ -3369,7 +3548,7 @@ function buildGameCard(m) {
   const versus = g.mode === 'versus';
   const st = gameStatus(g);
   const rightLabel = versus ? `第 ${g.round} 局`
-    : g.kind === 'guess' ? `第 ${g.round} 題` : `${g.moves} 步`;
+    : g.kind === 'guess' || g.mode === 'solo' ? `第 ${g.round} 題` : `${g.moves} 步`;
   card.append(el('div', { class: 'g-head' },
     el('span', { class: 'g-title', text: `${def.emoji} ${def.title}` }),
     el('span', { class: 'g-round', text: rightLabel })));
@@ -3381,13 +3560,24 @@ function buildGameCard(m) {
       el('div', { class: 'g-score' }, el('b', { text: String(val) }), el('span', { text: label })))));
   }
 
-  card.append(el('div', { class: 'g-status' + (st.hot ? ' hot' : ''), text: st.text }));
+  const statusEl = el('div', { class: 'g-status' + (st.hot ? ' hot' : ''), text: st.text });
+  card.append(statusEl);
+  // 數獨是比時間的，計時中就讓秒數自己跳
+  if (g.mode === 'solo' && g.kind === 'sudoku' && g.mine && !g.mine.doneAt) {
+    const tick = () => {
+      const secs = Math.max(0, Math.round((Date.now() - g.mine.startedAt) / 1000));
+      statusEl.textContent = `計時中…${fmtSec(secs)}`;
+    };
+    tick();
+    soloTimer = setInterval(tick, 1000);
+  }
 
   const interactive = true; // 盤面只出現在遊戲視窗裡，一律可以操作
   const boardWrap = el('div', { class: 'g-boardwrap' });
   const drawBoard = () => {
     boardWrap.textContent = '';
-    boardWrap.append(gameBoard(m, g, interactive, { flagMode: flagModes.get(m.id) === true }));
+    boardWrap.append(gameBoard(m, g, interactive,
+      { flagMode: flagModes.get(m.id) === true, redraw: drawBoard }));
   };
   drawBoard();
   card.append(boardWrap);
@@ -3410,6 +3600,7 @@ function buildGameCard(m) {
     card.append(flagBtn);
   }
   if (g.kind === '2048') card.append(dpad(m, g));
+  if (g.mode === 'solo') card.append(leaderboardList(g));
 
   const acts = el('div', { class: 'g-acts' });
   if (versus) {
@@ -3431,12 +3622,31 @@ function buildGameCard(m) {
       if (g.over || await confirmModal('重新開始', '目前的進度會歸零（最佳紀錄會留著），確定嗎？'))
         gameAct(m, { action: 'restart' });
     }, g.over ? 'btn-primary' : 'btn-ghost'));
-  } else {
+  } else if (g.mode === 'open') {
     acts.append(gameButton('換一題',
       async () => {
         if (g.winner || await confirmModal('換一題', '現在這題會作廢，重新出一組數字，確定嗎？'))
           gameAct(m, { action: 'restart' });
       }, g.winner ? 'btn-primary' : 'btn-ghost'));
+  } else {
+    const mine = g.mine;
+    if (!mine || mine.doneAt) {
+      acts.append(gameButton(mine ? '再挑戰一次' : '開始挑戰',
+        () => { soloSel.delete(m.id); gameAct(m, { action: 'start' }); }, 'btn-primary'));
+    } else {
+      acts.append(gameButton('重來', async () => {
+        if (await confirmModal('重來', '這題會回到一開始，計時也重新算，確定嗎？')) {
+          soloSel.delete(m.id);
+          gameAct(m, { action: 'start' });
+        }
+      }));
+    }
+    acts.append(gameButton('換一題', async () => {
+      if (await confirmModal('換一題', '會出一題新的給大家，這一題的排行榜也會歸零，確定嗎？')) {
+        soloSel.delete(m.id);
+        gameAct(m, { action: 'restart' });
+      }
+    }));
   }
   card.append(acts);
 
@@ -3446,6 +3656,9 @@ function buildGameCard(m) {
 }
 
 function gameHint(g) {
+  if (g.kind === 'sudoku') return '點空格再按數字，填錯會標紅';
+  if (g.kind === 'slide') return '把數字推進空格，排成 1–15 就完成';
+  if (g.kind === 'lights') return '按一格會連上下左右一起翻，全部關掉就完成';
   if (g.kind === 'gomoku') return `先連成五顆就贏 · 已下 ${g.moves} 手`;
   if (g.kind === 'connect4') return '點任一直行投下棋子，先連成四顆（橫、直、斜）就贏';
   if (g.kind === 'reversi') return '只能下在夾得到對方棋子的地方；沒地方下就自動跳過';
@@ -3479,6 +3692,7 @@ function openGameModal(m) {
     body.textContent = '';
     body.append(buildGameCard(cur));
     body.scrollTop = top; // 更新盤面不把畫面彈回最上面
+    grow(); // 內容變高（開始挑戰、排行榜多一列）就把視窗放大，但不會縮回去
     if (typed !== null) {
       const input = body.querySelector('.g-ginput');
       if (input) { input.value = typed; input.focus(); }
@@ -3492,7 +3706,6 @@ function openGameModal(m) {
     e.preventDefault();
     gameAct(cur, { action: 'move', dir });
   };
-  render();
   const win = el('div', { class: 'modal modal-game' },
     el('div', { class: 'modal-title', text: `${def.emoji} ${def.title}` }),
     body,
@@ -3503,8 +3716,7 @@ function openGameModal(m) {
       }),
       el('button', { class: 'btn btn-primary', text: '關閉', onclick: () => close() })));
   // 量一次高度就定住：視窗剛好包住這款遊戲，之後盤面更新都不會改變大小
-  const freeze = () => {
-    win.style.height = '';
+  const fitHeight = () => {
     let h = Math.ceil(win.getBoundingClientRect().height);
     win.style.height = h + 'px';
     // 寫死高度後內容區可能被壓縮幾像素，補回去（超過 CSS 的 max-height 就讓它捲）
@@ -3513,8 +3725,13 @@ function openGameModal(m) {
       win.style.height = h + 'px';
     }
   };
+  const freeze = () => { win.style.height = ''; fitHeight(); };
+  const grow = () => { if (body.scrollHeight > body.clientHeight) fitHeight(); };
+  render(); // 先把內容畫進去，等一下 freeze 才量得到正確高度
   const close = openModal(win, () => {
     state.openGame = null;
+    clearInterval(soloTimer);
+    soloTimer = null;
     document.removeEventListener('keydown', onKey);
     window.removeEventListener('resize', freeze);
   });
@@ -3535,7 +3752,9 @@ function handleGame(ev) {
 
 // 還沒分出勝負／還沒結束的那幾局
 const gameLive = (g) =>
-  g.mode === 'versus' ? g.winner === null : g.mode === 'coop' ? !g.over : !g.winner;
+  g.mode === 'versus' ? g.winner === null
+    : g.mode === 'coop' ? !g.over
+      : g.mode === 'solo' ? !(g.mine && g.mine.doneAt) : !g.winner;
 
 function ongoingGames(conv) {
   const cache = state.msgCache.get(conv.id);

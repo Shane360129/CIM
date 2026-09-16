@@ -8,6 +8,7 @@
 import {
   move2048, stuck2048, winLine, reversiFlips, reversiLegal, reversiStart,
   abOf, newSecret, mineLayout, mineNear, mineNeighbors, GAME_KINDS,
+  newSudoku, sudokuCount, newSlide, slideSolvable, slideSolved, newLights, lightsToggle,
 } from '../src/chatserver.js';
 
 let pass = 0;
@@ -100,6 +101,45 @@ const tiny = [0, 1, 0, 1, 0, 0, 0, 0, 0]; // 3×3，兩顆雷在 1、3
 check('周圍雷數：中央', mineNear(tiny, 3, 3, 4), 2);
 check('周圍雷數：角落', mineNear(tiny, 3, 3, 8), 0);
 check('邊界不會繞到另一邊', mineNear([1, 0, 0, 0, 0, 0, 0, 0, 0], 3, 3, 5), 0);
+
+console.log('\n--- 單人邏輯題 ---');
+const t0 = Date.now();
+const sd = newSudoku(GAME_KINDS.sudoku.holes);
+check('數獨出題：解答填滿 81 格', sd.solution.filter(Boolean).length, 81);
+check('數獨出題：挖掉 45 格', sd.puzzle.filter((v) => !v).length, GAME_KINDS.sudoku.holes);
+check('數獨出題：題目與解答不衝突',
+  sd.puzzle.every((v, i) => !v || v === sd.solution[i]), true);
+check('數獨出題：解答唯一', sudokuCount(sd.puzzle.slice(), 3), 1);
+const rows9 = [...Array(9).keys()].map((r) => sd.solution.slice(r * 9, r * 9 + 9));
+check('數獨解答：每列 1–9 不重複',
+  rows9.every((r) => new Set(r).size === 9), true);
+check('數獨解答：每行 1–9 不重複',
+  [...Array(9).keys()].every((c) => new Set(rows9.map((r) => r[c])).size === 9), true);
+check('數獨解答：每宮 1–9 不重複',
+  [...Array(9).keys()].every((b) => {
+    const br = Math.floor(b / 3) * 3, bc = (b % 3) * 3;
+    const cells = [];
+    for (let k = 0; k < 9; k++) cells.push(sd.solution[(br + Math.floor(k / 3)) * 9 + bc + (k % 3)]);
+    return new Set(cells).size === 9;
+  }), true);
+console.log(`   （出一題花了 ${Date.now() - t0} ms）`);
+
+const sl = newSlide(4);
+check('推盤：16 格不重複', new Set(sl).size, 16);
+check('推盤：一定推得回來', slideSolvable(sl, 4), true);
+check('推盤：開局不能剛好已完成', slideSolved(sl), false);
+check('推盤完成判定', slideSolved([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0]), true);
+// 已知不可解的排法（只交換最後兩塊）
+check('推盤：不可解的排法會被擋掉',
+  slideSolvable([1,2,3,4,5,6,7,8,9,10,11,12,13,15,14,0], 4), false);
+
+const lt = newLights(5, GAME_KINDS.lights.presses);
+check('關燈：開局不是全暗', lt.some((v) => v), true);
+const cells = [0,0,0, 0,0,0, 0,0,0];
+lightsToggle(cells, 3, 4);
+check('關燈：按中間會連十字一起翻', cells, [0,1,0, 1,1,1, 0,1,0]);
+lightsToggle(cells, 3, 0);
+check('關燈：角落只翻三格（不繞到另一邊）', cells, [1,0,0, 0,1,1, 0,1,0]);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

@@ -228,6 +228,85 @@ check('猜中後不能再猜', (await act(gs, { action: 'move', guess: '9876' },
 r = await act(gs, { action: 'restart' }, TB);
 check('換一題會重新出題', r.data.game?.round === 2 && r.data.game?.guesses?.length === 0 && r.data.game?.secret === null);
 
+console.log('\n--- 單人邏輯題與排行榜 ---');
+// 數獨：大家解同一題，答案不會送到前端，完成時間上排行榜
+r = await newGame('sudoku', TA);
+const sk = r.data.message?.id;
+const skGame = r.data.message?.game;
+check('開一題數獨（9×9、挖 45 格）',
+  skGame?.puzzle?.length === 81 && skGame.puzzle.filter((v) => !v).length === 45);
+check('數獨答案不會送到前端', skGame?.solution === undefined && skGame?.board === null);
+check('沒按開始不能填', (await act(sk, { action: 'move', i: 0, v: 1 }, TA)).status === 400);
+r = await act(sk, { action: 'start' }, TA);
+check('開始挑戰後拿到自己的盤面', r.data.game?.board?.length === 81 && r.data.game?.mine?.moves === 0);
+const firstHole = r.data.game.puzzle.findIndex((v) => !v);
+const firstGiven = r.data.game.puzzle.findIndex((v) => v);
+check('題目原本就有的數字不能改',
+  (await act(sk, { action: 'move', i: firstGiven, v: 5 }, TA)).status === 400);
+check('只能填 1–9', (await act(sk, { action: 'move', i: firstHole, v: 10 }, TA)).status === 400);
+r = await act(sk, { action: 'move', i: firstHole, v: 7 }, TA);
+check('填得進去、會算步數', r.data.game?.board?.[firstHole] === 7 && r.data.game?.mine?.moves === 1);
+// B 也開同一題，看到的是自己的空盤面
+r = await act(sk, { action: 'start' }, TB);
+check('每個人各自一盤（B 的盤面沒有 A 填的字）',
+  r.data.game?.board?.[firstHole] === 0 && r.data.game?.mine?.moves === 0);
+check('B 看到的排行榜還是空的', (r.data.game?.leaderboard || []).length === 0);
+
+// 關燈：把伺服器給的盤面照著按回去，完成就上排行榜
+r = await newGame('lights', TA);
+const lg = r.data.message?.id;
+r = await act(lg, { action: 'start' }, TA);
+let cells = r.data.game.board.slice();
+check('關燈開局不是全暗', cells.some((v) => v));
+const toggle = (arr, i) => {
+  const rr = Math.floor(i / 5), cc = i % 5;
+  for (const [a, b] of [[rr, cc], [rr - 1, cc], [rr + 1, cc], [rr, cc - 1], [rr, cc + 1]])
+    if (a >= 0 && a < 5 && b >= 0 && b < 5) arr[a * 5 + b] ^= 1;
+};
+// 逐列往下推，最後一列用查表解；這裡直接暴力試 32 種第一列按法
+let lightsSol = null;
+for (let mask = 0; mask < 32 && !lightsSol; mask++) {
+  const sim = cells.slice();
+  const press = [];
+  for (let c = 0; c < 5; c++) if (mask & (1 << c)) { toggle(sim, c); press.push(c); }
+  for (let rr = 1; rr < 5; rr++)
+    for (let c = 0; c < 5; c++)
+      if (sim[(rr - 1) * 5 + c]) { toggle(sim, rr * 5 + c); press.push(rr * 5 + c); }
+  if (sim.every((v) => !v)) lightsSol = press;
+}
+check('關燈盤面一定有解', !!lightsSol);
+let lgGame = null;
+for (const i of lightsSol) lgGame = (await act(lg, { action: 'move', i }, TA)).data.game;
+check('全部關掉就完成，並記下步數',
+  lgGame?.mine?.doneAt > 0 && lgGame?.mine?.score === lightsSol.length);
+check('完成後上排行榜',
+  lgGame?.leaderboard?.[0]?.userId === IA && lgGame.leaderboard[0].score === lightsSol.length);
+check('完成後不能再按', (await act(lg, { action: 'move', i: 0 }, TA)).status === 400);
+
+// 推盤：把空格旁邊的數字推過去
+r = await newGame('slide', TA);
+const sp = r.data.message?.id;
+r = await act(sp, { action: 'start' }, TA);
+const tiles = r.data.game.board;
+check('推盤發 16 格、含一個空格', tiles.length === 16 && tiles.includes(0));
+const blank = tiles.indexOf(0);
+const far = [...Array(16).keys()].find((i) => {
+  const d = Math.abs(Math.floor(i / 4) - Math.floor(blank / 4)) + Math.abs((i % 4) - (blank % 4));
+  return d > 1;
+});
+check('離空格太遠的推不動', (await act(sp, { action: 'move', i: far }, TA)).status === 400);
+const near = [...Array(16).keys()].find((i) => {
+  const d = Math.abs(Math.floor(i / 4) - Math.floor(blank / 4)) + Math.abs((i % 4) - (blank % 4));
+  return d === 1;
+});
+r = await act(sp, { action: 'move', i: near }, TA);
+check('空格旁邊的推得動', r.data.game?.board?.[near] === 0 && r.data.game?.mine?.moves === 1);
+
+// 換一題：排行榜歸零
+r = await act(lg, { action: 'restart' }, TB);
+check('換一題後排行榜歸零、盤面換新',
+  (r.data.game?.leaderboard || []).length === 0 && r.data.game?.round === 2 && r.data.game?.board === null);
+
 // 收尾：關閉邀請碼
 await j('/api/admin/settings', { method: 'PATCH', body: { inviteCode: '' } }, A0);
 
