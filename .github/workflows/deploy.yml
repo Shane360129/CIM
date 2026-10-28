@@ -20,11 +20,12 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/checkout@v4
+      # v5 起在 Node 24 上執行（v4 宣告的 Node 20 已被 GitHub 標為淘汰）
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
 
       - name: 安裝 wrangler
         run: npm ci
