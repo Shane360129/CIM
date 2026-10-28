@@ -44,6 +44,7 @@
 |---|---|
 | [docs/02-部署手冊.md](docs/02-部署手冊.md) | **要架站的人**。從註冊 Cloudflare／GitHub 帳號、怎麼拿 token、兩種部署方式、到備份與疑難排解，每一步都有說明 |
 | [docs/03-使用手冊.md](docs/03-使用手冊.md) | **所有使用者（含長輩）**。加到主畫面、傳照片語音、通知設定、低調模式、字體放大、隱私規則 |
+| [docs/04-幫朋友開站.md](docs/04-幫朋友開站.md) | **想幫朋友開一個他自己的站的人**。一頁交接清單：誰做什麼、照什麼順序、要填哪些值 |
 | [docs/01-建置-prompt.md](docs/01-建置-prompt.md) | 想用 AI 從零重建一個類似專案的人 |
 
 ## 🚀 部署（約 5 分鐘）
@@ -58,8 +59,8 @@
 電腦需裝好 [Node.js](https://nodejs.org/)（18 以上）。
 
 ```bash
-# 1. 下載這個專案
-git clone https://github.com/Shane360129/CIM.git
+# 1. 下載這個專案（-b 指定最新分支；預設分支是舊版，缺少後來的資安修正）
+git clone -b claude/cloudflare-web-chat-app-vt1qlj https://github.com/Shane360129/CIM.git
 cd CIM
 
 # 2. 安裝工具
@@ -89,7 +90,10 @@ Windows 小提醒：如果在 PowerShell 執行 `npm` / `npx` 出現「**因為�
    **New repository secret**，新增兩個：
    - 名稱 `CLOUDFLARE_API_TOKEN`，值＝第 3 步的 token
    - 名稱 `CLOUDFLARE_ACCOUNT_ID`，值＝第 2 步的 Account ID
-5. 到 repo 的 **Actions** 分頁 → 左側選「**部署到 Cloudflare**」→ **Run workflow**。
+5. 到 repo 的 **Actions** 分頁 → 左側選「**部署到 Cloudflare**」→ **Run workflow**，
+   **分支要選 `claude/cloudflare-web-chat-app-vt1qlj`**（預設分支是舊版）。
+   如果是 fork 過去的，先看 [docs/02-部署手冊.md](docs/02-部署手冊.md) 的 B-2：
+   Fork 時要取消勾選「只複製預設分支」、啟用 Actions、改預設分支。
    約一分鐘跑完，打開「部署」步驟的紀錄就能看到你的網址。
 
 之後想更新版本，再按一次 Run workflow 即可。
