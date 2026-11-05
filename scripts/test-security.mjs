@@ -8,7 +8,7 @@
 // 涵蓋：未登入／偽造 token、跨聊天室越權、非管理員越權、收回別人的訊息、
 // XSS 與 javascript: 連結、SQL injection 嘗試、上傳格式與大小限制、
 // 登入與邀請碼暴力破解鎖定、連結縮圖代理的簽章與 SSRF 防護、
-// 停用帳號與改密碼後 token 失效、照片簽章網址的授權。
+// 停用帳號與改密碼後 token 失效、照片簽章網址的授權、家族牧場的權限與即時連線。
 
 const B = process.env.BASE_URL || 'http://127.0.0.1:8787';
 const PASS = 'pass123456';
@@ -85,6 +85,32 @@ check('搜尋只找得到自己聊天室的內容',
   ((await j('/api/search?q=' + encodeURIComponent('機密家務事'), {}, TC)).data.results || []).length === 0);
 check('搜尋得到自己的內容',
   ((await j('/api/search?q=' + encodeURIComponent('機密家務事'), {}, TA)).data.results || []).length === 1);
+
+console.log('\n--- 家族牧場 ---');
+// 牧場視窗的即時連線（大家走來走去）。回傳 { ok, code, msg }：ok=有沒有連上，code=被關掉時的代碼
+const WSB = B.replace(/^http/, 'ws');
+const farmWs = (cid, tok, { holdMs = 400, onOpen } = {}) => new Promise((done) => {
+  let ws, opened = false, first = null;
+  try { ws = new WebSocket(`${WSB}/ws?farm=${cid}`, ['cim.v1', 'token.' + tok]); }
+  catch { return done({ ok: false }); }
+  const timer = setTimeout(() => { try { ws.close(); } catch {} done({ ok: opened, msg: first }); }, holdMs);
+  ws.onopen = () => { opened = true; onOpen && onOpen(ws); };
+  ws.onmessage = (e) => { if (!first) first = JSON.parse(e.data); };
+  ws.onclose = (e) => { clearTimeout(timer); done({ ok: opened, code: e.code, msg: first }); };
+  ws.onerror = () => {};
+});
+check('別人打不開我的牧場（404）', (await j(`/api/farm/${dm.id}`, {}, TC)).status === 404);
+check('別人不能在我的牧場翻土（404）', (await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'till', x: 4, y: 9 } }, TC)).status === 404);
+check('沒登入打不開牧場', (await j(`/api/farm/${dm.id}`)).status === 401);
+check('不存在的聊天室沒有牧場', (await j('/api/farm/999999', {}, TA)).status === 404);
+let fw = await farmWs(dm.id, TC);
+check('別人連不上我的牧場即時連線', !fw.ok);
+fw = await farmWs(dm.id, 'f'.repeat(64));
+check('假 token 連不上牧場即時連線', !fw.ok);
+fw = await farmWs(dm.id, TA);
+check('自己連得上，並收到「誰在牧場」', fw.ok && fw.msg?.type === 'farm-presence');
+check('牧場內容大小有上限（超大請求被擋）',
+  (await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'till', x: 4, y: 9, junk: 'x'.repeat(5000) } }, TA)).status >= 400);
 
 console.log('\n--- 非管理員越權 ---');
 check('不能讀管理員設定', (await j('/api/admin/settings', {}, TA)).status === 403);
@@ -182,8 +208,27 @@ check('同一個帳號可以有多個裝置', D.status === 200 && D.data.token !
 await j('/api/me/password', { method: 'POST', body: { oldPassword: PASS, newPassword: PASS + '!' } }, TC);
 check('改密碼後其他裝置的 token 失效', (await j('/api/me', {}, D.data.token)).status === 401);
 check('改密碼後自己的 token 還在', (await j('/api/me', {}, TC)).status === 200);
+const dmC = (await j('/api/conversations', { method: 'POST', body: { type: 'dm', userId: adminUser.id } }, TC)).data.conversation;
+// 被停用時，開著的牧場視窗要被伺服器斷線，之後也收不到這座牧場的消息。
+// （瀏覽器會收到關閉代碼 4003；Node 內建的 WebSocket 在本機開發環境會停在「關閉中」，所以這裡看狀態）
+const kws = new WebSocket(`${WSB}/ws?farm=${dmC.id}`, ['cim.v1', 'token.' + TC]);
+const kmsgs = [];
+let kcode = null;
+kws.onmessage = (e) => kmsgs.push(JSON.parse(e.data).type);
+kws.onclose = (e) => { kcode = e.code; };
+kws.onerror = () => {};
+const kOpened = await new Promise((ok) => { kws.onopen = () => ok(true); setTimeout(() => ok(false), 2000); });
 await j(`/api/admin/users/${IC}`, { method: 'DELETE' }, ADMIN);
+await new Promise((ok) => setTimeout(ok, 500));
+const kState = kws.readyState;
+const kBefore = kmsgs.length;
+await j(`/api/farm/${dmC.id}`, { method: 'POST', body: { action: 'till', x: 4, y: 9 } }, ADMIN);
+await new Promise((ok) => setTimeout(ok, 300));
 check('被管理員停用後 token 立刻失效', (await j('/api/me', {}, TC)).status === 401);
+check('被停用時開著的牧場視窗被伺服器斷線，之後收不到牧場消息',
+  kOpened && (kcode === 4003 || kState >= 2) && kmsgs.length === kBefore,
+  `opened=${kOpened} code=${kcode} state=${kState} 之後收到 ${kmsgs.length - kBefore} 則`);
+try { kws.close(); } catch {}
 
 await j('/api/admin/settings', { method: 'PATCH', body: { inviteCode: '' } }, ADMIN);
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);

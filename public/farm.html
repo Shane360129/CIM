@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
+  <meta name="theme-color" content="#62ad4b">
+  <title>家族小牧場</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/farm.css">
+</head>
+<body>
+  <canvas id="world" aria-label="牧場畫面"></canvas>
+
+  <header id="hud" class="hidden">
+    <div class="hud-row">
+      <span id="hud-title" class="hud-title"></span>
+      <span id="hud-clock" class="hud-chip"></span>
+      <button id="btn-close" class="hud-btn" type="button" aria-label="回聊天室">✕</button>
+    </div>
+    <div class="hud-row">
+      <span class="hud-chip">💰 <b id="hud-money">0</b></span>
+      <span class="hud-chip energy" title="體力，每天半夜 12 點（台灣時間）補滿">⚡ <span class="bar"><i id="hud-energy-bar"></i></span> <b id="hud-energy">0</b></span>
+      <button id="btn-bag" class="hud-btn" type="button">🎒 倉庫</button>
+    </div>
+  </header>
+
+  <nav id="toolbar" class="hidden" aria-label="工具"></nav>
+  <div id="toast-root"></div>
+  <div id="modal-root"></div>
+  <div id="boot" class="boot">🌱 牧場載入中…</div>
+
+  <script type="module" src="/farm.js"></script>
+</body>
+</html>

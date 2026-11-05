@@ -3,6 +3,12 @@
 // 家庭／親友規模（數十人）用單一實例最簡單也最一致：所有資料與連線都在同一處，
 // 不需要 D1、不需要設定任何密鑰，`wrangler deploy` 完即可使用。
 
+import {
+  FARM_MAP, FARM_W, FARM_H, FARM_SPAWN, CROPS, ENERGY_MAX, ENERGY_COST, WATER_HOURS,
+  START_MONEY, START_ITEMS, isField, grownMs, cropStage, cropTotalMs, isWet, waterUntil,
+  taiwanDay, seasonOf,
+} from './farm.js';
+
 const SESSION_TTL = 1000 * 60 * 60 * 24 * 60; // 60 天未使用即需重新登入
 const UNSEND_WINDOW = 1000 * 60 * 60 * 24; // 送出後 24 小時內可收回
 const DAY = 86400000;
@@ -210,6 +216,40 @@ CREATE TABLE IF NOT EXISTS guards (
   locked_until INTEGER NOT NULL DEFAULT 0,
   updated_at INTEGER NOT NULL,
   PRIMARY KEY (scope, key)
+);
+`;
+
+// v7：家族小牧場（一個聊天室一座）。錢與倉庫全家共用，體力每人各自計算
+const SCHEMA_V7 = `
+CREATE TABLE IF NOT EXISTS farms (
+  conversation_id INTEGER PRIMARY KEY,
+  money INTEGER NOT NULL,
+  created_by INTEGER NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS farm_tiles (
+  conversation_id INTEGER NOT NULL,
+  x INTEGER NOT NULL,
+  y INTEGER NOT NULL,
+  tilled INTEGER NOT NULL DEFAULT 0,
+  crop TEXT,
+  progress_ms INTEGER NOT NULL DEFAULT 0,
+  tick_at INTEGER NOT NULL DEFAULT 0,
+  watered_until INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (conversation_id, x, y)
+);
+CREATE TABLE IF NOT EXISTS farm_items (
+  conversation_id INTEGER NOT NULL,
+  item TEXT NOT NULL,
+  qty INTEGER NOT NULL,
+  PRIMARY KEY (conversation_id, item)
+);
+CREATE TABLE IF NOT EXISTS farm_players (
+  conversation_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  energy INTEGER NOT NULL,
+  energy_day TEXT NOT NULL,
+  PRIMARY KEY (conversation_id, user_id)
 );
 `;
 
@@ -434,6 +474,10 @@ export class ChatServer {
         this.sql.exec(SCHEMA_V6);
         this.setSetting('schema_version', '6');
       }
+      if (v < 7) {
+        this.sql.exec(SCHEMA_V7);
+        this.setSetting('schema_version', '7');
+      }
     });
     // 心跳不喚醒 DO：客戶端送 "ping"，執行環境自動回 "pong"
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
@@ -494,6 +538,10 @@ export class ChatServer {
     if (method === 'POST' && pathname === '/api/push/subscribe') return this.pushSubscribe(request, me);
     if (method === 'POST' && pathname === '/api/push/unsubscribe') return this.pushUnsubscribe(request, me);
 
+    if ((m = pathname.match(/^\/api\/farm\/(\d+)$/))) {
+      if (method === 'GET') return this.farmState(me, +m[1]);
+      if (method === 'POST') return this.farmAction(request, me, +m[1]);
+    }
     if (pathname === '/api/shopping') {
       if (method === 'GET') return this.listShopping();
       if (method === 'POST') return this.addShopping(request, me);
@@ -1555,9 +1603,12 @@ export class ChatServer {
     this.sql.exec(
       `DELETE FROM members WHERE conversation_id = ? AND user_id = ?`, conversationId, me.id);
     const remaining = this.memberIds(conversationId);
+    this.closeFarmSockets(me.id, conversationId);
     if (remaining.length === 0) {
       this.sql.exec(`DELETE FROM messages WHERE conversation_id = ?`, conversationId);
       this.sql.exec(`DELETE FROM conversations WHERE id = ?`, conversationId);
+      for (const t of ['farms', 'farm_tiles', 'farm_items', 'farm_players'])
+        this.sql.exec(`DELETE FROM ${t} WHERE conversation_id = ?`, conversationId);
     } else {
       this.addSystemMessage(conversationId, `${me.display_name} 離開了群組`);
       this.sendToUsers(remaining, { type: 'conversations-changed' });
@@ -1653,6 +1704,9 @@ export class ChatServer {
           .toArray(),
         conversations: this.sql.exec(`SELECT * FROM conversations`).toArray(),
         members: this.sql.exec(`SELECT * FROM members`).toArray(),
+        farms: this.sql.exec(`SELECT * FROM farms`).toArray(),
+        farmTiles: this.sql.exec(`SELECT * FROM farm_tiles`).toArray(),
+        farmItems: this.sql.exec(`SELECT * FROM farm_items`).toArray(),
         messageCount: this.sql.exec(`SELECT COUNT(*) AS c FROM messages`).one().c,
       });
     }
@@ -1922,6 +1976,7 @@ export class ChatServer {
     for (const ws of this.ctx.getWebSockets(`u:${userId}`)) {
       try { ws.close(4003, 'removed'); } catch {}
     }
+    this.closeFarmSockets(userId);
     this.sendToUsers(this.audienceOf(updated), { type: 'user', user: pubUser(updated) });
     return json({ ok: true });
   }
@@ -1942,6 +1997,7 @@ export class ChatServer {
     for (const ws of this.ctx.getWebSockets(`u:${userId}`)) {
       try { ws.close(1000, 'password reset'); } catch {}
     }
+    this.closeFarmSockets(userId);
     return json({ tempPassword });
   }
 
@@ -2063,19 +2119,54 @@ export class ChatServer {
 
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
-    this.ctx.acceptWebSocket(server, [`u:${user.id}`]);
-    server.serializeAttachment({ userId: user.id });
+    // 牧場視窗：只收這座牧場的事件（大家走來走去、田地變化），不收聊天訊息
+    const farmId = Number(new URL(request.url).searchParams.get('farm')) || 0;
+    if (farmId) {
+      if (!this.memberOf(farmId, user.id)) return new Response('Forbidden', { status: 403 });
+      this.ctx.acceptWebSocket(server, [`f:${farmId}`, `fu:${user.id}`]);
+      server.serializeAttachment({ userId: user.id, farm: farmId, x: FARM_SPAWN.x, y: FARM_SPAWN.y, d: 'd' });
+      // 告訴新來的人，現在誰在牧場、站在哪裡
+      const here = [];
+      for (const ws of this.ctx.getWebSockets(`f:${farmId}`)) {
+        const a = ws.deserializeAttachment();
+        if (a && ws !== server && a.userId !== user.id) here.push({ userId: a.userId, x: a.x, y: a.y, d: a.d });
+      }
+      queueMicrotask(() => { try { server.send(JSON.stringify({ type: 'farm-presence', players: here })); } catch {} });
+    } else {
+      this.ctx.acceptWebSocket(server, [`u:${user.id}`]);
+      server.serializeAttachment({ userId: user.id });
+    }
 
     const headers = {};
     if (protocols.includes('cim.v1')) headers['Sec-WebSocket-Protocol'] = 'cim.v1';
     return new Response(null, { status: 101, webSocket: client, headers });
   }
 
-  webSocketMessage() {
-    // 客戶端到伺服器一律走 HTTP API；"ping" 由 auto-response 處理，其餘忽略
+  // 客戶端到伺服器一律走 HTTP API；"ping" 由 auto-response 處理。
+  // 唯一例外是牧場的「我走到哪了」：每秒好幾次、不存資料庫，只轉給同一座牧場的其他人
+  webSocketMessage(ws, raw) {
+    const a = ws.deserializeAttachment();
+    if (!a || !a.farm || typeof raw !== 'string' || raw.length > 200) return;
+    let msg;
+    try { msg = JSON.parse(raw); } catch { return; }
+    if (!msg || msg.t !== 'pos') return;
+    const x = Number(msg.x), y = Number(msg.y);
+    const d = ['u', 'd', 'l', 'r'].includes(msg.d) ? msg.d : 'd';
+    if (!Number.isFinite(x) || !Number.isFinite(y) || x < 0 || y < 0 || x > FARM_W || y > FARM_H) return;
+    ws.serializeAttachment({ ...a, x, y, d });
+    const out = JSON.stringify({ type: 'farm-pos', userId: a.userId, x, y, d, m: !!msg.m });
+    for (const other of this.ctx.getWebSockets(`f:${a.farm}`)) {
+      if (other !== ws) { try { other.send(out); } catch {} }
+    }
   }
 
   webSocketClose(ws) {
+    const a = ws.deserializeAttachment();
+    if (a && a.farm) {
+      const still = this.ctx.getWebSockets(`f:${a.farm}`)
+        .some((o) => o !== ws && (o.deserializeAttachment() || {}).userId === a.userId);
+      if (!still) this.sendToFarm(a.farm, { type: 'farm-leave', userId: a.userId }, ws);
+    }
     // 客戶端發起關閉時，伺服器須回應 close 以完成握手，
     // 否則客戶端會永遠卡在 CLOSING 狀態
     try {
@@ -2084,6 +2175,213 @@ export class ChatServer {
   }
 
   webSocketError() {}
+
+  // ---------- 家族小牧場 ----------
+  // 規則在 src/farm.js；這裡負責存取資料、檢查權限、通知同一座牧場的人
+
+  // 時間倍率：只給本機測試用（wrangler dev --var FARM_TIME_SCALE:3600 → 1 秒＝1 小時）。
+  // 正式環境沒有設定，永遠是 1
+  farmScale() {
+    const s = Number(this.env && this.env.FARM_TIME_SCALE);
+    return Number.isFinite(s) && s >= 1 ? Math.min(s, 100000) : 1;
+  }
+
+  ensureFarm(conversationId, me) {
+    const f = this.sql.exec(`SELECT * FROM farms WHERE conversation_id = ?`, conversationId).toArray()[0];
+    if (f) return f;
+    const now = Date.now();
+    const row = this.sql
+      .exec(`INSERT INTO farms (conversation_id, money, created_by, created_at) VALUES (?, ?, ?, ?) RETURNING *`,
+        conversationId, START_MONEY, me.id, now)
+      .one();
+    for (const [item, qty] of Object.entries(START_ITEMS)) this.farmAddItem(conversationId, item, qty);
+    this.addSystemMessage(conversationId, `${me.display_name} 開墾了家族牧場 🌾`);
+    return row;
+  }
+
+  farmItems(conversationId) {
+    const out = {};
+    for (const r of this.sql.exec(`SELECT item, qty FROM farm_items WHERE conversation_id = ?`, conversationId))
+      out[r.item] = r.qty;
+    return out;
+  }
+
+  farmAddItem(conversationId, item, delta) {
+    this.sql.exec(
+      `INSERT INTO farm_items (conversation_id, item, qty) VALUES (?, ?, ?)
+       ON CONFLICT(conversation_id, item) DO UPDATE SET qty = qty + excluded.qty`,
+      conversationId, item, delta);
+    this.sql.exec(`DELETE FROM farm_items WHERE conversation_id = ? AND item = ? AND qty <= 0`, conversationId, item);
+  }
+
+  // 體力：每人每天（台灣時間）ENERGY_MAX，隔天自動恢復
+  farmPlayer(conversationId, userId, now) {
+    const today = taiwanDay(now);
+    let p = this.sql
+      .exec(`SELECT * FROM farm_players WHERE conversation_id = ? AND user_id = ?`, conversationId, userId)
+      .toArray()[0];
+    if (!p || p.energy_day !== today) {
+      this.sql.exec(
+        `INSERT INTO farm_players (conversation_id, user_id, energy, energy_day) VALUES (?, ?, ?, ?)
+         ON CONFLICT(conversation_id, user_id) DO UPDATE SET energy = excluded.energy, energy_day = excluded.energy_day`,
+        conversationId, userId, ENERGY_MAX, today);
+      p = { conversation_id: conversationId, user_id: userId, energy: ENERGY_MAX, energy_day: today };
+    }
+    return p;
+  }
+
+  // 送給前端的田地：progress 是「到 now 為止」的成長量，前端用 wetUntil 自己往後推算
+  farmTilePub(t, now, scale) {
+    return {
+      x: t.x, y: t.y, tilled: !!t.tilled, crop: t.crop || null,
+      stage: t.crop ? cropStage(t, now, scale) : -1,
+      progress: t.crop ? grownMs(t, now, scale) : 0,
+      total: t.crop ? cropTotalMs(t.crop) : 0,
+      wetUntil: t.watered_until || 0,
+    };
+  }
+
+  sendToFarm(conversationId, event, except = null) {
+    const str = JSON.stringify(event);
+    for (const ws of this.ctx.getWebSockets(`f:${conversationId}`)) {
+      if (ws !== except) { try { ws.send(str); } catch {} }
+    }
+  }
+
+  // 被移出聊天室、停用或重設密碼時，牧場視窗的連線也要斷掉
+  closeFarmSockets(userId, conversationId = null) {
+    for (const ws of this.ctx.getWebSockets(`fu:${userId}`)) {
+      const a = ws.deserializeAttachment() || {};
+      if (conversationId === null || a.farm === conversationId) {
+        try { ws.close(4003, 'farm access revoked'); } catch {}
+      }
+    }
+  }
+
+  farmState(me, conversationId) {
+    const conv = this.requireMember(conversationId, me.id);
+    const farm = this.ensureFarm(conversationId, me);
+    const now = Date.now();
+    const scale = this.farmScale();
+    const p = this.farmPlayer(conversationId, me.id, now);
+    const names = this.userNames();
+    const memberRows = this.sql
+      .exec(`SELECT u.id, u.display_name, u.avatar_color FROM members m JOIN users u ON u.id = m.user_id
+             WHERE m.conversation_id = ?`, conversationId)
+      .toArray();
+    let title = conv.name || '';
+    if (conv.type === 'dm') {
+      const other = memberRows.find((r) => r.id !== me.id);
+      title = other ? `${me.display_name} 和 ${other.display_name}` : `${me.display_name} 的牧場`;
+    }
+    const tiles = this.sql
+      .exec(`SELECT * FROM farm_tiles WHERE conversation_id = ?`, conversationId)
+      .toArray()
+      .map((t) => this.farmTilePub(t, now, scale));
+    return json({
+      farm: { id: conversationId, title, money: farm.money, createdBy: names.get(farm.created_by) || null },
+      map: FARM_MAP, spawn: FARM_SPAWN,
+      crops: CROPS, energy: { now: p.energy, max: ENERGY_MAX }, costs: ENERGY_COST,
+      tiles, items: this.farmItems(conversationId),
+      members: memberRows.map((r) => ({ id: r.id, name: r.display_name, color: r.avatar_color })),
+      now, scale, waterHours: WATER_HOURS, season: seasonOf(now), day: taiwanDay(now),
+    });
+  }
+
+  async farmAction(request, me, conversationId) {
+    this.requireMember(conversationId, me.id);
+    this.ensureFarm(conversationId, me);
+    const body = await this.readJson(request, 2000);
+    const action = String(body.action || '');
+    const now = Date.now();
+    const scale = this.farmScale();
+    const p = this.farmPlayer(conversationId, me.id, now);
+    const spend = (n) => {
+      if (p.energy < n) throw new HttpError(400, '體力用完了，明天再來吧 😴');
+      p.energy -= n;
+    };
+    let tileOut = null;
+    let gained = null;
+
+    if (['till', 'dig', 'plant', 'water', 'harvest'].includes(action)) {
+      const x = Number(body.x), y = Number(body.y);
+      if (!Number.isInteger(x) || !Number.isInteger(y) || !isField(x, y))
+        throw new HttpError(400, '這裡不能耕作');
+      const t = this.sql
+        .exec(`SELECT * FROM farm_tiles WHERE conversation_id = ? AND x = ? AND y = ?`, conversationId, x, y)
+        .toArray()[0] || { conversation_id: conversationId, x, y, tilled: 0, crop: null, progress_ms: 0, tick_at: now, watered_until: 0 };
+
+      if (action === 'till') {
+        if (t.tilled) throw new HttpError(400, '這塊已經翻好土了');
+        spend(ENERGY_COST.till);
+        Object.assign(t, { tilled: 1, crop: null, progress_ms: 0, tick_at: now });
+      } else if (action === 'dig') {
+        if (!t.crop) throw new HttpError(400, '這裡沒有種東西');
+        spend(ENERGY_COST.dig);
+        Object.assign(t, { crop: null, progress_ms: 0, tick_at: now });
+      } else if (action === 'plant') {
+        const crop = String(body.crop || '');
+        if (!CROPS[crop]) throw new HttpError(400, '沒有這種種子');
+        if (!t.tilled) throw new HttpError(400, '要先用鋤頭翻土');
+        if (t.crop) throw new HttpError(400, '這裡已經種了東西');
+        if ((this.farmItems(conversationId)[`seed:${crop}`] || 0) < 1)
+          throw new HttpError(400, `沒有${CROPS[crop].name}種子了，去商店買吧`);
+        spend(ENERGY_COST.plant);
+        this.farmAddItem(conversationId, `seed:${crop}`, -1);
+        Object.assign(t, { crop, progress_ms: 0, tick_at: now }); // 土本來就濕的話繼續算
+      } else if (action === 'water') {
+        if (!t.tilled) throw new HttpError(400, '要先用鋤頭翻土');
+        spend(ENERGY_COST.water);
+        // 先把舊的濕土時間結算進成長量，再重新保濕
+        Object.assign(t, { progress_ms: grownMs(t, now, scale), tick_at: now, watered_until: waterUntil(now, scale) });
+      } else {
+        if (!t.crop) throw new HttpError(400, '這裡沒有種東西');
+        if (cropStage(t, now, scale) < 3) throw new HttpError(400, '還沒成熟喔');
+        spend(ENERGY_COST.harvest);
+        this.farmAddItem(conversationId, `crop:${t.crop}`, 1);
+        gained = { item: `crop:${t.crop}`, qty: 1 };
+        Object.assign(t, { crop: null, progress_ms: 0, tick_at: now });
+      }
+      this.sql.exec(
+        `INSERT INTO farm_tiles (conversation_id, x, y, tilled, crop, progress_ms, tick_at, watered_until)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(conversation_id, x, y) DO UPDATE SET tilled = excluded.tilled, crop = excluded.crop,
+           progress_ms = excluded.progress_ms, tick_at = excluded.tick_at, watered_until = excluded.watered_until`,
+        conversationId, x, y, t.tilled, t.crop, t.progress_ms, t.tick_at, t.watered_until);
+      tileOut = this.farmTilePub(t, now, scale);
+    } else if (action === 'buy' || action === 'ship') {
+      const item = String(body.item || '');
+      const qty = Number(body.qty);
+      if (!Number.isInteger(qty) || qty < 1 || qty > 999) throw new HttpError(400, '數量不正確');
+      const [kind, crop] = item.split(':');
+      if (!CROPS[crop]) throw new HttpError(400, '沒有這樣東西');
+      if (action === 'buy') {
+        if (kind !== 'seed') throw new HttpError(400, '商店只賣種子');
+        const cost = CROPS[crop].seed * qty;
+        const money = this.sql.exec(`SELECT money FROM farms WHERE conversation_id = ?`, conversationId).one().money;
+        if (money < cost) throw new HttpError(400, '錢不夠');
+        this.sql.exec(`UPDATE farms SET money = money - ? WHERE conversation_id = ?`, cost, conversationId);
+        this.farmAddItem(conversationId, item, qty);
+      } else {
+        if (kind !== 'crop') throw new HttpError(400, '出貨箱只收作物');
+        if ((this.farmItems(conversationId)[item] || 0) < qty) throw new HttpError(400, '倉庫裡沒有那麼多');
+        this.farmAddItem(conversationId, item, -qty);
+        this.sql.exec(`UPDATE farms SET money = money + ? WHERE conversation_id = ?`, CROPS[crop].sell * qty, conversationId);
+      }
+    } else {
+      throw new HttpError(400, '不支援的動作');
+    }
+
+    this.sql.exec(`UPDATE farm_players SET energy = ? WHERE conversation_id = ? AND user_id = ?`,
+      p.energy, conversationId, me.id);
+    const money = this.sql.exec(`SELECT money FROM farms WHERE conversation_id = ?`, conversationId).one().money;
+    const items = this.farmItems(conversationId);
+    // 同一座牧場的其他人：田地、錢、倉庫即時同步（體力是個人的，不廣播）
+    this.sendToFarm(conversationId, {
+      type: 'farm-update', by: me.id, action, tiles: tileOut ? [tileOut] : [], money, items, now,
+    });
+    return json({ ok: true, energy: p.energy, tile: tileOut, money, items, gained, now });
+  }
 
   sendToUsers(userIds, event) {
     const str = JSON.stringify(event);

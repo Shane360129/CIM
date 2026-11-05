@@ -1579,7 +1579,7 @@ function newGroupModal() {
       }))));
 }
 
-// 聊天室選單裡的功能區：吃什麼、待辦、行事曆（私訊與群組都有）
+// 聊天室選單裡的功能區：吃什麼、牧場、待辦、行事曆（私訊與群組都有）
 function chatFeatureItems(conv, close) {
   const item = (emoji, label, sub, onclick) => el('button', {
     class: 'set-item feature-item', onclick: () => { close(); onclick(); },
@@ -1591,9 +1591,18 @@ function chatFeatureItems(conv, close) {
   return [
     el('div', { class: 'list-section', text: '聊天室功能' }),
     item('🍽️', '今天吃什麼', '隨機抽一個類別，省得想破頭', () => foodPickModal(conv)),
+    item('🌾', '家族牧場', '全家一起種田、收成、出貨，跟著現實時間長大', () => openFarm(conv)),
     item('✅', '待辦清單', '要做的、要買的，成員都看得到', () => openToolsModal('shopping')),
     item('📅', '行事曆', '生日、聚餐、提醒，到時通知大家', () => openToolsModal('calendar')),
   ];
+}
+
+// 牧場開在另一個視窗：電腦上可以一邊聊天一邊玩；手機上開新分頁
+function openFarm(conv) {
+  const url = `/farm.html?c=${conv.id}`;
+  const wide = matchMedia('(min-width: 900px) and (pointer: fine)').matches;
+  const w = window.open(url, `farm-${conv.id}`, wide ? 'width=1000,height=760' : '');
+  if (!w) location.href = url; // 被擋下彈出視窗的話，就在原本的分頁打開
 }
 
 function chatInfoModal() {

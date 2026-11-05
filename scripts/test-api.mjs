@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// API 煙霧測試：驗證帳號可見性（隱私）規則、聊天核心功能、待辦行事曆、管理員功能，以及速度與備份上限。
+// API 煙霧測試：驗證帳號可見性（隱私）規則、聊天核心功能、待辦行事曆、家族牧場、管理員功能，以及速度與備份上限。
 //
 // 用法（需先在另一個終端機啟動本機伺服器）：
 //   rm -rf .wrangler/state && npm run dev      # 乾淨資料庫，第一位註冊者自動成為管理員
@@ -172,6 +172,69 @@ check('行事曆所有人都看得到', ((await j('/api/events', {}, TB)).data.e
 check('日期格式錯誤被擋', (await j('/api/events', { method: 'POST', body: { title: 'x', date: '明天', remindAt: Date.now() } }, TA)).status === 400);
 check('刪除行事曆', (await j(`/api/events/${ev.id}`, { method: 'DELETE' }, TA)).status === 200);
 
+const medianMs = async (fn, reps = 7) => {
+  const t = [];
+  for (let k = 0; k < reps; k++) { const s0 = performance.now(); await fn(); t.push(performance.now() - s0); }
+  return t.sort((x, y) => x - y)[Math.floor(reps / 2)];
+};
+
+console.log('\n--- 家族牧場 ---');
+const farmGet = (cid, tok) => j(`/api/farm/${cid}`, {}, tok);
+const farmDo = (cid, body, tok) => j(`/api/farm/${cid}`, { method: 'POST', body }, tok);
+r = await farmGet(groupId, TA);
+const fs0 = r.data;
+check('第一次打開就開墾牧場（500 元、9 包小白菜種子、體力 60）',
+  r.status === 200 && fs0.farm?.money === 500 && fs0.items?.['seed:bokchoy'] === 9 && fs0.energy?.now === 60 && fs0.energy?.max === 60);
+check('地圖 30×20', fs0.map?.length === 20 && fs0.map.every((row) => row.length === 30));
+await farmGet(groupId, TB);
+const farmSys = (await listIn(groupId, TA)).filter((m) => m.type === 'system' && m.content.includes('開墾了家族牧場'));
+check('聊天室出現「開墾了家族牧場」，而且只出現一次', farmSys.length === 1, farmSys.map((m) => m.content).join(' / '));
+const fields = [];
+fs0.map.forEach((row, y) => [...row].forEach((c, x) => { if (c === 'F') fields.push({ x, y }); }));
+const [f1, f2] = fields;
+r = await farmDo(groupId, { action: 'till', ...f1 }, TA);
+check('翻土花 2 點體力', r.status === 200 && r.data.energy === 58 && r.data.tile?.tilled === true);
+check('同一塊不能再翻一次', (await farmDo(groupId, { action: 'till', ...f1 }, TA)).status === 400);
+check('田地外面不能翻土', (await farmDo(groupId, { action: 'till', x: 5, y: 5 }, TA)).status === 400);
+check('座標亂填被擋', (await farmDo(groupId, { action: 'till', x: 'a', y: 1.5 }, TA)).status === 400);
+check('沒翻土不能播種', (await farmDo(groupId, { action: 'plant', crop: 'bokchoy', ...f2 }, TA)).status === 400);
+check('沒有的種子不能種', (await farmDo(groupId, { action: 'plant', crop: 'carrot', ...f1 }, TA)).status === 400);
+r = await farmDo(groupId, { action: 'plant', crop: 'bokchoy', ...f1 }, TA);
+check('播種用掉一包種子', r.status === 200 && r.data.items['seed:bokchoy'] === 8 && r.data.tile?.crop === 'bokchoy' && r.data.tile.stage === 0);
+check('已經種了的地不能再種', (await farmDo(groupId, { action: 'plant', crop: 'bokchoy', ...f1 }, TA)).status === 400);
+r = await farmDo(groupId, { action: 'water', ...f1 }, TA);
+check('澆水後土是濕的（約 24 小時）', r.status === 200 && r.data.tile.wetUntil > Date.now());
+check('還沒成熟不能收成', (await farmDo(groupId, { action: 'harvest', ...f1 }, TA)).status === 400);
+r = await farmGet(groupId, TB);
+check('朋友B 看到同一塊田（全家共用）', r.data.tiles?.some((t) => t.x === f1.x && t.y === f1.y && t.crop === 'bokchoy'));
+check('體力是每人各自的（朋友B 還是 60）', r.data.energy?.now === 60);
+r = await farmDo(groupId, { action: 'buy', item: 'seed:carrot', qty: 2 }, TB);
+check('買 2 包紅蘿蔔種子 500 → 420（錢全家共用）', r.status === 200 && r.data.money === 420 && r.data.items['seed:carrot'] === 2);
+check('錢不夠不能買', (await farmDo(groupId, { action: 'buy', item: 'seed:strawberry', qty: 99 }, TB)).status === 400);
+check('商店不賣作物', (await farmDo(groupId, { action: 'buy', item: 'crop:carrot', qty: 1 }, TB)).status === 400);
+check('數量亂填被擋', (await farmDo(groupId, { action: 'buy', item: 'seed:carrot', qty: -1 }, TB)).status === 400
+  && (await farmDo(groupId, { action: 'buy', item: 'seed:carrot', qty: 1.5 }, TB)).status === 400);
+check('沒這種東西被擋', (await farmDo(groupId, { action: 'buy', item: 'seed:durian', qty: 1 }, TB)).status === 400);
+check('倉庫沒作物不能出貨', (await farmDo(groupId, { action: 'ship', item: 'crop:bokchoy', qty: 1 }, TB)).status === 400);
+check('不認識的動作被擋', (await farmDo(groupId, { action: 'steal' }, TB)).status === 400);
+// 朋友B 不在「管理員 ↔ 朋友A」的私訊裡
+check('不是成員看不到牧場（404）', (await farmGet(dmAdminA.id, TB)).status === 404);
+check('不是成員不能動牧場（404）', (await farmDo(dmAdminA.id, { action: 'till', ...f2 }, TB)).status === 404);
+let tills = 0;
+for (const f of fields.slice(1, 31)) if ((await farmDo(groupId, { action: 'till', ...f }, TB)).status === 200) tills++;
+r = await farmDo(groupId, { action: 'till', ...fields[31] }, TB);
+check('體力 60 剛好翻 30 塊，第 31 塊說體力用完', tills === 30 && r.status === 400 && /體力/.test(r.data.error || ''), `${tills} 塊；${r.data.error}`);
+const farmMs = await medianMs(() => farmGet(groupId, TA));
+check(`打開牧場在 150ms 內（實測 ${farmMs.toFixed(0)}ms）`, farmMs < 150);
+if (fs0.scale >= 3600) {
+  // 本機加速模式（FARM_TIME_SCALE）才跑：小白菜 3 小時 → 3 秒
+  await new Promise((ok) => setTimeout(ok, 3500));
+  r = await farmDo(groupId, { action: 'harvest', ...f1 }, TA);
+  check('（加速模式）熟了可以收成，收進倉庫', r.status === 200 && r.data.items['crop:bokchoy'] === 1);
+  r = await farmDo(groupId, { action: 'ship', item: 'crop:bokchoy', qty: 1 }, TB);
+  check('（加速模式）出貨小白菜 +45 元', r.status === 200 && r.data.money === 465);
+}
+
 console.log('\n--- 管理員 ---');
 r = await j(`/api/admin/users/${IC}/reset-password`, { method: 'POST' }, A0);
 const temp = r.data.tempPassword;
@@ -189,11 +252,6 @@ const SPEED_PHOTO = 'data:image/jpeg;base64,' + Buffer.alloc(460000, 7).toString
 const speedConv = (await j('/api/conversations', { method: 'POST', body: { type: 'group', name: '速度測試', memberIds: [IA, IB] } }, A0)).data.conversation.id;
 for (let k = 0; k < 30; k++)
   await j(`/api/conversations/${speedConv}/messages`, { method: 'POST', body: { type: 'image', content: SPEED_PHOTO } }, A0);
-const medianMs = async (fn, reps = 7) => {
-  const t = [];
-  for (let k = 0; k < reps; k++) { const s0 = performance.now(); await fn(); t.push(performance.now() - s0); }
-  return t.sort((x, y) => x - y)[Math.floor(reps / 2)];
-};
 let speedList;
 const openMs = await medianMs(async () => { speedList = await j(`/api/conversations/${speedConv}/messages`, {}, A0); });
 check(`打開 30 張照片的聊天室在 300ms 內（實測 ${openMs.toFixed(0)}ms）`, openMs < 300);
