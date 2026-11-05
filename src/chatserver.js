@@ -5,9 +5,14 @@
 
 import {
   FARM_MAP, FARM_W, FARM_H, FARM_SPAWN, CROPS, ENERGY_MAX, ENERGY_COST, WATER_HOURS,
-  START_MONEY, START_ITEMS, isField, grownMs, cropStage, cropTotalMs, isWet, waterUntil,
-  taiwanDay, seasonOf,
+  START_MONEY, START_ITEMS, isField, grownMs, cropStage, cropTotalMs, waterUntil,
+  taiwanDay, seasonOf, SEASONS, WEATHERS, inSeason, regrowProgressMs, weatherOf, realRain, NO_RAIN,
+  wetUntilOf, dayEndOf, nextSeasonStart,
 } from './farm.js';
+
+const SEASON_NAME = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
+const SEASON_EMOJI = { spring: '🌸', summer: '🌻', autumn: '🍂', winter: '⛄' };
+const seasonsText = (list) => list.map((x) => SEASON_NAME[x]).join('、');
 
 const SESSION_TTL = 1000 * 60 * 60 * 24 * 60; // 60 天未使用即需重新登入
 const UNSEND_WINDOW = 1000 * 60 * 60 * 24; // 送出後 24 小時內可收回
@@ -253,6 +258,9 @@ CREATE TABLE IF NOT EXISTS farm_players (
 );
 `;
 
+// 牧場記住「上次是哪一季」，換季後第一次有人打開時在聊天室說一聲
+const SCHEMA_V8 = `ALTER TABLE farms ADD COLUMN season_seen TEXT;`;
+
 // 訊息中的網址：http(s):// 或 www. 開頭，遇到空白、引號或中文標點即結束
 // （與前端 public/app.js 的 URL_RE / trimUrlTail 保持一致）
 const URL_RE = /(?:https?:\/\/|www\.)[^\s<>"'`\u3000、，。！？：；（）「」『』【】《》〈〉…]+/i;
@@ -477,6 +485,10 @@ export class ChatServer {
       if (v < 7) {
         this.sql.exec(SCHEMA_V7);
         this.setSetting('schema_version', '7');
+      }
+      if (v < 8) {
+        this.sql.exec(SCHEMA_V8);
+        this.setSetting('schema_version', '8');
       }
     });
     // 心跳不喚醒 DO：客戶端送 "ping"，執行環境自動回 "pong"
@@ -2186,13 +2198,30 @@ export class ChatServer {
     return Number.isFinite(s) && s >= 1 ? Math.min(s, 100000) : 1;
   }
 
+  // 季節與天氣跟著現實走。FARM_SEASON／FARM_WEATHER 也只給本機測試用，
+  // 例如 --var FARM_SEASON:winter --var FARM_WEATHER:rain 看冬天下雨的畫面
+  farmSeason(now) {
+    const o = this.env && this.env.FARM_SEASON;
+    return SEASONS.includes(o) ? o : seasonOf(now);
+  }
+  farmWeather(day) {
+    const o = this.env && this.env.FARM_WEATHER;
+    return WEATHERS.includes(o) ? o : weatherOf(day);
+  }
+  farmRainy() {
+    const o = this.env && this.env.FARM_WEATHER;
+    if (WEATHERS.includes(o)) return o === 'rain' ? () => true : NO_RAIN;
+    return realRain;
+  }
+
   ensureFarm(conversationId, me) {
     const f = this.sql.exec(`SELECT * FROM farms WHERE conversation_id = ?`, conversationId).toArray()[0];
     if (f) return f;
     const now = Date.now();
     const row = this.sql
-      .exec(`INSERT INTO farms (conversation_id, money, created_by, created_at) VALUES (?, ?, ?, ?) RETURNING *`,
-        conversationId, START_MONEY, me.id, now)
+      .exec(`INSERT INTO farms (conversation_id, money, created_by, created_at, season_seen)
+             VALUES (?, ?, ?, ?, ?) RETURNING *`,
+        conversationId, START_MONEY, me.id, now, this.farmSeason(now))
       .one();
     for (const [item, qty] of Object.entries(START_ITEMS)) this.farmAddItem(conversationId, item, qty);
     this.addSystemMessage(conversationId, `${me.display_name} 開墾了家族牧場 🌾`);
@@ -2230,14 +2259,15 @@ export class ChatServer {
     return p;
   }
 
-  // 送給前端的田地：progress 是「到 now 為止」的成長量，前端用 wetUntil 自己往後推算
-  farmTilePub(t, now, scale) {
+  // 送給前端的田地：progress 是「到 now 為止」的成長量（含下雨天），
+  // wetUntil 是土會一直濕到什麼時候，前端用這兩個自己往後推算
+  farmTilePub(t, now, scale, rainy) {
     return {
       x: t.x, y: t.y, tilled: !!t.tilled, crop: t.crop || null,
-      stage: t.crop ? cropStage(t, now, scale) : -1,
-      progress: t.crop ? grownMs(t, now, scale) : 0,
+      stage: t.crop ? cropStage(t, now, scale, rainy) : -1,
+      progress: t.crop ? grownMs(t, now, scale, rainy) : 0,
       total: t.crop ? cropTotalMs(t.crop) : 0,
-      wetUntil: t.watered_until || 0,
+      wetUntil: t.tilled ? wetUntilOf(t.watered_until || 0, now, rainy) : 0,
     };
   }
 
@@ -2263,6 +2293,17 @@ export class ChatServer {
     const farm = this.ensureFarm(conversationId, me);
     const now = Date.now();
     const scale = this.farmScale();
+    const rainy = this.farmRainy();
+    const season = this.farmSeason(now);
+    // 換季後第一次有人打開：在聊天室說一聲，並列出這一季能種什麼
+    if (farm.season_seen !== season) {
+      this.sql.exec(`UPDATE farms SET season_seen = ? WHERE conversation_id = ?`, season, conversationId);
+      if (farm.season_seen) {
+        const names = Object.keys(CROPS).filter((c) => inSeason(c, season)).map((c) => CROPS[c].name);
+        this.addSystemMessage(conversationId,
+          `${SEASON_EMOJI[season]} 家族牧場進入${SEASON_NAME[season]}天了！這一季可以種：${names.join('、')}`);
+      }
+    }
     const p = this.farmPlayer(conversationId, me.id, now);
     const names = this.userNames();
     const memberRows = this.sql
@@ -2277,14 +2318,17 @@ export class ChatServer {
     const tiles = this.sql
       .exec(`SELECT * FROM farm_tiles WHERE conversation_id = ?`, conversationId)
       .toArray()
-      .map((t) => this.farmTilePub(t, now, scale));
+      .map((t) => this.farmTilePub(t, now, scale, rainy));
+    const today = taiwanDay(now);
     return json({
       farm: { id: conversationId, title, money: farm.money, createdBy: names.get(farm.created_by) || null },
       map: FARM_MAP, spawn: FARM_SPAWN,
       crops: CROPS, energy: { now: p.energy, max: ENERGY_MAX }, costs: ENERGY_COST,
       tiles, items: this.farmItems(conversationId),
       members: memberRows.map((r) => ({ id: r.id, name: r.display_name, color: r.avatar_color })),
-      now, scale, waterHours: WATER_HOURS, season: seasonOf(now), day: taiwanDay(now),
+      now, scale, waterHours: WATER_HOURS, season, day: today,
+      seasonEndsAt: nextSeasonStart(now),
+      weather: { today: this.farmWeather(today), tomorrow: this.farmWeather(taiwanDay(dayEndOf(now))) },
     });
   }
 
@@ -2295,6 +2339,8 @@ export class ChatServer {
     const action = String(body.action || '');
     const now = Date.now();
     const scale = this.farmScale();
+    const rainy = this.farmRainy();
+    const season = this.farmSeason(now);
     const p = this.farmPlayer(conversationId, me.id, now);
     const spend = (n) => {
       if (p.energy < n) throw new HttpError(400, '體力用完了，明天再來吧 😴');
@@ -2322,6 +2368,8 @@ export class ChatServer {
       } else if (action === 'plant') {
         const crop = String(body.crop || '');
         if (!CROPS[crop]) throw new HttpError(400, '沒有這種種子');
+        if (!inSeason(crop, season))
+          throw new HttpError(400, `${CROPS[crop].name}要${seasonsText(CROPS[crop].seasons)}天才能種`);
         if (!t.tilled) throw new HttpError(400, '要先用鋤頭翻土');
         if (t.crop) throw new HttpError(400, '這裡已經種了東西');
         if ((this.farmItems(conversationId)[`seed:${crop}`] || 0) < 1)
@@ -2333,14 +2381,17 @@ export class ChatServer {
         if (!t.tilled) throw new HttpError(400, '要先用鋤頭翻土');
         spend(ENERGY_COST.water);
         // 先把舊的濕土時間結算進成長量，再重新保濕
-        Object.assign(t, { progress_ms: grownMs(t, now, scale), tick_at: now, watered_until: waterUntil(now, scale) });
+        Object.assign(t, { progress_ms: grownMs(t, now, scale, rainy), tick_at: now, watered_until: waterUntil(now, scale) });
       } else {
         if (!t.crop) throw new HttpError(400, '這裡沒有種東西');
-        if (cropStage(t, now, scale) < 3) throw new HttpError(400, '還沒成熟喔');
+        if (cropStage(t, now, scale, rainy) < 3) throw new HttpError(400, '還沒成熟喔');
         spend(ENERGY_COST.harvest);
         this.farmAddItem(conversationId, `crop:${t.crop}`, 1);
         gained = { item: `crop:${t.crop}`, qty: 1 };
-        Object.assign(t, { crop: null, progress_ms: 0, tick_at: now });
+        // 番茄、草莓這類收完會再長；其他的收完就空出來
+        const again = regrowProgressMs(t.crop);
+        if (again != null) Object.assign(t, { progress_ms: again, tick_at: now });
+        else Object.assign(t, { crop: null, progress_ms: 0, tick_at: now });
       }
       this.sql.exec(
         `INSERT INTO farm_tiles (conversation_id, x, y, tilled, crop, progress_ms, tick_at, watered_until)
@@ -2348,7 +2399,7 @@ export class ChatServer {
          ON CONFLICT(conversation_id, x, y) DO UPDATE SET tilled = excluded.tilled, crop = excluded.crop,
            progress_ms = excluded.progress_ms, tick_at = excluded.tick_at, watered_until = excluded.watered_until`,
         conversationId, x, y, t.tilled, t.crop, t.progress_ms, t.tick_at, t.watered_until);
-      tileOut = this.farmTilePub(t, now, scale);
+      tileOut = this.farmTilePub(t, now, scale, rainy);
     } else if (action === 'buy' || action === 'ship') {
       const item = String(body.item || '');
       const qty = Number(body.qty);
@@ -2357,6 +2408,8 @@ export class ChatServer {
       if (!CROPS[crop]) throw new HttpError(400, '沒有這樣東西');
       if (action === 'buy') {
         if (kind !== 'seed') throw new HttpError(400, '商店只賣種子');
+        if (!inSeason(crop, season))
+          throw new HttpError(400, `${CROPS[crop].name}種子要${seasonsText(CROPS[crop].seasons)}天才有賣`);
         const cost = CROPS[crop].seed * qty;
         const money = this.sql.exec(`SELECT money FROM farms WHERE conversation_id = ?`, conversationId).one().money;
         if (money < cost) throw new HttpError(400, '錢不夠');

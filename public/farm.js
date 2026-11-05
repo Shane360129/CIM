@@ -1,12 +1,17 @@
 // 家族小牧場（獨立視窗）：畫面、走路、工具、商店與出貨箱。
 // 規則都在伺服器（src/farm.js）判定，這裡只負責畫與送出動作；
 // 作物成長在兩次同步之間由這裡用同一套公式往後推算，畫面才會即時長大。
-import { sprite, houseSprite, shopSprite } from '/farm-sprites.js';
+import { sprite, cropSprite, houseSprite, shopSprite, SEASON_GROUND } from '/farm-sprites.js';
 
 const T = 16;            // 一格 16 像素
 const SPEED = 4.5;       // 每秒走幾格
 const WALK = new Set(['.', '=', 'F']);
 const SEASON = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
+const SEASON_ORDER = ['spring', 'summer', 'autumn', 'winter'];
+const SEASON_MONTHS = { spring: '3～5 月', summer: '6～8 月', autumn: '9～11 月', winter: '12～2 月' };
+const WEATHER = { sun: ['☀️', '晴天'], cloud: ['⛅', '多雲'], rain: ['🌧️', '下雨'] };
+// 春天有些樹是櫻花、秋天有些樹是紅楓
+const TREE_ALT = { spring: 'cherry', autumn: 'maple' };
 const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
 const TOOLS = [
   { key: 'hoe', ico: '⛏️', name: '鋤頭' },
@@ -24,7 +29,8 @@ const token = localStorage.getItem('cim_token') || localStorage.getItem('chat_to
 const S = {
   map: [], W: 0, H: 0, crops: {}, tiles: new Map(), items: {}, money: 0,
   energy: 0, energyMax: 60, members: new Map(), meId: 0, myColor: '#d9544d',
-  offset: 0, scale: 1, title: '', season: 'spring',
+  offset: 0, scale: 1, title: '', season: 'spring', seasonEndsAt: 0, weather: { today: 'sun', tomorrow: 'sun' },
+  rainWarned: false,
   tool: 'hoe', seed: 'bokchoy', busy: false,
   me: { x: 5, y: 5, d: 'd', step: null, path: [], pending: null, anim: 0 },
   others: new Map(), floats: [], keys: [], view: 3, cam: { x: 0, y: 0 },
@@ -45,6 +51,9 @@ const key = (x, y) => x + ',' + y;
 const terrain = (x, y) => (S.map[y] && S.map[y][x]) || 'T';
 const walkable = (x, y) => WALK.has(terrain(x, y));
 const serverNow = () => Date.now() + S.offset;
+const inSeason = (id) => !!S.crops[id] && S.crops[id].seasons.includes(S.season);
+const seasonsText = (list) => (list.length === 4 ? '一年四季' : list.map((x) => SEASON[x] + '天').join('、'));
+const cropMeta = (c) => `${c.hours} 小時成熟・賣 ${c.sell} 元` + (c.regrow ? `・收成後每 ${c.regrow} 小時再收一次` : '');
 
 function toast(msg) {
   const t = el('div', { class: 'toast', text: msg });
@@ -75,13 +84,18 @@ function applyState(st) {
   S.crops = st.crops; S.items = st.items; S.money = st.farm.money;
   S.energy = st.energy.now; S.energyMax = st.energy.max;
   S.scale = st.scale; S.season = st.season; S.title = st.farm.title;
+  S.weather = st.weather; S.seasonEndsAt = st.seasonEndsAt;
   S.offset = st.now - Date.now();
   S.tiles.clear();
   for (const t of st.tiles) setTile(t, st.now);
   S.members = new Map(st.members.map((m) => [m.id, m]));
   S.spawn = st.spawn;
-  if (!S.crops[S.seed]) S.seed = Object.keys(S.crops)[0];
-  renderHud();
+  // 手上的種子不是這一季的，就換成這一季有的（優先選倉庫裡有的）
+  if (!inSeason(S.seed)) {
+    const ids = Object.keys(S.crops).filter(inSeason);
+    S.seed = ids.find((id) => S.items['seed:' + id]) || ids[0] || 'bokchoy';
+  }
+  renderHud(); renderClock();
 }
 
 async function loadState() {
@@ -125,7 +139,7 @@ function renderClock() {
   const hh = String(d.getUTCHours()).padStart(2, '0');
   const mm = String(d.getUTCMinutes()).padStart(2, '0');
   $('hud-clock').textContent =
-    `${d.getUTCMonth() + 1}/${d.getUTCDate()}（${WEEK[d.getUTCDay()]}）${hh}:${mm}・${SEASON[S.season] || ''}`;
+    `${d.getUTCMonth() + 1}/${d.getUTCDate()}（${WEEK[d.getUTCDay()]}）${hh}:${mm}・${SEASON[S.season] || ''} ${(WEATHER[S.weather.today] || WEATHER.sun)[0]}`;
 }
 
 function renderToolbar() {
@@ -168,7 +182,7 @@ function icon(name) {
 }
 
 function openShop() {
-  const rows = Object.entries(S.crops).map(([id, c]) => {
+  const rows = Object.entries(S.crops).filter(([id]) => inSeason(id)).map(([id, c]) => {
     let n = 1;
     const qtyB = el('b', { text: '1' });
     const buy = el('button', { class: 'btn primary', type: 'button', text: `買 ${c.seed}` });
@@ -183,14 +197,19 @@ function openShop() {
     sync();
     return el('div', { class: 'row' }, icon(id + '_3'),
       el('div', { class: 'grow' }, el('div', { class: 'name', text: `${c.name}種子` }),
-        el('div', { class: 'meta', text: `${c.seed} 元・濕土 ${c.hours} 小時成熟・賣 ${c.sell} 元` })),
+        el('div', { class: 'meta', text: `${c.seed} 元・${cropMeta(c)}` })),
       el('span', { class: 'qty' },
         el('button', { type: 'button', text: '−', onclick: () => { n = Math.max(1, n - 1); sync(); } }), qtyB,
         el('button', { type: 'button', text: '＋', onclick: () => { n = Math.min(99, n + 1); sync(); } })),
       buy);
   });
-  openModal(el('h2', { text: '🏪 種子店' }), el('p', { class: 'sub', text: `全家共用的錢包：${S.money.toLocaleString()} 元` }),
-    ...rows, el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
+  const next = SEASON_ORDER[(SEASON_ORDER.indexOf(S.season) + 1) % 4];
+  const coming = Object.entries(S.crops).filter(([id, c]) => !inSeason(id) && c.seasons.includes(next)).map(([, c]) => c.name);
+  openModal(el('h2', { text: `🏪 種子店・${SEASON[S.season]}天` }),
+    el('p', { class: 'sub', text: `全家共用的錢包：${S.money.toLocaleString()} 元。作物都要土是濕的才會長。` }),
+    ...rows,
+    coming.length ? el('p', { class: 'note', text: `${SEASON[next]}天會上架：${coming.join('、')}` }) : null,
+    el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
 }
 
 function openBin() {
@@ -223,7 +242,8 @@ function openBag() {
     if (!c) return null;
     return el('div', { class: 'row' }, icon(kind === 'seed' ? 'seed' : id + '_3'),
       el('div', { class: 'grow' }, el('div', { class: 'name', text: kind === 'seed' ? `${c.name}種子` : c.name }),
-        el('div', { class: 'meta', text: kind === 'seed' ? '用「種子」工具種在翻好的土上' : `可以拿去出貨箱賣 ${c.sell} 元` })),
+        el('div', { class: 'meta', text: kind !== 'seed' ? `可以拿去出貨箱賣 ${c.sell} 元`
+          : inSeason(id) ? '用「種子」工具種在翻好的土上' : `${seasonsText(c.seasons)}才能種，先收著` })),
       el('b', { text: '×' + qty }));
   });
   openModal(el('h2', { text: '🎒 全家的倉庫' }), el('p', { class: 'sub', text: '種子和收成大家共用' }),
@@ -231,18 +251,47 @@ function openBag() {
     el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
 }
 
+// 這一季能種的都列出來；別季的種子倉庫裡有的話也列，但要等季節到了才能用
 function openSeedPicker() {
-  const rows = Object.entries(S.crops).map(([id, c]) => {
+  const list = Object.entries(S.crops).filter(([id]) => inSeason(id) || S.items['seed:' + id]);
+  const rows = list.map(([id, c]) => {
     const n = S.items['seed:' + id] || 0;
-    return el('div', { class: 'row' }, icon(id + '_3'),
-      el('div', { class: 'grow' }, el('div', { class: 'name', text: `${c.name}種子` }), el('div', { class: 'meta', text: `還有 ${n} 包` })),
+    const ok = inSeason(id);
+    return el('div', { class: 'row' + (ok ? '' : ' off') }, icon(id + '_3'),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: `${c.name}種子` }),
+        el('div', { class: 'meta', text: ok ? `還有 ${n} 包・${cropMeta(c)}` : `還有 ${n} 包・${seasonsText(c.seasons)}才能種` })),
       el('button', {
-        class: 'btn' + (S.seed === id ? ' primary' : ''), type: 'button', text: S.seed === id ? '使用中' : '用這個',
+        class: 'btn' + (S.seed === id ? ' primary' : ''), type: 'button', disabled: !ok,
+        text: S.seed === id ? '使用中' : ok ? '用這個' : '等季節',
         onclick: () => { S.seed = id; S.tool = 'seed'; renderToolbar(); closeModal(); },
       }));
   });
   openModal(el('h2', { text: '🌱 要種什麼？' }), ...rows,
     el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '去商店買種子', onclick: openShop })));
+}
+
+// 天氣預報與季節：點 HUD 上的時鐘打開
+function openForecast() {
+  const now = serverNow();
+  const w = (k) => WEATHER[S.weather[k]] || WEATHER.sun;
+  const rainNote = (k) => (S.weather[k] === 'rain' ? '，田地整天都是濕的，不用澆水' : '');
+  const days = Math.max(1, Math.ceil((S.seasonEndsAt - now) / 86400000));
+  const next = SEASON_ORDER[(SEASON_ORDER.indexOf(S.season) + 1) % 4];
+  const now_ = Object.values(S.crops).filter((c) => c.seasons.includes(S.season)).map((c) => c.name);
+  const coming = Object.values(S.crops).filter((c) => !c.seasons.includes(S.season) && c.seasons.includes(next)).map((c) => c.name);
+  openModal(el('h2', { text: '📺 天氣預報' }),
+    el('div', { class: 'row forecast' }, el('span', { class: 'big', text: w('today')[0] }),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: `今天：${w('today')[1]}` }),
+        el('div', { class: 'meta', text: `每天的天氣都不一樣${rainNote('today')}` }))),
+    el('div', { class: 'row forecast' }, el('span', { class: 'big', text: w('tomorrow')[0] }),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: `明天：${w('tomorrow')[1]}` }),
+        el('div', { class: 'meta', text: S.weather.tomorrow === 'rain' ? '明天會下雨，今天晚上可以省一次澆水' : '記得早上出門前澆水' }))),
+    el('h2', { text: `${{ spring: '🌸', summer: '🌻', autumn: '🍂', winter: '⛄' }[S.season]} 現在是${SEASON[S.season]}天` }),
+    el('p', { class: 'sub', text: `${SEASON_MONTHS[S.season]}・再 ${days} 天進入${SEASON[next]}天` }),
+    el('p', { class: 'note', text: `這一季可以種：${now_.join('、')}` }),
+    coming.length ? el('p', { class: 'note', text: `${SEASON[next]}天會上架：${coming.join('、')}` }) : null,
+    el('p', { class: 'note', text: '換季時，已經種下去的作物會繼續長完，不會枯掉。' }),
+    el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
 }
 
 function confirmDig(t, x, y) {
@@ -299,12 +348,19 @@ function useOn(x, y) {
   }
   if (S.tool === 'can') {
     if (!t.tilled) return toast('要先用鋤頭翻土');
+    // 下雨天第一次澆水先提醒一下（省體力）；真的要澆再點一次
+    if (S.weather.today === 'rain' && !S.rainWarned) {
+      S.rainWarned = true;
+      return toast('今天下雨，田地整天都是濕的，不用澆水 ☔（真的要澆再點一次）');
+    }
     return doAct({ action: 'water', x, y }).catch(() => {});
   }
   if (S.tool === 'seed') {
     if (!t.tilled) return toast('要先用鋤頭翻土');
     if (t.crop) return describe(t, now);
-    if (!S.items['seed:' + S.seed]) { toast(`沒有${S.crops[S.seed].name}種子了，去商店買吧`); return; }
+    const sc = S.crops[S.seed];
+    if (!inSeason(S.seed)) return toast(`${sc.name}要${seasonsText(sc.seasons)}才能種，按「種子」換一種`);
+    if (!S.items['seed:' + S.seed]) { toast(`沒有${sc.name}種子了，去商店買吧`); return; }
     return doAct({ action: 'plant', x, y, crop: S.seed }).catch(() => {});
   }
   if (t.crop) return describe(t, now);
@@ -315,7 +371,7 @@ function describe(t, now) {
   const c = S.crops[t.crop];
   const left = (t.total - grown(t, now)) / S.scale;
   if (!wet(t, now)) return toast(`${c.name}：土乾了，澆水才會繼續長（還差 ${fmtLeft(left)}）`);
-  toast(`${c.name}：再 ${fmtLeft(left)} 就能收成`);
+  toast(`${c.name}：再 ${fmtLeft(left)} 就能收成${c.regrow ? '（收完會再長）' : ''}`);
 }
 
 /* ---------- 走路 ---------- */
@@ -495,9 +551,36 @@ function baseSprite(x, y, ch) {
   if (ch === 'F') {
     const t = S.tiles.get(key(x, y));
     if (t && t.tilled) return sprite(wet(t, serverNow()) ? 'soil_wet' : 'soil_dry');
-    return sprite('field');
+    return sprite('field', undefined, false, S.season);
   }
-  return sprite('grass' + ((x * 7 + y * 13) % 3));
+  return sprite('grass' + ((x * 7 + y * 13) % 3), undefined, false, S.season);
+}
+// 樹：依位置挑一些變成櫻花（春）或紅楓（秋），其他照季節變色
+function treeSprite(x, y) {
+  const alt = TREE_ALT[S.season];
+  return sprite('tree', undefined, false, alt && (x * 5 + y * 3) % 4 === 0 ? alt : S.season);
+}
+
+// 下雨：畫面暗一點，加上斜斜的雨絲；多雲：稍微灰一點
+function drawWeather(vw, vh) {
+  const w = S.weather.today;
+  if (w === 'cloud') { g.fillStyle = 'rgba(90,100,115,0.14)'; g.fillRect(0, 0, vw, vh); return; }
+  if (w !== 'rain') return;
+  g.fillStyle = 'rgba(40,60,95,0.2)';
+  g.fillRect(0, 0, vw, vh);
+  const t = performance.now() / 1000;
+  const n = Math.round((vw * vh) / (dpr * dpr) / 3500);
+  g.strokeStyle = 'rgba(210,225,255,0.6)';
+  g.lineWidth = 1.2 * dpr;
+  g.beginPath();
+  for (let i = 0; i < n; i++) {
+    const sp = 0.9 + ((i * 0.618) % 1) * 0.6;
+    const y = (((i * 0.4142 + t * sp) % 1) * (vh + 40 * dpr)) - 20 * dpr;
+    const x = ((i * 0.7548) % 1) * (vw + 60 * dpr) - y * 0.12;
+    g.moveTo(x, y);
+    g.lineTo(x - 3 * dpr, y + 14 * dpr);
+  }
+  g.stroke();
 }
 
 function draw() {
@@ -529,21 +612,21 @@ function draw() {
   for (let y = y0; y <= y1; y++) {
     for (let x = x0; x <= x1; x++) {
       const ch = terrain(x, y);
-      if (ch === 'T') g.drawImage(sprite('tree'), x * T, y * T);
+      if (ch === 'T') g.drawImage(treeSprite(x, y), x * T, y * T);
       else if (ch === 'f') g.drawImage(sprite('fence'), x * T, y * T);
       else if (ch === 'B') g.drawImage(sprite('bin'), x * T, y * T);
       else if (ch === 'F') {
         const t = S.tiles.get(key(x, y));
         if (t && t.crop) {
           const st = stage(t, now);
-          g.drawImage(sprite(`${t.crop}_${st}`), x * T, y * T);
+          g.drawImage(cropSprite(t.crop, st), x * T, y * T);
           if (st === 3 && blink) g.drawImage(sprite('sparkle'), x * T, y * T);
         }
       }
     }
   }
   // 房子與商店（多格的大圖，左上角那一格畫一次）
-  outer: for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) if (terrain(x, y) === 'H') { g.drawImage(houseSprite(), x * T, y * T); break outer; }
+  outer: for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) if (terrain(x, y) === 'H') { g.drawImage(houseSprite(SEASON_GROUND[S.season]), x * T, y * T); break outer; }
   outer2: for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) if (terrain(x, y) === 'S') { g.drawImage(shopSprite(), x * T, y * T); break outer2; }
 
   // 面前那一格的框（鍵盤操作時看得到要對哪一格動作）
@@ -593,6 +676,7 @@ function draw() {
   else if (hour >= 19 || hour < 5) tint = 'rgba(20,30,80,0.32)';
   else if (hour >= 5 && hour < 6) tint = 'rgba(255,170,120,0.12)';
   if (tint) { g.fillStyle = tint; g.fillRect(0, 0, vw, vh); }
+  drawWeather(vw, vh);
 }
 
 let last = performance.now();
@@ -642,6 +726,7 @@ canvas.addEventListener('pointerup', (e) => {
 });
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 $('btn-bag').addEventListener('click', openBag);
+$('hud-clock').addEventListener('click', openForecast);
 // 從聊天室開的新視窗直接關掉；直接打開網址的話回聊天室
 $('btn-close').addEventListener('click', () => {
   if (window.opener) window.close();

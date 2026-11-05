@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 // 家族小牧場的規則單元測試（不需要啟動伺服器）：npm run test:farm
 // 驗證地圖（田地都走得到、商店出貨箱碰得到）、作物只在濕土時成長、
-// 成長階段、時間倍率、台灣時間換日（體力恢復）、季節。
+// 成長階段、時間倍率、台灣時間換日（體力恢復）、四季與作物、天氣（下雨自動澆水）、
+// 會再長的作物，以及每種作物都有畫好的圖。
 
 import {
   FARM_MAP, FARM_W, FARM_H, FARM_SPAWN, CROPS, isField, isWalkable, terrainAt,
   grownMs, cropStage, cropTotalMs, isWet, waterUntil, taiwanDay, seasonOf, WATER_HOURS,
+  SEASONS, inSeason, regrowProgressMs, weatherOf, wetMsBetween, wetUntilOf, dayEndOf, nextSeasonStart,
 } from '../src/farm.js';
+import { SPRITES, PALETTE } from '../public/farm-sprites.js';
 
 let pass = 0, fail = 0;
 const check = (label, got, want) => {
@@ -62,14 +65,71 @@ check('過三分之二是長大中（2）', cropStage(wetTile, t0 + (2 * total) 
 check('長滿可以收成（3）', cropStage(wetTile, t0 + total), 3);
 check('沒種東西是 -1', cropStage({ crop: null }, t0), -1);
 check('濕土判定', [isWet(wetTile, t0 + H), isWet(wetTile, t0 + 25 * H)], [true, false]);
-check('作物資料：成熟時間越久越值錢',
-  Object.values(CROPS).every((c, i, a) => i === 0 || (c.hours > a[i - 1].hours && c.sell > a[i - 1].sell)), true);
 
 console.log('\n--- 台灣時間 ---');
 check('台灣 23:59 還是同一天', taiwanDay(Date.UTC(2026, 10, 5, 15, 59)), '2026-11-05');
 check('台灣 00:00 換日（體力恢復）', taiwanDay(Date.UTC(2026, 10, 5, 16, 0)), '2026-11-06');
 check('季節：台灣 3/1 凌晨已經是春天', seasonOf(Date.UTC(2026, 1, 28, 16, 30)), 'spring');
 check('季節：夏、秋、冬', [seasonOf(Date.UTC(2026, 6, 1)), seasonOf(Date.UTC(2026, 9, 1)), seasonOf(Date.UTC(2026, 0, 15))], ['summer', 'autumn', 'winter']);
+
+
+console.log('\n--- 四季與作物 ---');
+const crops = Object.entries(CROPS);
+check('作物有 14 種', crops.length, 14);
+check('每種作物都標好季節', crops.every(([, c]) => c.seasons.length && c.seasons.every((x) => SEASONS.includes(x))), true);
+check('每一季至少 5 種能種', SEASONS.map((se) => crops.filter(([id]) => inSeason(id, se)).length >= 5), [true, true, true, true]);
+check('小白菜一年四季都能種（新手不會卡住）', SEASONS.every((se) => inSeason('bokchoy', se)), true);
+check('季節判定', [inSeason('watermelon', 'summer'), inSeason('watermelon', 'winter'), inSeason('nope', 'summer')], [true, false, false]);
+check('一次收成的作物：賣價比種子貴', crops.filter(([, c]) => !c.regrow).every(([, c]) => c.sell > c.seed), true);
+check('會再長的作物：收兩次就回本', crops.filter(([, c]) => c.regrow).every(([, c]) => c.sell * 2 > c.seed), true);
+check('會再長的作物：收完後看起來是「長大中」，不會變回小芽',
+  crops.filter(([, c]) => c.regrow).map(([id]) => cropStage({ crop: id, progress_ms: regrowProgressMs(id), tick_at: t0 }, t0)),
+  [2, 2, 2, 2]);
+check('一次收成的作物沒有再長', regrowProgressMs('carrot'), null);
+check('番茄收完再 4 小時又能收',
+  cropStage({ crop: 'tomato', progress_ms: regrowProgressMs('tomato'), tick_at: t0, watered_until: waterUntil(t0) }, t0 + 4 * H), 3);
+
+console.log('\n--- 每種作物都有圖 ---');
+const goodGrid = (g) => Array.isArray(g) && g.length === 16 && g.every((r) => r.length === 16 && [...r].every((ch) => ch === '.' || PALETTE[ch]));
+check('長大中、可收成兩張圖都有，而且是 16×16、顏色都有定義',
+  crops.filter(([id]) => !goodGrid(SPRITES[id + '_2']) || !goodGrid(SPRITES[id + '_3'])).map(([id]) => id), []);
+check('所有圖都是 16×16、顏色都有定義', Object.entries(SPRITES).filter(([, g]) => !goodGrid(g)).map(([n]) => n), []);
+
+console.log('\n--- 換季與換日 ---');
+const tw = (y, m, d, h = 0) => Date.UTC(y, m - 1, d, h) - 8 * H; // 台灣時間
+check('台灣半夜 12 點就是這一天的結束', dayEndOf(tw(2026, 11, 5, 15)), tw(2026, 11, 6));
+check('剛好 00:00 屬於新的一天', dayEndOf(tw(2026, 11, 6)), tw(2026, 11, 7));
+check('11 月的下一季（冬）從 12/1 開始', nextSeasonStart(tw(2026, 11, 5, 10)), tw(2026, 12, 1));
+check('12 月的下一季（春）從隔年 3/1 開始', nextSeasonStart(tw(2026, 12, 15)), tw(2027, 3, 1));
+check('2 月底的下一季是 3/1', nextSeasonStart(tw(2027, 2, 28, 23)), tw(2027, 3, 1));
+
+console.log('\n--- 天氣 ---');
+const yearDays = Array.from({ length: 365 }, (_, i) => taiwanDay(tw(2026, 1, 1, 12) + i * 24 * H));
+const ws = yearDays.map(weatherOf);
+check('天氣只有晴、多雲、雨', ws.every((w) => ['sun', 'cloud', 'rain'].includes(w)), true);
+check('同一天的天氣永遠一樣（才能預報明天）', weatherOf('2026-11-05') === weatherOf('2026-11-05'), true);
+const rainShare = ws.filter((w) => w === 'rain').length / 365;
+check(`一年大約一到三成是雨天（實際 ${(rainShare * 100).toFixed(0)}%）`, rainShare > 0.1 && rainShare < 0.3, true);
+const rainIn = (ms) => yearDays.filter((d, i) => ms.includes(Number(d.slice(5, 7))) && ws[i] === 'rain').length;
+check('春天（梅雨）比秋天多雨', rainIn([3, 4, 5]) > rainIn([9, 10, 11]), true);
+
+console.log('\n--- 下雨天自動澆水 ---');
+const rainOn = (days) => (d) => days.includes(d);
+const eve = tw(2026, 11, 5, 20); // 晚上 8 點種下，沒澆水
+check('下雨天沒澆水也會長', grownMs({ crop: 'cabbage', progress_ms: 0, tick_at: eve, watered_until: 0 }, eve + 2 * H, 1, rainOn(['2026-11-05'])), 2 * H);
+check('雨只下到半夜 12 點，隔天晴天就停（晚上 8 點種，只長 4 小時）',
+  grownMs({ crop: 'cabbage', progress_ms: 0, tick_at: eve, watered_until: 0 }, eve + 20 * H, 1, rainOn(['2026-11-05'])), 4 * H);
+check('澆水和下雨重疊不會算兩次',
+  wetMsBetween(eve, eve + 10 * H, eve + 10 * H, rainOn(['2026-11-05'])), 10 * H);
+check('連續下雨好幾天，加上一次澆水，加起來算',
+  wetMsBetween(eve, eve + 52 * H, eve + 2 * H, rainOn(['2026-11-06', '2026-11-07'])), 2 * H + 48 * H);
+check('離開很久（一年）也算得出來，而且長滿就停',
+  grownMs({ crop: 'pineapple', progress_ms: 0, tick_at: eve, watered_until: 0 }, eve + 365 * 24 * H, 1, (d) => d.endsWith('5')), cropTotalMs('pineapple'));
+check('土濕到什麼時候：澆了水、隔天又下雨 → 濕到隔天半夜',
+  wetUntilOf(eve + 24 * H, eve, rainOn(['2026-11-06'])), tw(2026, 11, 7));
+check('乾的土回傳 0', wetUntilOf(0, eve, rainOn([])), 0);
+check('今天下雨：濕到今天半夜', wetUntilOf(0, eve, rainOn(['2026-11-05'])), tw(2026, 11, 6));
+check('下雨天判定是濕土', isWet({ watered_until: 0 }, eve, rainOn(['2026-11-05'])), true);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

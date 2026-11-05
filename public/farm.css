@@ -87,6 +87,11 @@ canvas#world { position: fixed; inset: 0; width: 100%; height: 100%; display: bl
 .btn:disabled { opacity: .45; cursor: default; }
 .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
 .empty { text-align: center; color: #7a6a52; padding: 18px 0; font-size: 14px; }
+.note { margin: 6px 2px; font-size: 13px; color: #5c4d36; line-height: 1.5; }
+.row.off { opacity: .6; }
+.forecast .big { font-size: 28px; width: 32px; text-align: center; flex: none; }
+.modal h2 + .sub { margin-top: 2px; }
+.modal .forecast + h2 { margin-top: 14px; }
 
 .boot {
   position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center;

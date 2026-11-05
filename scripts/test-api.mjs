@@ -186,6 +186,16 @@ const fs0 = r.data;
 check('第一次打開就開墾牧場（500 元、9 包小白菜種子、體力 60）',
   r.status === 200 && fs0.farm?.money === 500 && fs0.items?.['seed:bokchoy'] === 9 && fs0.energy?.now === 60 && fs0.energy?.max === 60);
 check('地圖 30×20', fs0.map?.length === 20 && fs0.map.every((row) => row.length === 30));
+check('有季節、今天和明天的天氣、換季時間',
+  ['spring', 'summer', 'autumn', 'winter'].includes(fs0.season) && ['sun', 'cloud', 'rain'].includes(fs0.weather?.today)
+  && ['sun', 'cloud', 'rain'].includes(fs0.weather?.tomorrow) && fs0.seasonEndsAt > Date.now(), `${fs0.season} ${JSON.stringify(fs0.weather)}`);
+// 測試要在一年四季都能跑：從伺服器給的作物表挑「這一季有賣」和「這一季沒賣」的
+const cropIds = Object.keys(fs0.crops || {});
+const inSeasonNow = (id) => fs0.crops[id].seasons.includes(fs0.season);
+const buyable = cropIds.find((id) => id !== 'bokchoy' && inSeasonNow(id) && !fs0.crops[id].regrow);
+const offSeason = cropIds.find((id) => !inSeasonNow(id));
+const regrowCrop = cropIds.filter((id) => inSeasonNow(id) && fs0.crops[id].regrow).sort((a, b) => fs0.crops[a].hours - fs0.crops[b].hours)[0];
+check('這一季有別的種子可以買、也有不是這一季的、也有會再長的', !!buyable && !!offSeason && !!regrowCrop, `${buyable} / ${offSeason} / ${regrowCrop}`);
 await farmGet(groupId, TB);
 const farmSys = (await listIn(groupId, TA)).filter((m) => m.type === 'system' && m.content.includes('開墾了家族牧場'));
 check('聊天室出現「開墾了家族牧場」，而且只出現一次', farmSys.length === 1, farmSys.map((m) => m.content).join(' / '));
@@ -198,7 +208,9 @@ check('同一塊不能再翻一次', (await farmDo(groupId, { action: 'till', ..
 check('田地外面不能翻土', (await farmDo(groupId, { action: 'till', x: 5, y: 5 }, TA)).status === 400);
 check('座標亂填被擋', (await farmDo(groupId, { action: 'till', x: 'a', y: 1.5 }, TA)).status === 400);
 check('沒翻土不能播種', (await farmDo(groupId, { action: 'plant', crop: 'bokchoy', ...f2 }, TA)).status === 400);
-check('沒有的種子不能種', (await farmDo(groupId, { action: 'plant', crop: 'carrot', ...f1 }, TA)).status === 400);
+check('沒有的種子不能種', (await farmDo(groupId, { action: 'plant', crop: buyable, ...f1 }, TA)).status === 400);
+r = await farmDo(groupId, { action: 'plant', crop: offSeason, ...f1 }, TA);
+check('不是這一季的作物不能種', r.status === 400 && /才能種/.test(r.data.error || ''), r.data.error);
 r = await farmDo(groupId, { action: 'plant', crop: 'bokchoy', ...f1 }, TA);
 check('播種用掉一包種子', r.status === 200 && r.data.items['seed:bokchoy'] === 8 && r.data.tile?.crop === 'bokchoy' && r.data.tile.stage === 0);
 check('已經種了的地不能再種', (await farmDo(groupId, { action: 'plant', crop: 'bokchoy', ...f1 }, TA)).status === 400);
@@ -208,12 +220,17 @@ check('還沒成熟不能收成', (await farmDo(groupId, { action: 'harvest', ..
 r = await farmGet(groupId, TB);
 check('朋友B 看到同一塊田（全家共用）', r.data.tiles?.some((t) => t.x === f1.x && t.y === f1.y && t.crop === 'bokchoy'));
 check('體力是每人各自的（朋友B 還是 60）', r.data.energy?.now === 60);
-r = await farmDo(groupId, { action: 'buy', item: 'seed:carrot', qty: 2 }, TB);
-check('買 2 包紅蘿蔔種子 500 → 420（錢全家共用）', r.status === 200 && r.data.money === 420 && r.data.items['seed:carrot'] === 2);
-check('錢不夠不能買', (await farmDo(groupId, { action: 'buy', item: 'seed:strawberry', qty: 99 }, TB)).status === 400);
-check('商店不賣作物', (await farmDo(groupId, { action: 'buy', item: 'crop:carrot', qty: 1 }, TB)).status === 400);
-check('數量亂填被擋', (await farmDo(groupId, { action: 'buy', item: 'seed:carrot', qty: -1 }, TB)).status === 400
-  && (await farmDo(groupId, { action: 'buy', item: 'seed:carrot', qty: 1.5 }, TB)).status === 400);
+const price2 = fs0.crops[buyable].seed * 2;
+r = await farmDo(groupId, { action: 'buy', item: 'seed:' + buyable, qty: 2 }, TB);
+check(`買 2 包${fs0.crops[buyable].name}種子 500 → ${500 - price2}（錢全家共用）`,
+  r.status === 200 && r.data.money === 500 - price2 && r.data.items['seed:' + buyable] === 2);
+let money = 500 - price2;
+r = await farmDo(groupId, { action: 'buy', item: 'seed:' + offSeason, qty: 1 }, TB);
+check('這一季沒賣的種子買不到', r.status === 400 && /才有賣/.test(r.data.error || ''), r.data.error);
+check('錢不夠不能買', (await farmDo(groupId, { action: 'buy', item: 'seed:' + buyable, qty: 99 }, TB)).status === 400);
+check('商店不賣作物', (await farmDo(groupId, { action: 'buy', item: 'crop:' + buyable, qty: 1 }, TB)).status === 400);
+check('數量亂填被擋', (await farmDo(groupId, { action: 'buy', item: 'seed:' + buyable, qty: -1 }, TB)).status === 400
+  && (await farmDo(groupId, { action: 'buy', item: 'seed:' + buyable, qty: 1.5 }, TB)).status === 400);
 check('沒這種東西被擋', (await farmDo(groupId, { action: 'buy', item: 'seed:durian', qty: 1 }, TB)).status === 400);
 check('倉庫沒作物不能出貨', (await farmDo(groupId, { action: 'ship', item: 'crop:bokchoy', qty: 1 }, TB)).status === 400);
 check('不認識的動作被擋', (await farmDo(groupId, { action: 'steal' }, TB)).status === 400);
@@ -232,7 +249,20 @@ if (fs0.scale >= 3600) {
   r = await farmDo(groupId, { action: 'harvest', ...f1 }, TA);
   check('（加速模式）熟了可以收成，收進倉庫', r.status === 200 && r.data.items['crop:bokchoy'] === 1);
   r = await farmDo(groupId, { action: 'ship', item: 'crop:bokchoy', qty: 1 }, TB);
-  check('（加速模式）出貨小白菜 +45 元', r.status === 200 && r.data.money === 465);
+  money += 45;
+  check(`（加速模式）出貨小白菜 +45 元 → ${money}`, r.status === 200 && r.data.money === money);
+  // 會再長的作物：收完還在田裡，再等一下又能收
+  const rc = fs0.crops[regrowCrop];
+  r = await farmDo(groupId, { action: 'buy', item: 'seed:' + regrowCrop, qty: 1 }, TA);
+  await farmDo(groupId, { action: 'plant', crop: regrowCrop, ...f1 }, TA);
+  await farmDo(groupId, { action: 'water', ...f1 }, TA);
+  await new Promise((ok) => setTimeout(ok, rc.hours * 1000 + 600));
+  r = await farmDo(groupId, { action: 'harvest', ...f1 }, TA);
+  check(`（加速模式）${rc.name}收成後還留在田裡，回到「長大中」`, r.status === 200 && r.data.tile?.crop === regrowCrop && r.data.tile.stage === 2);
+  check(`（加速模式）${rc.name}剛收完不能馬上再收`, (await farmDo(groupId, { action: 'harvest', ...f1 }, TA)).status === 400);
+  await new Promise((ok) => setTimeout(ok, rc.regrow * 1000 + 600));
+  r = await farmDo(groupId, { action: 'harvest', ...f1 }, TA);
+  check(`（加速模式）再等 ${rc.regrow} 小時又能收，倉庫有 2 個`, r.status === 200 && r.data.items['crop:' + regrowCrop] === 2);
 }
 
 console.log('\n--- 管理員 ---');
