@@ -835,15 +835,7 @@ function renderSettings() {
         } catch (e2) { toast(e2.message); }
       }),
       setItem('成員管理', `${[...state.users.values()].filter((u) => !u.disabled).length} 位`, manageMembersModal),
-      setItem('下載聊天備份', null, async () => {
-        try {
-          const data = await api('/api/admin/export');
-          const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
-          const a = el('a', { href: URL.createObjectURL(blob), download: 'chat-backup.json' });
-          a.click();
-          URL.revokeObjectURL(a.href);
-        } catch (e2) { toast(e2.message); }
-      }),
+      setItem('下載聊天備份', null, downloadBackup),
       el('div', { class: 'set-note', text: '邀請碼留空並儲存＝關閉註冊。已註冊的人不受影響。' })));
   }
 
@@ -4190,6 +4182,48 @@ async function syncPushSubscription() {
     }
     await api('/api/push/subscribe', { method: 'POST', body: { subscription: sub.toJSON() } });
   } catch {}
+}
+
+/* ---------- 管理員：下載聊天備份 ---------- */
+
+// 伺服器每頁最多給約 8MB 的訊息（照片多時一次全拿會超過伺服器記憶體上限）。
+// 每一頁轉成一個 Blob 片段，最後組成一個檔案：大檔案交給瀏覽器的 Blob 儲存，
+// 不會整份留在網頁的記憶體裡。檔案格式跟以前一樣：
+// { exportedAt, users, conversations, members, messages: [...] }，訊息一則一行。
+async function downloadBackup() {
+  const bar = el('div', { class: 'toast', text: '正在準備備份…' });
+  $('toast-root').append(bar);
+  try {
+    const meta = await api('/api/admin/export');
+    const head = { exportedAt: meta.exportedAt, users: meta.users, conversations: meta.conversations, members: meta.members };
+    const parts = [JSON.stringify(head).slice(0, -1) + ',"messages":[\n'];
+    let after = 0;
+    let done = 0;
+    for (;;) {
+      const page = await api(`/api/admin/export?after=${after}`);
+      if (page.messages.length) {
+        parts.push(new Blob([(done ? ',\n' : '') + page.messages.map((m) => JSON.stringify(m)).join(',\n')]));
+        done += page.messages.length;
+        bar.textContent = `備份中… ${done} / ${meta.messageCount} 則`;
+      }
+      if (page.next == null) break;
+      after = page.next;
+    }
+    parts.push('\n]}\n');
+    const blob = new Blob(parts, { type: 'application/json' });
+    const day = new Date().toLocaleDateString('sv'); // YYYY-MM-DD（本地日期）
+    const a = el('a', { href: URL.createObjectURL(blob), download: `chat-backup-${day}.json` });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    // 太早釋放網址的話，有些瀏覽器會把還沒開始的下載取消
+    setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+    toast(`備份完成：${done} 則訊息（${(blob.size / 1048576).toFixed(1)} MB）`);
+  } catch (e) {
+    toast(e.message || '無法下載備份');
+  } finally {
+    bar.remove();
+  }
 }
 
 /* ---------- 管理員：成員管理 ---------- */

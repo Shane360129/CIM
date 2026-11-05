@@ -310,5 +310,39 @@ check('換一題後排行榜歸零、盤面換新',
 // 收尾：關閉邀請碼
 await j('/api/admin/settings', { method: 'PATCH', body: { inviteCode: '' } }, A0);
 
+console.log('\n--- 速度與備份上限（防止效能退步）---');
+// 這段會放 30 張約 450KB 的照片進去，量「打開聊天室」與「取照片」的時間，並檢查備份每頁大小有上限。
+// 門檻抓得很寬（正常值的十倍左右），只抓「慢了好幾倍」這種退步，不會因為電腦慢一點就失敗。
+// 例：曾經因為列訊息時把每張照片整張解碼，打開這個聊天室從 21ms 變成 1289ms。
+const SPEED_PHOTO = 'data:image/jpeg;base64,' + Buffer.alloc(460000, 7).toString('base64');
+const speedConv = (await j('/api/conversations', { method: 'POST', body: { type: 'group', name: '速度測試', memberIds: [IA, IB] } }, A0)).data.conversation.id;
+for (let k = 0; k < 30; k++)
+  await j(`/api/conversations/${speedConv}/messages`, { method: 'POST', body: { type: 'image', content: SPEED_PHOTO } }, A0);
+const medianMs = async (fn, reps = 7) => {
+  const t = [];
+  for (let k = 0; k < reps; k++) { const s0 = performance.now(); await fn(); t.push(performance.now() - s0); }
+  return t.sort((x, y) => x - y)[Math.floor(reps / 2)];
+};
+let speedList;
+const openMs = await medianMs(async () => { speedList = await j(`/api/conversations/${speedConv}/messages`, {}, A0); });
+check(`打開 30 張照片的聊天室在 300ms 內（實測 ${openMs.toFixed(0)}ms）`, openMs < 300);
+const speedMedia = speedList.data.messages.find((m) => m.type === 'image')?.meta?.media;
+const photoMs = await medianMs(() => fetch(B + speedMedia).then((res) => res.arrayBuffer()));
+check(`取一張照片在 50ms 內（實測 ${photoMs.toFixed(0)}ms）`, photoMs < 50);
+// 備份：每頁內容要有上限（伺服器記憶體 128MB；一次全拿的話照片一多就會失敗）
+const exMeta = (await j('/api/admin/export', {}, A0)).data;
+let exAfter = 0, exTotal = 0, exMaxPage = 0;
+for (;;) {
+  const res = await fetch(`${B}/api/admin/export?after=${exAfter}`, { headers: { authorization: 'Bearer ' + A0 } });
+  const text = await res.text();
+  const page = JSON.parse(text);
+  exTotal += page.messages.length;
+  exMaxPage = Math.max(exMaxPage, text.length);
+  if (page.next == null) break;
+  exAfter = page.next;
+}
+check(`備份分頁拿完全部訊息（${exTotal} / ${exMeta.messageCount}）`, exTotal === exMeta.messageCount);
+check(`備份每頁不超過 10.5MB（最大一頁 ${(exMaxPage / 1048576).toFixed(1)}MB）`, exMaxPage <= 10.5 * 1048576);
+
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

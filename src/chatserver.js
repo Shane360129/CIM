@@ -7,6 +7,8 @@ const SESSION_TTL = 1000 * 60 * 60 * 24 * 60; // 60 天未使用即需重新登�
 const UNSEND_WINDOW = 1000 * 60 * 60 * 24; // 送出後 24 小時內可收回
 const DAY = 86400000;
 const MEDIA_TTL_DAYS = 30; // 圖片／語音簽章網址的有效天數
+const EXPORT_PAGE_BYTES = 8 * 1024 * 1024; // 備份每頁最多約 8MB 內容（伺服器記憶體上限 128MB）
+const EXPORT_MAX_ROWS = 200;               // 純文字訊息時，每頁最多幾則
 const MAX_TEXT = 4000;
 const MAX_IMAGE = 700000; // data URL 長度上限（約 500KB 圖檔）
 const MAX_GIF = 1900000; // GIF 原檔直傳以保留動畫，上限約 1.4MB 檔案
@@ -1265,7 +1267,7 @@ export class ChatServer {
     }
     if (method === 'GET' && pathname === '/api/admin/export') {
       this.requireAdmin(me);
-      return this.exportData();
+      return this.exportData(url);
     }
 
     throw new HttpError(404, '找不到這個端點');
@@ -2371,14 +2373,50 @@ export class ChatServer {
     return json({ inviteCode: this.getSetting('invite_code'), privacyContacts: this.privacyOn() });
   }
 
-  exportData() {
-    const users = this.sql
-      .exec(`SELECT id, username, display_name, status_message, avatar_color, is_admin, created_at FROM users`)
+  // 下載聊天備份，分頁取：
+  //   GET /api/admin/export            → 帳號、聊天室、成員與訊息總數（很小）
+  //   GET /api/admin/export?after=<id> → 編號大於 id 的下一頁訊息，最多約 EXPORT_PAGE_BYTES
+  // 原本一次把全部訊息（含照片）組成一個 JSON：100 張照片時伺服器多吃 219MB，
+  // 超過 Cloudflare 每個執行環境 128MB 的上限，大約 50～60 張照片之後備份就會失敗。
+  // 試過串流回應，但執行環境不會等瀏覽器讀完才要下一批（300 張照片 1.7 秒就全部排進去），
+  // 記憶體一樣沒有上限；分頁則保證每次請求碰到的內容有固定上限，跟照片總數無關。
+  exportData(url) {
+    const afterParam = url.searchParams.get('after');
+    if (afterParam === null) {
+      return json({
+        exportedAt: Date.now(),
+        users: this.sql
+          .exec(`SELECT id, username, display_name, status_message, avatar_color, is_admin, created_at FROM users`)
+          .toArray(),
+        conversations: this.sql.exec(`SELECT * FROM conversations`).toArray(),
+        members: this.sql.exec(`SELECT * FROM members`).toArray(),
+        messageCount: this.sql.exec(`SELECT COUNT(*) AS c FROM messages`).one().c,
+      });
+    }
+    const after = Number(afterParam);
+    if (!Number.isInteger(after) || after < 0) throw new HttpError(400, '參數錯誤');
+    // 先只看每則的大小（不把內容讀進記憶體），湊到 EXPORT_PAGE_BYTES 為止。
+    // 純文字一頁可以有很多則；照片一頁十幾張；GIF（最大 1.9MB）一頁只放幾張。
+    const sizes = this.sql
+      .exec(
+        `SELECT id, length(content) + length(coalesce(meta, '')) AS n FROM messages
+         WHERE id > ? ORDER BY id LIMIT ?`, after, EXPORT_MAX_ROWS)
       .toArray();
-    const conversations = this.sql.exec(`SELECT * FROM conversations`).toArray();
-    const members = this.sql.exec(`SELECT * FROM members`).toArray();
-    const messages = this.sql.exec(`SELECT * FROM messages`).toArray();
-    return json({ exportedAt: Date.now(), users, conversations, members, messages });
+    if (!sizes.length) return json({ messages: [], next: null });
+    let used = 0;
+    let upto = 0;
+    let taken = 0;
+    for (const r of sizes) {
+      if (taken && used + r.n > EXPORT_PAGE_BYTES) break; // 至少放一則，單則最大也才 1.9MB
+      used += r.n;
+      upto = r.id;
+      taken++;
+    }
+    const messages = this.sql
+      .exec(`SELECT * FROM messages WHERE id > ? AND id <= ? ORDER BY id`, after, upto)
+      .toArray();
+    const more = taken < sizes.length || sizes.length === EXPORT_MAX_ROWS;
+    return json({ messages, next: more ? upto : null });
   }
 
   // ---------- 表情回應、投票、公告 ----------

@@ -90,6 +90,7 @@ console.log('\n--- 非管理員越權 ---');
 check('不能讀管理員設定', (await j('/api/admin/settings', {}, TA)).status === 403);
 check('不能改邀請碼', (await j('/api/admin/settings', { method: 'PATCH', body: { inviteCode: 'hack' } }, TA)).status === 403);
 check('不能下載整份聊天備份', (await j('/api/admin/export', {}, TA)).status === 403);
+check('也不能分頁偷拿備份', (await j('/api/admin/export?after=0', {}, TA)).status === 403);
 check('不能刪別人的帳號', (await j(`/api/admin/users/${IC}`, { method: 'DELETE' }, TA)).status === 403);
 check('不能重設別人的密碼', (await j(`/api/admin/users/${IC}/reset-password`, { method: 'POST' }, TA)).status === 403);
 
