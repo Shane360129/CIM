@@ -8,7 +8,9 @@ import {
   START_MONEY, START_ITEMS, isField, grownMs, cropStage, cropTotalMs, waterUntil,
   taiwanDay, seasonOf, SEASONS, WEATHERS, inSeason, regrowProgressMs, weatherOf, realRain, NO_RAIN,
   wetUntilOf, dayEndOf, nextSeasonStart,
+  ANIMALS, PRODUCTS, FEED_PRICE, LOVE_MAX, hearts, productOf, animalReadyAt, animalHasProduct, cleanAnimalName, PEN,
 } from './farm.js';
+const ANIMAL_EMOJI = { chicken: '🐔', cow: '🐄' };
 
 const SEASON_NAME = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
 const SEASON_EMOJI = { spring: '🌸', summer: '🌻', autumn: '🍂', winter: '⛄' };
@@ -261,6 +263,24 @@ CREATE TABLE IF NOT EXISTS farm_players (
 // 牧場記住「上次是哪一季」，換季後第一次有人打開時在聊天室說一聲
 const SCHEMA_V8 = `ALTER TABLE farms ADD COLUMN season_seen TEXT;`;
 
+// 牧場的動物：fed_at 最近一次餵的時間、fed_day 那天（台灣日期）、collected 這次的產品收了沒、
+// love 喜歡程度（0～20）、petted_day 最近一次被摸的日期
+const SCHEMA_V9 = `
+CREATE TABLE IF NOT EXISTS farm_animals (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  conversation_id INTEGER NOT NULL,
+  kind TEXT NOT NULL,
+  name TEXT NOT NULL,
+  bought_at INTEGER NOT NULL,
+  fed_at INTEGER NOT NULL DEFAULT 0,
+  fed_day TEXT NOT NULL DEFAULT '',
+  collected INTEGER NOT NULL DEFAULT 1,
+  love INTEGER NOT NULL DEFAULT 0,
+  petted_day TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_farm_animals_conv ON farm_animals(conversation_id);
+`;
+
 // 訊息中的網址：http(s):// 或 www. 開頭，遇到空白、引號或中文標點即結束
 // （與前端 public/app.js 的 URL_RE / trimUrlTail 保持一致）
 const URL_RE = /(?:https?:\/\/|www\.)[^\s<>"'`\u3000、，。！？：；（）「」『』【】《》〈〉…]+/i;
@@ -489,6 +509,10 @@ export class ChatServer {
       if (v < 8) {
         this.sql.exec(SCHEMA_V8);
         this.setSetting('schema_version', '8');
+      }
+      if (v < 9) {
+        this.sql.exec(SCHEMA_V9);
+        this.setSetting('schema_version', '9');
       }
     });
     // 心跳不喚醒 DO：客戶端送 "ping"，執行環境自動回 "pong"
@@ -1619,7 +1643,7 @@ export class ChatServer {
     if (remaining.length === 0) {
       this.sql.exec(`DELETE FROM messages WHERE conversation_id = ?`, conversationId);
       this.sql.exec(`DELETE FROM conversations WHERE id = ?`, conversationId);
-      for (const t of ['farms', 'farm_tiles', 'farm_items', 'farm_players'])
+      for (const t of ['farms', 'farm_tiles', 'farm_items', 'farm_players', 'farm_animals'])
         this.sql.exec(`DELETE FROM ${t} WHERE conversation_id = ?`, conversationId);
     } else {
       this.addSystemMessage(conversationId, `${me.display_name} 離開了群組`);
@@ -1719,6 +1743,7 @@ export class ChatServer {
         farms: this.sql.exec(`SELECT * FROM farms`).toArray(),
         farmTiles: this.sql.exec(`SELECT * FROM farm_tiles`).toArray(),
         farmItems: this.sql.exec(`SELECT * FROM farm_items`).toArray(),
+        farmAnimals: this.sql.exec(`SELECT * FROM farm_animals`).toArray(),
         messageCount: this.sql.exec(`SELECT COUNT(*) AS c FROM messages`).one().c,
       });
     }
@@ -2271,6 +2296,20 @@ export class ChatServer {
     };
   }
 
+  farmAnimalRows(conversationId) {
+    return this.sql.exec(`SELECT * FROM farm_animals WHERE conversation_id = ? ORDER BY id`, conversationId).toArray();
+  }
+
+  // 送給前端的動物：readyAt 是這次產品好的時間（0＝還沒餵或已經收了）
+  farmAnimalPub(a, scale, today) {
+    return {
+      id: a.id, kind: a.kind, name: a.name, love: a.love, hearts: hearts(a.love),
+      fedToday: a.fed_day === today, pettedToday: a.petted_day === today,
+      readyAt: a.fed_at && !a.collected ? animalReadyAt(a, scale) : 0,
+      product: productOf(a.kind, a.love),
+    };
+  }
+
   sendToFarm(conversationId, event, except = null) {
     const str = JSON.stringify(event);
     for (const ws of this.ctx.getWebSockets(`f:${conversationId}`)) {
@@ -2320,6 +2359,7 @@ export class ChatServer {
       .toArray()
       .map((t) => this.farmTilePub(t, now, scale, rainy));
     const today = taiwanDay(now);
+    const animals = this.farmAnimalRows(conversationId).map((a) => this.farmAnimalPub(a, scale, today));
     return json({
       farm: { id: conversationId, title, money: farm.money, createdBy: names.get(farm.created_by) || null },
       map: FARM_MAP, spawn: FARM_SPAWN,
@@ -2328,6 +2368,7 @@ export class ChatServer {
       members: memberRows.map((r) => ({ id: r.id, name: r.display_name, color: r.avatar_color })),
       now, scale, waterHours: WATER_HOURS, season, day: today,
       seasonEndsAt: nextSeasonStart(now),
+      animals, animalKinds: ANIMALS, products: PRODUCTS, feedPrice: FEED_PRICE, pen: PEN,
       weather: { today: this.farmWeather(today), tomorrow: this.farmWeather(taiwanDay(dayEndOf(now))) },
     });
   }
@@ -2348,6 +2389,7 @@ export class ChatServer {
     };
     let tileOut = null;
     let gained = null;
+    let animalsChanged = false;
 
     if (['till', 'dig', 'plant', 'water', 'harvest'].includes(action)) {
       const x = Number(body.x), y = Number(body.y);
@@ -2404,23 +2446,85 @@ export class ChatServer {
       const item = String(body.item || '');
       const qty = Number(body.qty);
       if (!Number.isInteger(qty) || qty < 1 || qty > 999) throw new HttpError(400, '數量不正確');
-      const [kind, crop] = item.split(':');
-      if (!CROPS[crop]) throw new HttpError(400, '沒有這樣東西');
+      const [kind, id] = item.split(':');
       if (action === 'buy') {
-        if (kind !== 'seed') throw new HttpError(400, '商店只賣種子');
-        if (!inSeason(crop, season))
-          throw new HttpError(400, `${CROPS[crop].name}種子要${seasonsText(CROPS[crop].seasons)}天才有賣`);
-        const cost = CROPS[crop].seed * qty;
-        const money = this.sql.exec(`SELECT money FROM farms WHERE conversation_id = ?`, conversationId).one().money;
-        if (money < cost) throw new HttpError(400, '錢不夠');
-        this.sql.exec(`UPDATE farms SET money = money - ? WHERE conversation_id = ?`, cost, conversationId);
+        let cost;
+        if (item === 'feed') cost = FEED_PRICE * qty;
+        else {
+          if (kind !== 'seed' || !CROPS[id]) throw new HttpError(400, '攤位只賣種子和飼料');
+          if (!inSeason(id, season))
+            throw new HttpError(400, `${CROPS[id].name}種子要${seasonsText(CROPS[id].seasons)}天才有賣`);
+          cost = CROPS[id].seed * qty;
+        }
+        this.farmSpend(conversationId, cost);
         this.farmAddItem(conversationId, item, qty);
       } else {
-        if (kind !== 'crop') throw new HttpError(400, '出貨箱只收作物');
+        const price = kind === 'crop' && CROPS[id] ? CROPS[id].sell : kind === 'prod' && PRODUCTS[id] ? PRODUCTS[id].sell : 0;
+        if (!price) throw new HttpError(400, '出貨箱只收作物、雞蛋和牛奶');
         if ((this.farmItems(conversationId)[item] || 0) < qty) throw new HttpError(400, '倉庫裡沒有那麼多');
         this.farmAddItem(conversationId, item, -qty);
-        this.sql.exec(`UPDATE farms SET money = money + ? WHERE conversation_id = ?`, CROPS[crop].sell * qty, conversationId);
+        this.sql.exec(`UPDATE farms SET money = money + ? WHERE conversation_id = ?`, price * qty, conversationId);
       }
+    } else if (action === 'buy_animal') {
+      const kind = String(body.kind || '');
+      const A = ANIMALS[kind];
+      if (!A) throw new HttpError(400, '沒有這種動物');
+      const name = cleanAnimalName(body.name);
+      if (!name) throw new HttpError(400, '幫牠取個名字吧（1～8 個字）');
+      const have = this.sql.exec(`SELECT COUNT(*) AS n FROM farm_animals WHERE conversation_id = ? AND kind = ?`,
+        conversationId, kind).one().n;
+      if (have >= A.max) throw new HttpError(400, `動物小屋最多養 ${A.max} 隻${A.name}`);
+      this.farmSpend(conversationId, A.price);
+      this.sql.exec(`INSERT INTO farm_animals (conversation_id, kind, name, bought_at) VALUES (?, ?, ?, ?)`,
+        conversationId, kind, name, now);
+      animalsChanged = true;
+      this.addSystemMessage(conversationId, `${ANIMAL_EMOJI[kind]} ${me.display_name} 帶了一隻${A.name}回牧場，取名「${name}」`);
+    } else if (['feed', 'pet', 'collect'].includes(action)) {
+      const animalId = Number(body.animalId);
+      const a = Number.isInteger(animalId) && this.sql
+        .exec(`SELECT * FROM farm_animals WHERE id = ? AND conversation_id = ?`, animalId, conversationId).toArray()[0];
+      if (!a) throw new HttpError(400, '找不到這隻動物');
+      const today = taiwanDay(now);
+      if (action === 'feed') gained = this.farmFeed(conversationId, a, now, scale, today, spend);
+      else if (action === 'pet') {
+        if (a.petted_day === today) throw new HttpError(400, `今天已經摸過${a.name}了，明天再來 ❤️`);
+        spend(ENERGY_COST.pet);
+        a.love = Math.min(LOVE_MAX, a.love + 1);
+        a.petted_day = today;
+      } else {
+        if (!a.fed_at || a.collected) throw new HttpError(400, `${a.name}還沒有${PRODUCTS[productOf(a.kind, a.love)].name}，先餵牠吃飯`);
+        if (!animalHasProduct(a, now, scale)) throw new HttpError(400, `${a.name}的${PRODUCTS[productOf(a.kind, a.love)].name}還沒好，等一下再來`);
+        gained = this.farmCollect(conversationId, a);
+      }
+      this.farmSaveAnimal(a);
+      animalsChanged = true;
+    } else if (action === 'feed_all' || action === 'collect_all') {
+      // 動物小屋裡一次餵完／一次收完：能做幾隻做幾隻，一隻都沒辦法才回錯誤
+      const today = taiwanDay(now);
+      let done = 0, firstError = null;
+      const got = {};
+      for (const a of this.farmAnimalRows(conversationId)) {
+        try {
+          let g = null;
+          if (action === 'feed_all') {
+            if (a.fed_day === today) continue;
+            g = this.farmFeed(conversationId, a, now, scale, today, spend);
+          } else {
+            if (!animalHasProduct(a, now, scale)) continue;
+            g = this.farmCollect(conversationId, a);
+          }
+          this.farmSaveAnimal(a);
+          if (g) got[g.item] = (got[g.item] || 0) + 1;
+          done++;
+        } catch (e) {
+          if (!(e instanceof HttpError)) throw e;
+          firstError = firstError || e;
+          if (/飼料|體力/.test(e.message)) break; // 飼料或體力用完，後面的也不用試了
+        }
+      }
+      if (!done) throw firstError || new HttpError(400, action === 'feed_all' ? '大家今天都吃飽了 😊' : '現在沒有可以收的');
+      gained = { count: done, items: got };
+      animalsChanged = true;
     } else {
       throw new HttpError(400, '不支援的動作');
     }
@@ -2429,11 +2533,45 @@ export class ChatServer {
       p.energy, conversationId, me.id);
     const money = this.sql.exec(`SELECT money FROM farms WHERE conversation_id = ?`, conversationId).one().money;
     const items = this.farmItems(conversationId);
-    // 同一座牧場的其他人：田地、錢、倉庫即時同步（體力是個人的，不廣播）
+    const animals = animalsChanged
+      ? this.farmAnimalRows(conversationId).map((a) => this.farmAnimalPub(a, scale, taiwanDay(now))) : undefined;
+    // 同一座牧場的其他人：田地、錢、倉庫、動物即時同步（體力是個人的，不廣播）
     this.sendToFarm(conversationId, {
-      type: 'farm-update', by: me.id, action, tiles: tileOut ? [tileOut] : [], money, items, now,
+      type: 'farm-update', by: me.id, action, tiles: tileOut ? [tileOut] : [], money, items, animals, now,
     });
-    return json({ ok: true, energy: p.energy, tile: tileOut, money, items, gained, now });
+    return json({ ok: true, energy: p.energy, tile: tileOut, money, items, animals, gained, now });
+  }
+
+  farmSpend(conversationId, cost) {
+    const money = this.sql.exec(`SELECT money FROM farms WHERE conversation_id = ?`, conversationId).one().money;
+    if (money < cost) throw new HttpError(400, '錢不夠');
+    this.sql.exec(`UPDATE farms SET money = money - ? WHERE conversation_id = ?`, cost, conversationId);
+  }
+
+  // 餵一隻動物。先檢查完（吃過了沒、還在消化、有沒有飼料、體力），再動資料，
+  // 中途出錯才不會只做一半。上一次的產品還沒收的話，順手收進倉庫
+  farmFeed(conversationId, a, now, scale, today, spend) {
+    if (a.fed_day === today) throw new HttpError(400, `${a.name}今天吃過了`);
+    const pending = a.fed_at && !a.collected;
+    if (pending && !animalHasProduct(a, now, scale)) throw new HttpError(400, `${a.name}還在消化，等一下再餵`);
+    if ((this.farmItems(conversationId).feed || 0) < 1) throw new HttpError(400, '沒有飼料了，去攤位或動物小屋買');
+    spend(ENERGY_COST.feed);
+    const got = pending ? this.farmCollect(conversationId, a) : null;
+    this.farmAddItem(conversationId, 'feed', -1);
+    Object.assign(a, { fed_at: now, fed_day: today, collected: 0, love: Math.min(LOVE_MAX, a.love + 1) });
+    return got;
+  }
+
+  farmCollect(conversationId, a) {
+    const item = `prod:${productOf(a.kind, a.love)}`;
+    this.farmAddItem(conversationId, item, 1);
+    a.collected = 1;
+    return { item, qty: 1 };
+  }
+
+  farmSaveAnimal(a) {
+    this.sql.exec(`UPDATE farm_animals SET fed_at = ?, fed_day = ?, collected = ?, love = ?, petted_day = ? WHERE id = ?`,
+      a.fed_at, a.fed_day, a.collected, a.love, a.petted_day, a.id);
   }
 
   sendToUsers(userIds, event) {

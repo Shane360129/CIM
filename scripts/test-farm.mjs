@@ -8,6 +8,7 @@ import {
   FARM_MAP, FARM_W, FARM_H, FARM_SPAWN, CROPS, isField, isWalkable, terrainAt,
   grownMs, cropStage, cropTotalMs, isWet, waterUntil, taiwanDay, seasonOf, WATER_HOURS,
   SEASONS, inSeason, regrowProgressMs, weatherOf, wetMsBetween, wetUntilOf, dayEndOf, nextSeasonStart,
+  PEN, PEN_GATE, ANIMALS, PRODUCTS, LOVE_BEST, hearts, productOf, animalReadyAt, animalHasProduct, cleanAnimalName,
 } from '../src/farm.js';
 import { SPRITES, PALETTE } from '../public/farm-sprites.js';
 
@@ -42,6 +43,22 @@ const touchable = (ch) => cells.filter((p) => p.c === ch).some((p) =>
   [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => seen.has(`${p.x + dx},${p.y + dy}`)));
 check('出貨箱走得到旁邊', touchable('B'), true);
 check('商店攤位走得到旁邊', touchable('S'), true);
+check('動物小屋走得到旁邊', touchable('A'), true);
+const penCells = cells.filter((p) => p.x >= PEN.x0 && p.x <= PEN.x1 && p.y >= PEN.y0 && p.y <= PEN.y1);
+check('動物圍欄裡都是草地（5×6 格）', [penCells.length, penCells.every((p) => p.c === '.')], [30, true]);
+check('圍欄裡每一格都走得到（從門進去）', penCells.every((p) => seen.has(`${p.x},${p.y}`)), true);
+check('圍欄的門是開的', isWalkable(PEN_GATE.x, PEN_GATE.y), true);
+// 把門關起來，圍欄就進不去 → 證明動物跑不出來、人只能從門進出
+const closed = new Set([`${FARM_SPAWN.x},${FARM_SPAWN.y}`]);
+const q2 = [[FARM_SPAWN.x, FARM_SPAWN.y]];
+while (q2.length) {
+  const [x, y] = q2.shift();
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const nx = x + dx, ny = y + dy, k = `${nx},${ny}`;
+    if (!closed.has(k) && isWalkable(nx, ny) && !(nx === PEN_GATE.x && ny === PEN_GATE.y)) { closed.add(k); q2.push([nx, ny]); }
+  }
+}
+check('圍欄只有一個門（門關起來就進不去）', penCells.some((p) => closed.has(`${p.x},${p.y}`)), false);
 check('只有 F 能耕作', [isField(4, 9), isField(3, 9), isField(5, 6)], [true, false, false]);
 
 console.log('\n--- 作物只在濕土時長大 ---');
@@ -89,11 +106,29 @@ check('一次收成的作物沒有再長', regrowProgressMs('carrot'), null);
 check('番茄收完再 4 小時又能收',
   cropStage({ crop: 'tomato', progress_ms: regrowProgressMs('tomato'), tick_at: t0, watered_until: waterUntil(t0) }, t0 + 4 * H), 3);
 
+console.log('\n--- 動物 ---');
+check('愛心：每 4 點一顆，最多 5 顆', [hearts(0), hearts(3), hearts(4), hearts(13), hearts(20), hearts(99), hearts(-5)], [0, 0, 1, 3, 5, 5, 0]);
+check('愛心夠了，雞蛋變大顆、牛奶變濃醇',
+  [productOf('chicken', LOVE_BEST - 1), productOf('chicken', LOVE_BEST), productOf('cow', 0), productOf('cow', 20)], ['egg', 'egg_l', 'milk', 'milk_l']);
+check('高級產品比較值錢', Object.values(ANIMALS).every((A) => PRODUCTS[A.best].sell > PRODUCTS[A.product].sell), true);
+const hen = { kind: 'chicken', fed_at: t0, collected: 0 };
+check('雞餵完 4 小時才有蛋', [animalHasProduct(hen, t0 + 4 * H - 1), animalHasProduct(hen, t0 + 4 * H)], [false, true]);
+check('收過了就沒有', animalHasProduct({ ...hen, collected: 1 }, t0 + 9 * H), false);
+check('沒餵過就沒有', animalHasProduct({ kind: 'chicken', fed_at: 0, collected: 0 }, t0), false);
+check('時間倍率 3600：雞 4 秒就有蛋', animalReadyAt(hen, 3600) - t0, 4000);
+check('牛要 6 小時', animalReadyAt({ kind: 'cow', fed_at: t0 }) - t0, 6 * H);
+check('名字：前後空白去掉', cleanAnimalName('  小花 '), '小花');
+check('名字：空的、太長的不行', [cleanAnimalName(''), cleanAnimalName('   '), cleanAnimalName('一二三四五六七八九')], [null, null, null]);
+check('名字：8 個字可以、表情符號算一個字', [cleanAnimalName('一二三四五六七八'), cleanAnimalName('🐔咕咕')], ['一二三四五六七八', '🐔咕咕']);
+check('名字：控制字元、反向文字之類的隱藏字元會被拿掉', cleanAnimalName('小\u202e花\u0000\u200b'), '小花');
+
 console.log('\n--- 每種作物都有圖 ---');
 const goodGrid = (g) => Array.isArray(g) && g.length === 16 && g.every((r) => r.length === 16 && [...r].every((ch) => ch === '.' || PALETTE[ch]));
 check('長大中、可收成兩張圖都有，而且是 16×16、顏色都有定義',
   crops.filter(([id]) => !goodGrid(SPRITES[id + '_2']) || !goodGrid(SPRITES[id + '_3'])).map(([id]) => id), []);
 check('所有圖都是 16×16、顏色都有定義', Object.entries(SPRITES).filter(([, g]) => !goodGrid(g)).map(([n]) => n), []);
+check('動物（兩張走路圖）、雞蛋牛奶、飼料都有圖',
+  [...Object.keys(ANIMALS).flatMap((k) => [k + '_0', k + '_1']), ...Object.keys(PRODUCTS), 'feed'].filter((n) => !goodGrid(SPRITES[n])), []);
 
 console.log('\n--- 換季與換日 ---');
 const tw = (y, m, d, h = 0) => Date.UTC(y, m - 1, d, h) - 8 * H; // 台灣時間

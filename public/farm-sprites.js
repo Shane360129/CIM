@@ -50,7 +50,9 @@ export const PALETTE = {
  "Q": "#2f6b2a",
  "A": "#efe0a0",
  "H": "#c99a2e",
- "E": "#e6e2d6"
+ "E": "#e6e2d6",
+ "I": "#f4a3b5",
+ "B": "#e9e4da"
 };
 
 export const SPRITES = {
@@ -918,6 +920,168 @@ export const SPRITES = {
   "................",
   "................"
  ],
+ "chicken_0": [
+  "................",
+  "................",
+  "................",
+  "..........xx....",
+  ".........xxx....",
+  ".........iiii...",
+  ".........iioiO..",
+  "..i......iiiiOO.",
+  "..ii....iiiix...",
+  "..iii.iiiiii....",
+  "...iiiiiiiiiB...",
+  "...BiiiiiiiiB...",
+  "....BiiiiiBB....",
+  ".....BBBBBB.....",
+  "......O..O......",
+  ".....OO..OO....."
+ ],
+ "chicken_1": [
+  "................",
+  "................",
+  "................",
+  "..........xx....",
+  ".........xxx....",
+  ".........iiii...",
+  ".........iioiO..",
+  "..i......iiiiOO.",
+  "..ii....iiiix...",
+  "..iii.iiiiii....",
+  "...iiiiiiiiiB...",
+  "...BiiiiiiiiB...",
+  "....BiiiiiBB....",
+  ".....BBBBBB.....",
+  ".....O....O.....",
+  "....OO....OO...."
+ ],
+ "cow_0": [
+  "................",
+  "................",
+  "................",
+  "............y.y.",
+  "...........oiiio",
+  "............ioi.",
+  ".o.iiiiooiiiiii.",
+  ".oiiiiooooiiIII.",
+  "..iiiiiooiiiIoI.",
+  "..iiiiiiiiiiIII.",
+  "..iiooiiiiiii...",
+  "..BiooiiiiiiB...",
+  "..ii.ii..ii.ii..",
+  "..ii.ii..ii.ii..",
+  "..oo.oo..oo.oo..",
+  "................"
+ ],
+ "cow_1": [
+  "................",
+  "................",
+  "................",
+  "............y.y.",
+  "...........oiiio",
+  "............ioi.",
+  ".o.iiiiooiiiiii.",
+  ".oiiiiooooiiIII.",
+  "..iiiiiooiiiIoI.",
+  "..iiiiiiiiiiIII.",
+  "..iiooiiiiiii...",
+  "..BiooiiiiiiB...",
+  "...ii.ii.ii..ii.",
+  "...ii.ii.ii..ii.",
+  "...oo.oo.oo..oo.",
+  "................"
+ ],
+ "egg": [
+  "................",
+  "................",
+  "................",
+  "......iiii......",
+  ".....iiiiii.....",
+  "....iiiiiiiB....",
+  "....iiiiiiiB....",
+  "...iiiiiiiiiB...",
+  "...iiiiiiiiiB...",
+  "...iiiiiiiiBB...",
+  "...BiiiiiiiBB...",
+  "....BiiiiiBB....",
+  ".....BBBBBB.....",
+  "................",
+  "................",
+  "................"
+ ],
+ "egg_l": [
+  "..j.............",
+  ".jij............",
+  "..j...AAAA......",
+  ".....AAiAAA.....",
+  "....AAiAAAAj....",
+  "....AAAAAAAj....",
+  "...AAAAAAAAAj...",
+  "...AAAAAAAAAj...",
+  "...AAAAAAAAjj...",
+  "...jAAAAAAAjj...",
+  "....jAAAAAjj..j.",
+  ".....jjjjjj..jij",
+  "..............j.",
+  "................",
+  "................",
+  "................"
+ ],
+ "milk": [
+  "................",
+  "......wwww......",
+  "......wwww......",
+  "......iiii......",
+  ".....iiiiii.....",
+  "....iiiiiiiB....",
+  "....iiiiiiiB....",
+  "....iwwwwwiB....",
+  "....iwiiiwiB....",
+  "....iwwwwwiB....",
+  "....iiiiiiiB....",
+  "....iiiiiiiB....",
+  "....BBBBBBBB....",
+  "................",
+  "................",
+  "................"
+ ],
+ "milk_l": [
+  "..j.............",
+  ".jij..jjjj......",
+  "..j...jjjj......",
+  "......iiii......",
+  ".....iiiiii.....",
+  "....iiiiiiiB....",
+  "....iiiiiiiB....",
+  "....ijjjjjiB....",
+  "....ijxxxjiB....",
+  "....ijjjjjiB....",
+  "....iiiiiiiB....",
+  "....iiiiiiiB..j.",
+  "....BBBBBBBB.jij",
+  "..............j.",
+  "................",
+  "................"
+ ],
+ "feed": [
+  "................",
+  "................",
+  "......y..y......",
+  ".......yy.......",
+  "......YyyY......",
+  ".....yyyyyy.....",
+  "....yyyyyyyy....",
+  "....yyjjjjyy....",
+  "...yyjjjjjjyy...",
+  "...yyyjjjjyyy...",
+  "...yyyyyyyyyy...",
+  "...Yyyyyyyyyz...",
+  "....YYYYYYzz....",
+  "................",
+  "................",
+  "................"
+ ],
  "cursor": [
   "aaaa........aaaa",
   "a..............a",
@@ -1127,6 +1291,27 @@ export function houseSprite(ground = '#62ad4b') {
   for (const wx of [10, 44]) { r('#5e3b20', wx - 1, 29, 12, 10); r('#9ad6f6', wx, 30, 10, 8); r('#ffffff', wx + 1, 31, 3, 2); r('#5e3b20', wx + 4, 30, 1, 8); }
   r(ground, 4, 46, 56, 2);
   cache.set('house|' + ground, c);
+  return c;
+}
+
+// 動物小屋（4×3 格 = 64×48）：紅色穀倉、白邊、大門上有白色 X、上面有放乾草的小窗
+export function barnSprite(ground = '#62ad4b') {
+  if (cache.has('barn|' + ground)) return cache.get('barn|' + ground);
+  const c = document.createElement('canvas');
+  c.width = 64; c.height = 48;
+  const g = c.getContext('2d');
+  const r = (col, x, y, w, h) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
+  for (let i = 0; i < 14; i++) r(i % 3 === 2 ? '#5e2219' : '#7a2e22', 18 - i, 2 + i, 28 + 2 * i, 1);   // 屋頂
+  r('#5e2219', 2, 16, 60, 2);
+  r('#b8432f', 4, 18, 56, 28);                                                                        // 牆
+  for (let x = 8; x < 60; x += 6) r('#a33a28', x, 18, 1, 28);                                         // 木板紋
+  r('#ffffff', 4, 18, 56, 1); r('#ffffff', 4, 18, 1, 28); r('#ffffff', 59, 18, 1, 28);              // 白邊
+  r('#ffffff', 26, 6, 12, 9); r('#e8c26a', 27, 7, 10, 7); r('#c99a2e', 27, 11, 10, 3);              // 乾草窗
+  r('#ffffff', 21, 26, 22, 20); r('#8f2a1d', 23, 28, 18, 18);                                         // 大門
+  for (let i = 0; i < 18; i++) { r('#ffffff', 23 + i, 28 + i, 1, 1); r('#ffffff', 40 - i, 28 + i, 1, 1); }
+  r('#ffffff', 31, 28, 2, 18);
+  r(ground, 4, 46, 17, 2); r(ground, 43, 46, 17, 2);
+  cache.set('barn|' + ground, c);
   return c;
 }
 

@@ -192,7 +192,8 @@ check('有季節、今天和明天的天氣、換季時間',
 // 測試要在一年四季都能跑：從伺服器給的作物表挑「這一季有賣」和「這一季沒賣」的
 const cropIds = Object.keys(fs0.crops || {});
 const inSeasonNow = (id) => fs0.crops[id].seasons.includes(fs0.season);
-const buyable = cropIds.find((id) => id !== 'bokchoy' && inSeasonNow(id) && !fs0.crops[id].regrow);
+const buyable = cropIds.filter((id) => id !== 'bokchoy' && inSeasonNow(id) && !fs0.crops[id].regrow)
+  .sort((a, b) => fs0.crops[a].seed - fs0.crops[b].seed)[0];
 const offSeason = cropIds.find((id) => !inSeasonNow(id));
 const regrowCrop = cropIds.filter((id) => inSeasonNow(id) && fs0.crops[id].regrow).sort((a, b) => fs0.crops[a].hours - fs0.crops[b].hours)[0];
 check('這一季有別的種子可以買、也有不是這一季的、也有會再長的', !!buyable && !!offSeason && !!regrowCrop, `${buyable} / ${offSeason} / ${regrowCrop}`);
@@ -220,11 +221,11 @@ check('還沒成熟不能收成', (await farmDo(groupId, { action: 'harvest', ..
 r = await farmGet(groupId, TB);
 check('朋友B 看到同一塊田（全家共用）', r.data.tiles?.some((t) => t.x === f1.x && t.y === f1.y && t.crop === 'bokchoy'));
 check('體力是每人各自的（朋友B 還是 60）', r.data.energy?.now === 60);
-const price2 = fs0.crops[buyable].seed * 2;
-r = await farmDo(groupId, { action: 'buy', item: 'seed:' + buyable, qty: 2 }, TB);
-check(`買 2 包${fs0.crops[buyable].name}種子 500 → ${500 - price2}（錢全家共用）`,
-  r.status === 200 && r.data.money === 500 - price2 && r.data.items['seed:' + buyable] === 2);
-let money = 500 - price2;
+const price1 = fs0.crops[buyable].seed;
+r = await farmDo(groupId, { action: 'buy', item: 'seed:' + buyable, qty: 1 }, TB);
+check(`買 1 包${fs0.crops[buyable].name}種子 500 → ${500 - price1}（錢全家共用）`,
+  r.status === 200 && r.data.money === 500 - price1 && r.data.items['seed:' + buyable] === 1);
+let money = 500 - price1;
 r = await farmDo(groupId, { action: 'buy', item: 'seed:' + offSeason, qty: 1 }, TB);
 check('這一季沒賣的種子買不到', r.status === 400 && /才有賣/.test(r.data.error || ''), r.data.error);
 check('錢不夠不能買', (await farmDo(groupId, { action: 'buy', item: 'seed:' + buyable, qty: 99 }, TB)).status === 400);
@@ -241,6 +242,46 @@ let tills = 0;
 for (const f of fields.slice(1, 31)) if ((await farmDo(groupId, { action: 'till', ...f }, TB)).status === 200) tills++;
 r = await farmDo(groupId, { action: 'till', ...fields[31] }, TB);
 check('體力 60 剛好翻 30 塊，第 31 塊說體力用完', tills === 30 && r.status === 400 && /體力/.test(r.data.error || ''), `${tills} 塊；${r.data.error}`);
+
+// 動物：在動物小屋買、取名字、每天摸摸和餵飯，過幾個小時收雞蛋
+check('一開始沒有動物，有雞和牛可以買', fs0.animals?.length === 0 && !!fs0.animalKinds?.chicken && !!fs0.animalKinds?.cow);
+check('買動物要取名字', (await farmDo(groupId, { action: 'buy_animal', kind: 'chicken', name: '  ' }, TA)).status === 400);
+check('名字太長不行', (await farmDo(groupId, { action: 'buy_animal', kind: 'chicken', name: '一二三四五六七八九' }, TA)).status === 400);
+check('沒有這種動物', (await farmDo(groupId, { action: 'buy_animal', kind: 'dragon', name: '小龍' }, TA)).status === 400);
+r = await farmDo(groupId, { action: 'buy_animal', kind: 'chicken', name: '小花' }, TA);
+money -= fs0.animalKinds.chicken.price;
+const hen = r.data.animals?.[0];
+check(`買一隻雞取名「小花」，錢 → ${money}`, r.status === 200 && r.data.money === money && hen?.name === '小花' && hen.kind === 'chicken');
+check('聊天室說誰帶了雞回來、叫什麼名字',
+  (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('帶了一隻雞回牧場，取名「小花」')));
+check('朋友B 也看到小花', ((await farmGet(groupId, TB)).data.animals || []).some((a) => a.name === '小花'));
+r = await farmDo(groupId, { action: 'feed', animalId: hen.id }, TA);
+check('沒有飼料不能餵', r.status === 400 && /飼料/.test(r.data.error || ''), r.data.error);
+r = await farmDo(groupId, { action: 'buy', item: 'feed', qty: 2 }, TA);
+money -= 2 * fs0.feedPrice;
+check(`買 2 包飼料，錢 → ${money}`, r.status === 200 && r.data.items.feed === 2 && r.data.money === money);
+r = await farmDo(groupId, { action: 'pet', animalId: hen.id }, TA);
+check('摸摸小花，牠更喜歡你了', r.status === 200 && r.data.animals[0].love === 1 && r.data.animals[0].pettedToday);
+check('一天只能摸一次', (await farmDo(groupId, { action: 'pet', animalId: hen.id }, TA)).status === 400);
+check('還沒餵就沒有雞蛋可以收', (await farmDo(groupId, { action: 'collect', animalId: hen.id }, TA)).status === 400);
+const eBefore = (await farmGet(groupId, TA)).data.energy.now;
+r = await farmDo(groupId, { action: 'feed', animalId: hen.id }, TA);
+check('餵飯：用掉一包飼料、1 點體力，雞蛋幾小時後好',
+  r.status === 200 && r.data.items.feed === 1 && r.data.energy === eBefore - 1 && r.data.animals[0].fedToday && r.data.animals[0].readyAt > Date.now() - 5000);
+check('一天只能餵一次', (await farmDo(groupId, { action: 'feed', animalId: hen.id }, TA)).status === 400);
+check('全部餵：大家都吃飽了會說', /吃飽/.test((await farmDo(groupId, { action: 'feed_all' }, TA)).data.error || ''));
+check('雞蛋還沒好不能收', (await farmDo(groupId, { action: 'collect', animalId: hen.id }, TA)).status === 400);
+check('全部收：現在沒有可以收的', (await farmDo(groupId, { action: 'collect_all' }, TA)).status === 400);
+check('動物編號亂填被擋', (await farmDo(groupId, { action: 'pet', animalId: 'abc' }, TA)).status === 400
+  && (await farmDo(groupId, { action: 'pet', animalId: 999999 }, TA)).status === 400);
+// 朋友A 也在「管理員 ↔ 朋友A」的私訊裡，那邊是另一座牧場：不能拿這邊的小花去那邊摸
+await farmGet(dmAdminA.id, TA);
+check('不能隔著別座牧場碰這隻雞', (await farmDo(dmAdminA.id, { action: 'pet', animalId: hen.id }, TA)).status === 400);
+check('不是成員不能碰小花（404）', (await farmDo(dmAdminA.id, { action: 'feed', animalId: hen.id }, TB)).status === 404);
+check('攤位不賣雞蛋', (await farmDo(groupId, { action: 'buy', item: 'prod:egg', qty: 1 }, TA)).status === 400);
+check('出貨箱不收飼料', (await farmDo(groupId, { action: 'ship', item: 'feed', qty: 1 }, TA)).status === 400);
+check('沒有雞蛋不能出貨', (await farmDo(groupId, { action: 'ship', item: 'prod:egg', qty: 1 }, TA)).status === 400);
+
 const farmMs = await medianMs(() => farmGet(groupId, TA));
 check(`打開牧場在 150ms 內（實測 ${farmMs.toFixed(0)}ms）`, farmMs < 150);
 if (fs0.scale >= 3600) {
@@ -251,6 +292,12 @@ if (fs0.scale >= 3600) {
   r = await farmDo(groupId, { action: 'ship', item: 'crop:bokchoy', qty: 1 }, TB);
   money += 45;
   check(`（加速模式）出貨小白菜 +45 元 → ${money}`, r.status === 200 && r.data.money === money);
+  await new Promise((ok) => setTimeout(ok, 800)); // 雞 4 小時＝4 秒，從餵飯到這裡大約 3.5 秒多
+  r = await farmDo(groupId, { action: 'collect_all' }, TA);
+  check('（加速模式）雞 4 小時後下蛋，全部收', r.status === 200 && r.data.items['prod:egg'] === 1 && r.data.gained.count === 1);
+  r = await farmDo(groupId, { action: 'ship', item: 'prod:egg', qty: 1 }, TA);
+  money += 50;
+  check(`（加速模式）雞蛋出貨 +50 元 → ${money}`, r.status === 200 && r.data.money === money);
   // 會再長的作物：收完還在田裡，再等一下又能收
   const rc = fs0.crops[regrowCrop];
   r = await farmDo(groupId, { action: 'buy', item: 'seed:' + regrowCrop, qty: 1 }, TA);
@@ -273,6 +320,7 @@ check('舊密碼不能用了', (await j('/api/login', { method: 'POST', body: { 
 check('臨時密碼可以登入', (await j('/api/login', { method: 'POST', body: { username: u('c'), password: temp } })).status === 200);
 r = await j('/api/admin/export', {}, A0);
 check('管理員可以下載備份', r.status === 200 && Array.isArray(r.data.users) && r.data.messageCount > 0);
+check('備份包含牧場的動物', (r.data.farmAnimals || []).some((a) => a.name === '小花'));
 
 console.log('\n--- 速度與備份上限（防止效能退步）---');
 // 這段會放 30 張約 450KB 的照片進去，量「打開聊天室」與「取照片」的時間，並檢查備份每頁大小有上限。

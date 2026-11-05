@@ -109,6 +109,10 @@ fw = await farmWs(dm.id, 'f'.repeat(64));
 check('假 token 連不上牧場即時連線', !fw.ok);
 fw = await farmWs(dm.id, TA);
 check('自己連得上，並收到「誰在牧場」', fw.ok && fw.msg?.type === 'farm-presence');
+const r0 = await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'buy_animal', kind: 'chicken', name: '\u202e花\u200b小\u0007' } }, TA);
+check('動物名字裡的隱藏字元（反向文字、零寬、控制字元）會被拿掉', r0.status === 200 && r0.data.animals?.[0]?.name === '花小', JSON.stringify(r0.data.animals?.[0]?.name));
+check('別人不能摸我牧場的動物（404）',
+  (await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'pet', animalId: r0.data.animals?.[0]?.id } }, TC)).status === 404);
 check('牧場內容大小有上限（超大請求被擋）',
   (await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'till', x: 4, y: 9, junk: 'x'.repeat(5000) } }, TA)).status >= 400);
 

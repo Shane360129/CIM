@@ -11,7 +11,8 @@ const HOUR = 3600000;
 const DAY = 24 * HOUR;
 const TW = 8 * HOUR; // 台灣時間 UTC+8
 
-// 地形：T 樹、. 草地、= 小路、F 田、f 柵欄、H 房子、S 商店、B 出貨箱、W 池塘
+// 地形：T 樹、. 草地、= 小路、F 田、f 柵欄、H 房子、S 商店、B 出貨箱、W 池塘、A 動物小屋
+// 動物小屋下面用柵欄圍了一塊草地給雞和牛散步，左邊 (22,13) 是門
 export const FARM_MAP = [
   'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
   'TT......T....................T',
@@ -20,20 +21,23 @@ export const FARM_MAP = [
   'T..HHHH..B..............WWWW.T',
   'T....=..................WWW..T',
   'T....=================.......T',
-  'T....=...............=.......T',
-  'T..ffffffffffffffff..=.......T',
-  'T..fFFFFFFFFFFFFFFf..=.....T.T',
-  'T..fFFFFFFFFFFFFFFf..=.......T',
-  'T..fFFFFFFFFFFFFFFf..=.......T',
-  'T.TfFFFFFFFFFFFFFFf..=.......T',
-  'T..fFFFFFFFFFFFFFFf..=.......T',
-  'T..fFFFFFFFFFFFFFFf..=....T..T',
-  'T..fffffff..fffffff..=.......T',
-  'T....=...............=.......T',
+  'T....=...............=.AAAA..T',
+  'T..ffffffffffffffff..=.AAAA..T',
+  'T..fFFFFFFFFFFFFFFf..=fAAAAffT',
+  'T..fFFFFFFFFFFFFFFf..=f.....fT',
+  'T..fFFFFFFFFFFFFFFf..=f.....fT',
+  'T.TfFFFFFFFFFFFFFFf..=f.....fT',
+  'T..fFFFFFFFFFFFFFFf..=......fT',
+  'T..fFFFFFFFFFFFFFFf..=f.....fT',
+  'T..fffffff..fffffff..=f.....fT',
+  'T....=...............=fffffffT',
   'T....=================.......T',
   'T...........T................T',
   'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
 ];
+// 動物活動的範圍（柵欄裡面）
+export const PEN = { x0: 23, y0: 10, x1: 27, y1: 15 };
+export const PEN_GATE = { x: 22, y: 13 };
 export const FARM_W = FARM_MAP[0].length;
 export const FARM_H = FARM_MAP.length;
 export const FARM_SPAWN = { x: 5, y: 5 }; // 家門口
@@ -63,8 +67,37 @@ export const CROPS = {
 };
 export const inSeason = (crop, season) => !!CROPS[crop] && CROPS[crop].seasons.includes(season);
 
+// 動物：在動物小屋買，買的時候幫牠取名字。每天餵一次飼料，過幾個小時就有雞蛋／牛奶可以收。
+// 每天摸摸、餵飯會讓牠更喜歡你（愛心），愛心夠多，產品會變成高級的（比較值錢）。
+// 沒餵只是那天沒有產品，不會生病、也不會跑掉。
+export const ANIMALS = {
+  chicken: { name: '雞', price: 300, max: 6, hours: 4, product: 'egg', best: 'egg_l' },
+  cow: { name: '牛', price: 1200, max: 4, hours: 6, product: 'milk', best: 'milk_l' },
+};
+export const PRODUCTS = {
+  egg: { name: '雞蛋', sell: 50 },
+  egg_l: { name: '大顆雞蛋', sell: 80 },
+  milk: { name: '牛奶', sell: 100 },
+  milk_l: { name: '濃醇牛奶', sell: 160 },
+};
+export const FEED_PRICE = 10;      // 一包飼料，一隻動物吃一天
+export const LOVE_MAX = 20;        // 每 4 點一顆愛心，最多 5 顆
+export const LOVE_BEST = 12;       // 3 顆愛心以上，產品變高級
+export const hearts = (love) => Math.floor(Math.min(LOVE_MAX, Math.max(0, love || 0)) / 4);
+export const productOf = (kind, love) => (love >= LOVE_BEST ? ANIMALS[kind].best : ANIMALS[kind].product);
+// 餵完之後產品什麼時候好（scale 一樣只給本機測試）
+export const animalReadyAt = (a, scale = 1) => (a.fed_at || 0) + (ANIMALS[a.kind].hours * HOUR) / scale;
+export const animalHasProduct = (a, now, scale = 1) => !!a.fed_at && !a.collected && now >= animalReadyAt(a, scale);
+
+// 動物名字：去掉前後空白與控制字元，1～8 個字
+export function cleanAnimalName(raw) {
+  const s = [...String(raw || '').replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2066-\u2069]/g, '').trim()];
+  if (!s.length || s.length > 8) return null;
+  return s.join('');
+}
+
 export const ENERGY_MAX = 60;
-export const ENERGY_COST = { till: 2, dig: 1, plant: 1, water: 1, harvest: 0 };
+export const ENERGY_COST = { till: 2, dig: 1, plant: 1, water: 1, harvest: 0, feed: 1, pet: 0, collect: 0 };
 export const WATER_HOURS = 24;
 export const START_MONEY = 500;
 export const START_ITEMS = { 'seed:bokchoy': 9 };
