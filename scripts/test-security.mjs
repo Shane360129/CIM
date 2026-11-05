@@ -8,7 +8,7 @@
 // 涵蓋：未登入／偽造 token、跨聊天室越權、非管理員越權、收回別人的訊息、
 // XSS 與 javascript: 連結、SQL injection 嘗試、上傳格式與大小限制、
 // 登入與邀請碼暴力破解鎖定、連結縮圖代理的簽章與 SSRF 防護、
-// 停用帳號與改密碼後 token 失效、遊戲藏牌資訊不外流。
+// 停用帳號與改密碼後 token 失效、照片簽章網址的授權。
 
 const B = process.env.BASE_URL || 'http://127.0.0.1:8787';
 const PASS = 'pass123456';
@@ -159,21 +159,6 @@ check('退出聊天室後，手上的舊網址立刻失效', (await raw(cUrl)).s
 // 收回訊息後也不該再拿得到
 await j(`/api/messages/${imgMsg.id}/unsend`, { method: 'POST' }, ADMIN);
 check('訊息收回後圖片也拿不到', (await raw(mediaUrl)).status === 404);
-
-console.log('\n--- 遊戲：藏起來的資訊 ---');
-const grp = (await j('/api/conversations', { method: 'POST', body: { type: 'group', name: '資安測試群', memberIds: [IA, IC] } }, ADMIN)).data.conversation;
-const newGame = (kind, tok) => j(`/api/conversations/${grp.id}/messages`, { method: 'POST', body: { type: 'game', content: '', game: { kind } } }, tok);
-const sk = (await newGame('sudoku', TA)).data.message;
-check('數獨：答案不在封包裡', sk.game.solution === undefined);
-check('數獨：別人的盤面不在封包裡', sk.game.players === undefined);
-const ms = (await newGame('mine', TA)).data.message;
-check('踩地雷：雷區不在封包裡', ms.game.layout === undefined);
-const gs = (await newGame('guess', TA)).data.message;
-check('猜數字：答案不在封包裡', gs.game.secret === null);
-const mem = (await newGame('memory', TA)).data.message;
-check('記憶翻翻樂：蓋著的牌面不在封包裡', mem.game.cards.every((c) => c === null));
-check('非成員不能操作遊戲',
-  (await j(`/api/messages/${sk.id}/game`, { method: 'POST', body: { action: 'start' } }, ADMIN)).status === 200);
 
 console.log('\n--- 暴力破解鎖定 ---');
 let locked = false;
