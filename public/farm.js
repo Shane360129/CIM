@@ -40,6 +40,7 @@ const S = {
   area: 'farm', maps: {}, arrive: {}, villagers: {}, friends: {}, request: null, tools: { hoe: 1, can: 1 },
   foods: {}, toolShop: {}, villagersOut: true, talks: 0,
   exits: {}, fishData: {}, oreData: {}, rocks: [], dex: [], fishing: null, dishes: {}, ingGroups: {},
+  festivals: {}, festival: null, festivalClaimed: false, nextFestival: null, todayEvents: [], birthdays: [],
   tool: 'hoe', seed: 'bokchoy', busy: false,
   me: { x: 5, y: 5, d: 'd', step: null, path: [], pending: null, anim: 0 },
   others: new Map(), floats: [], keys: [], view: 3, cam: { x: 0, y: 0 },
@@ -82,7 +83,7 @@ function itemInfo(item) {
 const ingItems = (k) => (S.ingGroups[k] ? S.ingGroups[k].items : [k]);
 const ingName = (k) => (S.ingGroups[k] ? S.ingGroups[k].name : (itemInfo(k) || { name: k }).name);
 const ingHave = (k) => ingItems(k).reduce((n, i) => n + (S.items[i] || 0), 0);
-const canCook = (id) => Object.entries(S.dishes[id].need).every(([k, q]) => ingHave(k) >= q);
+const canCook = (id) => !!S.dishes[id].need && Object.entries(S.dishes[id].need).every(([k, q]) => ingHave(k) >= q);
 const heartsText = (n) => '❤️'.repeat(n) + '🤍'.repeat(5 - n);
 
 function toast(msg) {
@@ -112,6 +113,7 @@ function setTile(t, at) {
 function applyTown(t) {
   if (!t) return;
   S.friends = t.friends; S.request = t.request; S.tools = t.tools;
+  if (t.festivalClaimed !== undefined) S.festivalClaimed = t.festivalClaimed;
 }
 
 function applyState(st) {
@@ -120,6 +122,9 @@ function applyState(st) {
   S.exits = st.exits || {}; S.fishData = st.fish || {}; S.oreData = st.ores || {};
   S.rocks = st.rocks || []; S.dex = st.dex || [];
   S.dishes = st.dishes || {}; S.ingGroups = st.ingredientGroups || {};
+  S.festivals = st.festivals || {}; S.festival = st.festival || null; S.nextFestival = st.nextFestival || null;
+  S.todayEvents = st.todayEvents || []; S.birthdays = st.birthdays || [];
+  for (const id of Object.keys(villagerTiles)) delete villagerTiles[id]; // 節日村民會換到廣場
   S.map = S.maps[S.area]; S.H = S.map.length; S.W = S.map[0].length;
   S.arrive = st.arrive || {}; S.villagers = st.villagers || {}; S.foods = st.foods || {}; S.toolShop = st.toolShop || {};
   S.villagersOut = st.villagersOut !== false;
@@ -186,7 +191,8 @@ function renderClock() {
   const hh = String(d.getUTCHours()).padStart(2, '0');
   const mm = String(d.getUTCMinutes()).padStart(2, '0');
   $('hud-clock').textContent =
-    `${d.getUTCMonth() + 1}/${d.getUTCDate()}（${WEEK[d.getUTCDay()]}）${hh}:${mm}・${SEASON[S.season] || ''} ${(WEATHER[S.weather.today] || WEATHER.sun)[0]}`;
+    `${d.getUTCMonth() + 1}/${d.getUTCDate()}（${WEEK[d.getUTCDay()]}）${hh}:${mm}・${SEASON[S.season] || ''} ${(WEATHER[S.weather.today] || WEATHER.sun)[0]}` +
+    (S.festival && S.festivals[S.festival] ? ` ${S.festivals[S.festival].emoji}` : '') + (S.birthdays.length ? ' 🎂' : '');
 }
 
 function renderToolbar() {
@@ -517,9 +523,10 @@ async function mineRock(x, y) {
   } catch {}
 }
 
+const recipeIds = () => Object.keys(S.dishes).filter((id) => S.dishes[id].need);
 // 家裡的廚房：用倉庫裡的東西煮菜（不花體力），煮好的菜可以吃、賣、送人
 function openKitchen() {
-  const ids = Object.keys(S.dishes).sort((a, b) => (canCook(b) ? 1 : 0) - (canCook(a) ? 1 : 0));
+  const ids = recipeIds().sort((a, b) => (canCook(b) ? 1 : 0) - (canCook(a) ? 1 : 0));
   const rows = ids.map((id) => {
     const d = S.dishes[id];
     const need = Object.entries(d.need).map(([k, q]) => `${ingName(k)} ${Math.min(ingHave(k), q)}/${q}`).join('・');
@@ -567,11 +574,11 @@ function openDex() {
   const nf = Object.keys(S.fishData).filter((id) => have.has('fish:' + id)).length;
   const no = Object.keys(S.oreData).filter((id) => have.has('ore:' + id)).length;
   openModal(el('h2', { text: '📖 圖鑑' }),
-    el('p', { class: 'sub', text: `魚 ${nf}/${Object.keys(S.fishData).length}・礦石 ${no}/${Object.keys(S.oreData).length}・料理 ${Object.keys(S.dishes).filter((id) => have.has('dish:' + id)).length}/${Object.keys(S.dishes).length}。第一次拿到會在聊天室說一聲。` }),
+    el('p', { class: 'sub', text: `魚 ${nf}/${Object.keys(S.fishData).length}・礦石 ${no}/${Object.keys(S.oreData).length}・料理 ${recipeIds().filter((id) => have.has('dish:' + id)).length}/${recipeIds().length}。第一次拿到會在聊天室說一聲。` }),
     el('h2', { class: 'section', text: '🎣 魚' }), ...section('fish', S.fishData),
     el('h2', { class: 'section', text: '⛏️ 礦石' }), ...section('ore', S.oreData),
-    el('h2', { class: 'section', text: `🍳 料理 ${Object.keys(S.dishes).filter((id) => have.has('dish:' + id)).length}/${Object.keys(S.dishes).length}` }),
-    ...Object.entries(S.dishes).map(([id, d]) => {
+    el('h2', { class: 'section', text: `🍳 料理 ${recipeIds().filter((id) => have.has('dish:' + id)).length}/${recipeIds().length}` }),
+    ...recipeIds().map((id) => [id, S.dishes[id]]).map(([id, d]) => {
       const got = have.has('dish:' + id);
       return el('div', { class: 'row' + (got ? '' : ' off') }, got ? icon(`dish_${id}@${d.shape}`) : el('span', { class: 'big', text: '❔' }),
         el('div', { class: 'grow' }, el('div', { class: 'name', text: got ? d.name : '？？？' }),
@@ -589,9 +596,11 @@ function fishHint(d, unknown) {
 
 // 村民在自己那一帶走來走去，位置由「村民＋時間」算出來，全家看到的一樣
 const villagerTiles = {};
+const PLAZA = { x0: 9, y0: 7, x1: 20, y1: 11 };
 function zoneTiles(id) {
   if (villagerTiles[id]) return villagerTiles[id];
-  const z = S.villagers[id].zone, out = [];
+  // 節日大家都到廣場（雜貨店、小吃店的老闆還是顧店）
+  const z = S.festival && id !== 'fu' && id !== 'mei' ? PLAZA : S.villagers[id].zone, out = [];
   for (let y = z.y0; y <= z.y1; y++) for (let x = z.x0; x <= z.x1; x++)
     if (WALK.has(((S.maps.town || [])[y] || '')[x])) out.push({ x, y });
   return (villagerTiles[id] = out);
@@ -627,6 +636,10 @@ const isBirthdayToday = (id) => S.villagers[id] && S.villagers[id].birthday === 
 function lineOf(id) {
   const v = S.villagers[id], L = v.lines, f = S.friends[id] || { hearts: 0 };
   if (isBirthdayToday(id)) return '今天是我的生日耶！你記得嗎？';
+  // 節日、家人生日：一半的時候說應景的話
+  const F = S.festival && S.festivals[S.festival];
+  if (F && S.talks % 2 === 0) return F.line;
+  if (S.birthdays.length && S.talks % 2 === 1) return `聽說今天是「${S.birthdays[0]}」？替我說聲生日快樂！`;
   const pool = [...L.any, ...(L[S.season] || []), ...(L[S.season] || [])];
   if (S.weather.today === 'rain') pool.push(...L.rain, ...L.rain);
   if (f.hearts >= 6) pool.push(...L.close, ...L.close);
@@ -698,6 +711,18 @@ function openGift(id) {
 function openBoard() {
   const q = S.request;
   const rows = [];
+  const F = S.festival && S.festivals[S.festival];
+  if (F) {
+    const g = F.gift;
+    const giftText = [g.money ? `${g.money} 元` : null, g.item ? `${(itemInfo(g.item) || { name: g.item }).name} ×${g.qty}` : null].filter(Boolean).join('、');
+    rows.push(el('div', { class: 'row festival' }, el('span', { class: 'big', text: F.emoji }),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: `今天是${F.name}！` }),
+        el('div', { class: 'meta', text: S.festivalClaimed ? '今天的節慶禮物已經領了' : `節慶禮物：${giftText}（全家一份）` })),
+      S.festivalClaimed ? null : el('button', {
+        class: 'btn primary', type: 'button', text: '領禮物',
+        onclick: async () => { try { await doAct({ action: 'festival_claim' }); toast(`🎁 領到${giftText}！`); openBoard(); } catch {} },
+      })));
+  }
   if (q) {
     const c = itemInfo(q.item) || { name: q.item, icon: 'seed' };
     const have = S.items[q.item] || 0;
@@ -795,7 +820,31 @@ function openForecast() {
     el('p', { class: 'note', text: `這一季可以種：${now_.join('、')}` }),
     coming.length ? el('p', { class: 'note', text: `${SEASON[next]}天會上架：${coming.join('、')}` }) : null,
     el('p', { class: 'note', text: '換季時，已經種下去的作物會繼續長完，不會枯掉。' }),
+    ...festivalInfo(),
     el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
+}
+// 節慶與行事曆：今天的節日、下一個節日、行事曆上今天的事，以及把節日加到行事曆
+function festivalInfo() {
+  const out = [el('h2', { class: 'section', text: '🎊 節慶與行事曆' })];
+  const F = S.festival && S.festivals[S.festival];
+  if (F) out.push(el('p', { class: 'note', text: `${F.emoji} 今天是${F.name}！到小鎮的告示板領節慶禮物${S.festivalClaimed ? '（今天已經領過了）' : ''}。` }));
+  if (S.nextFestival && S.festivals[S.nextFestival.id]) {
+    const N = S.festivals[S.nextFestival.id];
+    const days = Math.round((Date.parse(S.nextFestival.date) - Date.parse(todayTW())) / 86400000);
+    const [, m, d] = S.nextFestival.date.split('-').map(Number);
+    out.push(el('p', { class: 'note', text: `下一個節日：${N.emoji} ${N.name}（${m}/${d}，還有 ${days} 天）` }));
+  }
+  out.push(el('p', { class: 'note', text: S.todayEvents.length ? `📅 行事曆上的今天：${S.todayEvents.join('、')}` : '📅 行事曆上今天沒有事情。行事曆寫了家人生日，當天牧場也會幫忙慶生喔！' }));
+  out.push(el('div', { class: 'actions wrap' }, el('button', {
+    class: 'btn', type: 'button', text: '📅 把接下來一年的節日加到行事曆',
+    onclick: async () => {
+      try {
+        const r = await doAct({ action: 'festival_calendar' });
+        toast(r.gained.added ? `加了 ${r.gained.added} 個節日到行事曆，當天早上 9 點會提醒大家` : '行事曆上已經都有了');
+      } catch {}
+    },
+  })));
+  return out;
 }
 
 function confirmDig(t, x, y) {
@@ -1247,6 +1296,25 @@ function draw() {
         : ch === 'G' ? storeSprite() : ch === 'R' ? eaterySprite() : ch === 'Q' ? homeSprite(homes++)
         : fountainSprite(Math.floor(Date.now() / 500) % 2);
       g.drawImage(img, x * T, y * T);
+    }
+  }
+
+  // 節日的小鎮：大馬路上掛彩旗；春節、元宵、端午、七夕、中秋在廣場掛燈籠
+  if (S.area === 'town' && S.festival) {
+    const cols = ['#e0393e', '#f6d34a', '#3f9a3f', '#4aa3df'];
+    g.fillStyle = '#7a4e2d'; g.fillRect(5 * T, 5 * T + 1, 24 * T, 1);
+    for (let i = 0; i < 24 * 2; i++) {
+      g.fillStyle = cols[i % cols.length];
+      const bx = 5 * T + i * 8 + 1;
+      for (let r = 0; r < 4; r++) g.fillRect(bx + r, 5 * T + 2 + r, 6 - 2 * r, 1);
+    }
+    if (['spring', 'lantern', 'dragon', 'qixi', 'moon'].includes(S.festival)) {
+      for (let x = 9; x <= 20; x += 2) {
+        g.fillStyle = '#7a4e2d'; g.fillRect(x * T + 7, 7 * T - 4, 1, 3);
+        g.fillStyle = '#e0393e'; g.fillRect(x * T + 4, 7 * T - 1, 8, 7);
+        g.fillStyle = '#a8252b'; g.fillRect(x * T + 4, 7 * T + 1, 8, 1);
+        g.fillStyle = '#f6d34a'; g.fillRect(x * T + 7, 7 * T + 6, 2, 3);
+      }
     }
   }
 

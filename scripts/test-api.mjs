@@ -342,7 +342,7 @@ if (fs0.villagersOut) {
 }
 
 // 料理
-check('有 17 道菜的食譜', Object.keys(fs0.dishes || {}).length === 17 && !!fs0.ingredientGroups?.egg);
+check('有 17 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 17 && !!fs0.ingredientGroups?.egg);
 check('沒有這道菜', (await farmDo(groupId, { action: 'cook', dish: 'steak' }, TA)).status === 400
   && (await farmDo(groupId, { action: 'cook', dish: 'constructor' }, TA)).status === 400);
 r = await farmDo(groupId, { action: 'cook', dish: 'pumpkin_soup' }, TA);
@@ -355,6 +355,42 @@ const dmAB = (await j('/api/conversations', { method: 'POST', body: { type: 'dm'
 r = await j(`/api/farm/${dmAB.id}/dishes`, {}, A0);
 check('沒開過牧場的聊天室：清單是空的，也不會因此開墾牧場',
   r.status === 200 && r.data.dishes.length === 0 && !(await listIn(dmAB.id, A0)).some((m) => m.content.includes('開墾')));
+
+// 節日與行事曆（本機測試時用 FARM_FESTIVAL 假裝今天是某個節日）
+check('有 9 個節日的資料、下一個節日', Object.keys(fs0.festivals || {}).length === 9 && !!fs0.nextFestival?.date && fs0.nextFestival.date > fs0.day);
+check('節慶食物不能自己煮', /節慶/.test((await farmDo(groupId, { action: 'cook', dish: 'mooncake' }, TA)).data.error || ''));
+if (fs0.festival) {
+  const F = fs0.festivals[fs0.festival];
+  check(`今天是${F.name}：聊天室說一聲（只說一次）`, (await listIn(groupId, TA)).filter((m) => m.type === 'system' && m.content.includes(`今天是${F.name}`)).length === 1);
+  check('還沒領節慶禮物', fs0.festivalClaimed === false);
+  r = await farmDo(groupId, { action: 'festival_claim' }, TB);
+  money += F.gift.money || 0;
+  check(`朋友B 領${F.name}的禮物`, r.status === 200 && r.data.money === money && r.data.town.festivalClaimed === true
+    && (!F.gift.item || r.data.items[F.gift.item] >= F.gift.qty));
+  check('聊天室說誰領了禮物', (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes(`領了${F.name}的禮物`)));
+  check('一座牧場一個節日只能領一份', /領過了/.test((await farmDo(groupId, { action: 'festival_claim' }, TA)).data.error || ''));
+  check('朋友A 打開也看到已經領了', (await farmGet(groupId, TA)).data.festivalClaimed === true);
+} else {
+  check('不是節日不能領禮物', /不是節日/.test((await farmDo(groupId, { action: 'festival_claim' }, TA)).data.error || ''));
+}
+// 行事曆上今天有人生日 → 美玲姐送蛋糕（一天一次）
+const cake0 = (await farmGet(groupId, TA)).data.items['dish:cake'] || 0;
+r = await j('/api/events', { method: 'POST', body: { title: '爸爸生日', date: fs0.day, remindAt: Date.now() + 3600000 } }, TA);
+const bdayEv = r.data.event;
+const fBday = (await farmGet(groupId, TB)).data;
+check('行事曆上今天有人生日：牧場知道、送來一個生日蛋糕', fBday.birthdays?.includes('爸爸生日') && fBday.todayEvents.includes('爸爸生日') && fBday.items['dish:cake'] === cake0 + 1);
+check('聊天室說小鎮幫忙慶生', (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('爸爸生日') && m.content.includes('生日蛋糕')));
+check('再打開不會再送一個', (await farmGet(groupId, TA)).data.items['dish:cake'] === cake0 + 1);
+await j(`/api/events/${bdayEv.id}`, { method: 'DELETE' }, TA);
+// 把接下來一年的節日加到行事曆
+r = await farmDo(groupId, { action: 'festival_calendar' }, TA);
+const addedFest = r.data.gained?.added;
+check(`把接下來一年的節日加到行事曆（加了 ${addedFest} 個）`, r.status === 200 && addedFest >= 9 && addedFest <= 10);
+const nf = fs0.nextFestival, nfF = fs0.festivals[nf.id];
+const evs = (await j('/api/events', {}, TB)).data.events || [];
+check(`行事曆有「${nfF.emoji} ${nfF.name}」${nf.date}`, evs.some((e) => e.title === `${nfF.emoji} ${nfF.name}` && e.date === nf.date && e.note === '家族牧場加的節慶'));
+check('再按一次不會重複加', (await farmDo(groupId, { action: 'festival_calendar' }, TB)).data.gained?.added === 0);
+for (const e of evs.filter((x) => x.note === '家族牧場加的節慶')) await j(`/api/events/${e.id}`, { method: 'DELETE' }, TA);
 
 const farmMs = await medianMs(() => farmGet(groupId, TA));
 check(`打開牧場在 150ms 內（實測 ${farmMs.toFixed(0)}ms）`, farmMs < 150);

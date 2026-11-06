@@ -12,7 +12,7 @@ import {
   TOWN_MAP, AREAS, ARRIVE, VILLAGERS, FRIEND_MAX, friendHearts, giftPoints, friendReward, villagerOut, requestOf,
   TALK_POINTS, REQUEST_POINTS, FOODS, TOOL_UPGRADES, area3x3, isBirthday,
   HILL_MAP, EXITS, FISH, ORES, fishSpot, isDaytime, fishChoices, pickWeighted, rocksOf, itemPrice, itemName, terrainAt,
-  DISHES, INGREDIENT_GROUPS, cookTakes,
+  DISHES, INGREDIENT_GROUPS, cookTakes, FESTIVALS, festivalOn, festivalsAfter, nextFestival, isBirthdayEvent,
 } from './farm.js';
 const ANIMAL_EMOJI = { chicken: '🐔', cow: '🐄' };
 
@@ -320,6 +320,13 @@ CREATE TABLE IF NOT EXISTS farm_dex (
 );
 `;
 
+// 節慶：今天的節日說過了沒、節慶禮物領了沒、行事曆上的家人生日慶祝過了沒（都記日期）
+const SCHEMA_V12 = `
+ALTER TABLE farms ADD COLUMN festival_seen TEXT;
+ALTER TABLE farms ADD COLUMN festival_claim TEXT;
+ALTER TABLE farms ADD COLUMN bday_seen TEXT;
+`;
+
 // 訊息中的網址：http(s):// 或 www. 開頭，遇到空白、引號或中文標點即結束
 // （與前端 public/app.js 的 URL_RE / trimUrlTail 保持一致）
 const URL_RE = /(?:https?:\/\/|www\.)[^\s<>"'`\u3000、，。！？：；（）「」『』【】《》〈〉…]+/i;
@@ -560,6 +567,10 @@ export class ChatServer {
       if (v < 11) {
         this.sql.exec(SCHEMA_V11);
         this.setSetting('schema_version', '11');
+      }
+      if (v < 12) {
+        this.sql.exec(SCHEMA_V12);
+        this.setSetting('schema_version', '12');
       }
     });
     // 心跳不喚醒 DO：客戶端送 "ping"，執行環境自動回 "pong"
@@ -2294,6 +2305,16 @@ export class ChatServer {
     }
     return requestOf(today);
   }
+  // FARM_FESTIVAL 也只給本機測試用：假裝今天是某個節日，例如 moon（中秋節）
+  farmFestival(today) {
+    const o = this.env && this.env.FARM_FESTIVAL;
+    if (typeof o === 'string' && Object.hasOwn(FESTIVALS, o)) return o;
+    return festivalOn(today);
+  }
+  // 節慶禮物說明：「888 元、2 個年糕」
+  farmGiftText(g) {
+    return [g.money ? `${g.money} 元` : null, g.item ? `${g.qty} 個${itemName(g.item)}` : null].filter(Boolean).join('、');
+  }
   // FARM_START_MONEY 也只給本機測試用：新開的牧場一開始有多少錢（測試買工具升級用）
   farmStartMoney() {
     const m = Number(this.env && this.env.FARM_START_MONEY);
@@ -2437,6 +2458,7 @@ export class ChatServer {
       friends: this.farmFriendsPub(conversationId, today),
       request: { ...this.farmRequest(today), done: farm.request_day === today },
       tools: { hoe: farm.hoe_level, can: farm.can_level },
+      festivalClaimed: farm.festival_claim === today,
     };
   }
   // 後山：今天還在的石頭
@@ -2536,6 +2558,22 @@ export class ChatServer {
       .toArray()
       .map((t) => this.farmTilePub(t, now, scale, rainy));
     const today = taiwanDay(now);
+    // 節日當天第一次有人打開：在聊天室說一聲
+    const fest = this.farmFestival(today);
+    if (fest && farm.festival_seen !== today) {
+      const F = FESTIVALS[fest];
+      this.sql.exec(`UPDATE farms SET festival_seen = ? WHERE conversation_id = ?`, today, conversationId);
+      this.addSystemMessage(conversationId, `${F.emoji} 今天是${F.name}！${F.line}到小鎮的告示板可以領節慶禮物。`);
+    }
+    // 行事曆上今天有家人生日：小鎮的大家幫忙慶生，美玲姐送一個生日蛋糕（一天一次）
+    const todayEvents = this.sql.exec(`SELECT title FROM events WHERE date = ? ORDER BY remind_at LIMIT 10`, today).toArray().map((r) => r.title);
+    const bdays = todayEvents.filter(isBirthdayEvent);
+    if (bdays.length && farm.bday_seen !== today) {
+      this.sql.exec(`UPDATE farms SET bday_seen = ? WHERE conversation_id = ?`, today, conversationId);
+      this.farmAddItem(conversationId, 'dish:cake', 1);
+      this.addSystemMessage(conversationId,
+        `🎂 行事曆上今天是「${bdays.join('、')}」！小鎮的大家都說生日快樂，美玲姐送來一個生日蛋糕，放在倉庫了。`);
+    }
     const animals = this.farmAnimalRows(conversationId).map((a) => this.farmAnimalPub(a, scale, today));
     return json({
       farm: { id: conversationId, title, money: farm.money, createdBy: names.get(farm.created_by) || null },
@@ -2550,6 +2588,8 @@ export class ChatServer {
       villagersOut: this.farmVillagersOut(now),
       hill: HILL_MAP, exits: EXITS, fish: FISH, ores: ORES, dishes: DISHES, ingredientGroups: INGREDIENT_GROUPS,
       rocks: this.farmRocks(conversationId, today), dex: this.farmDex(conversationId),
+      festivals: FESTIVALS, festival: fest,
+      nextFestival: nextFestival(today), todayEvents, birthdays: bdays,
       ...this.farmTownPub(conversationId, today),
       weather: { today: this.farmWeather(today), tomorrow: this.farmWeather(taiwanDay(dayEndOf(now))) },
     });
@@ -2744,10 +2784,39 @@ export class ChatServer {
       gained = { item, qty: 1, first: this.farmDexAdd(conversationId, item, me, now) };
       rocksChanged = true;
       dexChanged = true;
+    } else if (action === 'festival_claim') {
+      // 節日當天到告示板領禮物：每座牧場每個節日一份
+      const fest = this.farmFestival(today);
+      if (!fest) throw new HttpError(400, '今天不是節日，下次節日再來');
+      if (farm.festival_claim === today) throw new HttpError(400, '今天的節慶禮物已經領過了');
+      const g = FESTIVALS[fest].gift;
+      if (g.money) this.sql.exec(`UPDATE farms SET money = money + ? WHERE conversation_id = ?`, g.money, conversationId);
+      if (g.item) this.farmAddItem(conversationId, g.item, g.qty);
+      this.sql.exec(`UPDATE farms SET festival_claim = ? WHERE conversation_id = ?`, today, conversationId);
+      this.addSystemMessage(conversationId, `🎁 ${me.display_name} 領了${FESTIVALS[fest].name}的禮物：${this.farmGiftText(g)}`);
+      gained = { festival: fest, ...g };
+      townChanged = true;
+    } else if (action === 'festival_calendar') {
+      // 把接下來一年的節日加到家裡的行事曆（已經有同名同日的就跳過），當天早上 9 點提醒
+      let added = 0;
+      for (const f of festivalsAfter(today, 366)) {
+        const F = FESTIVALS[f.id];
+        const title = `${F.emoji} ${F.name}`;
+        if (this.sql.exec(`SELECT 1 FROM events WHERE date = ? AND title = ?`, f.date, title).toArray().length) continue;
+        const [y, m, d] = f.date.split('-').map(Number);
+        const remindAt = Date.UTC(y, m - 1, d, 1, 0); // 台灣早上 9 點
+        this.sql.exec(
+          `INSERT INTO events (title, date, time, note, remind_at, created_by, created_at, reminded) VALUES (?, ?, NULL, ?, ?, ?, ?, ?)`,
+          title, f.date, '家族牧場加的節慶', remindAt, me.id, now, remindAt <= now ? 1 : 0);
+        added++;
+      }
+      if (added) { this.scheduleNextAlarm(); this.broadcastAll({ type: 'events-changed' }); }
+      gained = { added };
     } else if (action === 'cook') {
       // 在家裡的廚房煮菜：材料夠就煮一份（不花體力），第一次煮會進圖鑑、在聊天室說一聲
       const dish = String(body.dish || '');
       if (!Object.hasOwn(DISHES, dish)) throw new HttpError(400, '沒有這道菜');
+      if (!DISHES[dish].need) throw new HttpError(400, `${DISHES[dish].name}是節慶的食物，不能自己煮`);
       const take = cookTakes(this.farmItems(conversationId), dish);
       if (!take) throw new HttpError(400, `材料不夠，煮不了${DISHES[dish].name}`);
       for (const [i, q] of Object.entries(take)) this.farmAddItem(conversationId, i, -q);

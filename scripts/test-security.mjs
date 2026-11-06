@@ -118,6 +118,10 @@ check('送禮的東西亂填（原型鏈、飼料、種子）被擋', (await Pro
 check('別人不能在我的牧場交委託、買工具（404）',
   (await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'request_fill' } }, TC)).status === 404
   && (await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'upgrade_tool', tool: 'can' } }, TC)).status === 404);
+check('別人不能用我的牧場領節慶禮物、加行事曆（404）',
+  (await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'festival_claim' } }, TC)).status === 404
+  && (await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'festival_calendar' } }, TC)).status === 404
+  && !((await j('/api/events', {}, TA)).data.events || []).some((e) => e.note === '家族牧場加的節慶'));
 check('牧場內容大小有上限（超大請求被擋）',
   (await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'till', x: 4, y: 9, junk: 'x'.repeat(5000) } }, TA)).status >= 400);
 

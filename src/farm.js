@@ -355,6 +355,7 @@ export function giftReaction(villager, item) {
   if (v.loves.includes(item)) return 'love';
   if (v.likes.includes(item)) return 'like';
   if (v.dislikes.includes(item) || item === 'fish:junk' || item === 'ore:stone') return 'dislike'; // 破鞋子、石頭誰都不要
+  if (item.startsWith('dish:') && DISHES[item.slice(5)] && DISHES[item.slice(5)].festival) return 'like'; // 節慶的食物大家都喜歡
   return 'neutral';
 }
 // 生日那天送禮，喜歡的東西點數三倍
@@ -517,13 +518,21 @@ export const DISHES = {
   strawberry_milk: { name: '草莓牛奶', need: { 'crop:strawberry': 2, milk: 1 }, energy: 25, sell: 360, shape: 'cup' },
   watermelon_juice: { name: '西瓜汁', need: { 'crop:watermelon': 1 }, energy: 20, sell: 500, shape: 'cup' },
   pineapple_cake: { name: '鳳梨酥', need: { 'crop:pineapple': 1, egg: 2 }, energy: 25, sell: 800, shape: 'plate' },
+  // 節慶的食物：不能自己煮，節日或家人生日時收到（吃、賣、送人都可以）
+  niangao: { name: '年糕', need: null, festival: true, energy: 30, sell: 120, shape: 'plate' },
+  tangyuan: { name: '湯圓', need: null, festival: true, energy: 25, sell: 100, shape: 'bowl' },
+  zongzi: { name: '粽子', need: null, festival: true, energy: 35, sell: 150, shape: 'plate' },
+  mooncake: { name: '月餅', need: null, festival: true, energy: 30, sell: 150, shape: 'plate' },
+  candy: { name: '糖果', need: null, festival: true, energy: 10, sell: 30, shape: 'plate' },
+  cake: { name: '蛋糕', need: null, festival: true, energy: 50, sell: 300, shape: 'plate' },
 };
 export const ingredientItems = (key) => (INGREDIENT_GROUPS[key] ? INGREDIENT_GROUPS[key].items : [key]);
 export const ingredientName = (key) => (INGREDIENT_GROUPS[key] ? INGREDIENT_GROUPS[key].name : itemName(key));
 export const ingredientHave = (items, key) => ingredientItems(key).reduce((n, i) => n + (items[i] || 0), 0);
-export const canCook = (items, dish) => !!DISHES[dish] && Object.entries(DISHES[dish].need).every(([k, q]) => ingredientHave(items, k) >= q);
+export const canCook = (items, dish) => !!DISHES[dish] && !!DISHES[dish].need && Object.entries(DISHES[dish].need).every(([k, q]) => ingredientHave(items, k) >= q);
 // 要扣掉哪些東西：同一組先用普通的、不夠再用高級的
 export function cookTakes(items, dish) {
+  if (!DISHES[dish] || !DISHES[dish].need) return null;
   const take = {};
   for (const [k, q] of Object.entries(DISHES[dish].need)) {
     let left = q;
@@ -535,3 +544,51 @@ export function cookTakes(items, dish) {
   }
   return take;
 }
+
+// ---------------- 節慶 ----------------
+// 農曆節日換算成國曆的日期（依中央氣象署公告）。用程式內建的農曆（ICU）算，在新月剛好接近半夜的年份
+// 會差一天：2027、2030 年的春節（和元宵）ICU 算成 2/7、2/2，實際是 2/6、2/3，這裡用正確的日期
+const LUNAR_DATES = {
+  spring: ['2026-02-17', '2027-02-06', '2028-01-26', '2029-02-13', '2030-02-03', '2031-01-23', '2032-02-11', '2033-01-31', '2034-02-19', '2035-02-08'],
+  lantern: ['2026-03-03', '2027-02-20', '2028-02-09', '2029-02-27', '2030-02-17', '2031-02-06', '2032-02-25', '2033-02-14', '2034-03-05', '2035-02-22'],
+  dragon: ['2026-06-19', '2027-06-09', '2028-05-28', '2029-06-16', '2030-06-05', '2031-06-24', '2032-06-12', '2033-06-01', '2034-06-20', '2035-06-10'],
+  qixi: ['2026-08-19', '2027-08-08', '2028-08-26', '2029-08-16', '2030-08-05', '2031-08-24', '2032-08-12', '2033-08-01', '2034-08-20', '2035-08-10'],
+  moon: ['2026-09-25', '2027-09-15', '2028-10-03', '2029-09-22', '2030-09-12', '2031-10-01', '2032-09-19', '2033-09-08', '2034-09-27', '2035-09-16'],
+};
+export { LUNAR_DATES };
+// gift：節日當天在小鎮告示板領的禮物（每座牧場每個節日一份）；line：村民當天會說的話
+export const FESTIVALS = {
+  newyear: { name: '元旦', emoji: '🎉', fixed: '01-01', gift: { money: 200 }, line: '新年快樂！今年也一起把田種好吧！' },
+  spring: { name: '春節', emoji: '🧧', gift: { money: 888, item: 'dish:niangao', qty: 2 }, line: '新年快樂！恭喜發財，紅包拿去！' },
+  lantern: { name: '元宵節', emoji: '🏮', gift: { item: 'dish:tangyuan', qty: 4 }, line: '元宵節快樂！吃完湯圓，晚上一起去看花燈。' },
+  children: { name: '兒童節', emoji: '🎈', fixed: '04-04', gift: { item: 'dish:candy', qty: 6 }, line: '兒童節快樂！大人小孩今天都可以吃糖果！' },
+  dragon: { name: '端午節', emoji: '🐉', gift: { item: 'dish:zongzi', qty: 4 }, line: '端午節快樂！今年的粽子包得特別好吃。' },
+  qixi: { name: '七夕', emoji: '💕', gift: { item: 'ore:amethyst', qty: 1 }, line: '七夕快樂！這顆紫水晶，送給你最重要的人吧。' },
+  moon: { name: '中秋節', emoji: '🥮', gift: { item: 'dish:mooncake', qty: 4 }, line: '中秋節快樂！晚上大家一起烤肉賞月吧。' },
+  christmas: { name: '聖誕節', emoji: '🎄', fixed: '12-25', gift: { item: 'dish:cake', qty: 1 }, line: '聖誕快樂！廣場的聖誕樹好漂亮喔。' },
+  nye: { name: '跨年', emoji: '🎆', fixed: '12-31', gift: { money: 300 }, line: '今天跨年！晚上一起倒數吧！' },
+};
+const festivalDate = (id, year) => {
+  const f = FESTIVALS[id];
+  if (f.fixed) return `${year}-${f.fixed}`;
+  return (LUNAR_DATES[id] || []).find((d) => d.startsWith(year + '-')) || null;
+};
+// 這一天（台灣日期 YYYY-MM-DD）是哪個節日
+export function festivalOn(day) {
+  const y = Number(day.slice(0, 4));
+  return Object.keys(FESTIVALS).find((id) => festivalDate(id, y) === day) || null;
+}
+// day 之後（不含 day）到 days 天內的節日，照日期排
+export function festivalsAfter(day, days = 366) {
+  const end = new Date(Date.parse(day + 'T00:00:00Z') + days * DAY).toISOString().slice(0, 10);
+  const y = Number(day.slice(0, 4));
+  const out = [];
+  for (const yy of [y, y + 1, y + 2]) for (const id of Object.keys(FESTIVALS)) {
+    const d = festivalDate(id, yy);
+    if (d && d > day && d <= end) out.push({ id, date: d });
+  }
+  return out.sort((a, b) => (a.date < b.date ? -1 : 1));
+}
+export const nextFestival = (day) => festivalsAfter(day, 400)[0] || null;
+// 行事曆上今天的事情裡，有「生日」的就是有家人生日
+export const isBirthdayEvent = (title) => /生日|壽/.test(String(title));

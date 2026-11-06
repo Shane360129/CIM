@@ -2,7 +2,7 @@
 // 家族小牧場的規則單元測試（不需要啟動伺服器）：npm run test:farm
 // 驗證地圖（田地都走得到、商店出貨箱碰得到）、作物只在濕土時成長、
 // 成長階段、時間倍率、台灣時間換日（體力恢復）、四季與作物、天氣（下雨自動澆水）、
-// 會再長的作物，以及每種作物都有畫好的圖。
+// 會再長的作物、動物、小鎮、釣魚挖礦、料理、節日，以及每種東西都有畫好的圖。
 
 import {
   FARM_MAP, FARM_W, FARM_H, FARM_SPAWN, CROPS, isField, isWalkable, terrainAt,
@@ -13,6 +13,7 @@ import {
   FOODS, TOOL_UPGRADES, area3x3, ENERGY_MAX,
   HILL_MAP, MAPS, EXITS, FISH, ORES, QUARRY, ROCKS_PER_DAY, fishChoices, pickWeighted, rocksOf, itemPrice,
   DISHES, INGREDIENT_GROUPS, ingredientItems, canCook, cookTakes,
+  FESTIVALS, LUNAR_DATES, festivalOn, festivalsAfter, nextFestival, isBirthdayEvent,
 } from '../src/farm.js';
 import { SPRITES, PALETTE, FISH_SHAPE, BOOT_SHAPE, ROCK_SHAPE, FISH_COLORS, ORE_COLORS, DISH_SHAPES, DISH_COLORS } from '../public/farm-sprites.js';
 
@@ -283,8 +284,8 @@ check('3×3 範圍：9 格，點的那格排第一個', [area3x3(5, 5).length, a
 check('3×3 範圍不重複', new Set(area3x3(5, 5).map((c) => c.x + ',' + c.y)).size, 9);
 
 console.log('\n--- 料理 ---');
-const dishes = Object.entries(DISHES);
-check('有 17 道菜', dishes.length, 17);
+const dishes = Object.entries(DISHES).filter(([, d]) => d.need);
+check('有 17 道自己煮得出來的菜', dishes.length, 17);
 check('每道菜的材料都是真的東西（或雞蛋、牛奶這種組）', dishes.filter(([, d]) => !Object.keys(d.need).every((k) => INGREDIENT_GROUPS[k] || itemPrice(k) > 0)).map(([id]) => id), []);
 check('煮成菜比直接賣材料值錢', dishes.filter(([, d]) => d.sell <= Object.entries(d.need).reduce((n, [k, q]) => n + itemPrice(ingredientItems(k)[0]) * q, 0)).map(([id]) => id), []);
 check('每道菜都能補體力（不超過一整天的量）', dishes.every(([, d]) => d.energy > 0 && d.energy <= ENERGY_MAX), true);
@@ -295,6 +296,27 @@ check('雞蛋不夠時，大顆雞蛋也能用（先用普通的）', cookTakes(
 check('材料不夠回傳 null', cookTakes({ 'prod:egg': 1, 'prod:milk': 1 }, 'pudding'), null);
 check('菜也能賣、能送', [itemPrice('dish:pudding'), itemPrice('dish:__proto__')], [280, 0]);
 check('小傑最愛布丁、討厭魚香茄子', [giftReaction('jie', 'dish:pudding'), giftReaction('jie', 'dish:eggplant')], ['love', 'dislike']);
+
+
+console.log('\n--- 節日 ---');
+// 農曆節日的日期跟瀏覽器內建的農曆比對；2027、2030 的春節和元宵 ICU 會差一天，以台灣公布的放假日期為準
+const chinese = new Intl.DateTimeFormat('en-u-ca-chinese', { timeZone: 'Asia/Taipei', month: 'numeric', day: 'numeric' });
+const lunarMD = (d) => { const p = chinese.formatToParts(new Date(d + 'T12:00:00+08:00')); return p.find((x) => x.type === 'month').value + '-' + p.find((x) => x.type === 'day').value; };
+const LUNAR_WANT = { spring: '1-1', lantern: '1-15', dragon: '5-5', qixi: '7-7', moon: '8-15' };
+const ICU_OFF = ['spring 2027-02-06', 'spring 2030-02-03', 'lantern 2027-02-20', 'lantern 2030-02-17'];
+check('農曆節日的日期都對（2026～2035）', Object.entries(LUNAR_DATES).flatMap(([id, ds]) => ds.filter((d) => lunarMD(d) !== LUNAR_WANT[id] && !ICU_OFF.includes(id + ' ' + d)).map((d) => id + ' ' + d)), []);
+check('每個農曆節日都有 10 年份、一年一個', Object.values(LUNAR_DATES).every((ds) => ds.length === 10 && ds.every((d, i) => d.startsWith(String(2026 + i)))), true);
+check('元宵節在春節後 14 天', LUNAR_DATES.spring.every((d, i) => (Date.parse(LUNAR_DATES.lantern[i]) - Date.parse(d)) / (24 * H) === 14), true);
+check('今天是哪個節日', ['2026-09-25', '2026-01-01', '2026-04-04', '2026-12-25', '2026-12-31', '2027-02-06', '2026-11-06'].map(festivalOn), ['moon', 'newyear', 'children', 'christmas', 'nye', 'spring', null]);
+const year2027 = festivalsAfter('2026-12-31', 365);
+check('一年裡 9 個節日都會遇到一次', [year2027.length, new Set(year2027.map((f) => f.id)).size], [9, 9]);
+check('節日照日期排、不含今天', year2027.every((f, i) => f.date > '2026-12-31' && (i === 0 || f.date >= year2027[i - 1].date)), true);
+check('下一個節日', [nextFestival('2026-11-06'), nextFestival('2026-12-25'), nextFestival('2026-12-31')], [{ id: 'christmas', date: '2026-12-25' }, { id: 'nye', date: '2026-12-31' }, { id: 'newyear', date: '2027-01-01' }]);
+check('每個節日都有名字、表情、村民的話、禮物', Object.values(FESTIVALS).every((f) => f.name && f.emoji && f.line && f.gift && (f.gift.money > 0 || (validItem(f.gift.item) && f.gift.qty > 0))), true);
+check('節慶食物不能自己煮', Object.entries(DISHES).filter(([, d]) => d.festival).map(([id]) => [canCook({ 'crop:bokchoy': 99 }, id), cookTakes({}, id)]).flat().every((v) => v === false || v === null), true);
+check('節慶食物有圖、能賣、能吃', Object.entries(DISHES).filter(([, d]) => d.festival).every(([id, d]) => DISH_SHAPES[d.shape] && DISH_COLORS[id] && itemPrice('dish:' + id) > 0 && d.energy > 0), true);
+check('送節慶食物大家都喜歡', giftReaction('fu', 'dish:mooncake'), 'like');
+check('行事曆上的生日', ['媽媽生日', '阿公八十大壽', '看牙醫'].map(isBirthdayEvent), [true, true, false]);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);
