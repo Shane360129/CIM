@@ -113,6 +113,11 @@ const r0 = await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'buy_
 check('動物名字裡的隱藏字元（反向文字、零寬、控制字元）會被拿掉', r0.status === 200 && r0.data.animals?.[0]?.name === '花小', JSON.stringify(r0.data.animals?.[0]?.name));
 check('別人不能摸我牧場的動物（404）',
   (await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'pet', animalId: r0.data.animals?.[0]?.id } }, TC)).status === 404);
+check('送禮的東西亂填（原型鏈、飼料、種子）被擋', (await Promise.all(['crop:__proto__', 'prod:constructor', 'feed', 'seed:bokchoy', 'crop:']
+  .map((item) => j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'gift', villager: 'ama', item } }, TA)))).every((x) => x.status === 400));
+check('別人不能在我的牧場交委託、買工具（404）',
+  (await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'request_fill' } }, TC)).status === 404
+  && (await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'upgrade_tool', tool: 'can' } }, TC)).status === 404);
 check('牧場內容大小有上限（超大請求被擋）',
   (await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'till', x: 4, y: 9, junk: 'x'.repeat(5000) } }, TA)).status >= 400);
 

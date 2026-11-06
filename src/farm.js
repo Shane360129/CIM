@@ -11,8 +11,8 @@ const HOUR = 3600000;
 const DAY = 24 * HOUR;
 const TW = 8 * HOUR; // 台灣時間 UTC+8
 
-// 地形：T 樹、. 草地、= 小路、F 田、f 柵欄、H 房子、S 商店、B 出貨箱、W 池塘、A 動物小屋
-// 動物小屋下面用柵欄圍了一塊草地給雞和牛散步，左邊 (22,13) 是門
+// 地形：T 樹、. 草地、= 小路、F 田、f 柵欄、H 房子、S 商店、B 出貨箱、W 池塘、A 動物小屋、E 往小鎮的出口
+// 動物小屋下面用柵欄圍了一塊草地給雞和牛散步，左邊 (22,13) 是門；左下角的小路走出去就是小鎮
 export const FARM_MAP = [
   'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
   'TT......T....................T',
@@ -32,8 +32,8 @@ export const FARM_MAP = [
   'T..fffffff..fffffff..=f.....fT',
   'T....=...............=fffffffT',
   'T....=================.......T',
-  'T...........T................T',
-  'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+  'T....=......T................T',
+  'TTTTTETTTTTTTTTTTTTTTTTTTTTTTT',
 ];
 // 動物活動的範圍（柵欄裡面）
 export const PEN = { x0: 23, y0: 10, x1: 27, y1: 15 };
@@ -41,7 +41,35 @@ export const PEN_GATE = { x: 22, y: 13 };
 export const FARM_W = FARM_MAP[0].length;
 export const FARM_H = FARM_MAP.length;
 export const FARM_SPAWN = { x: 5, y: 5 }; // 家門口
-const WALKABLE = new Set(['.', '=', 'F']);
+
+// 小鎮：G 阿福伯的雜貨店、R 美玲姐的小吃店、Q 民宅、p 廣場石板、O 噴水池、N 委託告示板、, 花圃、E 回牧場
+export const TOWN_MAP = [
+  'TTTTTETTTTTTTTTTTTTTTTTTTTTTTT',
+  'T....=.......................T',
+  'T....=..GGGG......RRRR....T..T',
+  'T....=..GGGG......RRRR.......T',
+  'T....=..GGGG......RRRR.......T',
+  'T....========================T',
+  'T..............=.............T',
+  'T..,,,...pppppppppppp...,,,..T',
+  'T..,,,...pNpppppppppp...,,,..T',
+  'T........pppppOOppppp........T',
+  'T........pppppOOppppp........T',
+  'T........pppppppppppp........T',
+  'T..............=.............T',
+  'T...======================...T',
+  'T..QQQ......QQQ......QQQ.....T',
+  'T..QQQ......QQQ......QQQ.....T',
+  'T............................T',
+  'T..,,,..T........,,,....T....T',
+  'T............................T',
+  'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+];
+export const MAPS = { farm: FARM_MAP, town: TOWN_MAP };
+export const AREAS = ['farm', 'town'];
+// 走到 E 就換地圖：從牧場的出口到小鎮最上面，反過來也一樣
+export const ARRIVE = { town: { x: 5, y: 1 }, farm: { x: 5, y: 18 } };
+const WALKABLE = new Set(['.', '=', 'F', 'p', ',', 'E']);
 
 export const SEASONS = ['spring', 'summer', 'autumn', 'winter'];
 const ALL = SEASONS;
@@ -102,9 +130,9 @@ export const WATER_HOURS = 24;
 export const START_MONEY = 500;
 export const START_ITEMS = { 'seed:bokchoy': 9 };
 
-export const terrainAt = (x, y) => (FARM_MAP[y] && FARM_MAP[y][x]) || 'T';
+export const terrainAt = (x, y, area = 'farm') => (MAPS[area][y] && MAPS[area][y][x]) || 'T';
 export const isField = (x, y) => terrainAt(x, y) === 'F';
-export const isWalkable = (x, y) => WALKABLE.has(terrainAt(x, y));
+export const isWalkable = (x, y, area = 'farm') => WALKABLE.has(terrainAt(x, y, area));
 
 export const cropTotalMs = (crop) => CROPS[crop].hours * HOUR;
 // 會再長的作物收成後，成長量退回到「還差 regrow 小時」
@@ -200,3 +228,148 @@ export function wetUntilOf(wateredUntil, now, rainy = NO_RAIN) {
 
 export const isWet = (tile, now, rainy = NO_RAIN) => !!tile && wetUntilOf(tile.watered_until || 0, now, rainy) > now;
 export const waterUntil = (now, scale = 1) => now + (WATER_HOURS * HOUR) / scale;
+
+// ---------------- 小鎮的村民 ----------------
+// 每位村民：喜歡／最愛／討厭的東西（送禮用，不會傳給前端，要自己發現）、生日、白天在哪一帶走動、說的話。
+// 說的話依季節、天氣、跟你們家的感情（愛心）變化，每天換一句。
+// item 用倉庫的寫法：crop:作物、prod:雞蛋牛奶
+export const VILLAGERS = {
+  fu: {
+    name: '阿福伯', role: '雜貨店老闆', color: '#3b6ea8', hair: 'gray', birthday: '03-12',
+    zone: { x0: 7, y0: 5, x1: 13, y1: 6 },
+    loves: ['crop:pumpkin'], likes: ['crop:sweetpotato', 'crop:corn', 'prod:egg'], dislikes: ['crop:spinach'],
+    lines: {
+      any: ['今天要買什麼？鋤頭、澆水壺都有好貨喔。', '年輕人肯種田，阿伯看了就歡喜。', '店裡的東西都是實在價，不會騙你啦。',
+        '以前這一帶都是田，現在剩你們家還在種。', '要是田太大澆不完，可以來看看大澆水壺。'],
+      spring: ['春天到了，種子賣得特別好。'], summer: ['這麼熱，記得多喝水，別中暑了。'],
+      autumn: ['秋天的南瓜最甜，阿伯最愛吃南瓜了。'], winter: ['冬天冷，阿伯的老腰又在痠了。'],
+      rain: ['下雨天生意比較清淡，剛好休息一下。'],
+      close: ['你們家的菜，阿伯吃過都說讚！', '有空常來坐，阿伯泡茶給你喝。'],
+    },
+  },
+  mei: {
+    name: '美玲姐', role: '小吃店老闆娘', color: '#e86a5c', hair: 'brown', birthday: '07-21',
+    zone: { x0: 16, y0: 5, x1: 23, y1: 6 },
+    loves: ['prod:egg_l'], likes: ['crop:cabbage', 'prod:egg', 'crop:bokchoy', 'prod:milk'], dislikes: ['crop:pineapple'],
+    lines: {
+      any: ['餓了吧？進來吃碗麵，吃飽才有力氣種田！', '我們家的滷肉飯，是我阿母傳下來的味道。', '茶葉蛋剛滷好，香不香？',
+        '你們家的雞蛋，拿來做菜最好吃了。', '累了就來店裡坐一下，不用客氣。'],
+      spring: ['春天的高麗菜還沒到，好想念喔。'], summer: ['夏天客人都點冰的，我的麵都賣不出去啦。'],
+      autumn: ['秋天胃口好，今天的麵多給你一點。'], winter: ['冬天最適合來碗熱騰騰的牛肉麵了。'],
+      rain: ['下雨天，客人都想吃熱的。'],
+      close: ['你就像我自己的弟弟妹妹一樣。', '下次帶家人一起來，我請客！'],
+    },
+  },
+  jie: {
+    name: '小傑', role: '國小三年級', color: '#f2b33d', hair: 'black', birthday: '08-08',
+    zone: { x0: 9, y0: 7, x1: 20, y1: 11 },
+    loves: ['crop:watermelon'], likes: ['crop:strawberry', 'crop:corn', 'crop:tomato'], dislikes: ['crop:spinach', 'crop:eggplant'],
+    lines: {
+      any: ['你好！我今天考試考一百分喔！', '噴水池裡面有硬幣，是誰丟的啊？', '我長大也要當農夫，種好大的西瓜！',
+        '你們家的雞會不會咬人？', '老師說要多吃青菜……可是菠菜好難吃。'],
+      spring: ['春天的草莓好好吃！'], summer: ['放暑假了！可以一直玩！'],
+      autumn: ['開學了……好想放假喔。'], winter: ['好冷喔，可是我不想穿外套。'],
+      rain: ['下雨不能踢球，好無聊喔。'],
+      close: ['你是我最好的朋友！', '我跟同學說你們家有牛，他們都好羨慕！'],
+    },
+  },
+  ama: {
+    name: '王阿嬤', role: '住在鎮上五十年', color: '#8e6bb8', hair: 'gray', birthday: '01-25',
+    zone: { x0: 3, y0: 12, x1: 12, y1: 13 },
+    loves: ['prod:milk'], likes: ['crop:radish', 'crop:cabbage', 'crop:sweetpotato', 'crop:bokchoy'], dislikes: ['crop:pineapple'],
+    lines: {
+      any: ['乖孫，有沒有吃飽？', '阿嬤年輕的時候，也是每天天還沒亮就去田裡。', '慢慢來，做田人不要急。',
+        '你們家阿嬤身體好嗎？替我問候一下。', '有空多陪陪家裡的人，比賺錢卡要緊。'],
+      spring: ['春天到了，又要拜拜了。'], summer: ['天氣熱，要記得戴斗笠喔。'],
+      autumn: ['秋天的地瓜，烤起來最香了。'], winter: ['冬天冷，蘿蔔燉湯最補了。'],
+      rain: ['下雨了，田裡的菜就不用澆水了，真好。'],
+      close: ['你就像阿嬤的親孫一樣。', '阿嬤最喜歡你們家的牛奶，喝了身體都好起來了。'],
+    },
+  },
+  lin: {
+    name: '林老師', role: '國小老師', color: '#4f9d6b', hair: 'black', birthday: '09-28',
+    zone: { x0: 9, y0: 11, x1: 20, y1: 13 },
+    loves: ['crop:strawberry'], likes: ['crop:tomato', 'crop:carrot', 'crop:potato'], dislikes: ['crop:corn'],
+    lines: {
+      any: ['小傑上課又在畫西瓜了，真拿他沒辦法。', '種田跟教書一樣，都要耐心等它長大。', '讀書累了，就來廣場走走。',
+        '你們家的番茄好紅，做成番茄炒蛋一定很好吃。', '我小時候也住在鄉下，好懷念喔。'],
+      spring: ['春天是讀書的好季節。'], summer: ['暑假不用改作業，好開心。'],
+      autumn: ['教師節快到了，學生會送卡片給我呢。'], winter: ['寒假快到了，孩子們都坐不住了。'],
+      rain: ['下雨天，最適合在家看書了。'],
+      close: ['謝謝你們家一直照顧小傑。', '你們家的草莓，是我吃過最甜的。'],
+    },
+  },
+  zhi: {
+    name: '志明', role: '郵差', color: '#2f8f5b', hair: 'black', birthday: '11-19',
+    zone: { x0: 5, y0: 5, x1: 28, y1: 6 },
+    loves: ['crop:pineapple'], likes: ['prod:egg', 'crop:potato', 'crop:watermelon'], dislikes: ['crop:radish'],
+    lines: {
+      any: ['有你們家的信喔！……騙你的啦，哈哈。', '每天騎車送信，整個鎮我都熟。', '告示板上有大家的委託，有空去看看。',
+        '聽說阿福伯的店有賣新的澆水壺。', '送信送到肚子餓，等一下去美玲姐那裡吃飯。'],
+      spring: ['春天騎車最舒服了。'], summer: ['夏天騎車，衣服都濕透了。'],
+      autumn: ['秋天風好大，信差點被吹走。'], winter: ['冬天的手好冰，信都拿不穩。'],
+      rain: ['下雨天還是要送信，這就是郵差的命啦。'],
+      close: ['你們家的信，我都第一個送。', '鳳梨是我的最愛，你怎麼知道的？'],
+    },
+  },
+};
+export const FRIEND_MAX = 100;          // 每 10 點一顆愛心，最多 10 顆
+export const friendHearts = (points) => Math.floor(Math.min(FRIEND_MAX, Math.max(0, points || 0)) / 10);
+export const GIFT_POINTS = { love: 8, like: 5, neutral: 2, dislike: -3 };
+export const TALK_POINTS = 1;
+export const REQUEST_POINTS = 10;
+export function giftReaction(villager, item) {
+  const v = VILLAGERS[villager];
+  if (v.loves.includes(item)) return 'love';
+  if (v.likes.includes(item)) return 'like';
+  if (v.dislikes.includes(item)) return 'dislike';
+  return 'neutral';
+}
+// 生日那天送禮，喜歡的東西點數三倍
+export const isBirthday = (villager, day) => VILLAGERS[villager].birthday === day.slice(5);
+export function giftPoints(villager, item, day) {
+  const r = giftReaction(villager, item);
+  const p = GIFT_POINTS[r];
+  return { reaction: r, points: p > 0 && isBirthday(villager, day) ? p * 3 : p };
+}
+// 感情每到 2、4、6、8、10 顆愛心，村民會送你們家一份謝禮（每一級只送一次）
+export function friendReward(villager, level) {
+  const v = VILLAGERS[villager];
+  const fav = [...v.loves, ...v.likes].find((i) => i.startsWith('crop:')).slice(5);
+  return [null,
+    { money: 200 }, { item: 'feed', qty: 10 }, { item: `seed:${fav}`, qty: 3 }, { money: 800 }, { money: 2000 }][level];
+}
+
+// 村民早上 6 點出門，半夜 12 點回家睡覺（上班族晚上才有空玩，所以晚上還遇得到）
+export const villagerOut = (now) => new Date(now + TW).getUTCHours() >= 6;
+
+// 委託告示板：每天一個委託，由日期算出來（全家都看到同一個，也不用存）
+const VILLAGER_IDS = Object.keys(VILLAGERS);
+export function requestOf(day) {
+  let h = 2166136261;
+  for (const ch of day + '|farm-request') { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+  h >>>= 0;
+  const season = seasonOfMonth(Number(day.slice(5, 7)));
+  const items = [...Object.keys(CROPS).filter((c) => inSeason(c, season)).map((c) => 'crop:' + c), 'prod:egg', 'prod:milk'];
+  const item = items[(h >>> 8) % items.length];
+  const [kind, id] = item.split(':');
+  const sell = kind === 'crop' ? CROPS[id].sell : PRODUCTS[id].sell;
+  const qty = Math.max(1, Math.min(5, Math.round(250 / sell)));
+  return { villager: VILLAGER_IDS[h % VILLAGER_IDS.length], item, qty, reward: Math.round((sell * qty * 2) / 10) * 10 };
+}
+
+// 美玲姐的小吃店：吃了馬上恢復體力（最多到滿）
+export const FOODS = {
+  egg: { name: '茶葉蛋', price: 30, energy: 10 },
+  rice: { name: '滷肉飯', price: 80, energy: 25 },
+  noodle: { name: '牛肉麵', price: 150, energy: 50 },
+};
+
+// 阿福伯的雜貨店：工具升級（全家共用），升級後一次處理 3×3 的田
+export const TOOL_UPGRADES = {
+  hoe: { name: '大鋤頭', price: 2500, desc: '一次翻 3×3 九格田' },
+  can: { name: '大澆水壺', price: 2000, desc: '一次澆 3×3 九格田' },
+};
+// 3×3 的範圍，中間那格先做（體力不夠時至少做到點的那一格）
+export const area3x3 = (x, y) => [[0, 0], [-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]]
+  .map(([dx, dy]) => ({ x: x + dx, y: y + dy }));

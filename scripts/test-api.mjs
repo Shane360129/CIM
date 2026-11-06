@@ -282,6 +282,34 @@ check('攤位不賣雞蛋', (await farmDo(groupId, { action: 'buy', item: 'prod:
 check('出貨箱不收飼料', (await farmDo(groupId, { action: 'ship', item: 'feed', qty: 1 }, TA)).status === 400);
 check('沒有雞蛋不能出貨', (await farmDo(groupId, { action: 'ship', item: 'prod:egg', qty: 1 }, TA)).status === 400);
 
+// 小鎮：村民、聊天、送禮、委託、小吃店、工具店
+check('有小鎮地圖和 6 位村民（不會洩漏村民喜歡什麼）',
+  fs0.town?.length === 20 && Object.keys(fs0.villagers || {}).length === 6 && !('likes' in fs0.villagers.ama) && !('loves' in fs0.villagers.ama));
+check('有今天的委託、工具一開始是一般的', !!fs0.request?.item && fs0.request.qty > 0 && fs0.tools?.hoe === 1 && fs0.tools?.can === 1);
+if (fs0.villagersOut) {
+  r = await farmDo(groupId, { action: 'talk', villager: 'ama' }, TA);
+  check('跟王阿嬤聊天，感情 +1', r.status === 200 && r.data.town.friends.ama.points === 1 && r.data.town.friends.ama.talkedToday);
+  r = await farmDo(groupId, { action: 'talk', villager: 'ama' }, TB);
+  check('同一天家人再聊，不會再加（全家一天算一次）', r.status === 200 && r.data.town.friends.ama.points === 1);
+  check('種子不能當禮物', (await farmDo(groupId, { action: 'gift', villager: 'ama', item: 'seed:bokchoy' }, TA)).status === 400);
+  check('沒有的東西不能送', (await farmDo(groupId, { action: 'gift', villager: 'ama', item: 'crop:pineapple' }, TA)).status === 400);
+} else {
+  r = await farmDo(groupId, { action: 'talk', villager: 'ama' }, TA);
+  check('半夜村民在睡覺，聊不到', r.status === 400 && /睡覺/.test(r.data.error || ''), r.data.error);
+}
+check('沒有這位村民', (await farmDo(groupId, { action: 'talk', villager: 'nobody' }, TA)).status === 400
+  && (await farmDo(groupId, { action: 'talk', villager: '__proto__' }, TA)).status === 400);
+check('東西不夠不能交委託', (await farmDo(groupId, { action: 'request_fill' }, TA)).status === 400);
+check('沒有這道菜', (await farmDo(groupId, { action: 'eat', food: 'steak' }, TA)).status === 400
+  && (await farmDo(groupId, { action: 'eat', food: 'constructor' }, TA)).status === 400);
+r = await farmDo(groupId, { action: 'eat', food: 'egg' }, TA);
+money -= fs0.foods.egg.price;
+check(`吃茶葉蛋：體力 +10（最多到滿）、錢 → ${money}`, r.status === 200 && r.data.energy <= 60 && r.data.money === money);
+check('錢不夠買不起大鋤頭', /錢不夠/.test((await farmDo(groupId, { action: 'upgrade_tool', tool: 'hoe' }, TA)).data.error || ''));
+check('沒有這種工具', (await farmDo(groupId, { action: 'upgrade_tool', tool: 'tractor' }, TA)).status === 400);
+r = await farmDo(groupId, { action: 'water', ...f1, area: true }, TA);
+check('還沒升級不能一次澆 3×3', r.status === 400 && /升級/.test(r.data.error || ''), r.data.error);
+
 const farmMs = await medianMs(() => farmGet(groupId, TA));
 check(`打開牧場在 150ms 內（實測 ${farmMs.toFixed(0)}ms）`, farmMs < 150);
 if (fs0.scale >= 3600) {
@@ -298,6 +326,29 @@ if (fs0.scale >= 3600) {
   r = await farmDo(groupId, { action: 'ship', item: 'prod:egg', qty: 1 }, TA);
   money += 50;
   check(`（加速模式）雞蛋出貨 +50 元 → ${money}`, r.status === 200 && r.data.money === money);
+  if (fs0.villagersOut) {
+    // 種兩顆小白菜：一顆送王阿嬤，一顆交委託（本機測試時用 FARM_REQUEST 指定委託）
+    const [g1, g2] = [fields[40], fields[41]];
+    for (const g of [g1, g2]) {
+      await farmDo(groupId, { action: 'till', ...g }, TA);
+      await farmDo(groupId, { action: 'plant', crop: 'bokchoy', ...g }, TA);
+      await farmDo(groupId, { action: 'water', ...g }, TA);
+    }
+    await new Promise((ok) => setTimeout(ok, 3300));
+    for (const g of [g1, g2]) await farmDo(groupId, { action: 'harvest', ...g }, TA);
+    r = await farmDo(groupId, { action: 'gift', villager: 'ama', item: 'crop:bokchoy' }, TA);
+    check('（加速模式）送王阿嬤小白菜：她喜歡，感情 +5', r.status === 200 && r.data.gained.reaction === 'like' && r.data.town.friends.ama.points === 6);
+    check('（加速模式）一天只能送一次', (await farmDo(groupId, { action: 'gift', villager: 'ama', item: 'crop:bokchoy' }, TA)).status === 400);
+    const q = (await farmGet(groupId, TA)).data.request;
+    if (q.item === 'crop:bokchoy' && q.qty === 1) {
+      r = await farmDo(groupId, { action: 'request_fill' }, TA);
+      money += q.reward;
+      check(`（加速模式）交委託：拿到 ${q.reward} 元、感情 +10、今天完成`,
+        r.status === 200 && r.data.money === money && r.data.town.request.done && r.data.town.friends[q.villager].points >= 10);
+      check('（加速模式）委託一天只能交一次', (await farmDo(groupId, { action: 'request_fill' }, TA)).status === 400);
+      check('（加速模式）聊天室說誰完成了誰的委託', (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('完成了') && m.content.includes('的委託')));
+    }
+  }
   // 會再長的作物：收完還在田裡，再等一下又能收
   const rc = fs0.crops[regrowCrop];
   r = await farmDo(groupId, { action: 'buy', item: 'seed:' + regrowCrop, qty: 1 }, TA);
@@ -321,6 +372,7 @@ check('臨時密碼可以登入', (await j('/api/login', { method: 'POST', body:
 r = await j('/api/admin/export', {}, A0);
 check('管理員可以下載備份', r.status === 200 && Array.isArray(r.data.users) && r.data.messageCount > 0);
 check('備份包含牧場的動物', (r.data.farmAnimals || []).some((a) => a.name === '小花'));
+check('備份包含跟村民的感情', Array.isArray(r.data.farmFriends));
 
 console.log('\n--- 速度與備份上限（防止效能退步）---');
 // 這段會放 30 張約 450KB 的照片進去，量「打開聊天室」與「取照片」的時間，並檢查備份每頁大小有上限。

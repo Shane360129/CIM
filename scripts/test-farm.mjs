@@ -9,6 +9,8 @@ import {
   grownMs, cropStage, cropTotalMs, isWet, waterUntil, taiwanDay, seasonOf, WATER_HOURS,
   SEASONS, inSeason, regrowProgressMs, weatherOf, wetMsBetween, wetUntilOf, dayEndOf, nextSeasonStart,
   PEN, PEN_GATE, ANIMALS, PRODUCTS, LOVE_BEST, hearts, productOf, animalReadyAt, animalHasProduct, cleanAnimalName,
+  TOWN_MAP, ARRIVE, VILLAGERS, friendHearts, giftReaction, giftPoints, friendReward, villagerOut, requestOf,
+  FOODS, TOOL_UPGRADES, area3x3, ENERGY_MAX,
 } from '../src/farm.js';
 import { SPRITES, PALETTE } from '../public/farm-sprites.js';
 
@@ -127,6 +129,7 @@ const goodGrid = (g) => Array.isArray(g) && g.length === 16 && g.every((r) => r.
 check('長大中、可收成兩張圖都有，而且是 16×16、顏色都有定義',
   crops.filter(([id]) => !goodGrid(SPRITES[id + '_2']) || !goodGrid(SPRITES[id + '_3'])).map(([id]) => id), []);
 check('所有圖都是 16×16、顏色都有定義', Object.entries(SPRITES).filter(([, g]) => !goodGrid(g)).map(([n]) => n), []);
+check('小鎮的石板、花圃、告示板都有圖', ['plaza', 'flowers', 'board'].filter((n) => !goodGrid(SPRITES[n])), []);
 check('動物（兩張走路圖）、雞蛋牛奶、飼料都有圖',
   [...Object.keys(ANIMALS).flatMap((k) => [k + '_0', k + '_1']), ...Object.keys(PRODUCTS), 'feed'].filter((n) => !goodGrid(SPRITES[n])), []);
 
@@ -165,6 +168,73 @@ check('土濕到什麼時候：澆了水、隔天又下雨 → 濕到隔天半�
 check('乾的土回傳 0', wetUntilOf(0, eve, rainOn([])), 0);
 check('今天下雨：濕到今天半夜', wetUntilOf(0, eve, rainOn(['2026-11-05'])), tw(2026, 11, 6));
 check('下雨天判定是濕土', isWet({ watered_until: 0 }, eve, rainOn(['2026-11-05'])), true);
+
+console.log('\n--- 小鎮地圖 ---');
+check('小鎮也是 30×20', [TOWN_MAP.length, TOWN_MAP.every((r) => r.length === 30)], [20, true]);
+const reach = (area, start) => {
+  const seen2 = new Set([`${start.x},${start.y}`]);
+  const qq = [[start.x, start.y]];
+  while (qq.length) {
+    const [x, y] = qq.shift();
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const k = `${x + dx},${y + dy}`;
+      if (!seen2.has(k) && isWalkable(x + dx, y + dy, area)) { seen2.add(k); qq.push([x + dx, y + dy]); }
+    }
+  }
+  return seen2;
+};
+const townSeen = reach('town', ARRIVE.town);
+const townCells = [];
+TOWN_MAP.forEach((r, y) => [...r].forEach((c, x) => townCells.push({ x, y, c })));
+check('小鎮每一格能走的地方都走得到', townCells.filter((p) => isWalkable(p.x, p.y, 'town')).every((p) => townSeen.has(`${p.x},${p.y}`)), true);
+const touch = (ch) => townCells.filter((p) => p.c === ch).some((p) =>
+  [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => townSeen.has(`${p.x + dx},${p.y + dy}`)));
+check('雜貨店、小吃店、民宅、噴水池、告示板都走得到旁邊', ['G', 'R', 'Q', 'O', 'N'].map(touch), [true, true, true, true, true]);
+check('牧場的出口從家門口走得到', seen.has('5,19') && terrainAt(5, 19) === 'E', true);
+check('小鎮的出口從進來的地方走得到', townSeen.has('5,0') && terrainAt(5, 0, 'town') === 'E', true);
+check('換地圖後站的地方能走、而且不是出口（不會一直來回跳）',
+  [isWalkable(ARRIVE.town.x, ARRIVE.town.y, 'town'), terrainAt(ARRIVE.town.x, ARRIVE.town.y, 'town') !== 'E',
+    isWalkable(ARRIVE.farm.x, ARRIVE.farm.y), terrainAt(ARRIVE.farm.x, ARRIVE.farm.y) !== 'E'], [true, true, true, true]);
+
+console.log('\n--- 村民 ---');
+const vil = Object.entries(VILLAGERS);
+check('有 6 位村民', vil.length, 6);
+const validItem = (i) => { const [k, id] = i.split(':'); return (k === 'crop' && !!CROPS[id]) || (k === 'prod' && !!PRODUCTS[id]); };
+check('喜歡／最愛／討厭的東西都存在', vil.filter(([, v]) => ![...v.loves, ...v.likes, ...v.dislikes].every(validItem)).map(([id]) => id), []);
+check('沒有人同時喜歡又討厭同一樣東西', vil.filter(([, v]) => [...v.loves, ...v.likes].some((i) => v.dislikes.includes(i))).map(([id]) => id), []);
+check('生日格式正確（月-日）', vil.every(([, v]) => /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(v.birthday)), true);
+check('每個人說的話都齊全（平常、四季、下雨、感情好）', vil.filter(([, v]) =>
+  !['any', 'spring', 'summer', 'autumn', 'winter', 'rain', 'close'].every((k) => (v.lines[k] || []).length)).map(([id]) => id), []);
+check('每個人的活動範圍裡至少有 3 格能走', vil.filter(([, v]) => {
+  let n = 0;
+  for (let y = v.zone.y0; y <= v.zone.y1; y++) for (let x = v.zone.x0; x <= v.zone.x1; x++) if (isWalkable(x, y, 'town')) n++;
+  return n < 3;
+}).map(([id]) => id), []);
+check('送禮反應：最愛、喜歡、普通、討厭',
+  [giftReaction('fu', 'crop:pumpkin'), giftReaction('fu', 'crop:corn'), giftReaction('fu', 'prod:milk'), giftReaction('fu', 'crop:spinach')],
+  ['love', 'like', 'neutral', 'dislike']);
+check('生日那天喜歡的禮物點數三倍、討厭的不變',
+  [giftPoints('fu', 'crop:pumpkin', '2026-03-12').points, giftPoints('fu', 'crop:pumpkin', '2026-03-13').points,
+    giftPoints('fu', 'crop:spinach', '2026-03-12').points], [24, 8, -3]);
+check('愛心：每 10 點一顆，最多 10 顆', [friendHearts(0), friendHearts(9), friendHearts(10), friendHearts(55), friendHearts(100), friendHearts(250)], [0, 0, 1, 5, 10, 10]);
+check('每一級謝禮都有東西，種子是真的作物', [1, 2, 3, 4, 5].every((l) => vil.every(([id]) => {
+  const r = friendReward(id, l);
+  return r && (r.money > 0 || (r.qty > 0 && (r.item === 'feed' || !!CROPS[r.item.slice(5)])));
+})), true);
+check('村民早上 6 點出門、半夜 12 點回家',
+  [villagerOut(tw(2026, 11, 6, 5) + 59 * 60000), villagerOut(tw(2026, 11, 6, 6)), villagerOut(tw(2026, 11, 6, 23) + 59 * 60000), villagerOut(tw(2026, 11, 7, 0))],
+  [false, true, true, false]);
+
+console.log('\n--- 委託、小吃店、工具 ---');
+const reqs = yearDays.map(requestOf);
+check('同一天的委託永遠一樣', JSON.stringify(requestOf('2026-11-06')) === JSON.stringify(requestOf('2026-11-06')), true);
+check('委託的數量 1～5 個、報酬大於 0、東西都存在', reqs.every((q) => q.qty >= 1 && q.qty <= 5 && q.reward > 0 && validItem(q.item) && VILLAGERS[q.villager]), true);
+check('委託要的作物都是那一季種得出來的', reqs.every((q, i) => !q.item.startsWith('crop:') || inSeason(q.item.slice(5), seasonOf(tw(2026, 1, 1, 12) + i * 24 * H))), true);
+check('一年裡每位村民都會來委託', new Set(reqs.map((q) => q.villager)).size, 6);
+check('小吃店：越貴越補，最多也只補到滿', Object.values(FOODS).every((f, i, a) => f.energy > 0 && f.energy <= ENERGY_MAX && (i === 0 || (f.price > a[i - 1].price && f.energy > a[i - 1].energy))), true);
+check('工具升級有大鋤頭和大澆水壺', Object.keys(TOOL_UPGRADES).sort(), ['can', 'hoe']);
+check('3×3 範圍：9 格，點的那格排第一個', [area3x3(5, 5).length, area3x3(5, 5)[0]], [9, { x: 5, y: 5 }]);
+check('3×3 範圍不重複', new Set(area3x3(5, 5).map((c) => c.x + ',' + c.y)).size, 9);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

@@ -1,11 +1,15 @@
 // 家族小牧場（獨立視窗）：畫面、走路、工具、商店與出貨箱。
 // 規則都在伺服器（src/farm.js）判定，這裡只負責畫與送出動作；
 // 作物成長在兩次同步之間由這裡用同一套公式往後推算，畫面才會即時長大。
-import { sprite, cropSprite, houseSprite, shopSprite, barnSprite, SEASON_GROUND } from '/farm-sprites.js';
+import {
+  sprite, cropSprite, houseSprite, shopSprite, barnSprite, storeSprite, eaterySprite, homeSprite, fountainSprite, SEASON_GROUND,
+} from '/farm-sprites.js';
 
 const T = 16;            // 一格 16 像素
 const SPEED = 4.5;       // 每秒走幾格
-const WALK = new Set(['.', '=', 'F']);
+const WALK = new Set(['.', '=', 'F', 'p', ',', 'E']);
+// 點了會走過去互動的東西：田、出貨箱、攤位、房子、動物小屋；小鎮的雜貨店、小吃店、民宅、噴水池、告示板
+const TARGETS = 'FBSHAGRQON';
 const SEASON = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
 const SEASON_ORDER = ['spring', 'summer', 'autumn', 'winter'];
 const SEASON_MONTHS = { spring: '3～5 月', summer: '6～8 月', autumn: '9～11 月', winter: '12～2 月' };
@@ -32,6 +36,8 @@ const S = {
   offset: 0, scale: 1, title: '', season: 'spring', seasonEndsAt: 0, weather: { today: 'sun', tomorrow: 'sun' },
   rainWarned: false,
   animals: [], animalKinds: {}, products: {}, feedPrice: 10, penTiles: [],
+  area: 'farm', maps: {}, arrive: {}, villagers: {}, friends: {}, request: null, tools: { hoe: 1, can: 1 },
+  foods: {}, toolShop: {}, villagersOut: true, talks: 0,
   tool: 'hoe', seed: 'bokchoy', busy: false,
   me: { x: 5, y: 5, d: 'd', step: null, path: [], pending: null, anim: 0 },
   others: new Map(), floats: [], keys: [], view: 3, cam: { x: 0, y: 0 },
@@ -91,8 +97,18 @@ function setTile(t, at) {
   S.tiles.set(key(t.x, t.y), { ...t, at });
 }
 
+function applyTown(t) {
+  if (!t) return;
+  S.friends = t.friends; S.request = t.request; S.tools = t.tools;
+}
+
 function applyState(st) {
-  S.map = st.map; S.H = st.map.length; S.W = st.map[0].length;
+  // 兩張地圖：牧場和小鎮；重新同步時留在原本那一張
+  S.maps = { farm: st.map, town: st.town || st.map };
+  S.map = S.maps[S.area]; S.H = S.map.length; S.W = S.map[0].length;
+  S.arrive = st.arrive || {}; S.villagers = st.villagers || {}; S.foods = st.foods || {}; S.toolShop = st.toolShop || {};
+  S.villagersOut = st.villagersOut !== false;
+  applyTown(st);
   S.crops = st.crops; S.items = st.items; S.money = st.farm.money;
   S.energy = st.energy.now; S.energyMax = st.energy.max;
   S.scale = st.scale; S.season = st.season; S.title = st.farm.title;
@@ -163,6 +179,7 @@ function renderToolbar() {
   bar.textContent = '';
   TOOLS.forEach((tool, i) => {
     let ico = tool.ico, name = tool.name, count = null;
+    if ((tool.key === 'hoe' || tool.key === 'can') && S.tools[tool.key] >= 2) { name = '大' + name; count = '3×3'; }
     if (tool.key === 'seed') {
       name = S.crops[S.seed] ? S.crops[S.seed].name : '種子';
       count = S.items['seed:' + S.seed] || 0;
@@ -176,7 +193,7 @@ function renderToolbar() {
         renderToolbar();
       },
     }, el('kbd', { text: String(i + 1) }), el('span', { class: 'ico', text: ico }), el('span', { text: name }),
-      count != null ? el('span', { class: 'count', text: '×' + count }) : null));
+      count != null ? el('span', { class: 'count', text: typeof count === 'number' ? '×' + count : count }) : null));
   });
 }
 
@@ -191,9 +208,9 @@ function openModal(...kids) {
   root.onclick = (e) => { if (e.target === root) closeModal(); };
   return box;
 }
-function icon(name) {
+function icon(name, shirt, tint) {
   const c = el('canvas', { width: 16, height: 16 });
-  c.getContext('2d').drawImage(sprite(name), 0, 0);
+  c.getContext('2d').drawImage(sprite(name, shirt, false, tint || ''), 0, 0);
   return c;
 }
 
@@ -405,6 +422,198 @@ async function useOnAnimal(a) {
   } catch {}
 }
 
+/* ---------- 小鎮 ---------- */
+
+const BIG = { H: 1, S: 1, A: 1, G: 1, R: 1, Q: 1, O: 1 };
+const HOMES = ['ama', 'lin', 'jie'];   // 三間民宅由左到右：王阿嬤、林老師、小傑家
+function homeIndex(x, y) {
+  const tops = [];
+  for (let yy = 0; yy < S.H; yy++) for (let xx = 0; xx < S.W; xx++)
+    if (terrain(xx, yy) === 'Q' && terrain(xx - 1, yy) !== 'Q' && terrain(xx, yy - 1) !== 'Q') tops.push([xx, yy]);
+  return tops.findIndex(([tx, ty]) => x >= tx && x < tx + 3 && y >= ty && y < ty + 2);
+}
+
+// 走到 E：牧場 ↔ 小鎮
+function switchArea() {
+  const to = S.area === 'farm' ? 'town' : 'farm';
+  S.area = to;
+  S.map = S.maps[to];
+  const p = S.arrive[to] || S.spawn;
+  Object.assign(S.me, { x: p.x, y: p.y, step: null, path: [], pending: null, d: to === 'town' ? 'd' : 'u' });
+  S.floats = [];
+  closeModal();
+  sendPos(false);
+  toast(to === 'town' ? '🏘️ 來到小鎮了' : '🌾 回到牧場了');
+}
+
+// 村民在自己那一帶走來走去，位置由「村民＋時間」算出來，全家看到的一樣
+const villagerTiles = {};
+function zoneTiles(id) {
+  if (villagerTiles[id]) return villagerTiles[id];
+  const z = S.villagers[id].zone, out = [];
+  for (let y = z.y0; y <= z.y1; y++) for (let x = z.x0; x <= z.x1; x++)
+    if (WALK.has(((S.maps.town || [])[y] || '')[x])) out.push({ x, y });
+  return (villagerTiles[id] = out);
+}
+const idNum = (id) => [...id].reduce((n, c) => n * 31 + c.charCodeAt(0), 7) % 100000;
+function villagerPos(id, now) {
+  const tiles = zoneTiles(id);
+  if (!tiles.length) return { x: 0, y: 0, moving: false, d: 'd' };
+  const VSLOT = 9000, n = idNum(id);
+  const t = now + (hash32(n * 7919) % VSLOT);
+  const slot = Math.floor(t / VSLOT);
+  const from = tiles[hash32(n * 100003 + slot - 1) % tiles.length];
+  const to = tiles[hash32(n * 100003 + slot) % tiles.length];
+  const walk = Math.min(1, ((t % VSLOT) / VSLOT) / 0.4);
+  const moving = walk < 1 && (from.x !== to.x || from.y !== to.y);
+  const dx = to.x - from.x, dy = to.y - from.y;
+  const d = !moving ? 'd' : Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'r' : 'l') : (dy > 0 ? 'd' : 'u');
+  return { x: from.x + dx * walk, y: from.y + dy * walk, moving, d };
+}
+function villagerAt(tx, ty, now = serverNow()) {
+  if (!S.villagersOut) return null;
+  let best = null, bd = 0.8;
+  for (const id of Object.keys(S.villagers)) {
+    const p = villagerPos(id, now);
+    const d = Math.hypot(p.x - tx, p.y - ty);
+    if (d < bd) { best = id; bd = d; }
+  }
+  return best;
+}
+const todayTW = () => new Date(serverNow() + 8 * 3600000).toISOString().slice(0, 10);
+const isBirthdayToday = (id) => S.villagers[id] && S.villagers[id].birthday === todayTW().slice(5);
+// 今天要說的話：依季節、天氣、感情挑，每天不一樣，同一天多聊幾次也會換
+function lineOf(id) {
+  const v = S.villagers[id], L = v.lines, f = S.friends[id] || { hearts: 0 };
+  if (isBirthdayToday(id)) return '今天是我的生日耶！你記得嗎？';
+  const pool = [...L.any, ...(L[S.season] || []), ...(L[S.season] || [])];
+  if (S.weather.today === 'rain') pool.push(...L.rain, ...L.rain);
+  if (f.hearts >= 6) pool.push(...L.close, ...L.close);
+  const day = Number(todayTW().replace(/-/g, '')) % 997;
+  return pool[(hash32(day * 31 + idNum(id)) + S.talks) % pool.length];
+}
+const REACTION = {
+  love: ['哇！這是我最喜歡的！你怎麼知道？謝謝你！', '😍'],
+  like: ['謝謝你，我很喜歡！', '😊'],
+  neutral: ['謝謝你，你人真好。', '🙂'],
+  dislike: ['呃……謝謝，這個我不太喜歡……', '😅'],
+};
+function rewardText(rs) {
+  return (rs || []).map((r) => `💌 ${S.villagers[r.villager].name}送了你們家${r.money ? r.money + ' 元' : r.item === 'feed' ? r.qty + ' 包飼料' : `${r.qty} 包${itemInfo(r.item).name}`}！`).join(' ');
+}
+
+async function openVillager(id) {
+  const v = S.villagers[id];
+  let r;
+  try { r = await doAct({ action: 'talk', villager: id }); } catch { return; }
+  S.talks++;
+  const f = S.friends[id] || { hearts: 0, giftedToday: false };
+  const line = lineOf(id);
+  openModal(
+    el('div', { class: 'talk-head' }, icon('char_d0', v.color, v.hair),
+      el('div', { class: 'grow' }, el('h2', { text: `${v.name}${isBirthdayToday(id) ? ' 🎂' : ''}` }),
+        el('div', { class: 'sub', text: `${v.role}・${friendText(f)}` }))),
+    el('p', { class: 'speech', text: line }),
+    rewardText(r.gained && r.gained.rewards) ? el('p', { class: 'note', text: rewardText(r.gained.rewards) }) : null,
+    el('div', { class: 'actions' },
+      el('button', { class: 'btn', type: 'button', text: '再見', onclick: closeModal }),
+      el('button', {
+        class: 'btn primary', type: 'button', disabled: f.giftedToday,
+        text: f.giftedToday ? '今天送過禮了' : '🎁 送禮物', onclick: () => openGift(id),
+      })));
+}
+// 感情：每 10 點一顆愛心（最多 10 顆），也顯示點數，送禮後看得出有進步
+const friendText = (f) => `❤️×${(f && f.hearts) || 0}・感情 ${(f && f.points) || 0}/100`;
+
+function openGift(id) {
+  const v = S.villagers[id];
+  const list = Object.keys(S.items).filter((item) => /^(crop|prod):/.test(item) && itemInfo(item)).sort();
+  const rows = list.map((item) => {
+    const c = itemInfo(item);
+    return el('div', { class: 'row' }, icon(c.icon),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: `${c.name} ×${S.items[item]}` })),
+      el('button', {
+        class: 'btn primary', type: 'button', text: '送這個',
+        onclick: async () => {
+          let r;
+          try { r = await doAct({ action: 'gift', villager: id, item }); } catch { return; }
+          const [say, face] = REACTION[r.gained.reaction];
+          openModal(el('div', { class: 'talk-head' }, icon('char_d0', v.color, v.hair),
+            el('div', { class: 'grow' }, el('h2', { text: `${v.name} ${face}` }),
+              el('div', { class: 'sub', text: `${friendText(S.friends[id])}（${r.gained.points > 0 ? '+' : ''}${r.gained.points}）` }))),
+            el('p', { class: 'speech', text: (r.gained.birthday && r.gained.points > 0 ? '還記得我的生日！' : '') + say }),
+            rewardText(r.gained.rewards) ? el('p', { class: 'note', text: rewardText(r.gained.rewards) }) : null,
+            el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '好', onclick: closeModal })));
+        },
+      }));
+  });
+  openModal(el('h2', { text: `🎁 要送${v.name}什麼？` }),
+    el('p', { class: 'sub', text: '每個人喜歡的東西不一樣，送他喜歡的感情會增加比較多。生日那天送更有心意喔！' }),
+    ...(rows.length ? rows : [el('div', { class: 'empty', text: '倉庫裡沒有作物或雞蛋牛奶可以送' })]),
+    el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '算了', onclick: closeModal })));
+}
+
+// 委託告示板：今天的委託＋村民名冊（感情、生日）
+function openBoard() {
+  const q = S.request;
+  const rows = [];
+  if (q) {
+    const c = itemInfo(q.item) || { name: q.item, icon: 'seed' };
+    const have = S.items[q.item] || 0;
+    rows.push(el('div', { class: 'row' }, icon(c.icon),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: `${S.villagers[q.villager].name}：想要 ${c.name} ×${q.qty}` }),
+        el('div', { class: 'meta', text: q.done ? '今天的委託完成了，明天再來看看！' : `報酬 ${q.reward} 元，還能增加感情・倉庫有 ${have} 個` })),
+      q.done ? null : el('button', {
+        class: 'btn primary', type: 'button', text: '交給他', disabled: have < q.qty,
+        onclick: async () => {
+          try { const r = await doAct({ action: 'request_fill' }); toast(`拿到 ${r.gained.money} 元！`); openBoard(); } catch {}
+        },
+      })));
+  }
+  const people = Object.entries(S.villagers).map(([id, v]) => {
+    const f = S.friends[id] || { hearts: 0 };
+    return el('div', { class: 'row' }, icon('char_d0', v.color, v.hair),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: `${v.name}${isBirthdayToday(id) ? ' 🎂 今天生日！' : ''}` }),
+        el('div', { class: 'meta', text: `${v.role}・生日 ${Number(v.birthday.slice(0, 2))}/${Number(v.birthday.slice(3))}・${friendText(f)}${f.talkedToday ? '・今天聊過了' : ''}` })));
+  });
+  openModal(el('h2', { text: '📋 委託告示板' }), ...rows,
+    el('h2', { class: 'section', text: '小鎮的人' }), ...people,
+    el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
+}
+
+// 美玲姐的小吃店：吃了恢復體力
+function openEatery() {
+  const rows = Object.entries(S.foods).map(([id, f]) => el('div', { class: 'row' },
+    el('span', { class: 'big', text: { egg: '🥚', rice: '🍚', noodle: '🍜' }[id] || '🍽️' }),
+    el('div', { class: 'grow' }, el('div', { class: 'name', text: f.name }), el('div', { class: 'meta', text: `${f.price} 元・體力 +${f.energy}` })),
+    el('button', {
+      class: 'btn primary', type: 'button', text: `吃 ${f.price}`, disabled: f.price > S.money || S.energy >= S.energyMax,
+      onclick: async () => { try { await doAct({ action: 'eat', food: id }); toast(`好吃！體力 ${S.energy}/${S.energyMax}`); openEatery(); } catch {} },
+    })));
+  openModal(el('h2', { text: '🍜 美玲姐的小吃店' }),
+    el('p', { class: 'sub', text: `累了就來吃一碗，體力馬上恢復（最多到滿）。現在體力 ${S.energy}/${S.energyMax}，錢包 ${S.money.toLocaleString()} 元。` }),
+    ...rows, el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
+}
+
+// 阿福伯的雜貨店：工具升級，也可以買種子和飼料
+function openStore() {
+  const rows = Object.entries(S.toolShop).map(([id, t]) => {
+    const have = S.tools[id] >= 2;
+    return el('div', { class: 'row' }, el('span', { class: 'big', text: id === 'hoe' ? '⛏️' : '💧' }),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: t.name }), el('div', { class: 'meta', text: `${t.desc}（只做需要的格子，體力照格子算）` })),
+      el('button', {
+        class: 'btn primary', type: 'button', text: have ? '已經有了' : `買 ${t.price}`, disabled: have || t.price > S.money,
+        onclick: async () => { try { await doAct({ action: 'upgrade_tool', tool: id }); toast(`買了${t.name}！`); renderToolbar(); openStore(); } catch {} },
+      }));
+  });
+  openModal(el('h2', { text: '🏪 阿福伯的雜貨店' }),
+    el('p', { class: 'sub', text: `錢包 ${S.money.toLocaleString()} 元。工具是全家共用的，一個人買全家都能用。` }),
+    ...rows,
+    el('div', { class: 'actions' },
+      el('button', { class: 'btn', type: 'button', text: '買種子、飼料', onclick: openShop }),
+      el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
+}
+
 // 這一季能種的都列出來；別季的種子倉庫裡有的話也列，但要等季節到了才能用
 function openSeedPicker() {
   const list = Object.entries(S.crops).filter(([id]) => inSeason(id) || S.items['seed:' + id]);
@@ -467,6 +676,8 @@ async function doAct(body) {
     S.energy = r.energy; S.money = r.money; S.items = r.items;
     if (r.tile) setTile(r.tile, r.now);
     if (r.animals) S.animals = r.animals;
+    if (r.tiles) for (const t of r.tiles) setTile(t, r.now);
+    if (r.town) applyTown(r.town);
     if (body.x != null) {
       if (r.gained) floatAt(body.x, body.y, `+1 ${S.crops[r.gained.item.split(':')[1]].name}`, '#fff3b0');
       else if (spent > 0) floatAt(body.x, body.y, `-${spent}⚡`, '#ffffff');
@@ -493,13 +704,20 @@ function useOn(x, y) {
   if (ch === 'S') return openShop();
   if (ch === 'H') return toast('家裡還在整理中，下一期就能進去了 🏠');
   if (ch === 'A') return openBarn();
+  if (ch === 'G') return openStore();
+  if (ch === 'R') return openEatery();
+  if (ch === 'N') return openBoard();
+  if (ch === 'O') return toast('噴水池裡有好多硬幣，許個願吧 ✨');
+  if (ch === 'Q') { const who = HOMES[homeIndex(x, y)]; return toast(who ? `這是${S.villagers[who].name}的家` : '別人的家'); }
   if (ch !== 'F') return;
   const t = S.tiles.get(key(x, y)) || { tilled: false, crop: null };
   const now = serverNow();
   if (t.crop && stage(t, now) === 3) return doAct({ action: 'harvest', x, y }).catch(() => {});
   if (S.tool === 'hoe') {
-    if (!t.tilled) return doAct({ action: 'till', x, y }).catch(() => {});
+    if (!t.tilled) return doAct({ action: 'till', x, y, ...(S.tools.hoe >= 2 ? { area: true } : {}) }).catch(() => {});
     if (t.crop) return confirmDig(t, x, y);
+    // 大鋤頭：點翻好的地，也會把旁邊還沒翻的一起翻好
+    if (S.tools.hoe >= 2) return doAct({ action: 'till', x, y, area: true }).catch(() => {});
     return toast('這塊已經翻好了，換「種子」來播種');
   }
   if (S.tool === 'can') {
@@ -509,7 +727,7 @@ function useOn(x, y) {
       S.rainWarned = true;
       return toast('今天下雨，田地整天都是濕的，不用澆水 ☔（真的要澆再點一次）');
     }
-    return doAct({ action: 'water', x, y }).catch(() => {});
+    return doAct({ action: 'water', x, y, ...(S.tools.can >= 2 ? { area: true } : {}) }).catch(() => {});
   }
   if (S.tool === 'seed') {
     if (!t.tilled) return toast('要先用鋤頭翻土');
@@ -564,7 +782,7 @@ function tapTile(tx, ty, fx = tx + 0.5, fy = ty + 0.5) {
   const ch = terrain(tx, ty);
   // 點到動物：走到牠旁邊再跟牠互動
   const an = animalAt(fx - 0.5, fy - 0.5);
-  if (an) {
+  if (an && S.area === 'farm') {
     const p = animalPos(an, serverNow());
     const ax = Math.round(p.x), ay = Math.round(p.y);
     const path = findPath(cx, cy, (x, y) => Math.abs(x - ax) + Math.abs(y - ay) <= 1);
@@ -574,7 +792,19 @@ function tapTile(tx, ty, fx = tx + 0.5, fy = ty + 0.5) {
     if (!path.length && !me.step) arrive();
     return;
   }
-  const target = ch === 'F' || ch === 'B' || ch === 'S' || ch === 'H' || ch === 'A';
+  // 小鎮的村民：跟動物一樣，走到旁邊再聊天
+  const vi = S.area === 'town' && villagerAt(fx - 0.5, fy - 0.5);
+  if (vi) {
+    const p = villagerPos(vi, serverNow());
+    const ax = Math.round(p.x), ay = Math.round(p.y);
+    const path = findPath(cx, cy, (x, y) => Math.abs(x - ax) + Math.abs(y - ay) <= 1);
+    if (!path) return toast('走不過去');
+    me.path = path;
+    me.pending = { villager: vi };
+    if (!path.length && !me.step) arrive();
+    return;
+  }
+  const target = TARGETS.includes(ch);
   if (target) {
     // 走到旁邊（上下左右）再面向它動作。房子、攤位、動物小屋好幾格大，
     // 點到中間那格也算：走到這棟建築任何一格的旁邊就好
@@ -610,6 +840,13 @@ function arrive() {
   const p = me.pending;
   me.pending = null;
   if (!p) return;
+  if (p.villager) {
+    const vp = villagerPos(p.villager, serverNow());
+    if (!S.villagersOut) return toast('大家都回家睡覺了');
+    if (Math.hypot(vp.x - me.x, vp.y - me.y) > 2.5) return toast(`${S.villagers[p.villager].name}走開了，再點一次`);
+    me.d = dirTo(me.x, me.y, Math.round(vp.x), Math.round(vp.y));
+    return openVillager(p.villager);
+  }
   if (p.animal) {
     const a = S.animals.find((x) => x.id === p.animal);
     if (!a) return;
@@ -655,6 +892,7 @@ function update(dt) {
     me.y = s.fy + (s.ty - s.fy) * t;
     if (s.t >= 1) {
       me.x = s.tx; me.y = s.ty; me.step = null;
+      if (terrain(me.x, me.y) === 'E') { switchArea(); return; }
       if (!me.path.length && !S.keys.length) { sendPos(false); if (me.pending) arrive(); }
     }
     if (me.step) sendPos(true);
@@ -681,7 +919,7 @@ function sendPos(moving) {
   const now = performance.now();
   if (moving && lastMoving && now - lastPosSent < 120) return;
   lastPosSent = now; lastMoving = moving;
-  ws.send(JSON.stringify({ t: 'pos', x: +S.me.x.toFixed(2), y: +S.me.y.toFixed(2), d: S.me.d, m: moving }));
+  ws.send(JSON.stringify({ t: 'pos', x: +S.me.x.toFixed(2), y: +S.me.y.toFixed(2), d: S.me.d, m: moving, a: S.area }));
 }
 
 function otherOf(id) {
@@ -703,18 +941,20 @@ function connectWs() {
     let ev;
     try { ev = JSON.parse(e.data); } catch { return; }
     if (ev.type === 'farm-presence') {
-      for (const p of ev.players) { const o = otherOf(p.userId); o.x = o.tx = p.x; o.y = o.ty = p.y; o.d = p.d; }
+      for (const p of ev.players) { const o = otherOf(p.userId); o.x = o.tx = p.x; o.y = o.ty = p.y; o.d = p.d; o.a = p.a || 'farm'; }
     } else if (ev.type === 'farm-pos') {
       if (ev.userId === S.meId) return;
       const o = otherOf(ev.userId);
-      if (!o.seen) { o.x = ev.x; o.y = ev.y; o.seen = true; }
-      o.tx = ev.x; o.ty = ev.y; o.d = ev.d; o.m = ev.m;
+      const area = ev.a || 'farm';
+      if (!o.seen || o.a !== area) { o.x = ev.x; o.y = ev.y; o.seen = true; } // 換地圖了就直接出現在新位置
+      o.tx = ev.x; o.ty = ev.y; o.d = ev.d; o.m = ev.m; o.a = area;
     } else if (ev.type === 'farm-leave') {
       S.others.delete(ev.userId);
     } else if (ev.type === 'farm-update') {
       for (const t of ev.tiles) setTile(t, ev.now);
       S.money = ev.money; S.items = ev.items;
       if (ev.animals) S.animals = ev.animals;
+      if (ev.town) applyTown(ev.town);
       if (ev.by !== S.meId && ev.action === 'harvest' && ev.tiles[0]) {
         const who = S.members.get(ev.by);
         floatAt(ev.tiles[0].x, ev.tiles[0].y, `${who ? who.name : '家人'} 收成了！`, '#fff3b0');
@@ -743,10 +983,15 @@ function resize() {
   canvas.height = Math.round(innerHeight * dpr);
   // 手機約看得到 12 格寬，電腦視窗約 15 格；一律整數倍放大，像素才不會糊
   S.view = Math.max(2, Math.min(6, Math.floor(Math.min(innerWidth / (T * 13), innerHeight / (T * 10)))));
+  // 上面的狀態列、下面的工具列會蓋住地圖邊緣，鏡頭要能多捲一點，最上排、最下排才看得到、點得到
+  S.padTop = $('hud').offsetHeight || 0;
+  S.padBottom = ($('toolbar').offsetHeight || 0) + 14;
 }
 
 function baseSprite(x, y, ch) {
-  if (ch === '=') return sprite('path');
+  if (ch === '=' || ch === 'E') return sprite('path');
+  if (ch === 'p') return sprite('plaza');
+  if (ch === ',') return sprite('flowers', undefined, false, S.season);
   if (ch === 'W') return sprite(Math.floor(Date.now() / 600) % 2 ? 'water1' : 'water0');
   if (ch === 'F') {
     const t = S.tiles.get(key(x, y));
@@ -791,7 +1036,8 @@ function draw() {
   let camX = (me.x + 0.5) * T * k - vw / 2;
   let camY = (me.y + 0.5) * T * k - vh / 2;
   camX = worldW <= vw ? (worldW - vw) / 2 : Math.max(0, Math.min(worldW - vw, camX));
-  camY = worldH <= vh ? (worldH - vh) / 2 : Math.max(0, Math.min(worldH - vh, camY));
+  const padT = (S.padTop || 0) * dpr, padB = (S.padBottom || 0) * dpr;
+  camY = worldH + padT + padB <= vh ? (worldH - vh + padB - padT) / 2 : Math.max(-padT, Math.min(worldH - vh + padB, camY));
   camX = Math.round(camX); camY = Math.round(camY);
   S.cam = { x: camX, y: camY };
 
@@ -815,6 +1061,7 @@ function draw() {
       if (ch === 'T') g.drawImage(treeSprite(x, y), x * T, y * T);
       else if (ch === 'f') g.drawImage(sprite('fence'), x * T, y * T);
       else if (ch === 'B') g.drawImage(sprite('bin'), x * T, y * T);
+      else if (ch === 'N') g.drawImage(sprite('board'), x * T, y * T);
       else if (ch === 'F') {
         const t = S.tiles.get(key(x, y));
         if (t && t.crop) {
@@ -825,29 +1072,45 @@ function draw() {
       }
     }
   }
-  // 房子與商店（多格的大圖，左上角那一格畫一次）
-  outer: for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) if (terrain(x, y) === 'H') { g.drawImage(houseSprite(SEASON_GROUND[S.season]), x * T, y * T); break outer; }
-  outer2: for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) if (terrain(x, y) === 'S') { g.drawImage(shopSprite(), x * T, y * T); break outer2; }
-  outer3: for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) if (terrain(x, y) === 'A') { g.drawImage(barnSprite(SEASON_GROUND[S.season]), x * T, y * T); break outer3; }
+  // 好幾格大的建築：每一棟在它左上角那一格畫一次
+  const ground = SEASON_GROUND[S.season];
+  let homes = 0;
+  for (let y = 0; y < S.H; y++) {
+    for (let x = 0; x < S.W; x++) {
+      const ch = terrain(x, y);
+      if (!BIG[ch] || terrain(x - 1, y) === ch || terrain(x, y - 1) === ch) continue;
+      const img = ch === 'H' ? houseSprite(ground) : ch === 'S' ? shopSprite() : ch === 'A' ? barnSprite(ground)
+        : ch === 'G' ? storeSprite() : ch === 'R' ? eaterySprite() : ch === 'Q' ? homeSprite(homes++)
+        : fountainSprite(Math.floor(Date.now() / 500) % 2);
+      g.drawImage(img, x * T, y * T);
+    }
+  }
 
   // 面前那一格的框（鍵盤操作時看得到要對哪一格動作）
   if (!me.step && !me.path.length) {
     const [dx, dy] = DIRS[me.d];
     const fx = Math.round(me.x) + dx, fy = Math.round(me.y) + dy;
-    if ('FBSHA'.includes(terrain(fx, fy))) g.drawImage(sprite('cursor'), fx * T, fy * T);
+    if (TARGETS.includes(terrain(fx, fy))) g.drawImage(sprite('cursor'), fx * T, fy * T);
   }
 
   // 角色：依 y 排序，後面的先畫
   const people = [{ ...me, color: S.myColor, mine: true, moving: !!me.step }];
-  for (const [id, o] of S.others) people.push({ ...o, id, moving: Math.hypot(o.tx - o.x, o.ty - o.y) > 0.01 });
-  const beasts = S.animals.map((a) => ({ a, ...animalPos(a, now) }));
+  for (const [id, o] of S.others) if ((o.a || 'farm') === S.area) people.push({ ...o, id, moving: Math.hypot(o.tx - o.x, o.ty - o.y) > 0.01 });
+  const beasts = S.area === 'farm' ? S.animals.map((a) => ({ a, ...animalPos(a, now) })) : [];
+  // 小鎮的村民也一起排前後，用跟家人一樣的小人圖、各自的衣服和髮色
+  if (S.area === 'town' && S.villagersOut) {
+    for (const id of Object.keys(S.villagers)) {
+      const v = S.villagers[id], vp = villagerPos(id, now);
+      people.push({ x: vp.x, y: vp.y, d: vp.d, moving: vp.moving, anim: now / 1000, color: v.color, hair: v.hair, name: v.name, villager: id });
+    }
+  }
   const sprites = [...people.map((p) => ({ p, y: p.y })), ...beasts.map((b) => ({ b, y: b.y }))].sort((u, v) => u.y - v.y);
   for (const it of sprites) {
     if (it.p) {
       const p = it.p;
-      const frame = p.moving ? (((p.anim * 6) | 0) % 2) : 0;
+      const frame = p.moving ? Math.floor(p.anim * 6) % 2 : 0;
       const dir = p.d === 'l' ? 'r' : p.d;
-      g.drawImage(sprite(`char_${dir}${frame}`, p.color, p.d === 'l'), p.x * T, p.y * T - 5);
+      g.drawImage(sprite(`char_${dir}${frame}`, p.color, p.d === 'l', p.hair || ''), p.x * T, p.y * T - 5);
     } else {
       const b = it.b;
       const frame = b.moving ? Math.floor(Date.now() / 220) % 2 : 0;
@@ -862,11 +1125,23 @@ function draw() {
   for (const p of people) {
     if (p.mine) continue;
     const sx = (p.x + 0.5) * T * k - camX, sy = (p.y * T - 6) * k - camY;
-    const w = g.measureText(p.name).width + 8 * dpr;
+    const name = p.villager && isBirthdayToday(p.villager) ? `🎂 ${p.name}` : p.name;
+    const w = g.measureText(name).width + 8 * dpr;
     g.fillStyle = 'rgba(43,36,33,.7)';
     g.fillRect(sx - w / 2, sy - 13 * dpr, w, 15 * dpr);
     g.fillStyle = '#fff';
-    g.fillText(p.name, sx, sy - 2 * dpr);
+    g.fillText(name, sx, sy - 2 * dpr);
+  }
+  // 出口的路牌
+  for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) {
+    if (terrain(x, y) !== 'E') continue;
+    const label = S.area === 'farm' ? '🏘️ 往小鎮' : '🌾 回牧場';
+    const sx = (x + 0.5) * T * k - camX, sy = (y * T + (y === 0 ? 14 : 2)) * k - camY;
+    const w = g.measureText(label).width + 10 * dpr;
+    g.fillStyle = 'rgba(122,78,45,.9)';
+    g.fillRect(sx - w / 2, sy - 13 * dpr, w, 16 * dpr);
+    g.fillStyle = '#fff';
+    g.fillText(label, sx, sy);
   }
   // 動物：名字小小的；有雞蛋牛奶可以收時，頭上冒出泡泡；晚上睡覺冒 z
   g.font = `${Math.round(10 * dpr)}px sans-serif`;
@@ -925,8 +1200,13 @@ addEventListener('keydown', (e) => {
     const [dx, dy] = DIRS[S.me.d];
     if (S.me.step) return;
     const fx = Math.round(S.me.x) + dx, fy = Math.round(S.me.y) + dy;
-    const an = animalAt(fx, fy);
-    if (an) return useOnAnimal(an);
+    if (S.area === 'town') {
+      const vi = villagerAt(fx, fy);
+      if (vi) return openVillager(vi);
+    } else {
+      const an = animalAt(fx, fy);
+      if (an) return useOnAnimal(an);
+    }
     useOn(fx, fy);
     return;
   }
@@ -983,6 +1263,7 @@ async function boot() {
   resize();
   $('hud').classList.remove('hidden');
   $('toolbar').classList.remove('hidden');
+  resize(); // 狀態列、工具列出現之後再量一次高度
   $('boot').classList.add('hidden');
   renderHud(); renderClock();
   setInterval(renderClock, 15000);
@@ -999,6 +1280,11 @@ if (params.has('test')) {
       return { x: ((x + 0.5) * T * k - S.cam.x) / dpr, y: ((y + 0.5) * T * k - S.cam.y) / dpr };
     },
     stageAt(x, y) { return stage(S.tiles.get(key(x, y)), serverNow()); },
+    villagerScreen(id) {
+      const p = villagerPos(id, serverNow());
+      const k = S.view * dpr;
+      return { x: ((p.x + 0.5) * T * k - S.cam.x) / dpr, y: ((p.y + 0.5) * T * k - S.cam.y) / dpr, tx: p.x, ty: p.y };
+    },
     animalScreen(id) {
       const a = S.animals.find((x) => x.id === id);
       const p = animalPos(a, serverNow());
