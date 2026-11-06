@@ -2909,8 +2909,11 @@ function foodPickModal(conv) {
   };
   renderChips();
 
-  const draw = () => {
-    const pool = foodPool();
+  // fromFarm：從家族牧場煮過的菜裡抽（分享時會註明）
+  let fromFarm = false;
+  const draw = (farmPool) => {
+    const pool = farmPool || foodPool();
+    fromFarm = !!farmPool;
     clearInterval(timer);
     result.classList.add('spinning');
     let ticks = 0;
@@ -2925,7 +2928,8 @@ function foodPickModal(conv) {
       result.classList.remove('pop');
       void result.offsetWidth;
       result.classList.add('pop');
-      note.textContent = `從 ${pool.length} 個選項裡抽中的 — 不喜歡就再抽一次`;
+      note.textContent = fromFarm ? `從家族牧場煮過的 ${pool.length} 道菜裡抽中的 — 自己種的最好吃！`
+        : `從 ${pool.length} 個選項裡抽中的 — 不喜歡就再抽一次`;
       shareBtn.disabled = false;
     }, 65);
   };
@@ -2935,18 +2939,29 @@ function foodPickModal(conv) {
     onclick: async () => {
       if (!current) return;
       try {
-        await postMessage(conv.id, 'text', `🍽️ 今天吃「${current}」！（隨機抽的）`);
+        await postMessage(conv.id, 'text', fromFarm ? `🍽️ 今天吃「${current}」！（家族牧場煮過的菜）` : `🍽️ 今天吃「${current}」！（隨機抽的）`);
         close();
       } catch (e) { toast(e.message); }
     },
   });
+
+  // 家族牧場煮過的菜：有的話多一個按鈕，從那些菜裡抽（沒有牧場、沒煮過就不顯示）
+  const farmBtn = el('button', { class: 'btn btn-ghost btn-block hidden', text: '🌾 從家族牧場煮過的菜裡抽' });
+  api(`/api/farm/${conv.id}/dishes`).then((d) => {
+    const names = (d.dishes || []).map((x) => x.name);
+    if (!names.length) return;
+    farmBtn.textContent = `🌾 從家族牧場煮過的菜裡抽（${names.length} 道）`;
+    farmBtn.onclick = () => draw(names);
+    farmBtn.classList.remove('hidden');
+  }).catch(() => {});
 
   const close = openModal(el('div', { class: 'modal modal-food' },
     el('div', { class: 'modal-title', text: '🍽️ 今天吃什麼' }),
     el('div', { class: 'modal-body' },
       result, note,
       el('div', { class: 'food-acts' },
-        el('button', { class: 'btn btn-primary btn-block', text: '隨機抽一個！', onclick: draw }),
+        el('button', { class: 'btn btn-primary btn-block', text: '隨機抽一個！', onclick: () => draw() }),
+        farmBtn,
         el('button', {
           class: 'btn btn-ghost btn-block', text: '抽 3 個給大家投票',
           onclick: async () => {

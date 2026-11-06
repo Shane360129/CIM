@@ -1325,6 +1325,7 @@ const cache = new Map();
 export function sprite(name, shirt = '#d9544d', flip = false, season = '') {
   if (name.startsWith('fish_')) return fishSprite(name.slice(5));
   if (name.startsWith('ore_')) return oreSprite(name.slice(4));
+  if (name.startsWith('dish_')) { const [id, shape] = name.slice(5).split('@'); return dishSprite(id, shape); }
   const key = name + '|' + shirt + '|' + (flip ? 1 : 0) + '|' + season;
   if (cache.has(key)) return cache.get(key);
   const rows = SPRITES[name];
@@ -1380,6 +1381,12 @@ function shaped(key, shape, colors) {
   cache.set(key, c);
   return c;
 }
+// 料理：盤子（3 盤子、4 陰影）、碗（4 是碗上的藍色花紋）、杯子（4 是吸管），1、2 是菜的顏色
+export const DISH_SHAPES = { plate: ["................", "................", "................", "................", "................", "......1121......", "....11211211....", "...1121112111...", "..112111121112..", ".33333333333333.", ".43333333333334.", "..444444444444..", "................", "................", "................", "................"], bowl: ["................", "................", "................", "................", "....11211211....", "..112111121111..", ".33333333333333.", ".34444444444443.", "..333333333333..", "...3333333333...", "....33333333....", ".....444444.....", "................", "................", "................", "................"], cup: ["................", "..........4.....", ".........4......", "....33334333....", "....31141113....", "....31411113....", "....31111113....", "....31212123....", "....31111113....", "....31111113....", ".....311113.....", ".....311113.....", ".....333333.....", "................", "................", "................"] };
+export const DISH_COLORS = {"stirfry": ["#4f9d3f", "#8fd16a"], "tomato_egg": ["#e0393e", "#f6d34a"], "carrot_egg": ["#f28b2c", "#f6d34a"], "eggplant": ["#7b3fa0", "#c8553d"], "potato_salad": ["#f2e2a0", "#f6d34a"], "corn_grill": ["#f2b33d", "#8d5d32"], "cabbage_rice": ["#f4f1e8", "#9dd17a"], "sweetpotato_congee": ["#f4efe0", "#e8913a"], "radish_soup": ["#e9e4c8", "#ffffff"], "pumpkin_soup": ["#f2a03a", "#ffffff"], "fish_braised": ["#8a4a2a", "#c96a3a"], "bass_soup": ["#e8e4d0", "#d9b44a"], "eel_rice": ["#6b3a1e", "#f4f1e8"], "pudding": ["#f6d880", "#8d5d32"], "strawberry_milk": ["#f6b6c9", "#e0393e"], "watermelon_juice": ["#f05a5a", "#4f9d3f"], "pineapple_cake": ["#e8b45a", "#f6d34a"]};
+const DISH_KIND = { plate: ['#f4f1ea', '#c9c5bf'], bowl: ['#f4f1ea', '#5a8fc8'], cup: ['#d9eef6', '#e0393e'] };
+export const dishSprite = (id, shape = 'plate') => shaped('dish_' + id, DISH_SHAPES[shape] || DISH_SHAPES.plate,
+  [...(DISH_COLORS[id] || ['#c8553d', '#f6d34a']), ...(DISH_KIND[shape] || DISH_KIND.plate)]);
 export const fishSprite = (id) => shaped('fish_' + id, id === 'junk' ? BOOT_SHAPE : FISH_SHAPE, FISH_COLORS[id] || FISH_COLORS.tilapia);
 export const oreSprite = (id) => shaped('ore_' + id, ROCK_SHAPE, ORE_COLORS[id] || ORE_COLORS.stone);
 

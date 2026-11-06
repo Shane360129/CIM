@@ -12,6 +12,7 @@ import {
   TOWN_MAP, AREAS, ARRIVE, VILLAGERS, FRIEND_MAX, friendHearts, giftPoints, friendReward, villagerOut, requestOf,
   TALK_POINTS, REQUEST_POINTS, FOODS, TOOL_UPGRADES, area3x3, isBirthday,
   HILL_MAP, EXITS, FISH, ORES, fishSpot, isDaytime, fishChoices, pickWeighted, rocksOf, itemPrice, itemName, terrainAt,
+  DISHES, INGREDIENT_GROUPS, cookTakes,
 } from './farm.js';
 const ANIMAL_EMOJI = { chicken: '🐔', cow: '🐄' };
 
@@ -620,6 +621,8 @@ export class ChatServer {
     if (method === 'POST' && pathname === '/api/push/subscribe') return this.pushSubscribe(request, me);
     if (method === 'POST' && pathname === '/api/push/unsubscribe') return this.pushUnsubscribe(request, me);
 
+    // 今天吃什麼：這個聊天室的牧場煮過哪些菜（只讀，沒有牧場就是空的，不會順便開墾）
+    if (method === 'GET' && (m = pathname.match(/^\/api\/farm\/(\d+)\/dishes$/))) return this.farmDishes(me, +m[1]);
     if ((m = pathname.match(/^\/api\/farm\/(\d+)$/))) {
       if (method === 'GET') return this.farmState(me, +m[1]);
       if (method === 'POST') return this.farmAction(request, me, +m[1]);
@@ -2450,11 +2453,24 @@ export class ChatServer {
     const had = this.sql.exec(`SELECT 1 FROM farm_dex WHERE conversation_id = ? AND item = ?`, conversationId, item).toArray().length;
     if (had) return false;
     this.sql.exec(`INSERT INTO farm_dex (conversation_id, item, by_user, at) VALUES (?, ?, ?, ?)`, conversationId, item, me.id, now);
-    if (item !== 'fish:junk' && item !== 'ore:stone') {
+    if (item.startsWith('dish:')) {
+      this.addSystemMessage(conversationId, `🍳 ${me.display_name} 第一次做了${itemName(item)}！今天晚餐要不要也吃這個？`);
+    } else if (item !== 'fish:junk' && item !== 'ore:stone') {
       const fish = item.startsWith('fish:');
       this.addSystemMessage(conversationId, `${fish ? '🎣' : '⛏️'} ${me.display_name} 第一次${fish ? '釣到' : '挖到'}了${itemName(item)}！`);
     }
     return true;
+  }
+
+  farmDishes(me, conversationId) {
+    this.requireMember(conversationId, me.id);
+    const names = this.userNames();
+    const dishes = this.sql
+      .exec(`SELECT item, by_user, at FROM farm_dex WHERE conversation_id = ? AND item LIKE 'dish:%' ORDER BY at`, conversationId)
+      .toArray()
+      .filter((r) => Object.hasOwn(DISHES, r.item.slice(5)))
+      .map((r) => ({ id: r.item.slice(5), name: DISHES[r.item.slice(5)].name, by: names.get(r.by_user) || null, at: r.at }));
+    return json({ dishes });
   }
 
   farmTileRow(conversationId, x, y, now) {
@@ -2532,7 +2548,7 @@ export class ChatServer {
       animals, animalKinds: ANIMALS, products: PRODUCTS, feedPrice: FEED_PRICE, pen: PEN,
       town: TOWN_MAP, arrive: ARRIVE, villagers: this.farmVillagersPub(), foods: FOODS, toolShop: TOOL_UPGRADES,
       villagersOut: this.farmVillagersOut(now),
-      hill: HILL_MAP, exits: EXITS, fish: FISH, ores: ORES,
+      hill: HILL_MAP, exits: EXITS, fish: FISH, ores: ORES, dishes: DISHES, ingredientGroups: INGREDIENT_GROUPS,
       rocks: this.farmRocks(conversationId, today), dex: this.farmDex(conversationId),
       ...this.farmTownPub(conversationId, today),
       weather: { today: this.farmWeather(today), tomorrow: this.farmWeather(taiwanDay(dayEndOf(now))) },
@@ -2728,6 +2744,24 @@ export class ChatServer {
       gained = { item, qty: 1, first: this.farmDexAdd(conversationId, item, me, now) };
       rocksChanged = true;
       dexChanged = true;
+    } else if (action === 'cook') {
+      // 在家裡的廚房煮菜：材料夠就煮一份（不花體力），第一次煮會進圖鑑、在聊天室說一聲
+      const dish = String(body.dish || '');
+      if (!Object.hasOwn(DISHES, dish)) throw new HttpError(400, '沒有這道菜');
+      const take = cookTakes(this.farmItems(conversationId), dish);
+      if (!take) throw new HttpError(400, `材料不夠，煮不了${DISHES[dish].name}`);
+      for (const [i, q] of Object.entries(take)) this.farmAddItem(conversationId, i, -q);
+      const item = `dish:${dish}`;
+      this.farmAddItem(conversationId, item, 1);
+      gained = { item, qty: 1, first: this.farmDexAdd(conversationId, item, me, now) };
+      dexChanged = true;
+    } else if (action === 'eat_dish') {
+      const dish = String(body.dish || '');
+      if (!Object.hasOwn(DISHES, dish)) throw new HttpError(400, '沒有這道菜');
+      if ((this.farmItems(conversationId)[`dish:${dish}`] || 0) < 1) throw new HttpError(400, `倉庫裡沒有${DISHES[dish].name}`);
+      if (p.energy >= ENERGY_MAX) throw new HttpError(400, '體力是滿的，等累了再吃吧');
+      this.farmAddItem(conversationId, `dish:${dish}`, -1);
+      p.energy = Math.min(ENERGY_MAX, p.energy + DISHES[dish].energy);
     } else if (action === 'talk') {
       // 每天第一次聊天 +1（全家一天算一次）；之後再聊只是聽他說話
       const id = villagerOf(body.villager);

@@ -12,8 +12,9 @@ import {
   TOWN_MAP, ARRIVE, VILLAGERS, friendHearts, giftReaction, giftPoints, friendReward, villagerOut, requestOf,
   FOODS, TOOL_UPGRADES, area3x3, ENERGY_MAX,
   HILL_MAP, MAPS, EXITS, FISH, ORES, QUARRY, ROCKS_PER_DAY, fishChoices, pickWeighted, rocksOf, itemPrice,
+  DISHES, INGREDIENT_GROUPS, ingredientItems, canCook, cookTakes,
 } from '../src/farm.js';
-import { SPRITES, PALETTE, FISH_SHAPE, BOOT_SHAPE, ROCK_SHAPE, FISH_COLORS, ORE_COLORS } from '../public/farm-sprites.js';
+import { SPRITES, PALETTE, FISH_SHAPE, BOOT_SHAPE, ROCK_SHAPE, FISH_COLORS, ORE_COLORS, DISH_SHAPES, DISH_COLORS } from '../public/farm-sprites.js';
 
 let pass = 0, fail = 0;
 const check = (label, got, want) => {
@@ -280,6 +281,20 @@ check('小吃店：越貴越補，最多也只補到滿', Object.values(FOODS).e
 check('工具升級有大鋤頭和大澆水壺', Object.keys(TOOL_UPGRADES).sort(), ['can', 'hoe']);
 check('3×3 範圍：9 格，點的那格排第一個', [area3x3(5, 5).length, area3x3(5, 5)[0]], [9, { x: 5, y: 5 }]);
 check('3×3 範圍不重複', new Set(area3x3(5, 5).map((c) => c.x + ',' + c.y)).size, 9);
+
+console.log('\n--- 料理 ---');
+const dishes = Object.entries(DISHES);
+check('有 17 道菜', dishes.length, 17);
+check('每道菜的材料都是真的東西（或雞蛋、牛奶這種組）', dishes.filter(([, d]) => !Object.keys(d.need).every((k) => INGREDIENT_GROUPS[k] || itemPrice(k) > 0)).map(([id]) => id), []);
+check('煮成菜比直接賣材料值錢', dishes.filter(([, d]) => d.sell <= Object.entries(d.need).reduce((n, [k, q]) => n + itemPrice(ingredientItems(k)[0]) * q, 0)).map(([id]) => id), []);
+check('每道菜都能補體力（不超過一整天的量）', dishes.every(([, d]) => d.energy > 0 && d.energy <= ENERGY_MAX), true);
+check('每道菜都有圖（形狀和顏色）', dishes.filter(([id, d]) => !DISH_SHAPES[d.shape] || !DISH_COLORS[id]).map(([id]) => id), []);
+check('盤子、碗、杯子的形狀都是 16×16', Object.values(DISH_SHAPES).every((g) => g.length === 16 && g.every((r) => r.length === 16 && /^[.1234]+$/.test(r))), true);
+check('材料夠才能煮', [canCook({ 'crop:bokchoy': 2 }, 'stirfry'), canCook({ 'crop:bokchoy': 1 }, 'stirfry'), canCook({}, 'nope')], [true, false, false]);
+check('雞蛋不夠時，大顆雞蛋也能用（先用普通的）', cookTakes({ 'prod:egg': 1, 'prod:egg_l': 5, 'prod:milk_l': 1 }, 'pudding'), { 'prod:egg': 1, 'prod:egg_l': 1, 'prod:milk_l': 1 });
+check('材料不夠回傳 null', cookTakes({ 'prod:egg': 1, 'prod:milk': 1 }, 'pudding'), null);
+check('菜也能賣、能送', [itemPrice('dish:pudding'), itemPrice('dish:__proto__')], [280, 0]);
+check('小傑最愛布丁、討厭魚香茄子', [giftReaction('jie', 'dish:pudding'), giftReaction('jie', 'dish:eggplant')], ['love', 'dislike']);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

@@ -341,6 +341,21 @@ if (fs0.villagersOut) {
   check('礦石也能送人', r.status === 200 && ['love', 'like', 'neutral', 'dislike'].includes(r.data.gained.reaction));
 }
 
+// 料理
+check('有 17 道菜的食譜', Object.keys(fs0.dishes || {}).length === 17 && !!fs0.ingredientGroups?.egg);
+check('沒有這道菜', (await farmDo(groupId, { action: 'cook', dish: 'steak' }, TA)).status === 400
+  && (await farmDo(groupId, { action: 'cook', dish: 'constructor' }, TA)).status === 400);
+r = await farmDo(groupId, { action: 'cook', dish: 'pumpkin_soup' }, TA);
+check('材料不夠煮不了', r.status === 400 && /材料不夠/.test(r.data.error || ''), r.data.error);
+check('沒有的菜不能吃', (await farmDo(groupId, { action: 'eat_dish', dish: 'pudding' }, TA)).status === 400);
+r = await j(`/api/farm/${groupId}/dishes`, {}, TA);
+check('今天吃什麼：還沒煮過菜，清單是空的', r.status === 200 && Array.isArray(r.data.dishes) && r.data.dishes.length === 0);
+check('不是成員看不到別人家煮過什麼（404）', (await j(`/api/farm/${dmAdminA.id}/dishes`, {}, TB)).status === 404);
+const dmAB = (await j('/api/conversations', { method: 'POST', body: { type: 'dm', userId: IB } }, A0)).data.conversation;
+r = await j(`/api/farm/${dmAB.id}/dishes`, {}, A0);
+check('沒開過牧場的聊天室：清單是空的，也不會因此開墾牧場',
+  r.status === 200 && r.data.dishes.length === 0 && !(await listIn(dmAB.id, A0)).some((m) => m.content.includes('開墾')));
+
 const farmMs = await medianMs(() => farmGet(groupId, TA));
 check(`打開牧場在 150ms 內（實測 ${farmMs.toFixed(0)}ms）`, farmMs < 150);
 if (fs0.scale >= 3600) {
@@ -370,6 +385,24 @@ if (fs0.scale >= 3600) {
     r = await farmDo(groupId, { action: 'gift', villager: 'ama', item: 'crop:bokchoy' }, TA);
     check('（加速模式）送王阿嬤小白菜：她喜歡，感情 +5', r.status === 200 && r.data.gained.reaction === 'like' && r.data.town.friends.ama.points === 6);
     check('（加速模式）一天只能送一次', (await farmDo(groupId, { action: 'gift', villager: 'ama', item: 'crop:bokchoy' }, TA)).status === 400);
+    // 再種兩顆小白菜煮炒青菜
+    for (const g of [fields[42], fields[43]]) {
+      await farmDo(groupId, { action: 'till', ...g }, TA);
+      await farmDo(groupId, { action: 'plant', crop: 'bokchoy', ...g }, TA);
+      await farmDo(groupId, { action: 'water', ...g }, TA);
+    }
+    await new Promise((ok) => setTimeout(ok, 3300));
+    for (const g of [fields[42], fields[43]]) await farmDo(groupId, { action: 'harvest', ...g }, TA);
+    const bokBefore = (await farmGet(groupId, TA)).data.items['crop:bokchoy'] || 0;
+    r = await farmDo(groupId, { action: 'cook', dish: 'stirfry' }, TA);
+    check('（加速模式）兩顆小白菜煮成炒青菜，第一次煮進圖鑑', r.status === 200 && r.data.items['dish:stirfry'] === 1
+      && (r.data.items['crop:bokchoy'] || 0) === bokBefore - 2 && r.data.gained.first && r.data.dex.includes('dish:stirfry'));
+    check('（加速模式）聊天室：第一次做了炒青菜，問晚餐要不要吃', (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('第一次做了炒青菜')));
+    r = await j(`/api/farm/${groupId}/dishes`, {}, TB);
+    check('（加速模式）今天吃什麼看得到家族牧場煮過炒青菜', r.status === 200 && r.data.dishes.some((d) => d.name === '炒青菜' && d.by === '朋友A'));
+    const eD = (await farmGet(groupId, TA)).data.energy.now;
+    r = await farmDo(groupId, { action: 'eat_dish', dish: 'stirfry' }, TA);
+    check(`（加速模式）吃炒青菜體力 +12（${eD} → 最多 60）`, r.status === 200 && r.data.energy === Math.min(60, eD + 12) && !r.data.items['dish:stirfry']);
     const q = (await farmGet(groupId, TA)).data.request;
     if (q.item === 'crop:bokchoy' && q.qty === 1) {
       r = await farmDo(groupId, { action: 'request_fill' }, TA);

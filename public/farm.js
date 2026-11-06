@@ -39,7 +39,7 @@ const S = {
   animals: [], animalKinds: {}, products: {}, feedPrice: 10, penTiles: [],
   area: 'farm', maps: {}, arrive: {}, villagers: {}, friends: {}, request: null, tools: { hoe: 1, can: 1 },
   foods: {}, toolShop: {}, villagersOut: true, talks: 0,
-  exits: {}, fishData: {}, oreData: {}, rocks: [], dex: [], fishing: null,
+  exits: {}, fishData: {}, oreData: {}, rocks: [], dex: [], fishing: null, dishes: {}, ingGroups: {},
   tool: 'hoe', seed: 'bokchoy', busy: false,
   me: { x: 5, y: 5, d: 'd', step: null, path: [], pending: null, anim: 0 },
   others: new Map(), floats: [], keys: [], view: 3, cam: { x: 0, y: 0 },
@@ -75,8 +75,14 @@ function itemInfo(item) {
   if (kind === 'prod' && S.products[id]) return { name: S.products[id].name, icon: id, sell: S.products[id].sell };
   if (kind === 'fish' && S.fishData[id]) return { name: S.fishData[id].name, icon: 'fish_' + id, sell: S.fishData[id].sell };
   if (kind === 'ore' && S.oreData[id]) return { name: S.oreData[id].name, icon: 'ore_' + id, sell: S.oreData[id].sell };
+  if (kind === 'dish' && S.dishes[id]) return { name: S.dishes[id].name, icon: `dish_${id}@${S.dishes[id].shape}`, sell: S.dishes[id].sell, dish: id };
   return null;
 }
+// 料理的材料：egg／milk 普通的、高級的都算
+const ingItems = (k) => (S.ingGroups[k] ? S.ingGroups[k].items : [k]);
+const ingName = (k) => (S.ingGroups[k] ? S.ingGroups[k].name : (itemInfo(k) || { name: k }).name);
+const ingHave = (k) => ingItems(k).reduce((n, i) => n + (S.items[i] || 0), 0);
+const canCook = (id) => Object.entries(S.dishes[id].need).every(([k, q]) => ingHave(k) >= q);
 const heartsText = (n) => '❤️'.repeat(n) + '🤍'.repeat(5 - n);
 
 function toast(msg) {
@@ -113,6 +119,7 @@ function applyState(st) {
   S.maps = { farm: st.map, town: st.town || st.map, hill: st.hill || st.map };
   S.exits = st.exits || {}; S.fishData = st.fish || {}; S.oreData = st.ores || {};
   S.rocks = st.rocks || []; S.dex = st.dex || [];
+  S.dishes = st.dishes || {}; S.ingGroups = st.ingredientGroups || {};
   S.map = S.maps[S.area]; S.H = S.map.length; S.W = S.map[0].length;
   S.arrive = st.arrive || {}; S.villagers = st.villagers || {}; S.foods = st.foods || {}; S.toolShop = st.toolShop || {};
   S.villagersOut = st.villagersOut !== false;
@@ -283,15 +290,17 @@ function openBag() {
     if (!c) return null;
     const meta = item === 'feed' ? '去動物小屋餵動物，一隻吃一包'
       : c.crop ? (inSeason(c.crop) ? '用「種子」工具種在翻好的土上' : `${seasonsText(S.crops[c.crop].seasons)}才能種，先收著`)
+      : c.dish ? `吃了體力 +${S.dishes[c.dish].energy}，或出貨賣 ${c.sell} 元`
       : `可以拿去出貨箱賣 ${c.sell} 元`;
     return el('div', { class: 'row' }, icon(c.icon),
       el('div', { class: 'grow' }, el('div', { class: 'name', text: c.name }), el('div', { class: 'meta', text: meta })),
-      el('b', { text: '×' + qty }));
+      el('b', { text: '×' + qty }),
+      c.dish ? el('button', { class: 'btn', type: 'button', text: '吃', disabled: S.energy >= S.energyMax, onclick: () => eatDish(c.dish, openBag) }) : null);
   });
   openModal(el('h2', { text: '🎒 全家的倉庫' }), el('p', { class: 'sub', text: '種子和收成大家共用' }),
     ...(rows.filter(Boolean).length ? rows : [el('div', { class: 'empty', text: '倉庫是空的' })]),
     el('div', { class: 'actions' },
-      el('button', { class: 'btn', type: 'button', text: '📖 魚和礦石圖鑑', onclick: openDex }),
+      el('button', { class: 'btn', type: 'button', text: '📖 圖鑑', onclick: openDex }),
       el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
 }
 
@@ -508,6 +517,44 @@ async function mineRock(x, y) {
   } catch {}
 }
 
+// 家裡的廚房：用倉庫裡的東西煮菜（不花體力），煮好的菜可以吃、賣、送人
+function openKitchen() {
+  const ids = Object.keys(S.dishes).sort((a, b) => (canCook(b) ? 1 : 0) - (canCook(a) ? 1 : 0));
+  const rows = ids.map((id) => {
+    const d = S.dishes[id];
+    const need = Object.entries(d.need).map(([k, q]) => `${ingName(k)} ${Math.min(ingHave(k), q)}/${q}`).join('・');
+    const ok = canCook(id);
+    return el('div', { class: 'row' + (ok ? '' : ' off') }, icon(`dish_${id}@${d.shape}`),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: d.name + (S.dex.includes('dish:' + id) ? '' : '　🆕') }),
+        el('div', { class: 'meta', text: `${need}｜體力 +${d.energy}・賣 ${d.sell} 元` })),
+      el('button', {
+        class: 'btn primary', type: 'button', text: '煮', disabled: !ok,
+        onclick: async () => {
+          try {
+            const r = await doAct({ action: 'cook', dish: id });
+            toast(r.gained.first ? `🎉 第一次做${d.name}！聊天室也知道了` : `煮好了：${d.name}`);
+            openKitchen();
+          } catch {}
+        },
+      }));
+  });
+  const cooked = Object.keys(S.items).filter((i) => i.startsWith('dish:') && itemInfo(i));
+  openModal(el('h2', { text: '🍳 家裡的廚房' }),
+    el('p', { class: 'sub', text: `用自己種的、養的、釣的東西煮菜（不花體力）。煮好的菜可以吃、拿去出貨、送村民。體力 ${S.energy}/${S.energyMax}` }),
+    ...(cooked.length ? [el('h2', { class: 'section', text: '煮好的菜' }), ...cooked.map((i) => {
+      const c = itemInfo(i);
+      return el('div', { class: 'row' }, icon(c.icon),
+        el('div', { class: 'grow' }, el('div', { class: 'name', text: `${c.name} ×${S.items[i]}` }),
+          el('div', { class: 'meta', text: `吃了體力 +${S.dishes[c.dish].energy}` })),
+        el('button', { class: 'btn', type: 'button', text: '吃', disabled: S.energy >= S.energyMax, onclick: () => eatDish(c.dish, openKitchen) }));
+    })] : []),
+    el('h2', { class: 'section', text: '食譜' }), ...rows,
+    el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
+}
+async function eatDish(id, after) {
+  try { await doAct({ action: 'eat_dish', dish: id }); toast(`好吃！體力 ${S.energy}/${S.energyMax}`); if (after) after(); } catch {}
+}
+
 // 圖鑑：釣過、挖過的魚和礦石
 function openDex() {
   const have = new Set(S.dex);
@@ -520,9 +567,16 @@ function openDex() {
   const nf = Object.keys(S.fishData).filter((id) => have.has('fish:' + id)).length;
   const no = Object.keys(S.oreData).filter((id) => have.has('ore:' + id)).length;
   openModal(el('h2', { text: '📖 圖鑑' }),
-    el('p', { class: 'sub', text: `魚 ${nf}/${Object.keys(S.fishData).length}・礦石 ${no}/${Object.keys(S.oreData).length}。第一次拿到會在聊天室說一聲。` }),
+    el('p', { class: 'sub', text: `魚 ${nf}/${Object.keys(S.fishData).length}・礦石 ${no}/${Object.keys(S.oreData).length}・料理 ${Object.keys(S.dishes).filter((id) => have.has('dish:' + id)).length}/${Object.keys(S.dishes).length}。第一次拿到會在聊天室說一聲。` }),
     el('h2', { class: 'section', text: '🎣 魚' }), ...section('fish', S.fishData),
     el('h2', { class: 'section', text: '⛏️ 礦石' }), ...section('ore', S.oreData),
+    el('h2', { class: 'section', text: `🍳 料理 ${Object.keys(S.dishes).filter((id) => have.has('dish:' + id)).length}/${Object.keys(S.dishes).length}` }),
+    ...Object.entries(S.dishes).map(([id, d]) => {
+      const got = have.has('dish:' + id);
+      return el('div', { class: 'row' + (got ? '' : ' off') }, got ? icon(`dish_${id}@${d.shape}`) : el('span', { class: 'big', text: '❔' }),
+        el('div', { class: 'grow' }, el('div', { class: 'name', text: got ? d.name : '？？？' }),
+          el('div', { class: 'meta', text: got ? `賣 ${d.sell} 元・體力 +${d.energy}` : '到家裡的廚房看看食譜' })));
+    }),
     el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
 }
 function fishHint(d, unknown) {
@@ -793,7 +847,7 @@ function useOn(x, y) {
   const ch = terrain(x, y);
   if (ch === 'B') return openBin();
   if (ch === 'S') return openShop();
-  if (ch === 'H') return toast('家裡還在整理中，下一期就能進去了 🏠');
+  if (ch === 'H') return openKitchen();
   if (ch === 'A') return openBarn();
   if (ch === 'W') return startFishing(x, y);
   if (rockAt(x, y)) return mineRock(x, y);
