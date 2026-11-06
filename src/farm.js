@@ -12,7 +12,8 @@ const DAY = 24 * HOUR;
 const TW = 8 * HOUR; // 台灣時間 UTC+8
 
 // 地形：T 樹、. 草地、= 小路、F 田、f 柵欄、H 房子、S 商店、B 出貨箱、W 池塘、A 動物小屋、E 往小鎮的出口
-// 動物小屋下面用柵欄圍了一塊草地給雞和牛散步，左邊 (22,13) 是門；左下角的小路走出去就是小鎮
+// 動物小屋下面用柵欄圍了一塊草地給雞和牛散步，左邊 (22,13) 是門；左下角的小路走出去是小鎮，
+// 動物小屋右邊 (29,7) 走出去是後山
 export const FARM_MAP = [
   'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
   'TT......T....................T',
@@ -21,7 +22,7 @@ export const FARM_MAP = [
   'T..HHHH..B..............WWWW.T',
   'T....=..................WWW..T',
   'T....=================.......T',
-  'T....=...............=.AAAA..T',
+  'T....=...............=.AAAA..E',
   'T..ffffffffffffffff..=.AAAA..T',
   'T..fFFFFFFFFFFFFFFf..=fAAAAffT',
   'T..fFFFFFFFFFFFFFFf..=f.....fT',
@@ -65,11 +66,42 @@ export const TOWN_MAP = [
   'T............................T',
   'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
 ];
-export const MAPS = { farm: FARM_MAP, town: TOWN_MAP };
-export const AREAS = ['farm', 'town'];
-// 走到 E 就換地圖：從牧場的出口到小鎮最上面，反過來也一樣
-export const ARRIVE = { town: { x: 5, y: 1 }, farm: { x: 5, y: 18 } };
-const WALKABLE = new Set(['.', '=', 'F', 'p', ',', 'E']);
+// 後山：左上是湖（釣魚），右上是採石場 q（每天會冒出新的石頭和礦石），左邊 E 回牧場
+export const HILL_MAP = [
+  'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+  'T..T......T.....qqqqqqqqqqqq.T',
+  'T.......T.......qqqqqqqqqqqq.T',
+  'T...WWWWWW......qqqqqqqqqqqq.T',
+  'T..WWWWWWWW.....qqqqqqqqqqqq.T',
+  'T..WWWWWWWWW....qqqqqqqqqqqq.T',
+  'T..WWWWWWWWW....qqqqqqqqqqqq.T',
+  'T...WWWWWWW.....=..........TTT',
+  'T....WWWWW......=....T.......T',
+  'T...............=............T',
+  'T....T..........=......T.....T',
+  'E================............T',
+  'T.......T....................T',
+  'T...........T........T.......T',
+  'T..T.........................T',
+  'T.......T.........T......T...T',
+  'T...T.............,,,........T',
+  'T..........T......,,,....T...T',
+  'T....T.......................T',
+  'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+];
+export const MAPS = { farm: FARM_MAP, town: TOWN_MAP, hill: HILL_MAP };
+export const AREAS = ['farm', 'town', 'hill'];
+// 走到 E 就換地圖。EXITS：每張地圖的出口通到哪；ARRIVE['從>到']：換過去之後站在哪
+export const EXITS = {
+  farm: [{ x: 5, y: 19, to: 'town' }, { x: 29, y: 7, to: 'hill' }],
+  town: [{ x: 5, y: 0, to: 'farm' }],
+  hill: [{ x: 0, y: 11, to: 'farm' }],
+};
+export const ARRIVE = {
+  'farm>town': { x: 5, y: 1 }, 'town>farm': { x: 5, y: 18 },
+  'farm>hill': { x: 1, y: 11 }, 'hill>farm': { x: 28, y: 7 },
+};
+const WALKABLE = new Set(['.', '=', 'F', 'p', ',', 'E', 'q']);
 
 export const SEASONS = ['spring', 'summer', 'autumn', 'winter'];
 const ALL = SEASONS;
@@ -125,7 +157,7 @@ export function cleanAnimalName(raw) {
 }
 
 export const ENERGY_MAX = 60;
-export const ENERGY_COST = { till: 2, dig: 1, plant: 1, water: 1, harvest: 0, feed: 1, pet: 0, collect: 0 };
+export const ENERGY_COST = { till: 2, dig: 1, plant: 1, water: 1, harvest: 0, feed: 1, pet: 0, collect: 0, fish: 2, mine: 2 };
 export const WATER_HOURS = 24;
 export const START_MONEY = 500;
 export const START_ITEMS = { 'seed:bokchoy': 9 };
@@ -237,7 +269,7 @@ export const VILLAGERS = {
   fu: {
     name: '阿福伯', role: '雜貨店老闆', color: '#3b6ea8', hair: 'gray', birthday: '03-12',
     zone: { x0: 7, y0: 5, x1: 13, y1: 6 },
-    loves: ['crop:pumpkin'], likes: ['crop:sweetpotato', 'crop:corn', 'prod:egg'], dislikes: ['crop:spinach'],
+    loves: ['crop:pumpkin'], likes: ['crop:sweetpotato', 'crop:corn', 'prod:egg', 'fish:carp'], dislikes: ['crop:spinach'],
     lines: {
       any: ['今天要買什麼？鋤頭、澆水壺都有好貨喔。', '年輕人肯種田，阿伯看了就歡喜。', '店裡的東西都是實在價，不會騙你啦。',
         '以前這一帶都是田，現在剩你們家還在種。', '要是田太大澆不完，可以來看看大澆水壺。'],
@@ -250,7 +282,7 @@ export const VILLAGERS = {
   mei: {
     name: '美玲姐', role: '小吃店老闆娘', color: '#e86a5c', hair: 'brown', birthday: '07-21',
     zone: { x0: 16, y0: 5, x1: 23, y1: 6 },
-    loves: ['prod:egg_l'], likes: ['crop:cabbage', 'prod:egg', 'crop:bokchoy', 'prod:milk'], dislikes: ['crop:pineapple'],
+    loves: ['prod:egg_l'], likes: ['crop:cabbage', 'prod:egg', 'crop:bokchoy', 'prod:milk', 'fish:bass'], dislikes: ['crop:pineapple'],
     lines: {
       any: ['餓了吧？進來吃碗麵，吃飽才有力氣種田！', '我們家的滷肉飯，是我阿母傳下來的味道。', '茶葉蛋剛滷好，香不香？',
         '你們家的雞蛋，拿來做菜最好吃了。', '累了就來店裡坐一下，不用客氣。'],
@@ -263,7 +295,7 @@ export const VILLAGERS = {
   jie: {
     name: '小傑', role: '國小三年級', color: '#f2b33d', hair: 'black', birthday: '08-08',
     zone: { x0: 9, y0: 7, x1: 20, y1: 11 },
-    loves: ['crop:watermelon'], likes: ['crop:strawberry', 'crop:corn', 'crop:tomato'], dislikes: ['crop:spinach', 'crop:eggplant'],
+    loves: ['crop:watermelon'], likes: ['crop:strawberry', 'crop:corn', 'crop:tomato', 'fish:goldfish', 'ore:amethyst'], dislikes: ['crop:spinach', 'crop:eggplant'],
     lines: {
       any: ['你好！我今天考試考一百分喔！', '噴水池裡面有硬幣，是誰丟的啊？', '我長大也要當農夫，種好大的西瓜！',
         '你們家的雞會不會咬人？', '老師說要多吃青菜……可是菠菜好難吃。'],
@@ -276,7 +308,7 @@ export const VILLAGERS = {
   ama: {
     name: '王阿嬤', role: '住在鎮上五十年', color: '#8e6bb8', hair: 'gray', birthday: '01-25',
     zone: { x0: 3, y0: 12, x1: 12, y1: 13 },
-    loves: ['prod:milk'], likes: ['crop:radish', 'crop:cabbage', 'crop:sweetpotato', 'crop:bokchoy'], dislikes: ['crop:pineapple'],
+    loves: ['prod:milk'], likes: ['crop:radish', 'crop:cabbage', 'crop:sweetpotato', 'crop:bokchoy', 'fish:crucian'], dislikes: ['crop:pineapple'],
     lines: {
       any: ['乖孫，有沒有吃飽？', '阿嬤年輕的時候，也是每天天還沒亮就去田裡。', '慢慢來，做田人不要急。',
         '你們家阿嬤身體好嗎？替我問候一下。', '有空多陪陪家裡的人，比賺錢卡要緊。'],
@@ -289,7 +321,7 @@ export const VILLAGERS = {
   lin: {
     name: '林老師', role: '國小老師', color: '#4f9d6b', hair: 'black', birthday: '09-28',
     zone: { x0: 9, y0: 11, x1: 20, y1: 13 },
-    loves: ['crop:strawberry'], likes: ['crop:tomato', 'crop:carrot', 'crop:potato'], dislikes: ['crop:corn'],
+    loves: ['crop:strawberry'], likes: ['crop:tomato', 'crop:carrot', 'crop:potato', 'ore:amethyst'], dislikes: ['crop:corn'],
     lines: {
       any: ['小傑上課又在畫西瓜了，真拿他沒辦法。', '種田跟教書一樣，都要耐心等它長大。', '讀書累了，就來廣場走走。',
         '你們家的番茄好紅，做成番茄炒蛋一定很好吃。', '我小時候也住在鄉下，好懷念喔。'],
@@ -302,7 +334,7 @@ export const VILLAGERS = {
   zhi: {
     name: '志明', role: '郵差', color: '#2f8f5b', hair: 'black', birthday: '11-19',
     zone: { x0: 5, y0: 5, x1: 28, y1: 6 },
-    loves: ['crop:pineapple'], likes: ['prod:egg', 'crop:potato', 'crop:watermelon'], dislikes: ['crop:radish'],
+    loves: ['crop:pineapple'], likes: ['prod:egg', 'crop:potato', 'crop:watermelon', 'fish:eel'], dislikes: ['crop:radish'],
     lines: {
       any: ['有你們家的信喔！……騙你的啦，哈哈。', '每天騎車送信，整個鎮我都熟。', '告示板上有大家的委託，有空去看看。',
         '聽說阿福伯的店有賣新的澆水壺。', '送信送到肚子餓，等一下去美玲姐那裡吃飯。'],
@@ -322,7 +354,7 @@ export function giftReaction(villager, item) {
   const v = VILLAGERS[villager];
   if (v.loves.includes(item)) return 'love';
   if (v.likes.includes(item)) return 'like';
-  if (v.dislikes.includes(item)) return 'dislike';
+  if (v.dislikes.includes(item) || item === 'fish:junk' || item === 'ore:stone') return 'dislike'; // 破鞋子、石頭誰都不要
   return 'neutral';
 }
 // 生日那天送禮，喜歡的東西點數三倍
@@ -373,3 +405,89 @@ export const TOOL_UPGRADES = {
 // 3×3 的範圍，中間那格先做（體力不夠時至少做到點的那一格）
 export const area3x3 = (x, y) => [[0, 0], [-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]]
   .map(([dx, dy]) => ({ x: x + dx, y: y + dy }));
+
+// ---------------- 釣魚 ----------------
+// 牧場的池塘（pond）和後山的湖（lake）都能釣。什麼魚會上鉤看季節、白天晚上（6～18 點是白天）、下雨、在哪裡釣
+export const FISH = {
+  tilapia: { name: '吳郭魚', sell: 40, seasons: ALL, where: ['pond', 'lake'], time: 'any', weight: 40 },
+  crucian: { name: '鯽魚', sell: 60, seasons: ALL, where: ['pond', 'lake'], time: 'any', weight: 25 },
+  catfish: { name: '鯰魚', sell: 100, seasons: ALL, where: ['lake'], time: 'night', weight: 15 },
+  carp: { name: '鯉魚', sell: 120, seasons: ['spring', 'summer', 'autumn'], where: ['lake'], time: 'day', weight: 12 },
+  sweetfish: { name: '香魚', sell: 150, seasons: ['spring', 'summer'], where: ['lake'], time: 'day', weight: 8 },
+  bass: { name: '鱸魚', sell: 180, seasons: ['autumn', 'winter'], where: ['lake'], time: 'any', weight: 8 },
+  goldfish: { name: '金魚', sell: 250, seasons: ALL, where: ['pond'], time: 'any', weight: 3 },
+  eel: { name: '鰻魚', sell: 300, seasons: ['summer', 'autumn'], where: ['pond', 'lake'], time: 'night', weight: 5 }, // 下雨天白天也有
+  junk: { name: '破鞋子', sell: 2, seasons: ALL, where: ['pond', 'lake'], time: 'any', weight: 6 },
+};
+export const FISH_WINDOW_MS = 1500;     // 看到 ❗ 之後幾毫秒內要拉
+export const fishSpot = (area) => (area === 'farm' ? 'pond' : area === 'hill' ? 'lake' : null);
+export const isDaytime = (now) => { const h = new Date(now + TW).getUTCHours(); return h >= 6 && h < 18; };
+// 這一刻在這裡可能釣到哪些魚，各自的機會（權重）
+export function fishChoices(spot, season, day, rain) {
+  const out = [];
+  for (const [id, f] of Object.entries(FISH)) {
+    if (!f.where.includes(spot) || !f.seasons.includes(season)) continue;
+    let w = f.weight;
+    if (id === 'eel') { if (!day || rain) w *= rain ? 3 : 1; else continue; }
+    else if (f.time === 'day' && !day) continue;
+    else if (f.time === 'night' && day) continue;
+    out.push({ id, w });
+  }
+  return out;
+}
+// 依權重抽一條（r 是 0～1 的亂數）
+export function pickWeighted(choices, r) {
+  const total = choices.reduce((n, c) => n + c.w, 0);
+  let x = r * total;
+  for (const c of choices) { if ((x -= c.w) < 0) return c.id; }
+  return choices[choices.length - 1].id;
+}
+
+// ---------------- 挖礦 ----------------
+// 後山的採石場每天（台灣時間）冒出 20 顆石頭，位置和種類由「牧場＋日期」算出來，
+// 所以全家看到的一樣、隔天換一批。挖掉的記在資料庫（只記當天的）
+export const ORES = {
+  stone: { name: '石頭', sell: 5, weight: 55 },
+  copper: { name: '銅礦', sell: 60, weight: 25 },
+  silver: { name: '銀礦', sell: 150, weight: 12 },
+  gold: { name: '金礦', sell: 400, weight: 6 },
+  amethyst: { name: '紫水晶', sell: 700, weight: 2 },
+};
+export const QUARRY = { x0: 16, y0: 1, x1: 27, y1: 6 };
+export const ROCKS_PER_DAY = 20;
+function seededRandom(seedText) {
+  let h = 2166136261;
+  for (const ch of seedText) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+  let a = h >>> 0;
+  return () => { // mulberry32
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+export function rocksOf(farmId, day) {
+  const rnd = seededRandom(`${farmId}|${day}|rocks`);
+  const spots = [];
+  for (let y = QUARRY.y0; y <= QUARRY.y1; y++) for (let x = QUARRY.x0; x <= QUARRY.x1; x++) spots.push({ x, y });
+  const oreList = Object.entries(ORES).map(([id, o]) => ({ id, w: o.weight }));
+  const out = [];
+  while (out.length < ROCKS_PER_DAY && spots.length) {
+    const p = spots.splice(Math.floor(rnd() * spots.length), 1)[0];
+    out.push({ ...p, type: pickWeighted(oreList, rnd()) });
+  }
+  return out;
+}
+
+// 倉庫裡的東西能賣多少（賣不了的回傳 0）：作物、雞蛋牛奶、魚、礦石
+export function itemPrice(item) {
+  const [kind, id] = String(item).split(':');
+  const table = { crop: CROPS, prod: PRODUCTS, fish: FISH, ore: ORES }[kind];
+  return table && Object.hasOwn(table, id) ? table[id].sell : 0;
+}
+export const itemName = (item) => {
+  const [kind, id] = String(item).split(':');
+  const table = { crop: CROPS, prod: PRODUCTS, fish: FISH, ore: ORES }[kind];
+  return table && Object.hasOwn(table, id) ? table[id].name : item;
+};

@@ -11,8 +11,9 @@ import {
   PEN, PEN_GATE, ANIMALS, PRODUCTS, LOVE_BEST, hearts, productOf, animalReadyAt, animalHasProduct, cleanAnimalName,
   TOWN_MAP, ARRIVE, VILLAGERS, friendHearts, giftReaction, giftPoints, friendReward, villagerOut, requestOf,
   FOODS, TOOL_UPGRADES, area3x3, ENERGY_MAX,
+  HILL_MAP, MAPS, EXITS, FISH, ORES, QUARRY, ROCKS_PER_DAY, fishChoices, pickWeighted, rocksOf, itemPrice,
 } from '../src/farm.js';
-import { SPRITES, PALETTE } from '../public/farm-sprites.js';
+import { SPRITES, PALETTE, FISH_SHAPE, BOOT_SHAPE, ROCK_SHAPE, FISH_COLORS, ORE_COLORS } from '../public/farm-sprites.js';
 
 let pass = 0, fail = 0;
 const check = (label, got, want) => {
@@ -129,7 +130,7 @@ const goodGrid = (g) => Array.isArray(g) && g.length === 16 && g.every((r) => r.
 check('長大中、可收成兩張圖都有，而且是 16×16、顏色都有定義',
   crops.filter(([id]) => !goodGrid(SPRITES[id + '_2']) || !goodGrid(SPRITES[id + '_3'])).map(([id]) => id), []);
 check('所有圖都是 16×16、顏色都有定義', Object.entries(SPRITES).filter(([, g]) => !goodGrid(g)).map(([n]) => n), []);
-check('小鎮的石板、花圃、告示板都有圖', ['plaza', 'flowers', 'board'].filter((n) => !goodGrid(SPRITES[n])), []);
+check('小鎮的石板、花圃、告示板、採石場的地都有圖', ['plaza', 'flowers', 'board', 'gravel'].filter((n) => !goodGrid(SPRITES[n])), []);
 check('動物（兩張走路圖）、雞蛋牛奶、飼料都有圖',
   [...Object.keys(ANIMALS).flatMap((k) => [k + '_0', k + '_1']), ...Object.keys(PRODUCTS), 'feed'].filter((n) => !goodGrid(SPRITES[n])), []);
 
@@ -183,7 +184,7 @@ const reach = (area, start) => {
   }
   return seen2;
 };
-const townSeen = reach('town', ARRIVE.town);
+const townSeen = reach('town', ARRIVE['farm>town']);
 const townCells = [];
 TOWN_MAP.forEach((r, y) => [...r].forEach((c, x) => townCells.push({ x, y, c })));
 check('小鎮每一格能走的地方都走得到', townCells.filter((p) => isWalkable(p.x, p.y, 'town')).every((p) => townSeen.has(`${p.x},${p.y}`)), true);
@@ -192,14 +193,58 @@ const touch = (ch) => townCells.filter((p) => p.c === ch).some((p) =>
 check('雜貨店、小吃店、民宅、噴水池、告示板都走得到旁邊', ['G', 'R', 'Q', 'O', 'N'].map(touch), [true, true, true, true, true]);
 check('牧場的出口從家門口走得到', seen.has('5,19') && terrainAt(5, 19) === 'E', true);
 check('小鎮的出口從進來的地方走得到', townSeen.has('5,0') && terrainAt(5, 0, 'town') === 'E', true);
-check('換地圖後站的地方能走、而且不是出口（不會一直來回跳）',
-  [isWalkable(ARRIVE.town.x, ARRIVE.town.y, 'town'), terrainAt(ARRIVE.town.x, ARRIVE.town.y, 'town') !== 'E',
-    isWalkable(ARRIVE.farm.x, ARRIVE.farm.y), terrainAt(ARRIVE.farm.x, ARRIVE.farm.y) !== 'E'], [true, true, true, true]);
+check('每個出口都是 E、通到存在的地圖，換過去站的地方能走、而且不是出口（不會一直來回跳）',
+  Object.entries(EXITS).flatMap(([from, list]) => list.map((e) => {
+    const a = ARRIVE[`${from}>${e.to}`];
+    return terrainAt(e.x, e.y, from) === 'E' && !!MAPS[e.to] && !!a && isWalkable(a.x, a.y, e.to) && terrainAt(a.x, a.y, e.to) !== 'E';
+  })).every(Boolean), true);
+check('地圖上每個 E 都有登記去哪', Object.entries(MAPS).every(([area, m]) => m.every((row, y) => [...row].every((c, x) =>
+  c !== 'E' || (EXITS[area] || []).some((e) => e.x === x && e.y === y)))), true);
+
+console.log('\n--- 後山 ---');
+check('後山也是 30×20', [HILL_MAP.length, HILL_MAP.every((r) => r.length === 30)], [20, true]);
+const hillSeen = reach('hill', ARRIVE['farm>hill']);
+check('後山每一格能走的地方都走得到', HILL_MAP.every((row, y) => [...row].every((c, x) => !isWalkable(x, y, 'hill') || hillSeen.has(`${x},${y}`))), true);
+check('湖邊走得到（可以釣魚）', HILL_MAP.some((row, y) => [...row].some((c, x) => c === 'W' &&
+  [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => hillSeen.has(`${x + dx},${y + dy}`)))), true);
+check('牧場往後山的出口從家門口走得到', seen.has('29,7') && terrainAt(29, 7) === 'E', true);
+let quarryOk = true;
+for (let y = QUARRY.y0; y <= QUARRY.y1; y++) for (let x = QUARRY.x0; x <= QUARRY.x1; x++) if (terrainAt(x, y, 'hill') !== 'q') quarryOk = false;
+check('採石場範圍全部是 q 地', quarryOk, true);
+
+console.log('\n--- 釣魚 ---');
+const combos = [];
+for (const spot of ['pond', 'lake']) for (const se of SEASONS) for (const day of [true, false]) for (const rain of [true, false]) combos.push([spot, se, day, rain]);
+check('任何地點、季節、白天晚上、晴雨都釣得到東西', combos.every((c) => fishChoices(...c).length > 0), true);
+check('鰻魚：晴天白天沒有，晚上或下雨才有', [
+  fishChoices('lake', 'summer', true, false).some((c) => c.id === 'eel'), fishChoices('lake', 'summer', false, false).some((c) => c.id === 'eel'),
+  fishChoices('lake', 'summer', true, true).some((c) => c.id === 'eel')], [false, true, true]);
+check('下雨天鰻魚機會變三倍', fishChoices('pond', 'autumn', false, true).find((c) => c.id === 'eel').w, FISH.eel.weight * 3);
+check('金魚只在牧場池塘', [fishChoices('pond', 'winter', true, false).some((c) => c.id === 'goldfish'), fishChoices('lake', 'winter', true, false).some((c) => c.id === 'goldfish')], [true, false]);
+check('香魚只有春夏白天的湖', [fishChoices('lake', 'spring', true, false).some((c) => c.id === 'sweetfish'), fishChoices('lake', 'winter', true, false).some((c) => c.id === 'sweetfish'), fishChoices('lake', 'spring', false, false).some((c) => c.id === 'sweetfish')], [true, false, false]);
+const ch3 = [{ id: 'a', w: 1 }, { id: 'b', w: 2 }, { id: 'c', w: 1 }];
+check('依權重抽：0 抽到第一個、快到 1 抽到最後一個、中間看權重', [pickWeighted(ch3, 0), pickWeighted(ch3, 0.999), pickWeighted(ch3, 0.5)], ['a', 'c', 'b']);
+
+console.log('\n--- 挖礦 ---');
+const rk = rocksOf(7, '2026-11-06');
+check(`每天 ${ROCKS_PER_DAY} 顆石頭，都在採石場、位置不重複`, [rk.length, rk.every((r) => terrainAt(r.x, r.y, 'hill') === 'q'), new Set(rk.map((r) => r.x + ',' + r.y)).size], [20, true, 20]);
+check('同一座牧場同一天的石頭一樣（全家看到的一樣）', JSON.stringify(rocksOf(7, '2026-11-06')) === JSON.stringify(rk), true);
+check('隔天換一批、別座牧場也不一樣', [JSON.stringify(rocksOf(7, '2026-11-07')) !== JSON.stringify(rk), JSON.stringify(rocksOf(8, '2026-11-06')) !== JSON.stringify(rk)], [true, true]);
+const oreCount = {};
+for (let d = 1; d <= 300; d++) for (const r of rocksOf(1, `day-${d}`)) oreCount[r.type] = (oreCount[r.type] || 0) + 1;
+check('越值錢的礦越少見', Object.keys(ORES).every((id, i, a) => i === 0 || oreCount[id] < oreCount[a[i - 1]]), true);
+check('東西的價錢：魚、礦石、作物、雞蛋都能賣，飼料和亂填的不行',
+  [itemPrice('fish:eel'), itemPrice('ore:gold'), itemPrice('crop:carrot'), itemPrice('prod:egg'), itemPrice('feed'), itemPrice('ore:__proto__'), itemPrice('fish:')],
+  [300, 400, 110, 50, 0, 0, 0]);
+check('破鞋子、石頭送誰都不喜歡', [giftReaction('ama', 'fish:junk'), giftReaction('jie', 'ore:stone')], ['dislike', 'dislike']);
+const shapeOk = (g) => g.length === 16 && g.every((r) => r.length === 16 && /^[.1234o]+$/.test(r));
+check('魚、鞋子、石頭的形狀都是 16×16', [shapeOk(FISH_SHAPE), shapeOk(BOOT_SHAPE), shapeOk(ROCK_SHAPE)], [true, true, true]);
+check('每種魚、礦石都有顏色', [Object.keys(FISH).every((id) => FISH_COLORS[id]), Object.keys(ORES).every((id) => ORE_COLORS[id])], [true, true]);
 
 console.log('\n--- 村民 ---');
 const vil = Object.entries(VILLAGERS);
 check('有 6 位村民', vil.length, 6);
-const validItem = (i) => { const [k, id] = i.split(':'); return (k === 'crop' && !!CROPS[id]) || (k === 'prod' && !!PRODUCTS[id]); };
+const validItem = (i) => itemPrice(i) > 0; // 作物、雞蛋牛奶、魚、礦石
 check('喜歡／最愛／討厭的東西都存在', vil.filter(([, v]) => ![...v.loves, ...v.likes, ...v.dislikes].every(validItem)).map(([id]) => id), []);
 check('沒有人同時喜歡又討厭同一樣東西', vil.filter(([, v]) => [...v.loves, ...v.likes].some((i) => v.dislikes.includes(i))).map(([id]) => id), []);
 check('生日格式正確（月-日）', vil.every(([, v]) => /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(v.birthday)), true);

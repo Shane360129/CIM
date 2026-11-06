@@ -1139,6 +1139,24 @@ export const SPRITES = {
   "...RR......RR...",
   "..ssss....ssss.."
  ],
+ "gravel": [
+  "yyyyzyyyyyyYyyyy",
+  "yYyyyyyyzyyyyyyy",
+  "yyyyyyyyyyyyyzyy",
+  "yyyzyyYyyyyyyyyy",
+  "yyyyyyyyyyyzyyyy",
+  "yzyyyyyyyyyyyyYy",
+  "yyyyyyzyyYyyyyyy",
+  "yyYyyyyyyyyyyyyy",
+  "yyyyyyyyyzyyyyzy",
+  "yyyzyyyyyyyyyyyy",
+  "yyyyyyYyyyyzyyyy",
+  "yzyyyyyyyyyyyyyy",
+  "yyyyyyyyzyyyYyyy",
+  "yyyYyyyyyyyyyyyy",
+  "yyyyyyzyyyyyyzyy",
+  "yyyyyyyyyyyyyyyy"
+ ],
  "cursor": [
   "aaaa........aaaa",
   "a..............a",
@@ -1305,6 +1323,8 @@ const cache = new Map();
 
 // 把一張字串圖畫成 16×16 的小畫布（同一張圖、同一件衣服顏色、同一季只畫一次）
 export function sprite(name, shirt = '#d9544d', flip = false, season = '') {
+  if (name.startsWith('fish_')) return fishSprite(name.slice(5));
+  if (name.startsWith('ore_')) return oreSprite(name.slice(4));
   const key = name + '|' + shirt + '|' + (flip ? 1 : 0) + '|' + season;
   if (cache.has(key)) return cache.get(key);
   const rows = SPRITES[name];
@@ -1324,6 +1344,44 @@ export function sprite(name, shirt = '#d9544d', flip = false, season = '') {
   cache.set(key, c);
   return c;
 }
+
+// 魚、礦石：同一個形狀換顏色。1 身體、2 肚子（礦石是礦脈的斑點）、3 鰭／陰影、4 亮面、o 眼睛
+export const FISH_SHAPE = ["................", "................", "................", ".....3333.......", "...111111111....", "..1o1111111111.3", ".111111111111133", ".122222222211133", "..2222222222113.", "...222222221113.", ".....3...3......", "................", "................", "................", "................", "................"];
+export const BOOT_SHAPE = ["................", "................", "....11111.......", "....12221.......", "....12221.......", "....12221.......", "....12221.......", "....122211......", "....1222211111..", "....12222222221.", "....12222222221.", "....33333333333.", "................", "................", "................", "................"];
+export const ROCK_SHAPE = ["................", "................", "................", "................", "......4444......", "....44111111....", "...4111211111...", "..411111112113..", "..112111111113..", ".11111121111133.", ".11211111121133.", ".13111111111333.", "..333111113333..", "...3333333333...", "................", "................"];
+export const FISH_COLORS = {
+  tilapia: ['#6b7a8f', '#c9d1db', '#4b586b'],
+  crucian: ['#9a8a5a', '#e2d6a8', '#6e6240'],
+  catfish: ['#5a4e44', '#a89a8a', '#3a322c'],
+  carp: ['#e07a2e', '#f6e2b8', '#b85a1c'],
+  sweetfish: ['#8fb3a0', '#eef4ea', '#5e8a74'],
+  bass: ['#7d8c6a', '#d9dfc8', '#55613f'],
+  goldfish: ['#f28b2c', '#f6d34a', '#e0393e'],
+  eel: ['#3d4a3a', '#8f9a6e', '#262e24'],
+  junk: ['#6b4a2b', '#8d6a45', '#3a2818'],
+};
+export const ORE_COLORS = {
+  stone: ['#a4a09a', '#8a8680', '#6e6a64', '#c9c5bf'],
+  copper: ['#a4a09a', '#d9822b', '#6e6a64', '#c9c5bf'],
+  silver: ['#a4a09a', '#eef2f6', '#6e6a64', '#c9c5bf'],
+  gold: ['#a4a09a', '#f6d34a', '#6e6a64', '#c9c5bf'],
+  amethyst: ['#8f8aa0', '#b56ee0', '#5e5872', '#d6c9ee'],
+};
+function shaped(key, shape, colors) {
+  if (cache.has(key)) return cache.get(key);
+  const c = document.createElement('canvas');
+  c.width = 16; c.height = 16;
+  const g = c.getContext('2d');
+  const map = { 1: colors[0], 2: colors[1], 3: colors[2], 4: colors[3] || colors[0], o: '#2b2421' };
+  for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+    const col = map[shape[y][x]];
+    if (col) { g.fillStyle = col; g.fillRect(x, y, 1, 1); }
+  }
+  cache.set(key, c);
+  return c;
+}
+export const fishSprite = (id) => shaped('fish_' + id, id === 'junk' ? BOOT_SHAPE : FISH_SHAPE, FISH_COLORS[id] || FISH_COLORS.tilapia);
+export const oreSprite = (id) => shaped('ore_' + id, ROCK_SHAPE, ORE_COLORS[id] || ORE_COLORS.stone);
 
 // 作物某個階段的圖：種子、發芽兩個階段每種作物長得一樣，共用小白菜那兩張
 export function cropSprite(crop, stage) {

@@ -310,6 +310,37 @@ check('沒有這種工具', (await farmDo(groupId, { action: 'upgrade_tool', too
 r = await farmDo(groupId, { action: 'water', ...f1, area: true }, TA);
 check('還沒升級不能一次澆 3×3', r.status === 400 && /升級/.test(r.data.error || ''), r.data.error);
 
+// 後山：釣魚、挖礦、圖鑑
+check('有後山地圖、出口、今天的 20 顆石頭、魚和礦石的資料', fs0.hill?.length === 20 && fs0.exits?.farm?.length === 2
+  && fs0.rocks?.length === 20 && Array.isArray(fs0.dex) && !!fs0.fish?.eel && !!fs0.ores?.gold);
+check('小鎮沒有水可以釣', (await farmDo(groupId, { action: 'fish', area: 'town', x: 14, y: 9, hooked: true }, TA)).status === 400);
+check('不是水的地方不能釣', (await farmDo(groupId, { action: 'fish', area: 'farm', x: 5, y: 5, hooked: true }, TA)).status === 400);
+check('地圖亂填被擋', (await farmDo(groupId, { action: 'fish', area: '__proto__', x: 24, y: 3, hooked: true }, TA)).status === 400);
+let eF = (await farmGet(groupId, TA)).data.energy.now;
+r = await farmDo(groupId, { action: 'fish', area: 'farm', x: 24, y: 3, hooked: false }, TA);
+check('沒拉到：魚跑掉，體力照扣 2', r.status === 200 && r.data.gained?.missed === true && r.data.energy === eF - 2);
+r = await farmDo(groupId, { action: 'fish', area: 'farm', x: 24, y: 3, hooked: true }, TA);
+const fishItem = r.data.gained?.item;
+check(`在牧場池塘釣到 ${fishItem}，進倉庫、進圖鑑`, r.status === 200 && /^fish:/.test(fishItem || '') && r.data.items[fishItem] === 1
+  && r.data.dex.includes(fishItem) && r.data.gained.first === true);
+if (fishItem && fishItem !== 'fish:junk')
+  check('聊天室說第一次釣到什麼', (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('第一次釣到了')));
+const rk0 = fs0.rocks[0];
+r = await farmDo(groupId, { action: 'mine', x: rk0.x, y: rk0.y }, TA);
+check(`挖石頭得到 ore:${rk0.type}，剩 19 顆`, r.status === 200 && r.data.gained.item === `ore:${rk0.type}` && r.data.rocks.length === 19
+  && !r.data.rocks.some((x) => x.x === rk0.x && x.y === rk0.y));
+check('同一顆不能挖兩次', (await farmDo(groupId, { action: 'mine', x: rk0.x, y: rk0.y }, TA)).status === 400);
+check('沒石頭的地方挖不到', (await farmDo(groupId, { action: 'mine', x: 1, y: 1 }, TA)).status === 400);
+check('朋友B 看到的石頭也少了一顆（全家同一座採石場）', (await farmGet(groupId, TB)).data.rocks.length === 19);
+r = await farmDo(groupId, { action: 'ship', item: fishItem, qty: 1 }, TA);
+money += fs0.fish[fishItem.slice(5)].sell;
+check(`魚可以出貨（+${fs0.fish[fishItem.slice(5)].sell} 元）`, r.status === 200 && r.data.money === money);
+check('沒有的礦石不能出貨', (await farmDo(groupId, { action: 'ship', item: 'ore:amethyst', qty: 1 }, TA)).status === 400);
+if (fs0.villagersOut) {
+  r = await farmDo(groupId, { action: 'gift', villager: 'fu', item: `ore:${rk0.type}` }, TA);
+  check('礦石也能送人', r.status === 200 && ['love', 'like', 'neutral', 'dislike'].includes(r.data.gained.reaction));
+}
+
 const farmMs = await medianMs(() => farmGet(groupId, TA));
 check(`打開牧場在 150ms 內（實測 ${farmMs.toFixed(0)}ms）`, farmMs < 150);
 if (fs0.scale >= 3600) {
@@ -373,6 +404,7 @@ r = await j('/api/admin/export', {}, A0);
 check('管理員可以下載備份', r.status === 200 && Array.isArray(r.data.users) && r.data.messageCount > 0);
 check('備份包含牧場的動物', (r.data.farmAnimals || []).some((a) => a.name === '小花'));
 check('備份包含跟村民的感情', Array.isArray(r.data.farmFriends));
+check('備份包含圖鑑', (r.data.farmDex || []).length >= 2);
 
 console.log('\n--- 速度與備份上限（防止效能退步）---');
 // 這段會放 30 張約 450KB 的照片進去，量「打開聊天室」與「取照片」的時間，並檢查備份每頁大小有上限。

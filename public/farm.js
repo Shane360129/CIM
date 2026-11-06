@@ -9,7 +9,8 @@ const T = 16;            // 一格 16 像素
 const SPEED = 4.5;       // 每秒走幾格
 const WALK = new Set(['.', '=', 'F', 'p', ',', 'E']);
 // 點了會走過去互動的東西：田、出貨箱、攤位、房子、動物小屋；小鎮的雜貨店、小吃店、民宅、噴水池、告示板
-const TARGETS = 'FBSHAGRQON';
+const TARGETS = 'FBSHAGRQONW';
+const EXIT_LABEL = { town: '🏘️ 往小鎮', farm: '🌾 回牧場', hill: '⛰️ 往後山' };
 const SEASON = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
 const SEASON_ORDER = ['spring', 'summer', 'autumn', 'winter'];
 const SEASON_MONTHS = { spring: '3～5 月', summer: '6～8 月', autumn: '9～11 月', winter: '12～2 月' };
@@ -38,6 +39,7 @@ const S = {
   animals: [], animalKinds: {}, products: {}, feedPrice: 10, penTiles: [],
   area: 'farm', maps: {}, arrive: {}, villagers: {}, friends: {}, request: null, tools: { hoe: 1, can: 1 },
   foods: {}, toolShop: {}, villagersOut: true, talks: 0,
+  exits: {}, fishData: {}, oreData: {}, rocks: [], dex: [], fishing: null,
   tool: 'hoe', seed: 'bokchoy', busy: false,
   me: { x: 5, y: 5, d: 'd', step: null, path: [], pending: null, anim: 0 },
   others: new Map(), floats: [], keys: [], view: 3, cam: { x: 0, y: 0 },
@@ -56,7 +58,9 @@ const el = (tag, attrs = {}, ...kids) => {
 };
 const key = (x, y) => x + ',' + y;
 const terrain = (x, y) => (S.map[y] && S.map[y][x]) || 'T';
-const walkable = (x, y) => WALK.has(terrain(x, y));
+const rockAt = (x, y) => S.area === 'hill' && S.rocks.find((r) => r.x === x && r.y === y);
+// 後山的石頭擋路，挖掉才過得去
+const walkable = (x, y) => WALK.has(terrain(x, y)) && !rockAt(x, y);
 const serverNow = () => Date.now() + S.offset;
 const inSeason = (id) => !!S.crops[id] && S.crops[id].seasons.includes(S.season);
 const seasonsText = (list) => (list.length === 4 ? '一年四季' : list.map((x) => SEASON[x] + '天').join('、'));
@@ -69,6 +73,8 @@ function itemInfo(item) {
   if (kind === 'seed' && S.crops[id]) return { name: `${S.crops[id].name}種子`, icon: 'seed', sell: 0, crop: id };
   if (kind === 'crop' && S.crops[id]) return { name: S.crops[id].name, icon: id + '_3', sell: S.crops[id].sell };
   if (kind === 'prod' && S.products[id]) return { name: S.products[id].name, icon: id, sell: S.products[id].sell };
+  if (kind === 'fish' && S.fishData[id]) return { name: S.fishData[id].name, icon: 'fish_' + id, sell: S.fishData[id].sell };
+  if (kind === 'ore' && S.oreData[id]) return { name: S.oreData[id].name, icon: 'ore_' + id, sell: S.oreData[id].sell };
   return null;
 }
 const heartsText = (n) => '❤️'.repeat(n) + '🤍'.repeat(5 - n);
@@ -104,7 +110,9 @@ function applyTown(t) {
 
 function applyState(st) {
   // 兩張地圖：牧場和小鎮；重新同步時留在原本那一張
-  S.maps = { farm: st.map, town: st.town || st.map };
+  S.maps = { farm: st.map, town: st.town || st.map, hill: st.hill || st.map };
+  S.exits = st.exits || {}; S.fishData = st.fish || {}; S.oreData = st.ores || {};
+  S.rocks = st.rocks || []; S.dex = st.dex || [];
   S.map = S.maps[S.area]; S.H = S.map.length; S.W = S.map[0].length;
   S.arrive = st.arrive || {}; S.villagers = st.villagers || {}; S.foods = st.foods || {}; S.toolShop = st.toolShop || {};
   S.villagersOut = st.villagersOut !== false;
@@ -282,7 +290,9 @@ function openBag() {
   });
   openModal(el('h2', { text: '🎒 全家的倉庫' }), el('p', { class: 'sub', text: '種子和收成大家共用' }),
     ...(rows.filter(Boolean).length ? rows : [el('div', { class: 'empty', text: '倉庫是空的' })]),
-    el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
+    el('div', { class: 'actions' },
+      el('button', { class: 'btn', type: 'button', text: '📖 魚和礦石圖鑑', onclick: openDex }),
+      el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
 }
 
 // 飼料（攤位和動物小屋都買得到）
@@ -435,15 +445,92 @@ function homeIndex(x, y) {
 
 // 走到 E：牧場 ↔ 小鎮
 function switchArea() {
-  const to = S.area === 'farm' ? 'town' : 'farm';
+  const from = S.area;
+  const ex = (S.exits[from] || []).find((e) => e.x === Math.round(S.me.x) && e.y === Math.round(S.me.y));
+  if (!ex) return;
+  const to = ex.to;
   S.area = to;
   S.map = S.maps[to];
-  const p = S.arrive[to] || S.spawn;
-  Object.assign(S.me, { x: p.x, y: p.y, step: null, path: [], pending: null, d: to === 'town' ? 'd' : 'u' });
+  const p = S.arrive[`${from}>${to}`] || S.spawn;
+  const d = p.y <= 1 ? 'd' : p.y >= S.H - 2 ? 'u' : p.x <= 1 ? 'r' : 'l';
+  Object.assign(S.me, { x: p.x, y: p.y, step: null, path: [], pending: null, d });
   S.floats = [];
+  S.fishing = null;
   closeModal();
   sendPos(false);
-  toast(to === 'town' ? '🏘️ 來到小鎮了' : '🌾 回到牧場了');
+  toast({ town: '🏘️ 來到小鎮了', farm: '🌾 回到牧場了', hill: '⛰️ 來到後山了' }[to]);
+}
+
+/* ---------- 釣魚、挖礦 ---------- */
+
+// 拋竿 → 等魚上鉤（1～4 秒）→ 出現 ❗ 之後 1.5 秒內點畫面（或按空白鍵）就拉到；太早點會把魚嚇跑
+function startFishing(x, y) {
+  if (S.fishing || S.busy) return;
+  if (S.energy < 2) return toast('體力不夠了，明天再來釣吧 😴');
+  const now = performance.now();
+  S.fishing = { x, y, state: 'wait', bite: now + 1000 + Math.random() * 3000, end: 0 };
+  toast('拋竿！看到 ❗ 就趕快點畫面');
+}
+function fishTick() {
+  const f = S.fishing;
+  if (!f) return;
+  const now = performance.now();
+  if (f.state === 'wait' && now >= f.bite) { f.state = 'bite'; f.end = now + 1500; }
+  else if (f.state === 'bite' && now > f.end) finishFishing(false, '太慢了，魚跑掉了');
+}
+async function finishFishing(hooked, why) {
+  const f = S.fishing;
+  if (!f) return;
+  S.fishing = null;
+  try {
+    const r = await doAct({ action: 'fish', area: S.area, x: f.x, y: f.y, hooked });
+    if (r.gained && r.gained.item) {
+      const c = itemInfo(r.gained.item);
+      floatAt(f.x, f.y, `+1 ${c.name}`, '#fff3b0');
+      toast(r.gained.first ? `🎉 第一次釣到${c.name}！圖鑑新增一種` : `釣到${c.name}了！`);
+    } else toast(why);
+  } catch {}
+}
+// 釣魚中點畫面：看到 ❗ 才拉，不然太早
+function fishTap() {
+  const f = S.fishing;
+  if (!f) return false;
+  if (f.state === 'bite') finishFishing(true);
+  else finishFishing(false, '太早拉了，魚被嚇跑了');
+  return true;
+}
+async function mineRock(x, y) {
+  try {
+    const r = await doAct({ action: 'mine', x, y });
+    const c = itemInfo(r.gained.item);
+    floatAt(x, y, `+1 ${c.name}`, '#fff3b0');
+    if (r.gained.first && r.gained.item !== 'ore:stone') toast(`🎉 第一次挖到${c.name}！圖鑑新增一種`);
+  } catch {}
+}
+
+// 圖鑑：釣過、挖過的魚和礦石
+function openDex() {
+  const have = new Set(S.dex);
+  const section = (kind, data) => Object.entries(data).map(([id, d]) => {
+    const got = have.has(`${kind}:${id}`);
+    return el('div', { class: 'row' + (got ? '' : ' off') }, got ? icon((kind === 'fish' ? 'fish_' : 'ore_') + id) : el('span', { class: 'big', text: '❔' }),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: got ? d.name : '？？？' }),
+        el('div', { class: 'meta', text: got ? `賣 ${d.sell} 元${kind === 'fish' ? fishHint(d) : ''}` : kind === 'fish' ? fishHint(d, true) : '在後山的採石場挖挖看' })));
+  });
+  const nf = Object.keys(S.fishData).filter((id) => have.has('fish:' + id)).length;
+  const no = Object.keys(S.oreData).filter((id) => have.has('ore:' + id)).length;
+  openModal(el('h2', { text: '📖 圖鑑' }),
+    el('p', { class: 'sub', text: `魚 ${nf}/${Object.keys(S.fishData).length}・礦石 ${no}/${Object.keys(S.oreData).length}。第一次拿到會在聊天室說一聲。` }),
+    el('h2', { class: 'section', text: '🎣 魚' }), ...section('fish', S.fishData),
+    el('h2', { class: 'section', text: '⛏️ 礦石' }), ...section('ore', S.oreData),
+    el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
+}
+function fishHint(d, unknown) {
+  const where = d.where.map((w) => (w === 'pond' ? '牧場池塘' : '後山的湖')).join('、');
+  const when = d.time === 'day' ? '白天' : d.time === 'night' ? '晚上' : '';
+  const seasons = d.seasons.length === 4 ? '' : d.seasons.map((x) => SEASON[x]).join('') + '天';
+  const hint = [where, seasons, when].filter(Boolean).join('・');
+  return unknown ? `提示：${hint}` : `・${hint}`;
 }
 
 // 村民在自己那一帶走來走去，位置由「村民＋時間」算出來，全家看到的一樣
@@ -678,8 +765,12 @@ async function doAct(body) {
     if (r.animals) S.animals = r.animals;
     if (r.tiles) for (const t of r.tiles) setTile(t, r.now);
     if (r.town) applyTown(r.town);
-    if (body.x != null) {
-      if (r.gained) floatAt(body.x, body.y, `+1 ${S.crops[r.gained.item.split(':')[1]].name}`, '#fff3b0');
+    if (r.rocks) S.rocks = r.rocks;
+    if (r.dex) S.dex = r.dex;
+    // 田地上的動作：收成飄出「+1 作物」，其他飄出扣了幾點體力（釣魚、挖礦自己處理）
+    if (body.x != null && body.action !== 'fish' && body.action !== 'mine') {
+      const got = r.gained && r.gained.item && itemInfo(r.gained.item);
+      if (got) floatAt(body.x, body.y, `+1 ${got.name}`, '#fff3b0');
       else if (spent > 0) floatAt(body.x, body.y, `-${spent}⚡`, '#ffffff');
     }
     renderHud();
@@ -704,6 +795,8 @@ function useOn(x, y) {
   if (ch === 'S') return openShop();
   if (ch === 'H') return toast('家裡還在整理中，下一期就能進去了 🏠');
   if (ch === 'A') return openBarn();
+  if (ch === 'W') return startFishing(x, y);
+  if (rockAt(x, y)) return mineRock(x, y);
   if (ch === 'G') return openStore();
   if (ch === 'R') return openEatery();
   if (ch === 'N') return openBoard();
@@ -804,11 +897,20 @@ function tapTile(tx, ty, fx = tx + 0.5, fy = ty + 0.5) {
     if (!path.length && !me.step) arrive();
     return;
   }
+  // 後山的石頭：走到旁邊挖
+  if (rockAt(tx, ty)) {
+    const path = findPath(cx, cy, (x, y) => Math.abs(x - tx) + Math.abs(y - ty) === 1);
+    if (!path) return toast('被別的石頭擋住了，先挖外面的');
+    me.path = path;
+    me.pending = { x: tx, y: ty, rock: true };
+    if (!path.length && !me.step) arrive();
+    return;
+  }
   const target = TARGETS.includes(ch);
   if (target) {
     // 走到旁邊（上下左右）再面向它動作。房子、攤位、動物小屋好幾格大，
     // 點到中間那格也算：走到這棟建築任何一格的旁邊就好
-    const parts = ch === 'F' || ch === 'B' ? new Set([key(tx, ty)]) : buildingTiles(tx, ty, ch);
+    const parts = ch === 'F' || ch === 'B' ? new Set([key(tx, ty)]) : buildingTiles(tx, ty, ch); // 水也是：走到湖邊就好
     const adj = (x, y) => [[0, 1], [1, 0], [0, -1], [-1, 0]].some(([dx, dy]) => parts.has(key(x + dx, y + dy)));
     const path = findPath(cx, cy, adj);
     if (!path) return toast('走不過去');
@@ -855,7 +957,8 @@ function arrive() {
     me.d = dirTo(me.x, me.y, Math.round(ap.x), Math.round(ap.y));
     return useOnAnimal(a);
   }
-  // 面向建築裡離自己最近的那一格
+  if (p.rock) { me.d = dirTo(me.x, me.y, p.x, p.y); return mineRock(p.x, p.y); }
+  // 面向建築（或湖）裡離自己最近的那一格
   const ch = terrain(p.x, p.y);
   let fx = p.x, fy = p.y;
   for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
@@ -863,11 +966,13 @@ function arrive() {
     if (terrain(nx, ny) === ch && (ch !== 'F' || (nx === p.x && ny === p.y))) { fx = nx; fy = ny; break; }
   }
   me.d = dirTo(me.x, me.y, fx, fy);
+  if (ch === 'W') return useOn(fx, fy); // 釣竿拋到面前那一格水
   useOn(p.x, p.y);
 }
 
 function update(dt) {
   const me = S.me;
+  fishTick();
   if (!me.step) {
     // 鍵盤：按著方向鍵就一格一格走
     const k = S.keys[S.keys.length - 1];
@@ -955,6 +1060,8 @@ function connectWs() {
       S.money = ev.money; S.items = ev.items;
       if (ev.animals) S.animals = ev.animals;
       if (ev.town) applyTown(ev.town);
+      if (ev.rocks) S.rocks = ev.rocks;
+      if (ev.dex) S.dex = ev.dex;
       if (ev.by !== S.meId && ev.action === 'harvest' && ev.tiles[0]) {
         const who = S.members.get(ev.by);
         floatAt(ev.tiles[0].x, ev.tiles[0].y, `${who ? who.name : '家人'} 收成了！`, '#fff3b0');
@@ -991,6 +1098,7 @@ function resize() {
 function baseSprite(x, y, ch) {
   if (ch === '=' || ch === 'E') return sprite('path');
   if (ch === 'p') return sprite('plaza');
+  if (ch === 'q') return sprite('gravel');
   if (ch === ',') return sprite('flowers', undefined, false, S.season);
   if (ch === 'W') return sprite(Math.floor(Date.now() / 600) % 2 ? 'water1' : 'water0');
   if (ch === 'F') {
@@ -1062,6 +1170,8 @@ function draw() {
       else if (ch === 'f') g.drawImage(sprite('fence'), x * T, y * T);
       else if (ch === 'B') g.drawImage(sprite('bin'), x * T, y * T);
       else if (ch === 'N') g.drawImage(sprite('board'), x * T, y * T);
+      const rk = rockAt(x, y);
+      if (rk) g.drawImage(sprite('ore_' + rk.type), x * T, y * T);
       else if (ch === 'F') {
         const t = S.tiles.get(key(x, y));
         if (t && t.crop) {
@@ -1086,11 +1196,19 @@ function draw() {
     }
   }
 
+  // 釣魚的浮標：等魚時輕輕上下、魚上鉤時往下沉
+  if (S.fishing) {
+    const f = S.fishing, bob = f.state === 'bite' ? 3 : Math.sin(performance.now() / 300) * 1;
+    g.fillStyle = '#ffffff'; g.fillRect(f.x * T + 6, f.y * T + 6 + bob, 4, 2);
+    g.fillStyle = '#e0393e'; g.fillRect(f.x * T + 6, f.y * T + 8 + bob, 4, 3);
+    g.fillStyle = 'rgba(255,255,255,.6)'; g.fillRect(f.x * T + 3, f.y * T + 12, 10, 1);
+  }
+
   // 面前那一格的框（鍵盤操作時看得到要對哪一格動作）
   if (!me.step && !me.path.length) {
     const [dx, dy] = DIRS[me.d];
     const fx = Math.round(me.x) + dx, fy = Math.round(me.y) + dy;
-    if (TARGETS.includes(terrain(fx, fy))) g.drawImage(sprite('cursor'), fx * T, fy * T);
+    if (TARGETS.includes(terrain(fx, fy)) || rockAt(fx, fy)) g.drawImage(sprite('cursor'), fx * T, fy * T);
   }
 
   // 角色：依 y 排序，後面的先畫
@@ -1135,13 +1253,22 @@ function draw() {
   // 出口的路牌
   for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) {
     if (terrain(x, y) !== 'E') continue;
-    const label = S.area === 'farm' ? '🏘️ 往小鎮' : '🌾 回牧場';
-    const sx = (x + 0.5) * T * k - camX, sy = (y * T + (y === 0 ? 14 : 2)) * k - camY;
+    const ex = (S.exits[S.area] || []).find((e) => e.x === x && e.y === y);
+    const label = EXIT_LABEL[ex ? ex.to : 'farm'];
     const w = g.measureText(label).width + 10 * dpr;
+    // 在地圖最左、最右邊的出口，路牌往裡面挪，才不會被切掉
+    const sx = Math.max(-camX + w / 2, Math.min(worldW - camX - w / 2, (x + 0.5) * T * k - camX));
+    const sy = (y * T + (y === 0 ? 14 : 2)) * k - camY;
     g.fillStyle = 'rgba(122,78,45,.9)';
     g.fillRect(sx - w / 2, sy - 13 * dpr, w, 16 * dpr);
     g.fillStyle = '#fff';
     g.fillText(label, sx, sy);
+  }
+  // 魚上鉤了：浮標上面跳出大大的 ❗
+  if (S.fishing && S.fishing.state === 'bite') {
+    g.font = `bold ${Math.round(26 * dpr)}px sans-serif`;
+    g.fillText('❗', (S.fishing.x + 0.5) * T * k - camX, (S.fishing.y * T - 2) * k - camY);
+    g.font = `bold ${Math.round(11 * dpr)}px sans-serif`;
   }
   // 動物：名字小小的；有雞蛋牛奶可以收時，頭上冒出泡泡；晚上睡覺冒 z
   g.font = `${Math.round(10 * dpr)}px sans-serif`;
@@ -1190,6 +1317,7 @@ addEventListener('keydown', (e) => {
   if (e.key === 'Escape') return closeModal();
   if (document.querySelector('.modal')) return;
   const dir = KEYMAP[e.key];
+  if (dir && S.fishing) { e.preventDefault(); return; }
   if (dir) {
     e.preventDefault();
     if (!S.keys.includes(dir)) S.keys.push(dir);
@@ -1197,6 +1325,7 @@ addEventListener('keydown', (e) => {
   }
   if (e.key === ' ' || e.key === 'Enter') {
     e.preventDefault();
+    if (fishTap()) return;
     const [dx, dy] = DIRS[S.me.d];
     if (S.me.step) return;
     const fx = Math.round(S.me.x) + dx, fy = Math.round(S.me.y) + dy;
@@ -1224,6 +1353,7 @@ canvas.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clie
 canvas.addEventListener('pointerup', (e) => {
   if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 12) { down = null; return; }
   down = null;
+  if (fishTap()) return; // 釣魚中：點畫面＝拉竿
   const k = S.view * dpr;
   const wx = (e.clientX * dpr + S.cam.x) / k, wy = (e.clientY * dpr + S.cam.y) / k;
   tapTile(Math.floor(wx / T), Math.floor(wy / T), wx / T, wy / T);
