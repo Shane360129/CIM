@@ -14,8 +14,9 @@ import {
   HILL_MAP, MAPS, EXITS, FISH, ORES, QUARRY, ROCKS_PER_DAY, fishChoices, pickWeighted, rocksOf, itemPrice,
   DISHES, INGREDIENT_GROUPS, ingredientItems, canCook, cookTakes,
   FESTIVALS, LUNAR_DATES, festivalOn, festivalsAfter, nextFestival, isBirthdayEvent,
+  GH_MAP, fieldArea, GOODS, MACHINES, MACHINE_SPOTS, MACHINE_BATCH, machineAt, machineReadyAt, BUILDS, HOUSE_ENERGY, energyMaxOf,
 } from '../src/farm.js';
-import { SPRITES, PALETTE, FISH_SHAPE, BOOT_SHAPE, ROCK_SHAPE, FISH_COLORS, ORE_COLORS, DISH_SHAPES, DISH_COLORS } from '../public/farm-sprites.js';
+import { SPRITES, PALETTE, FISH_SHAPE, BOOT_SHAPE, ROCK_SHAPE, FISH_COLORS, ORE_COLORS, DISH_SHAPES, DISH_COLORS, GOOD_ART } from '../public/farm-sprites.js';
 
 let pass = 0, fail = 0;
 const check = (label, got, want) => {
@@ -285,7 +286,7 @@ check('3×3 範圍不重複', new Set(area3x3(5, 5).map((c) => c.x + ',' + c.y))
 
 console.log('\n--- 料理 ---');
 const dishes = Object.entries(DISHES).filter(([, d]) => d.need);
-check('有 17 道自己煮得出來的菜', dishes.length, 17);
+check('有 23 道自己煮得出來的菜（6 道用加工品）', [dishes.length, dishes.filter(([, d]) => Object.keys(d.need).some((k) => k.startsWith('good:') || k === 'mayo' || k === 'cheese')).length], [23, 6]);
 check('每道菜的材料都是真的東西（或雞蛋、牛奶這種組）', dishes.filter(([, d]) => !Object.keys(d.need).every((k) => INGREDIENT_GROUPS[k] || itemPrice(k) > 0)).map(([id]) => id), []);
 check('煮成菜比直接賣材料值錢', dishes.filter(([, d]) => d.sell <= Object.entries(d.need).reduce((n, [k, q]) => n + itemPrice(ingredientItems(k)[0]) * q, 0)).map(([id]) => id), []);
 check('每道菜都能補體力（不超過一整天的量）', dishes.every(([, d]) => d.energy > 0 && d.energy <= ENERGY_MAX), true);
@@ -317,6 +318,44 @@ check('節慶食物不能自己煮', Object.entries(DISHES).filter(([, d]) => d.
 check('節慶食物有圖、能賣、能吃', Object.entries(DISHES).filter(([, d]) => d.festival).every(([id, d]) => DISH_SHAPES[d.shape] && DISH_COLORS[id] && itemPrice('dish:' + id) > 0 && d.energy > 0), true);
 check('送節慶食物大家都喜歡', giftReaction('fu', 'dish:mooncake'), 'like');
 check('行事曆上的生日', ['媽媽生日', '阿公八十大壽', '看牙醫'].map(isBirthdayEvent), [true, true, false]);
+
+
+console.log('\n--- 溫室 ---');
+check('溫室 16×10，每一列一樣寬、四周是玻璃牆', [GH_MAP.length, GH_MAP.every((r) => r.length === 16),
+  GH_MAP[0].replace(/K/g, '') === '' && GH_MAP.every((r) => r[0] === 'K' && r[15] === 'K')], [10, true, true]);
+check('溫室有 40 格田', GH_MAP.join('').split('').filter((c) => c === 'F').length, 40);
+const allF = (m) => m.flatMap((r, y) => [...r].map((c, x) => (c === 'F' ? `${x},${y}` : null))).filter(Boolean);
+check('溫室的田跟牧場的田座標不重疊（兩邊存在同一張表）', allF(GH_MAP).filter((k) => allF(FARM_MAP).includes(k)), []);
+check('這格田在哪裡', [fieldArea(4, 9), fieldArea(2, 2), fieldArea(13, 6), fieldArea(1, 1), fieldArea(5, 8)], ['farm', 'gh', 'gh', null, null]);
+const ghSeen = reach('gh', ARRIVE['farm>gh']);
+check('溫室每一格田都走得到，出口也走得到', allF(GH_MAP).every((k) => ghSeen.has(k)) && ghSeen.has(`${EXITS.gh[0].x},${EXITS.gh[0].y}`), true);
+const jCells = cells.filter((p) => p.c === 'J');
+check('牧場上的溫室 5×3，從家門口走得到旁邊', [jCells.length, touchable('J')], [15, true]);
+const ga = ARRIVE['gh>farm'];
+check('走出溫室站在溫室門口（走得到、就在溫室旁邊）', isWalkable(ga.x, ga.y) && seen.has(`${ga.x},${ga.y}`) && terrainAt(ga.x, ga.y - 1) === 'J', true);
+
+console.log('\n--- 加工機 ---');
+check('四台加工機的位置都是 M、各自走得到旁邊', Object.entries(MACHINE_SPOTS).every(([id, p]) => terrainAt(p.x, p.y) === 'M' && machineAt(p.x, p.y) === id
+  && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => seen.has(`${p.x + dx},${p.y + dy}`))), true);
+check('地圖上的 M 剛好四個', cells.filter((p) => p.c === 'M').length, Object.keys(MACHINES).length);
+const recipesM = Object.values(MACHINES).flatMap((m) => Object.entries(m.makes));
+check('加工機放得進去的都是真的東西、做出來的都是加工品', recipesM.every(([i, g]) => itemPrice(i) > 0 && !!GOODS[g]), true);
+check('每種加工品都只有一台加工機做得出來', Object.keys(GOODS).map((g) => recipesM.filter(([, x]) => x === g).length).every((n) => n === 1), true);
+check('加工品比材料值錢（超過兩倍）', recipesM.filter(([i, g]) => GOODS[g].sell <= 2 * itemPrice(i)).map(([, g]) => g), []);
+check('加工機要的材料都是礦石，價錢都大於 0、時間都大於 0', Object.values(MACHINES).every((m) => m.price > 0 && m.hours > 0
+  && Object.keys(m.need).every((i) => i.startsWith('ore:') && itemPrice(i) > 0)), true);
+check('一次最多放 5 個', MACHINE_BATCH, 5);
+check('美乃滋機 3 小時做好（時間倍率也算）', [machineReadyAt({ kind: 'mayo', started_at: t0 }) - t0, machineReadyAt({ kind: 'mayo', started_at: t0 }, 3600) - t0], [3 * H, 3000]);
+check('加工品能賣、能送（名字都有）', Object.keys(GOODS).every((g) => itemPrice('good:' + g) > 0) && itemPrice('good:__proto__') === 0, true);
+check('每種加工品都有圖', Object.keys(GOODS).filter((g) => !GOOD_ART[g]), []);
+check('阿嬤最愛菜脯、小傑不喜歡泡菜', [giftReaction('ama', 'good:pickled_radish'), giftReaction('jie', 'good:kimchi')], ['love', 'dislike']);
+check('高級美乃滋也能拿來做玉米沙拉', cookTakes({ 'crop:corn': 1, 'good:mayo_l': 1 }, 'corn_salad'), { 'crop:corn': 1, 'good:mayo_l': 1 });
+
+console.log('\n--- 建築 ---');
+check('溫室、房子擴建的材料都是礦石', Object.values(BUILDS).every((b) => b.price > 0 && Object.keys(b.need).every((i) => i.startsWith('ore:') && itemPrice(i) > 0)), true);
+check('房子擴建照順序：大臥室 2 級、二樓 3 級', [BUILDS.house2.level, BUILDS.house3.level, BUILDS.greenhouse.level], [2, 3, undefined]);
+check('體力上限：原本 60、大臥室 80、二樓 100', [energyMaxOf(1), energyMaxOf(2), energyMaxOf(3), energyMaxOf(undefined), HOUSE_ENERGY.length], [60, 80, 100, 60, 4]);
+check('一年四季都種得到東西了：溫室讓非當季作物也能種（每種作物都至少一季買不到）', Object.values(CROPS).filter((c) => c.seasons.length === 4).length, 1);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

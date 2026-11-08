@@ -342,7 +342,7 @@ if (fs0.villagersOut) {
 }
 
 // 料理
-check('有 17 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 17 && !!fs0.ingredientGroups?.egg);
+check('有 23 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 23 && !!fs0.ingredientGroups?.egg);
 check('沒有這道菜', (await farmDo(groupId, { action: 'cook', dish: 'steak' }, TA)).status === 400
   && (await farmDo(groupId, { action: 'cook', dish: 'constructor' }, TA)).status === 400);
 r = await farmDo(groupId, { action: 'cook', dish: 'pumpkin_soup' }, TA);
@@ -391,6 +391,21 @@ const evs = (await j('/api/events', {}, TB)).data.events || [];
 check(`行事曆有「${nfF.emoji} ${nfF.name}」${nf.date}`, evs.some((e) => e.title === `${nfF.emoji} ${nfF.name}` && e.date === nf.date && e.note === '家族牧場加的節慶'));
 check('再按一次不會重複加', (await farmDo(groupId, { action: 'festival_calendar' }, TB)).data.gained?.added === 0);
 for (const e of evs.filter((x) => x.note === '家族牧場加的節慶')) await j(`/api/events/${e.id}`, { method: 'DELETE' }, TA);
+
+// 加工機、溫室、房子擴建
+check('一開始：沒有加工機、溫室還沒蓋、房子原本的樣子（體力上限 60）、有溫室的地圖',
+  JSON.stringify(fs0.machines) === '{}' && fs0.ghBuilt === false && fs0.houseLevel === 1 && fs0.energyMax === 60
+  && fs0.greenhouse?.length === 10 && Object.keys(fs0.machineKinds || {}).length === 4 && Object.keys(fs0.builds || {}).length === 3);
+check('溫室還沒蓋，不能在溫室的田翻土', /溫室還沒蓋好/.test((await farmDo(groupId, { action: 'till', x: 2, y: 2, map: 'gh' }, TA)).data.error || ''));
+check('說在牧場卻點溫室的座標：不能耕作', /不能耕作/.test((await farmDo(groupId, { action: 'till', x: 2, y: 2, map: 'farm' }, TA)).data.error || ''));
+check('還沒買加工機不能放東西', /還沒有/.test((await farmDo(groupId, { action: 'machine_put', machine: 'mayo', item: 'prod:egg', qty: 1 }, TA)).data.error || ''));
+check('沒有這種加工機、沒有這種建築', (await farmDo(groupId, { action: 'buy_machine', machine: 'oven' }, TA)).status === 400
+  && (await farmDo(groupId, { action: 'build', what: '__proto__' }, TA)).status === 400
+  && (await farmDo(groupId, { action: 'machine_take', machine: 'constructor' }, TA)).status === 400);
+check('要先擴建大臥室才能蓋二樓', /要先擴建/.test((await farmDo(groupId, { action: 'build', what: 'house3' }, TA)).data.error || ''));
+r = await farmDo(groupId, { action: 'build', what: 'greenhouse' }, TA);
+check('材料或錢不夠蓋不了溫室', r.status === 400 && /材料不夠|錢不夠/.test(r.data.error || ''), r.data.error);
+if (!fs0.items['ore:copper']) check('材料不夠會說缺什麼', /銅礦 0\/3/.test((await farmDo(groupId, { action: 'buy_machine', machine: 'mayo' }, TA)).data.error || ''));
 
 const farmMs = await medianMs(() => farmGet(groupId, TA));
 check(`打開牧場在 150ms 內（實測 ${farmMs.toFixed(0)}ms）`, farmMs < 150);
@@ -452,6 +467,7 @@ if (fs0.scale >= 3600) {
   // 會再長的作物：收完還在田裡，再等一下又能收
   const rc = fs0.crops[regrowCrop];
   r = await farmDo(groupId, { action: 'buy', item: 'seed:' + regrowCrop, qty: 1 }, TA);
+  money -= rc.seed;
   await farmDo(groupId, { action: 'plant', crop: regrowCrop, ...f1 }, TA);
   await farmDo(groupId, { action: 'water', ...f1 }, TA);
   await new Promise((ok) => setTimeout(ok, rc.hours * 1000 + 600));
@@ -461,6 +477,74 @@ if (fs0.scale >= 3600) {
   await new Promise((ok) => setTimeout(ok, rc.regrow * 1000 + 600));
   r = await farmDo(groupId, { action: 'harvest', ...f1 }, TA);
   check(`（加速模式）再等 ${rc.regrow} 小時又能收，倉庫有 2 個`, r.status === 200 && r.data.items['crop:' + regrowCrop] === 2);
+  if ((fs0.items['ore:gold'] || 0) >= 100) {
+    // 本機測試用 FARM_START_ITEMS 先放了礦石和大顆雞蛋：先賣金礦湊錢
+    r = await farmDo(groupId, { action: 'ship', item: 'ore:gold', qty: 95 }, TA);
+    money += 95 * fs0.ores.gold.sell;
+    check(`（加速模式）賣 95 個金礦湊錢 → ${money}`, r.status === 200 && r.data.money === money, `實際 ${r.data.money}`);
+    let it = r.data.items;
+    r = await farmDo(groupId, { action: 'buy_machine', machine: 'mayo' }, TA);
+    money -= fs0.machineKinds.mayo.price;
+    check('（加速模式）買美乃滋機：扣錢、扣 3 個銅礦、放在牧場', r.status === 200 && r.data.money === money
+      && r.data.items['ore:copper'] === it['ore:copper'] - 3 && r.data.machines.mayo?.input === null);
+    check('（加速模式）聊天室說買了美乃滋機', (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('買了美乃滋機')));
+    check('（加速模式）同一種只能買一台', /已經有/.test((await farmDo(groupId, { action: 'buy_machine', machine: 'mayo' }, TA)).data.error || ''));
+    check('（加速模式）美乃滋機不能放番茄、一次最多 5 個', /不能放/.test((await farmDo(groupId, { action: 'machine_put', machine: 'mayo', item: 'crop:tomato', qty: 1 }, TA)).data.error || '')
+      && (await farmDo(groupId, { action: 'machine_put', machine: 'mayo', item: 'prod:egg_l', qty: 6 }, TA)).status === 400);
+    r = await farmDo(groupId, { action: 'machine_put', machine: 'mayo', item: 'prod:egg_l', qty: 3 }, TB);
+    check('（加速模式）朋友B 放 3 個大顆雞蛋進去', r.status === 200 && r.data.machines.mayo.input === 'prod:egg_l' && r.data.machines.mayo.qty === 3
+      && r.data.machines.mayo.output === 'good:mayo_l' && r.data.items['prod:egg_l'] === 2);
+    check('（加速模式）還在做不能拿、也不能再放', /還在做/.test((await farmDo(groupId, { action: 'machine_take', machine: 'mayo' }, TA)).data.error || '')
+      && /正在做/.test((await farmDo(groupId, { action: 'machine_put', machine: 'mayo', item: 'prod:egg_l', qty: 1 }, TA)).data.error || ''));
+    check('（加速模式）朋友A 打開也看到美乃滋機在做', (await farmGet(groupId, TA)).data.machines.mayo?.qty === 3);
+    await new Promise((ok) => setTimeout(ok, fs0.machineKinds.mayo.hours * 1000 + 600));
+    r = await farmDo(groupId, { action: 'machine_take', machine: 'mayo' }, TA);
+    check('（加速模式）3 小時後拿出高級美乃滋 ×3，第一次做進圖鑑', r.status === 200 && r.data.items['good:mayo_l'] === 3 && r.data.gained.qty === 3
+      && r.data.gained.first === true && r.data.dex.includes('good:mayo_l') && r.data.machines.mayo.input === null);
+    check('（加速模式）聊天室說第一次做出了高級美乃滋', (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('第一次做出了高級美乃滋')));
+    r = await farmDo(groupId, { action: 'ship', item: 'good:mayo_l', qty: 3 }, TA);
+    money += 3 * fs0.goods.mayo_l.sell;
+    check(`（加速模式）加工品可以出貨（3 × ${fs0.goods.mayo_l.sell}）`, r.status === 200 && r.data.money === money);
+    // 溫室
+    it = r.data.items;
+    r = await farmDo(groupId, { action: 'build', what: 'greenhouse' }, TA);
+    money -= fs0.builds.greenhouse.price;
+    check('（加速模式）蓋溫室：扣錢和礦石', r.status === 200 && r.data.build?.ghBuilt === true && r.data.money === money
+      && Object.entries(fs0.builds.greenhouse.need).every(([i, q]) => (r.data.items[i] || 0) === it[i] - q));
+    check('（加速模式）溫室只能蓋一次', /已經蓋好/.test((await farmDo(groupId, { action: 'build', what: 'greenhouse' }, TA)).data.error || ''));
+    check('（加速模式）聊天室說蓋好了溫室、朋友B 也看到', (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('蓋好了溫室'))
+      && (await farmGet(groupId, TB)).data.ghBuilt === true);
+    const off = cropIds.filter((id) => !inSeasonNow(id)).sort((a, b) => fs0.crops[a].hours - fs0.crops[b].hours)[0];
+    r = await farmDo(groupId, { action: 'buy', item: 'seed:' + off, qty: 1 }, TA);
+    money -= fs0.crops[off].seed;
+    check(`（加速模式）蓋了溫室，別季的${fs0.crops[off].name}種子也買得到`, r.status === 200 && r.data.money === money);
+    const out = fields[44];
+    await farmDo(groupId, { action: 'till', ...out, map: 'farm' }, TA);
+    check('（加速模式）別季的作物還是不能種在外面', /溫室/.test((await farmDo(groupId, { action: 'plant', crop: off, ...out, map: 'farm' }, TA)).data.error || ''));
+    r = await farmDo(groupId, { action: 'till', x: 2, y: 2, map: 'gh' }, TA);
+    check('（加速模式）溫室的田剛翻好是乾的（下雨也淋不到）', r.status === 200 && r.data.tile.tilled && r.data.tile.wetUntil === 0);
+    r = await farmDo(groupId, { action: 'plant', crop: off, x: 2, y: 2, map: 'gh' }, TA);
+    check(`（加速模式）溫室裡可以種別季的${fs0.crops[off].name}`, r.status === 200 && r.data.tile.crop === off);
+    await farmDo(groupId, { action: 'water', x: 2, y: 2, map: 'gh' }, TA);
+    await new Promise((ok) => setTimeout(ok, fs0.crops[off].hours * 1000 + 600));
+    r = await farmDo(groupId, { action: 'harvest', x: 2, y: 2, map: 'gh' }, TB);
+    check(`（加速模式）${fs0.crops[off].hours} 小時後在溫室收成`, r.status === 200 && r.data.items['crop:' + off] >= 1);
+    check('（加速模式）溫室的田大家都看得到（存在同一個牧場）', (await farmGet(groupId, TA)).data.tiles.some((t) => t.x === 2 && t.y === 2 && t.tilled));
+    // 房子擴建
+    const eB = (await farmGet(groupId, TB)).data.energy.now;
+    const eA = (await farmGet(groupId, TA)).data.energy.now;
+    r = await farmDo(groupId, { action: 'build', what: 'house2' }, TA);
+    money -= fs0.builds.house2.price;
+    check('（加速模式）擴建大臥室：體力上限 80、今天的體力也 +20', r.status === 200 && r.data.build.houseLevel === 2 && r.data.energyMax === 80
+      && r.data.energy === eA + 20 && r.data.money === money);
+    r = await farmGet(groupId, TB);
+    check('（加速模式）朋友B 的體力也多了 20', r.data.energy.now === eB + 20 && r.data.energy.max === 80 && r.data.houseLevel === 2);
+    r = await farmDo(groupId, { action: 'build', what: 'house3' }, TB);
+    money -= fs0.builds.house3.price;
+    check('（加速模式）擴建二樓：體力上限 100', r.status === 200 && r.data.build.houseLevel === 3 && r.data.energyMax === 100 && r.data.money === money);
+    check('（加速模式）已經擴建過的不能再蓋', /已經擴建/.test((await farmDo(groupId, { action: 'build', what: 'house2' }, TA)).data.error || ''));
+    check('（加速模式）聊天室說擴建了房子', (await listIn(groupId, TA)).filter((m) => m.type === 'system' && m.content.includes('把房子擴建成')).length === 2);
+  }
 }
 
 console.log('\n--- 管理員 ---');
@@ -474,6 +558,7 @@ check('管理員可以下載備份', r.status === 200 && Array.isArray(r.data.us
 check('備份包含牧場的動物', (r.data.farmAnimals || []).some((a) => a.name === '小花'));
 check('備份包含跟村民的感情', Array.isArray(r.data.farmFriends));
 check('備份包含圖鑑', (r.data.farmDex || []).length >= 2);
+check('備份包含加工機', Array.isArray(r.data.farmMachines));
 
 console.log('\n--- 速度與備份上限（防止效能退步）---');
 // 這段會放 30 張約 450KB 的照片進去，量「打開聊天室」與「取照片」的時間，並檢查備份每頁大小有上限。

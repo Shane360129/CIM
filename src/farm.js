@@ -11,15 +11,16 @@ const HOUR = 3600000;
 const DAY = 24 * HOUR;
 const TW = 8 * HOUR; // 台灣時間 UTC+8
 
-// 地形：T 樹、. 草地、= 小路、F 田、f 柵欄、H 房子、S 商店、B 出貨箱、W 池塘、A 動物小屋、E 往小鎮的出口
+// 地形：T 樹、. 草地、= 小路、F 田、f 柵欄、H 房子、S 商店、B 出貨箱、W 池塘、A 動物小屋、E 往小鎮的出口、
+// J 溫室（蓋好之後點它走進去）、M 加工機的位置（攤位右邊一排四台）
 // 動物小屋下面用柵欄圍了一塊草地給雞和牛散步，左邊 (22,13) 是門；左下角的小路走出去是小鎮，
 // 動物小屋右邊 (29,7) 走出去是後山
 export const FARM_MAP = [
   'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
-  'TT......T....................T',
-  'T..HHHH.........SS....T......T',
-  'T..HHHH.........SS......WWW..T',
-  'T..HHHH..B..............WWWW.T',
+  'TT......T.JJJJJ..............T',
+  'T..HHHH...JJJJJ.SS....T......T',
+  'T..HHHH...JJJJJ.SS......WWW..T',
+  'T..HHHH..B........MMMM..WWWW.T',
   'T....=..................WWW..T',
   'T....=================.......T',
   'T....=...............=.AAAA..E',
@@ -89,17 +90,34 @@ export const HILL_MAP = [
   'T....T.......................T',
   'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
 ];
-export const MAPS = { farm: FARM_MAP, town: TOWN_MAP, hill: HILL_MAP };
-export const AREAS = ['farm', 'town', 'hill'];
+// 溫室裡面：K 玻璃牆、F 溫室的田（四季都能種、不會被雨淋到，要自己澆水）、, 盆栽、E 回牧場。
+// 溫室田地的座標故意跟牧場的田不重疊（牧場的田在第 9～14 列），所以兩邊的田可以存在同一張表、用 x,y 分得出來
+export const GH_MAP = [
+  'KKKKKKKKKKKKKKKK',
+  'K,............,K',
+  'K.FFFFF..FFFFF.K',
+  'K.FFFFF..FFFFF.K',
+  'K..............K',
+  'K.FFFFF..FFFFF.K',
+  'K.FFFFF..FFFFF.K',
+  'K..............K',
+  'K,.....==.....,K',
+  'KKKKKKKEKKKKKKKK',
+];
+export const MAPS = { farm: FARM_MAP, town: TOWN_MAP, hill: HILL_MAP, gh: GH_MAP };
+export const AREAS = ['farm', 'town', 'hill', 'gh'];
 // 走到 E 就換地圖。EXITS：每張地圖的出口通到哪；ARRIVE['從>到']：換過去之後站在哪
 export const EXITS = {
   farm: [{ x: 5, y: 19, to: 'town' }, { x: 29, y: 7, to: 'hill' }],
   town: [{ x: 5, y: 0, to: 'farm' }],
   hill: [{ x: 0, y: 11, to: 'farm' }],
+  gh: [{ x: 7, y: 9, to: 'farm' }],
 };
+// 溫室沒有走進去的出口格：在牧場點溫室（J）就會走進去
 export const ARRIVE = {
   'farm>town': { x: 5, y: 1 }, 'town>farm': { x: 5, y: 18 },
   'farm>hill': { x: 1, y: 11 }, 'hill>farm': { x: 28, y: 7 },
+  'farm>gh': { x: 7, y: 8 }, 'gh>farm': { x: 12, y: 4 },
 };
 const WALKABLE = new Set(['.', '=', 'F', 'p', ',', 'E', 'q']);
 
@@ -157,6 +175,9 @@ export function cleanAnimalName(raw) {
 }
 
 export const ENERGY_MAX = 60;
+// 房子擴建之後，每人每天的體力上限變多（1 原本的房子、2 大臥室、3 二樓）
+export const HOUSE_ENERGY = [0, 60, 80, 100];
+export const energyMaxOf = (houseLevel) => HOUSE_ENERGY[houseLevel] || ENERGY_MAX;
 export const ENERGY_COST = { till: 2, dig: 1, plant: 1, water: 1, harvest: 0, feed: 1, pet: 0, collect: 0, fish: 2, mine: 2 };
 export const WATER_HOURS = 24;
 export const START_MONEY = 500;
@@ -164,6 +185,8 @@ export const START_ITEMS = { 'seed:bokchoy': 9 };
 
 export const terrainAt = (x, y, area = 'farm') => (MAPS[area][y] && MAPS[area][y][x]) || 'T';
 export const isField = (x, y) => terrainAt(x, y) === 'F';
+// 這格田在牧場還是溫室（都不是回傳 null）
+export const fieldArea = (x, y) => (terrainAt(x, y) === 'F' ? 'farm' : terrainAt(x, y, 'gh') === 'F' ? 'gh' : null);
 export const isWalkable = (x, y, area = 'farm') => WALKABLE.has(terrainAt(x, y, area));
 
 export const cropTotalMs = (crop) => CROPS[crop].hours * HOUR;
@@ -264,12 +287,12 @@ export const waterUntil = (now, scale = 1) => now + (WATER_HOURS * HOUR) / scale
 // ---------------- 小鎮的村民 ----------------
 // 每位村民：喜歡／最愛／討厭的東西（送禮用，不會傳給前端，要自己發現）、生日、白天在哪一帶走動、說的話。
 // 說的話依季節、天氣、跟你們家的感情（愛心）變化，每天換一句。
-// item 用倉庫的寫法：crop:作物、prod:雞蛋牛奶
+// item 用倉庫的寫法：crop:作物、prod:雞蛋牛奶、fish:魚、ore:礦石、dish:料理、good:加工品
 export const VILLAGERS = {
   fu: {
     name: '阿福伯', role: '雜貨店老闆', color: '#3b6ea8', hair: 'gray', birthday: '03-12',
     zone: { x0: 7, y0: 5, x1: 13, y1: 6 },
-    loves: ['crop:pumpkin', 'dish:pumpkin_soup'], likes: ['crop:sweetpotato', 'crop:corn', 'prod:egg', 'fish:carp', 'dish:corn_grill'], dislikes: ['crop:spinach'],
+    loves: ['crop:pumpkin', 'dish:pumpkin_soup'], likes: ['crop:sweetpotato', 'crop:corn', 'prod:egg', 'fish:carp', 'dish:corn_grill', 'good:mayo', 'dish:corn_salad'], dislikes: ['crop:spinach'],
     lines: {
       any: ['今天要買什麼？鋤頭、澆水壺都有好貨喔。', '年輕人肯種田，阿伯看了就歡喜。', '店裡的東西都是實在價，不會騙你啦。',
         '以前這一帶都是田，現在剩你們家還在種。', '要是田太大澆不完，可以來看看大澆水壺。'],
@@ -282,7 +305,7 @@ export const VILLAGERS = {
   mei: {
     name: '美玲姐', role: '小吃店老闆娘', color: '#e86a5c', hair: 'brown', birthday: '07-21',
     zone: { x0: 16, y0: 5, x1: 23, y1: 6 },
-    loves: ['prod:egg_l', 'dish:bass_soup'], likes: ['crop:cabbage', 'prod:egg', 'crop:bokchoy', 'prod:milk', 'fish:bass', 'dish:tomato_egg'], dislikes: ['crop:pineapple'],
+    loves: ['prod:egg_l', 'dish:bass_soup', 'good:kimchi'], likes: ['crop:cabbage', 'prod:egg', 'crop:bokchoy', 'prod:milk', 'fish:bass', 'dish:tomato_egg', 'dish:kimchi_pot', 'good:salted_greens'], dislikes: ['crop:pineapple'],
     lines: {
       any: ['餓了吧？進來吃碗麵，吃飽才有力氣種田！', '我們家的滷肉飯，是我阿母傳下來的味道。', '茶葉蛋剛滷好，香不香？',
         '你們家的雞蛋，拿來做菜最好吃了。', '累了就來店裡坐一下，不用客氣。'],
@@ -295,7 +318,7 @@ export const VILLAGERS = {
   jie: {
     name: '小傑', role: '國小三年級', color: '#f2b33d', hair: 'black', birthday: '08-08',
     zone: { x0: 9, y0: 7, x1: 20, y1: 11 },
-    loves: ['crop:watermelon', 'dish:pudding'], likes: ['crop:strawberry', 'crop:corn', 'crop:tomato', 'fish:goldfish', 'ore:amethyst', 'dish:watermelon_juice', 'dish:strawberry_milk'], dislikes: ['crop:spinach', 'crop:eggplant', 'dish:eggplant'],
+    loves: ['crop:watermelon', 'dish:pudding', 'dish:pancake'], likes: ['crop:strawberry', 'crop:corn', 'crop:tomato', 'fish:goldfish', 'ore:amethyst', 'dish:watermelon_juice', 'dish:strawberry_milk', 'dish:fries', 'good:jam_strawberry', 'good:ketchup'], dislikes: ['crop:spinach', 'crop:eggplant', 'dish:eggplant', 'good:kimchi'],
     lines: {
       any: ['你好！我今天考試考一百分喔！', '噴水池裡面有硬幣，是誰丟的啊？', '我長大也要當農夫，種好大的西瓜！',
         '你們家的雞會不會咬人？', '老師說要多吃青菜……可是菠菜好難吃。'],
@@ -308,7 +331,7 @@ export const VILLAGERS = {
   ama: {
     name: '王阿嬤', role: '住在鎮上五十年', color: '#8e6bb8', hair: 'gray', birthday: '01-25',
     zone: { x0: 3, y0: 12, x1: 12, y1: 13 },
-    loves: ['prod:milk', 'dish:sweetpotato_congee'], likes: ['crop:radish', 'crop:cabbage', 'crop:sweetpotato', 'crop:bokchoy', 'fish:crucian', 'dish:radish_soup'], dislikes: ['crop:pineapple'],
+    loves: ['prod:milk', 'dish:sweetpotato_congee', 'good:pickled_radish', 'dish:caipu_egg'], likes: ['crop:radish', 'crop:cabbage', 'crop:sweetpotato', 'crop:bokchoy', 'fish:crucian', 'dish:radish_soup', 'good:salted_greens'], dislikes: ['crop:pineapple'],
     lines: {
       any: ['乖孫，有沒有吃飽？', '阿嬤年輕的時候，也是每天天還沒亮就去田裡。', '慢慢來，做田人不要急。',
         '你們家阿嬤身體好嗎？替我問候一下。', '有空多陪陪家裡的人，比賺錢卡要緊。'],
@@ -321,7 +344,7 @@ export const VILLAGERS = {
   lin: {
     name: '林老師', role: '國小老師', color: '#4f9d6b', hair: 'black', birthday: '09-28',
     zone: { x0: 9, y0: 11, x1: 20, y1: 13 },
-    loves: ['crop:strawberry', 'dish:tomato_egg'], likes: ['crop:tomato', 'crop:carrot', 'crop:potato', 'ore:amethyst', 'dish:strawberry_milk'], dislikes: ['crop:corn'],
+    loves: ['crop:strawberry', 'dish:tomato_egg', 'good:cheese_l'], likes: ['crop:tomato', 'crop:carrot', 'crop:potato', 'ore:amethyst', 'dish:strawberry_milk', 'good:cheese', 'good:jam_strawberry', 'dish:cheese_potato'], dislikes: ['crop:corn'],
     lines: {
       any: ['小傑上課又在畫西瓜了，真拿他沒辦法。', '種田跟教書一樣，都要耐心等它長大。', '讀書累了，就來廣場走走。',
         '你們家的番茄好紅，做成番茄炒蛋一定很好吃。', '我小時候也住在鄉下，好懷念喔。'],
@@ -334,7 +357,7 @@ export const VILLAGERS = {
   zhi: {
     name: '志明', role: '郵差', color: '#2f8f5b', hair: 'black', birthday: '11-19',
     zone: { x0: 5, y0: 5, x1: 28, y1: 6 },
-    loves: ['crop:pineapple', 'dish:eel_rice'], likes: ['prod:egg', 'crop:potato', 'crop:watermelon', 'fish:eel', 'dish:pineapple_cake'], dislikes: ['crop:radish'],
+    loves: ['crop:pineapple', 'dish:eel_rice', 'good:jam_pineapple'], likes: ['prod:egg', 'crop:potato', 'crop:watermelon', 'fish:eel', 'dish:pineapple_cake', 'good:kimchi', 'dish:fries'], dislikes: ['crop:radish', 'good:pickled_radish'],
     lines: {
       any: ['有你們家的信喔！……騙你的啦，哈哈。', '每天騎車送信，整個鎮我都熟。', '告示板上有大家的委託，有空去看看。',
         '聽說阿福伯的店有賣新的澆水壺。', '送信送到肚子餓，等一下去美玲姐那裡吃飯。'],
@@ -481,15 +504,56 @@ export function rocksOf(farmId, day) {
   return out;
 }
 
-// 倉庫裡的東西能賣多少（賣不了的回傳 0）：作物、雞蛋牛奶、魚、礦石
+// ---------------- 加工機、溫室、房子擴建 ----------------
+// 加工品：用加工機把雞蛋、牛奶、水果、蔬菜做成更值錢的東西（賣的價錢都超過材料的兩倍）
+export const GOODS = {
+  mayo: { name: '美乃滋', sell: 130 },
+  mayo_l: { name: '高級美乃滋', sell: 210 },
+  cheese: { name: '起司', sell: 260 },
+  cheese_l: { name: '高級起司', sell: 400 },
+  jam_strawberry: { name: '草莓果醬', sell: 240 },
+  jam_pineapple: { name: '鳳梨果醬', sell: 1150 },
+  ketchup: { name: '番茄醬', sell: 140 },
+  pickled_radish: { name: '菜脯', sell: 220 },
+  kimchi: { name: '台式泡菜', sell: 420 },
+  salted_greens: { name: '鹹菜', sell: 120 },
+};
+// 加工機：在小鎮的雜貨店買（錢＋後山挖的礦石），放在牧場攤位右邊。一次最多放 MACHINE_BATCH 個同一種東西，
+// 過幾個小時（跟著現實時間）全部做好，拿出來放進倉庫。不花體力
+export const MACHINE_BATCH = 5;
+export const MACHINES = {
+  mayo: { name: '美乃滋機', price: 1500, need: { 'ore:copper': 3 }, hours: 3, makes: { 'prod:egg': 'mayo', 'prod:egg_l': 'mayo_l' } },
+  cheese: { name: '起司機', price: 2500, need: { 'ore:silver': 3 }, hours: 5, makes: { 'prod:milk': 'cheese', 'prod:milk_l': 'cheese_l' } },
+  jam: { name: '果醬鍋', price: 2000, need: { 'ore:copper': 5 }, hours: 6,
+    makes: { 'crop:strawberry': 'jam_strawberry', 'crop:pineapple': 'jam_pineapple', 'crop:tomato': 'ketchup' } },
+  pickle: { name: '醃漬罈', price: 1000, need: { 'ore:stone': 10 }, hours: 12,
+    makes: { 'crop:radish': 'pickled_radish', 'crop:cabbage': 'kimchi', 'crop:bokchoy': 'salted_greens' } },
+};
+// 加工機在牧場上的位置（地圖上的 M）
+export const MACHINE_SPOTS = { mayo: { x: 18, y: 4 }, cheese: { x: 19, y: 4 }, jam: { x: 20, y: 4 }, pickle: { x: 21, y: 4 } };
+export const machineAt = (x, y) => Object.keys(MACHINE_SPOTS).find((id) => MACHINE_SPOTS[id].x === x && MACHINE_SPOTS[id].y === y) || null;
+// 放進去的東西什麼時候做好（scale 一樣只給本機測試）
+export const machineReadyAt = (m, scale = 1) => (m.started_at || 0) + (MACHINES[m.kind].hours * HOUR) / scale;
+// 建築：溫室、房子擴建（要照順序：先大臥室再二樓）
+export const BUILDS = {
+  greenhouse: { name: '溫室', price: 8000, need: { 'ore:stone': 30, 'ore:copper': 10, 'ore:silver': 5 },
+    desc: '40 格田，一年四季什麼都能種（雨淋不到，要自己澆水）' },
+  house2: { name: '房子擴建：大臥室', price: 5000, need: { 'ore:stone': 20, 'ore:copper': 5 }, level: 2,
+    desc: `睡得更好，每人每天體力 ${HOUSE_ENERGY[2]}` },
+  house3: { name: '房子擴建：二樓', price: 15000, need: { 'ore:silver': 5, 'ore:gold': 3 }, level: 3,
+    desc: `全家住得更舒服，每人每天體力 ${HOUSE_ENERGY[3]}` },
+};
+
+// 倉庫裡的東西能賣多少（賣不了的回傳 0）：作物、雞蛋牛奶、魚、礦石、料理、加工品
+const ITEM_TABLES = () => ({ crop: CROPS, prod: PRODUCTS, fish: FISH, ore: ORES, dish: DISHES, good: GOODS });
 export function itemPrice(item) {
   const [kind, id] = String(item).split(':');
-  const table = { crop: CROPS, prod: PRODUCTS, fish: FISH, ore: ORES, dish: DISHES }[kind];
+  const table = ITEM_TABLES()[kind];
   return table && Object.hasOwn(table, id) ? table[id].sell : 0;
 }
 export const itemName = (item) => {
   const [kind, id] = String(item).split(':');
-  const table = { crop: CROPS, prod: PRODUCTS, fish: FISH, ore: ORES, dish: DISHES }[kind];
+  const table = ITEM_TABLES()[kind];
   return table && Object.hasOwn(table, id) ? table[id].name : item;
 };
 
@@ -499,6 +563,8 @@ export const itemName = (item) => {
 export const INGREDIENT_GROUPS = {
   egg: { name: '雞蛋', items: ['prod:egg', 'prod:egg_l'] },
   milk: { name: '牛奶', items: ['prod:milk', 'prod:milk_l'] },
+  mayo: { name: '美乃滋', items: ['good:mayo', 'good:mayo_l'] },
+  cheese: { name: '起司', items: ['good:cheese', 'good:cheese_l'] },
 };
 export const DISHES = {
   stirfry: { name: '炒青菜', need: { 'crop:bokchoy': 2 }, energy: 12, sell: 110, shape: 'plate' },
@@ -518,6 +584,13 @@ export const DISHES = {
   strawberry_milk: { name: '草莓牛奶', need: { 'crop:strawberry': 2, milk: 1 }, energy: 25, sell: 360, shape: 'cup' },
   watermelon_juice: { name: '西瓜汁', need: { 'crop:watermelon': 1 }, energy: 20, sell: 500, shape: 'cup' },
   pineapple_cake: { name: '鳳梨酥', need: { 'crop:pineapple': 1, egg: 2 }, energy: 25, sell: 800, shape: 'plate' },
+  // 用加工品做的菜
+  caipu_egg: { name: '菜脯蛋', need: { 'good:pickled_radish': 1, egg: 1 }, energy: 25, sell: 330, shape: 'plate' },
+  kimchi_pot: { name: '泡菜鍋', need: { 'good:kimchi': 1, 'crop:bokchoy': 1, egg: 1 }, energy: 40, sell: 600, shape: 'bowl' },
+  cheese_potato: { name: '焗烤地瓜', need: { cheese: 1, 'crop:sweetpotato': 1 }, energy: 35, sell: 420, shape: 'plate' },
+  pancake: { name: '草莓鬆餅', need: { 'good:jam_strawberry': 1, egg: 1, milk: 1 }, energy: 40, sell: 470, shape: 'plate' },
+  fries: { name: '薯條', need: { 'crop:potato': 2, 'good:ketchup': 1 }, energy: 20, sell: 400, shape: 'plate' },
+  corn_salad: { name: '玉米沙拉', need: { 'crop:corn': 1, mayo: 1 }, energy: 20, sell: 250, shape: 'bowl' },
   // 節慶的食物：不能自己煮，節日或家人生日時收到（吃、賣、送人都可以）
   niangao: { name: '年糕', need: null, festival: true, energy: 30, sell: 120, shape: 'plate' },
   tangyuan: { name: '湯圓', need: null, festival: true, energy: 25, sell: 100, shape: 'bowl' },

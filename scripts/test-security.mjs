@@ -122,6 +122,13 @@ check('別人不能用我的牧場領節慶禮物、加行事曆（404）',
   (await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'festival_claim' } }, TC)).status === 404
   && (await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'festival_calendar' } }, TC)).status === 404
   && !((await j('/api/events', {}, TA)).data.events || []).some((e) => e.note === '家族牧場加的節慶'));
+check('別人不能在我的牧場蓋房子、買加工機、拿加工品（404）',
+  (await Promise.all([{ action: 'build', what: 'greenhouse' }, { action: 'buy_machine', machine: 'mayo' }, { action: 'machine_take', machine: 'mayo' },
+    { action: 'till', x: 2, y: 2, map: 'gh' }].map((b) => j(`/api/farm/${dm.id}`, { method: 'POST', body: b }, TC)))).every((x) => x.status === 404));
+check('加工機亂填（原型鏈、數量）被擋', (await Promise.all([
+  { action: 'machine_put', machine: '__proto__', item: 'prod:egg', qty: 1 }, { action: 'buy_machine', machine: 'toString' },
+  { action: 'build', what: 'constructor' }, { action: 'machine_put', machine: 'mayo', item: 'prod:egg', qty: -5 }]
+  .map((b) => j(`/api/farm/${dm.id}`, { method: 'POST', body: b }, TA)))).every((x) => x.status === 400));
 check('牧場內容大小有上限（超大請求被擋）',
   (await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'till', x: 4, y: 9, junk: 'x'.repeat(5000) } }, TA)).status >= 400);
 

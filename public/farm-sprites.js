@@ -1326,6 +1326,7 @@ export function sprite(name, shirt = '#d9544d', flip = false, season = '') {
   if (name.startsWith('fish_')) return fishSprite(name.slice(5));
   if (name.startsWith('ore_')) return oreSprite(name.slice(4));
   if (name.startsWith('dish_')) { const [id, shape] = name.slice(5).split('@'); return dishSprite(id, shape); }
+  if (name.startsWith('good_')) return goodSprite(name.slice(5));
   const key = name + '|' + shirt + '|' + (flip ? 1 : 0) + '|' + season;
   if (cache.has(key)) return cache.get(key);
   const rows = SPRITES[name];
@@ -1383,7 +1384,7 @@ function shaped(key, shape, colors) {
 }
 // 料理：盤子（3 盤子、4 陰影）、碗（4 是碗上的藍色花紋）、杯子（4 是吸管），1、2 是菜的顏色
 export const DISH_SHAPES = { plate: ["................", "................", "................", "................", "................", "......1121......", "....11211211....", "...1121112111...", "..112111121112..", ".33333333333333.", ".43333333333334.", "..444444444444..", "................", "................", "................", "................"], bowl: ["................", "................", "................", "................", "....11211211....", "..112111121111..", ".33333333333333.", ".34444444444443.", "..333333333333..", "...3333333333...", "....33333333....", ".....444444.....", "................", "................", "................", "................"], cup: ["................", "..........4.....", ".........4......", "....33334333....", "....31141113....", "....31411113....", "....31111113....", "....31212123....", "....31111113....", "....31111113....", ".....311113.....", ".....311113.....", ".....333333.....", "................", "................", "................"] };
-export const DISH_COLORS = {"stirfry": ["#4f9d3f", "#8fd16a"], "tomato_egg": ["#e0393e", "#f6d34a"], "carrot_egg": ["#f28b2c", "#f6d34a"], "eggplant": ["#7b3fa0", "#c8553d"], "potato_salad": ["#f2e2a0", "#f6d34a"], "corn_grill": ["#f2b33d", "#8d5d32"], "cabbage_rice": ["#f4f1e8", "#9dd17a"], "sweetpotato_congee": ["#f4efe0", "#e8913a"], "radish_soup": ["#e9e4c8", "#ffffff"], "pumpkin_soup": ["#f2a03a", "#ffffff"], "fish_braised": ["#8a4a2a", "#c96a3a"], "bass_soup": ["#e8e4d0", "#d9b44a"], "eel_rice": ["#6b3a1e", "#f4f1e8"], "pudding": ["#f6d880", "#8d5d32"], "strawberry_milk": ["#f6b6c9", "#e0393e"], "watermelon_juice": ["#f05a5a", "#4f9d3f"], "pineapple_cake": ["#e8b45a", "#f6d34a"], "niangao": ["#c98a3a", "#e8b45a"], "tangyuan": ["#f4f1e8", "#f6b6c9"], "zongzi": ["#4f7d3a", "#8fb35a"], "mooncake": ["#c98a3a", "#8d5d32"], "candy": ["#e0393e", "#f6d34a"], "cake": ["#f6efe0", "#e0393e"]};
+export const DISH_COLORS = {"stirfry": ["#4f9d3f", "#8fd16a"], "tomato_egg": ["#e0393e", "#f6d34a"], "carrot_egg": ["#f28b2c", "#f6d34a"], "eggplant": ["#7b3fa0", "#c8553d"], "potato_salad": ["#f2e2a0", "#f6d34a"], "corn_grill": ["#f2b33d", "#8d5d32"], "cabbage_rice": ["#f4f1e8", "#9dd17a"], "sweetpotato_congee": ["#f4efe0", "#e8913a"], "radish_soup": ["#e9e4c8", "#ffffff"], "pumpkin_soup": ["#f2a03a", "#ffffff"], "fish_braised": ["#8a4a2a", "#c96a3a"], "bass_soup": ["#e8e4d0", "#d9b44a"], "eel_rice": ["#6b3a1e", "#f4f1e8"], "pudding": ["#f6d880", "#8d5d32"], "strawberry_milk": ["#f6b6c9", "#e0393e"], "watermelon_juice": ["#f05a5a", "#4f9d3f"], "pineapple_cake": ["#e8b45a", "#f6d34a"], "niangao": ["#c98a3a", "#e8b45a"], "tangyuan": ["#f4f1e8", "#f6b6c9"], "zongzi": ["#4f7d3a", "#8fb35a"], "mooncake": ["#c98a3a", "#8d5d32"], "candy": ["#e0393e", "#f6d34a"], "cake": ["#f6efe0", "#e0393e"], "caipu_egg": ["#f6d34a", "#c98a3a"], "kimchi_pot": ["#e05a3a", "#f6d880"], "cheese_potato": ["#f6d34a", "#e8913a"], "pancake": ["#e8b45a", "#d9344a"], "fries": ["#f2c94a", "#d9344a"], "corn_salad": ["#f6d34a", "#f6efc8"]};
 const DISH_KIND = { plate: ['#f4f1ea', '#c9c5bf'], bowl: ['#f4f1ea', '#5a8fc8'], cup: ['#d9eef6', '#e0393e'] };
 export const dishSprite = (id, shape = 'plate') => shaped('dish_' + id, DISH_SHAPES[shape] || DISH_SHAPES.plate,
   [...(DISH_COLORS[id] || ['#c8553d', '#f6d34a']), ...(DISH_KIND[shape] || DISH_KIND.plate)]);
@@ -1398,9 +1399,11 @@ export function cropSprite(crop, stage) {
 }
 export const hasCropArt = (crop) => !!SPRITES[`${crop}_3`];
 
-// 房子（4×3 格 = 64×48）：紅屋頂、米色牆、木門、兩扇窗、煙囪
-export function houseSprite(ground = '#62ad4b') {
-  if (cache.has('house|' + ground)) return cache.get('house|' + ground);
+// 房子（4×3 格 = 64×48）：紅屋頂、米色牆、木門、兩扇窗、煙囪。
+// 擴建過的房子：大臥室（窗台多了花箱、門口有燈），二樓（屋頂上多一扇老虎窗、門變成藍色）
+export function houseSprite(ground = '#62ad4b', level = 1) {
+  const ck = 'house|' + ground + '|' + level;
+  if (cache.has(ck)) return cache.get(ck);
   const c = document.createElement('canvas');
   c.width = 64; c.height = 48;
   const g = c.getContext('2d');
@@ -1413,8 +1416,21 @@ export function houseSprite(ground = '#62ad4b') {
   r('#7a4e2d', 26, 30, 12, 18);                       // 門
   r('#5e3b20', 26, 30, 12, 2); r('#f6d34a', 35, 39, 2, 2);
   for (const wx of [10, 44]) { r('#5e3b20', wx - 1, 29, 12, 10); r('#9ad6f6', wx, 30, 10, 8); r('#ffffff', wx + 1, 31, 3, 2); r('#5e3b20', wx + 4, 30, 1, 8); }
+  if (level >= 2) {
+    for (const wx of [10, 44]) {                                   // 花箱
+      r('#8d5d32', wx - 1, 39, 12, 3);
+      for (let i = 0; i < 5; i++) r(i % 2 ? '#f6d34a' : '#e0393e', wx + i * 2, 37, 2, 2);
+      r('#4f9d3f', wx, 38, 10, 1);
+    }
+    r('#f6d34a', 40, 31, 2, 3); r('#5e3b20', 40, 30, 2, 1);        // 門燈
+  }
+  if (level >= 3) {
+    r('#3b6ea8', 26, 30, 12, 18); r('#2f5a8a', 26, 30, 12, 2); r('#f6d34a', 35, 39, 2, 2); // 藍色的門
+    for (let i = 0; i < 6; i++) r('#a8432f', 25 + i, 8 - i + 6, 14 - 2 * i, 1);         // 老虎窗的小屋頂
+    r('#f2e2c4', 26, 14, 12, 8); r('#5e3b20', 28, 15, 8, 6); r('#9ad6f6', 29, 16, 6, 4); r('#ffffff', 30, 16, 2, 1);
+  }
   r(ground, 4, 46, 56, 2);
-  cache.set('house|' + ground, c);
+  cache.set(ck, c);
   return c;
 }
 
@@ -1511,3 +1527,100 @@ export function shopSprite() {
   cache.set('shop', c);
   return c;
 }
+
+// ---------------- 加工品、加工機、溫室 ----------------
+// 加工品的圖：瓶子（美乃滋、番茄醬）、罐子（果醬、菜脯、泡菜、鹹菜）、起司塊。[樣子, 內容物顏色, 亮面／蓋子顏色]
+export const GOOD_ART = {
+  mayo: ['bottle', '#f6efc8', '#f6d34a'], mayo_l: ['bottle', '#fff4c0', '#e8b45a'],
+  cheese: ['cheese', '#f6d34a', '#fff3b0'], cheese_l: ['cheese', '#f2b33d', '#f6d880'],
+  jam_strawberry: ['jar', '#d9344a', '#f6b6c9'], jam_pineapple: ['jar', '#f2b33d', '#f6d880'], ketchup: ['bottle', '#d9344a', '#ffffff'],
+  pickled_radish: ['jar', '#c98a3a', '#e8c28a'], kimchi: ['jar', '#e05a3a', '#f6a07a'], salted_greens: ['jar', '#6b8f3a', '#a8c26a'],
+};
+export const goodSprite = (id) => building('good_' + id, 16, 16, (r) => {
+  const [shape, main, light] = GOOD_ART[id] || ['jar', '#c8553d', '#f6d34a'];
+  if (shape === 'jar') {
+    r('#8d5d32', 4, 2, 8, 2); r('#5e3b20', 4, 3, 8, 1);                 // 木蓋子
+    r('#c9dde6', 3, 4, 10, 10); r(main, 4, 5, 8, 8); r(light, 5, 6, 1, 5); // 玻璃罐
+    r('#f4f1e8', 4, 8, 8, 3); r(main, 7, 9, 2, 1);                       // 標籤
+    r('#9fb6c0', 4, 14, 8, 1);
+  } else if (shape === 'bottle') {
+    r(light === '#ffffff' ? '#f4f1e8' : '#e0393e', 7, 1, 2, 2);         // 瓶蓋
+    r('#c9dde6', 6, 3, 4, 2); r('#c9dde6', 4, 5, 8, 9); r(main, 5, 6, 6, 7);
+    r(light, 6, 7, 1, 4); r('#f4f1e8', 5, 9, 6, 2); r('#9fb6c0', 5, 14, 6, 1);
+  } else {                                                               // 起司：三角形的一塊
+    for (let i = 0; i < 9; i++) r(main, 13 - i, 5 + i, i + 1, 1);
+    r(main, 2, 13, 12, 1); r('#c99a2e', 2, 14, 12, 1);
+    r(light, 12, 6, 1, 3);
+    r('#c99a2e', 9, 10, 2, 2); r('#c99a2e', 6, 12, 2, 1); r('#c99a2e', 11, 12, 1, 1); // 起司的洞
+  }
+});
+
+// 加工機（一格 16×16）。busy：正在做東西（冒煙、燈亮）
+export const machineSprite = (kind, busy = false, frame = 0) => building(`machine_${kind}_${busy ? 1 : 0}_${frame}`, 16, 16, (r) => {
+  if (kind === 'mayo') {                                                // 美乃滋機：藍色的機器，上面有攪拌把手
+    r('#2f5a8a', 2, 14, 12, 2);
+    r('#5a8fc8', 2, 5, 12, 9); r('#7fb2e0', 3, 6, 10, 1);
+    r('#dfe6ee', 4, 7, 8, 4); r(busy ? '#f6efc8' : '#c9d3dc', 5, 8, 6, 2);
+    r('#9aa3a8', 7, 1, 2, 4); r('#9aa3a8', 7, 1, busy && frame ? 5 : 1, 1); r('#e0393e', busy && frame ? 11 : 7, 0, 2, 2);
+    r(busy ? '#6cc25a' : '#3a4a5a', 11, 12, 2, 1);
+  } else if (kind === 'cheese') {                                       // 起司機：木桶加上壓板的螺絲
+    r('#5e3b20', 3, 14, 10, 2);
+    r('#8d5d32', 3, 7, 10, 7); r('#a8743f', 4, 7, 1, 7); r('#a8743f', 8, 7, 1, 7);
+    r('#5e5872', 3, 9, 10, 1); r('#5e5872', 3, 12, 10, 1);
+    r('#c9c5bf', 2, 5, 12, 2); r('#9aa3a8', 7, 1, 2, 4); r('#5e5872', 5, 1, 6, 1);
+    if (busy) r('#f6d34a', 4, 13, 8, 1);
+  } else if (kind === 'jam') {                                          // 果醬鍋：爐子上的銅鍋
+    r('#3a3a44', 3, 12, 10, 4); r(busy ? '#f28b2c' : '#5e5872', 5, 13, 6, 1);
+    r('#a85a1e', 2, 6, 12, 6); r('#d9822b', 3, 6, 10, 5); r('#f2a96a', 4, 7, 2, 3);
+    r('#7a3e14', 1, 7, 1, 2); r('#7a3e14', 14, 7, 1, 2);
+    r(busy ? '#d9344a' : '#a85a1e', 3, 5, 10, 1);
+    if (busy) { r('#ffffff', 6, frame ? 1 : 2, 1, 2); r('#ffffff', 9, frame ? 2 : 1, 1, 2); }
+  } else {                                                              // 醃漬罈：咖啡色的陶甕，蓋子綁著紅布
+    r('#5e3b20', 4, 15, 8, 1);
+    r('#7a4e2d', 4, 5, 8, 10); r('#7a4e2d', 3, 7, 10, 6); r('#9a6a3e', 5, 7, 1, 6);
+    r('#e0393e', 4, 3, 8, 2); r('#a8252b', 4, 4, 8, 1); r('#e0393e', 11, 5, 1, 2);
+    r('#f4f1e8', 6, 8, 4, 5); r('#c8553d', 7, 9, 2, 1); r('#c8553d', 8, 10, 1, 1); r('#c8553d', 7, 11, 2, 1); // 紅字的紙條
+    if (busy) r('#f6d34a', 6, 2, 1, 1);
+  }
+});
+// 還沒買加工機的空位：木棧板＋小木牌
+export const machineSpotSprite = () => building('machine_spot', 16, 16, (r) => {
+  r('#bd864f', 2, 11, 12, 2); r('#bd864f', 2, 14, 12, 1); r('#8d5d32', 3, 13, 1, 2); r('#8d5d32', 12, 13, 1, 2);
+  r('#8d5d32', 7, 4, 2, 7); r('#e8c28a', 4, 3, 8, 4); r('#8d5d32', 4, 3, 8, 1); r('#5e3b20', 6, 5, 4, 1);
+});
+
+// 溫室（5×3 格 = 80×48）：白色框架、玻璃牆、玻璃屋頂，看得到裡面的綠色植物；中間是玻璃門。
+// 還沒蓋：圍起來的空地，插著「溫室預定地」的木牌
+export function greenhouseSprite(built, ground = '#62ad4b') {
+  return building(`greenhouse_${built ? 1 : 0}_${ground}`, 80, 48, (r) => {
+    if (!built) {
+      r('#a77b4f', 4, 14, 72, 32); r('#8d6a42', 4, 14, 72, 2);
+      for (const [x, y] of [[12, 22], [30, 36], [52, 26], [64, 40], [20, 40]]) { r('#9c968b', x, y, 4, 3); r('#c9c5bf', x, y, 2, 1); }
+      for (let x = 2; x < 80; x += 10) { r('#8d5d32', x, 10, 2, 8); r('#8d5d32', x, 40, 2, 8); }
+      r('#bd864f', 2, 12, 76, 2); r('#bd864f', 2, 42, 76, 2);
+      r('#8d5d32', 38, 18, 3, 16); r('#e8c28a', 30, 14, 20, 10); r('#8d5d32', 30, 14, 20, 1); r('#8d5d32', 30, 23, 20, 1);
+      r('#4f9d3f', 34, 17, 3, 4); r('#4f9d3f', 38, 16, 3, 5); r('#4f9d3f', 42, 17, 3, 4);  // 牌子上畫著小苗
+      return;
+    }
+    for (let i = 0; i < 16; i++) r(i % 4 === 0 ? '#ffffff' : '#bfe6f6', 8 + i, 16 - i, 64 - 2 * i, 1); // 玻璃屋頂
+    r('#ffffff', 39, 0, 2, 17); r('#e8f4fa', 4, 16, 72, 2);
+    r('#9fd0ea', 4, 18, 72, 30);                                       // 玻璃牆
+    for (let y = 20; y < 46; y += 6) for (let x = 6; x < 74; x += 7) r((x + y) % 3 ? '#4f9d3f' : '#6cc25a', x, y + 2, 4, 3); // 裡面的植物
+    for (let x = 4; x < 77; x += 12) r('#ffffff', x, 18, 2, 30);       // 白框
+    r('#ffffff', 4, 30, 72, 1); r('#ffffff', 4, 46, 72, 2);
+    r('#ffffff', 31, 24, 18, 24); r('#bfe6f6', 33, 26, 14, 22); r('#ffffff', 39, 26, 2, 22); r('#f6d34a', 37, 37, 2, 2); // 門
+    r(ground, 4, 46, 26, 2); r(ground, 50, 46, 26, 2);
+  });
+}
+// 溫室裡面：K 玻璃牆、地上鋪石板
+export const ghTileSprite = (ch) => building('gh_' + ch, 16, 16, (r) => {
+  if (ch === 'K') {
+    r('#e8f4fa', 0, 0, 16, 16); r('#9fd0ea', 1, 1, 14, 14);
+    r('#ffffff', 0, 7, 16, 1); r('#ffffff', 7, 0, 1, 16);
+    r('#d2ecf8', 4, 2, 1, 1); r('#d2ecf8', 3, 3, 1, 1); r('#d2ecf8', 2, 4, 1, 1);   // 玻璃的反光
+  } else {
+    r('#cdbf9f', 0, 0, 16, 16);
+    r('#b8a982', 0, 7, 16, 1); r('#b8a982', 0, 15, 16, 1); r('#b8a982', 7, 0, 1, 8); r('#b8a982', 15, 8, 1, 8);
+    r('#d9cdb0', 2, 2, 2, 1); r('#d9cdb0', 10, 11, 2, 1);
+  }
+});
