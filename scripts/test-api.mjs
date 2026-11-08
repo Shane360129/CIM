@@ -342,7 +342,7 @@ if (fs0.villagersOut) {
 }
 
 // 料理
-check('有 23 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 23 && !!fs0.ingredientGroups?.egg);
+check('有 24 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 24 && !!fs0.ingredientGroups?.egg);
 check('沒有這道菜', (await farmDo(groupId, { action: 'cook', dish: 'steak' }, TA)).status === 400
   && (await farmDo(groupId, { action: 'cook', dish: 'constructor' }, TA)).status === 400);
 r = await farmDo(groupId, { action: 'cook', dish: 'pumpkin_soup' }, TA);
@@ -406,6 +406,34 @@ check('要先擴建大臥室才能蓋二樓', /要先擴建/.test((await farmDo(
 r = await farmDo(groupId, { action: 'build', what: 'greenhouse' }, TA);
 check('材料或錢不夠蓋不了溫室', r.status === 400 && /材料不夠|錢不夠/.test(r.data.error || ''), r.data.error);
 if (!fs0.items['ore:copper']) check('材料不夠會說缺什麼', /銅礦 0\/3/.test((await farmDo(groupId, { action: 'buy_machine', machine: 'mayo' }, TA)).data.error || ''));
+
+// 更多動物、寵物、改名
+check('四種動物（雞、鴨、牛、羊）、兩種寵物、鴨子的池塘', Object.keys(fs0.animalKinds || {}).join() === 'chicken,duck,cow,sheep'
+  && Object.keys(fs0.petKinds || {}).join() === 'dog,cat' && JSON.stringify(fs0.pets) === '{}' && !!fs0.pond);
+check('領養要取名字、沒有這種寵物', (await farmDo(groupId, { action: 'adopt_pet', pet: 'dog', name: ' ' }, TA)).status === 400
+  && (await farmDo(groupId, { action: 'adopt_pet', pet: 'hamster', name: '小倉' }, TA)).status === 400
+  && (await farmDo(groupId, { action: 'adopt_pet', pet: '__proto__', name: '小倉' }, TA)).status === 400);
+r = await farmDo(groupId, { action: 'adopt_pet', pet: 'dog', name: '小黑' }, TA);
+check('領養一隻小狗「小黑」（免費）', r.status === 200 && r.data.pets.dog?.name === '小黑' && r.data.pets.dog.love === 0 && r.data.money === money);
+check('聊天室說領養了小狗', (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('領養了一隻小狗，取名「小黑」')));
+check('一種只能養一隻', /已經有/.test((await farmDo(groupId, { action: 'adopt_pet', pet: 'dog', name: '小白' }, TB)).data.error || ''));
+check('還沒領養的小貓摸不到', /還沒有/.test((await farmDo(groupId, { action: 'pat', pet: 'cat' }, TA)).data.error || ''));
+const itemsBeforePat = (await farmGet(groupId, TB)).data.items;
+r = await farmDo(groupId, { action: 'pat', pet: 'dog' }, TB);
+const find = r.data.gained?.find;
+check(`朋友B 摸小黑：愛心 +1、跟著朋友B${find ? `、叼回來 ${find.item} ×${find.qty}` : '（今天沒叼東西）'}`, r.status === 200 && r.data.gained.first === true
+  && r.data.pets.dog.love === 1 && r.data.pets.dog.pettedToday && r.data.pets.dog.follow === IB
+  && (!find || (r.data.items[find.item] || 0) === (itemsBeforePat[find.item] || 0) + find.qty));
+r = await farmDo(groupId, { action: 'pat', pet: 'dog' }, TA);
+check('同一天再摸：愛心不會再加、也不會再叼東西，但改跟著朋友A', r.status === 200 && r.data.gained.first === false && r.data.gained.find === null
+  && r.data.pets.dog.love === 1 && r.data.pets.dog.follow === IA);
+check('朋友B 打開也看到小黑跟著朋友A', (await farmGet(groupId, TB)).data.pets.dog.follow === IA);
+r = await farmDo(groupId, { action: 'rename_animal', animalId: hen.id, name: '花花' }, TB);
+check('幫小花改名叫花花', r.status === 200 && r.data.animals.find((a) => a.id === hen.id).name === '花花');
+check('改名也要 1～8 個字', (await farmDo(groupId, { action: 'rename_animal', animalId: hen.id, name: '' }, TB)).status === 400);
+r = await farmDo(groupId, { action: 'rename_animal', animalId: hen.id, name: '小花' }, TB);
+check('再改回小花', r.status === 200 && r.data.animals.find((a) => a.id === hen.id).name === '小花');
+check('別人家的動物不能改名（找不到）', (await farmDo(dmAdminA.id, { action: 'rename_animal', animalId: hen.id, name: '偷改' }, TA)).status === 400);
 
 const farmMs = await medianMs(() => farmGet(groupId, TA));
 check(`打開牧場在 150ms 內（實測 ${farmMs.toFixed(0)}ms）`, farmMs < 150);
@@ -544,6 +572,26 @@ if (fs0.scale >= 3600) {
     check('（加速模式）擴建二樓：體力上限 100', r.status === 200 && r.data.build.houseLevel === 3 && r.data.energyMax === 100 && r.data.money === money);
     check('（加速模式）已經擴建過的不能再蓋', /已經擴建/.test((await farmDo(groupId, { action: 'build', what: 'house2' }, TA)).data.error || ''));
     check('（加速模式）聊天室說擴建了房子', (await listIn(groupId, TA)).filter((m) => m.type === 'system' && m.content.includes('把房子擴建成')).length === 2);
+    // 動物寶寶（本機測試用 FARM_START_LOVE=duck:20：買來的鴨子就是滿愛心）
+    r = await farmDo(groupId, { action: 'buy_animal', kind: 'duck', name: '阿呱' }, TA);
+    money -= fs0.animalKinds.duck.price;
+    const duck = r.data.animals?.find((a) => a.name === '阿呱');
+    check('（加速模式）買一隻鴨子', r.status === 200 && duck?.kind === 'duck' && r.data.money === money);
+    if (duck && duck.love >= 20) {
+      await farmDo(groupId, { action: 'buy', item: 'feed', qty: 5 }, TA);
+      money -= 5 * fs0.feedPrice;
+      await farmDo(groupId, { action: 'feed', animalId: duck.id }, TA);
+      await new Promise((ok) => setTimeout(ok, fs0.animalKinds.duck.hours * 1000 + 600));
+      r = await farmDo(groupId, { action: 'collect', animalId: duck.id }, TA);
+      const baby = r.data.animals?.find((a) => a.name === '阿呱寶寶');
+      check('（加速模式）滿愛心的鴨子收到雙黃鴨蛋，還生了一隻小鴨寶寶', r.status === 200 && r.data.gained.item === 'prod:duck_egg_l'
+        && r.data.gained.baby?.name === '阿呱寶寶' && baby?.kind === 'duck' && baby.babyUntil > Date.now() && baby.love === 0);
+      check('（加速模式）聊天室說生了小鴨', (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('生了一隻小鴨「阿呱寶寶」')));
+      r = await farmDo(groupId, { action: 'feed', animalId: baby.id }, TB);
+      const b2 = r.data.animals?.find((a) => a.id === baby.id);
+      check('（加速模式）寶寶吃飯會長愛心，但還沒有產品', r.status === 200 && b2.love === 1 && b2.fedToday && b2.readyAt === 0);
+      check('（加速模式）鴨子今天吃過了，不能再餵（一天一次）', /吃過了/.test((await farmDo(groupId, { action: 'feed', animalId: duck.id }, TA)).data.error || ''));
+    }
   }
 }
 

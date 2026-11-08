@@ -15,6 +15,7 @@ import {
   DISHES, INGREDIENT_GROUPS, ingredientItems, canCook, cookTakes,
   FESTIVALS, LUNAR_DATES, festivalOn, festivalsAfter, nextFestival, isBirthdayEvent,
   GH_MAP, fieldArea, GOODS, MACHINES, MACHINE_SPOTS, MACHINE_BATCH, machineAt, machineReadyAt, BUILDS, HOUSE_ENERGY, energyMaxOf,
+  POND_ZONE, BABY_DAYS, BABY_EVERY_DAYS, isBaby, canHaveBaby, babyName, PETS, PET_ZONE, petFind, LOVE_MAX,
 } from '../src/farm.js';
 import { SPRITES, PALETTE, FISH_SHAPE, BOOT_SHAPE, ROCK_SHAPE, FISH_COLORS, ORE_COLORS, DISH_SHAPES, DISH_COLORS, GOOD_ART } from '../public/farm-sprites.js';
 
@@ -286,7 +287,7 @@ check('3×3 範圍不重複', new Set(area3x3(5, 5).map((c) => c.x + ',' + c.y))
 
 console.log('\n--- 料理 ---');
 const dishes = Object.entries(DISHES).filter(([, d]) => d.need);
-check('有 23 道自己煮得出來的菜（6 道用加工品）', [dishes.length, dishes.filter(([, d]) => Object.keys(d.need).some((k) => k.startsWith('good:') || k === 'mayo' || k === 'cheese')).length], [23, 6]);
+check('有 24 道自己煮得出來的菜（7 道用加工品）', [dishes.length, dishes.filter(([, d]) => Object.keys(d.need).some((k) => k.startsWith('good:') || k === 'mayo' || k === 'cheese')).length], [24, 7]);
 check('每道菜的材料都是真的東西（或雞蛋、牛奶這種組）', dishes.filter(([, d]) => !Object.keys(d.need).every((k) => INGREDIENT_GROUPS[k] || itemPrice(k) > 0)).map(([id]) => id), []);
 check('煮成菜比直接賣材料值錢', dishes.filter(([, d]) => d.sell <= Object.entries(d.need).reduce((n, [k, q]) => n + itemPrice(ingredientItems(k)[0]) * q, 0)).map(([id]) => id), []);
 check('每道菜都能補體力（不超過一整天的量）', dishes.every(([, d]) => d.energy > 0 && d.energy <= ENERGY_MAX), true);
@@ -356,6 +357,33 @@ check('溫室、房子擴建的材料都是礦石', Object.values(BUILDS).every(
 check('房子擴建照順序：大臥室 2 級、二樓 3 級', [BUILDS.house2.level, BUILDS.house3.level, BUILDS.greenhouse.level], [2, 3, undefined]);
 check('體力上限：原本 60、大臥室 80、二樓 100', [energyMaxOf(1), energyMaxOf(2), energyMaxOf(3), energyMaxOf(undefined), HOUSE_ENERGY.length], [60, 80, 100, 60, 4]);
 check('一年四季都種得到東西了：溫室讓非當季作物也能種（每種作物都至少一季買不到）', Object.values(CROPS).filter((c) => c.seasons.length === 4).length, 1);
+
+
+console.log('\n--- 更多動物、寶寶、寵物 ---');
+check('四種動物：雞、鴨、牛、羊（照價錢排）', [Object.keys(ANIMALS), Object.values(ANIMALS).every((A, i, a) => i === 0 || A.price > a[i - 1].price)], [['chicken', 'duck', 'cow', 'sheep'], true]);
+check('每種動物的產品、高級產品、寶寶的叫法都有', Object.values(ANIMALS).every((A) => PRODUCTS[A.product] && PRODUCTS[A.best] && A.baby), true);
+check('鴨子在池塘那一帶（範圍裡有水也有草地、在牧場裡面）', (() => {
+  const t = []; for (let y = POND_ZONE.y0; y <= POND_ZONE.y1; y++) for (let x = POND_ZONE.x0; x <= POND_ZONE.x1; x++) t.push(terrainAt(x, y));
+  return ANIMALS.duck.zone === 'pond' && t.includes('W') && t.includes('.') && !t.includes('E');
+})(), true);
+check('寵物玩耍的地方走得到', (() => { for (let y = PET_ZONE.y0; y <= PET_ZONE.y1; y++) for (let x = PET_ZONE.x0; x <= PET_ZONE.x1; x++) if (isWalkable(x, y) && seen.has(`${x},${y}`)) return true; return false; })(), true);
+check('鴨蛋可以醃成鹹鴨蛋，鹹鴨蛋可以做金沙南瓜', [MACHINES.pickle.makes['prod:duck_egg'], DISHES.golden_pumpkin.need['good:salted_egg']], ['salted_egg', 1]);
+const mom = { kind: 'duck', love: LOVE_MAX, baby_until: 0, last_baby_at: 0 };
+check('滿愛心、有位子就會生寶寶；愛心不夠、沒位子、寶寶自己都不會', [canHaveBaby(mom, t0, 3), canHaveBaby({ ...mom, love: LOVE_MAX - 1 }, t0, 3),
+  canHaveBaby(mom, t0, ANIMALS.duck.max), canHaveBaby({ ...mom, baby_until: t0 + H }, t0, 3)], [true, false, false, false]);
+check('一週生一次（時間倍率也算）', [canHaveBaby({ ...mom, last_baby_at: t0 }, t0 + 6 * 24 * H, 3), canHaveBaby({ ...mom, last_baby_at: t0 }, t0 + BABY_EVERY_DAYS * 24 * H, 3),
+  canHaveBaby({ ...mom, last_baby_at: t0 }, t0 + BABY_EVERY_DAYS * 24 * 1000, 3, 3600)], [false, true, true]);
+check('寶寶 3 天長大', [BABY_DAYS, isBaby({ baby_until: t0 + H }, t0), isBaby({ baby_until: t0 + H }, t0 + H), isBaby({ baby_until: 0 }, t0)], [3, true, false, false]);
+check('寶寶的名字：媽媽的名字＋寶寶（最多 8 個字）', [babyName('小花'), [...babyName('一二三四五六七八')].length], ['小花寶寶', 8]);
+check('寵物：小狗、小貓', Object.keys(PETS), ['dog', 'cat']);
+const year = Array.from({ length: 365 }, (_, i) => taiwanDay(tw(2026, 1, 1, 12) + i * 24 * H));
+const finds = (k, love) => year.map((d) => petFind(k, 7, d, love, seasonOf(tw(2026, 1, 1, 12) + year.indexOf(d) * 24 * H))).filter(Boolean);
+check('同一天摸，叼回來的東西都一樣（不能一直重摸）', JSON.stringify(petFind('dog', 7, '2026-11-08', 5, 'autumn')) === JSON.stringify(petFind('dog', 7, '2026-11-08', 5, 'autumn')), true);
+check('愛心越多越常叼東西回來', finds('dog', 20).length > finds('dog', 0).length + 60 && finds('cat', 20).length > finds('cat', 0).length + 60, true);
+check('叼回來的都是真的東西（飼料、種子、礦石、魚）', [...finds('dog', 20), ...finds('cat', 20)].every((f) => f.qty > 0 && (f.item === 'feed' || itemPrice(f.item) > 0 || /^seed:/.test(f.item))), true);
+check('小狗叼的種子是當季的', finds('dog', 20).filter((f) => f.item.startsWith('seed:')).every((f) => CROPS[f.item.slice(5)]), true);
+check('沒什麼愛心時，不會叼到金礦、金魚', [...finds('dog', 0), ...finds('cat', 0)].some((f) => ['ore:gold', 'ore:silver', 'fish:goldfish', 'fish:catfish'].includes(f.item)), false);
+check('寵物、鴨、羊都有圖（兩張走路的）', ['dog', 'cat', 'duck', 'sheep'].every((k) => SPRITES[k + '_0'] && SPRITES[k + '_1']), true);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

@@ -43,6 +43,7 @@ const S = {
   exits: {}, fishData: {}, oreData: {}, rocks: [], dex: [], fishing: null, dishes: {}, ingGroups: {},
   festivals: {}, festival: null, festivalClaimed: false, nextFestival: null, todayEvents: [], birthdays: [],
   machines: {}, machineKinds: {}, machineSpots: {}, machineBatch: 5, goods: {}, builds: {}, ghBuilt: false, houseLevel: 1,
+  pondTiles: [], pets: {}, petKinds: {}, petZoneTiles: [], petPos: {}, trails: new Map(),
   tool: 'hoe', seed: 'bokchoy', busy: false,
   me: { x: 5, y: 5, d: 'd', step: null, path: [], pending: null, anim: 0 },
   others: new Map(), floats: [], keys: [], view: 3, cam: { x: 0, y: 0 },
@@ -71,7 +72,7 @@ const canPlantHere = (id) => !!S.crops[id] && (S.area === 'gh' || inSeason(id));
 const machineAt = (x, y) => S.area === 'farm' && Object.keys(S.machineSpots).find((id) => S.machineSpots[id].x === x && S.machineSpots[id].y === y);
 const seasonsText = (list) => (list.length === 4 ? '一年四季' : list.map((x) => SEASON[x] + '天').join('、'));
 const cropMeta = (c) => `${c.hours} 小時成熟・賣 ${c.sell} 元` + (c.regrow ? `・收成後每 ${c.regrow} 小時再收一次` : '');
-const PRODUCT_EMOJI = { egg: '🥚', egg_l: '🥚', milk: '🥛', milk_l: '🥛' };
+const PRODUCT_EMOJI = { egg: '🥚', egg_l: '🥚', milk: '🥛', milk_l: '🥛', duck_egg: '🥚', duck_egg_l: '🥚', wool: '🧶', wool_l: '🧶' };
 // 倉庫裡的東西：seed:作物、crop:作物、prod:雞蛋牛奶、feed 飼料
 function itemInfo(item) {
   const [kind, id] = item.split(':');
@@ -141,6 +142,16 @@ function applyState(st) {
   S.machines = st.machines || {}; S.machineKinds = st.machineKinds || {}; S.machineSpots = st.machineSpots || {};
   S.machineBatch = st.machineBatch || 5; S.goods = st.goods || {}; S.builds = st.builds || {};
   applyBuild(st);
+  S.pets = st.pets || {}; S.petKinds = st.petKinds || {};
+  // 鴨子游泳的範圍：池塘邊的水和旁邊的草地；寵物沒人帶時在家門口玩
+  const tilesIn = (z, ok) => {
+    const out = [];
+    if (z) for (let y = z.y0; y <= z.y1; y++) for (let x = z.x0; x <= z.x1; x++) if (ok(x, y, ((st.map[y] || '')[x]))) out.push({ x, y });
+    return out;
+  };
+  const W_ = (x, y) => (st.map[y] || '')[x] === 'W';
+  S.pondTiles = tilesIn(st.pond, (x, y, c) => c === '.' || (c === 'W' && !(W_(x + 1, y) && W_(x - 1, y) && W_(x, y + 1) && W_(x, y - 1))));
+  S.petZoneTiles = tilesIn(st.petZone, (x, y, c) => c === '.' || c === '=');
   S.map = S.maps[S.area]; S.H = S.map.length; S.W = S.map[0].length;
   S.arrive = st.arrive || {}; S.villagers = st.villagers || {}; S.foods = st.foods || {}; S.toolShop = st.toolShop || {};
   S.villagersOut = st.villagersOut !== false;
@@ -355,6 +366,10 @@ const animalReady = (a, now = serverNow()) => !!a.readyAt && now >= a.readyAt;
 const fmtClock = (t) => { const d = new Date(t + 8 * 3600000); return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`; };
 function animalStatus(a) {
   const pname = S.products[a.product] ? S.products[a.product].name : '';
+  if (a.babyUntil > serverNow()) {
+    const days = Math.max(1, Math.ceil((a.babyUntil - serverNow()) * S.scale / 86400000));
+    return `${S.animalKinds[a.kind].baby}寶寶，再 ${days} 天長大${a.fedToday ? '・今天吃飽了' : '・肚子餓了'}`;
+  }
   if (animalReady(a)) return `有${pname}可以收！`;
   if (a.readyAt) return `今天吃飽了，${pname}大約 ${fmtClock(a.readyAt)} 好`;
   if (!a.fedToday) return '肚子餓了，等你餵飯';
@@ -369,7 +384,8 @@ function openBarn() {
   const ready = S.animals.filter((a) => animalReady(a)).length;
   const rows = S.animals.map((a) => el('div', { class: 'row' }, icon(a.kind + '_0'),
     el('div', { class: 'grow' }, el('div', { class: 'name', text: `${a.name}　${heartsText(a.hearts)}` }),
-      el('div', { class: 'meta', text: animalStatus(a) + (a.pettedToday ? '' : '・今天還沒摸摸') }))));
+      el('div', { class: 'meta', text: animalStatus(a) + (a.pettedToday ? '' : '・今天還沒摸摸') })),
+    el('button', { class: 'btn', type: 'button', text: '改名', onclick: () => openRename(a) })));
   const actions = el('div', { class: 'actions wrap' },
     el('button', {
       class: 'btn primary', type: 'button', text: `全部餵飯（${hungry} 隻）`, disabled: !hungry,
@@ -380,7 +396,8 @@ function openBarn() {
       onclick: async () => {
         try {
           const r = await doAct({ action: 'collect_all' });
-          toast('收到 ' + Object.entries(r.gained.items).map(([it, n]) => `${itemInfo(it).name} ×${n}`).join('、'));
+          toast('收到 ' + Object.entries(r.gained.items).map(([it, n]) => `${itemInfo(it).name} ×${n}`).join('、')
+            + ((r.gained.babies || []).length ? `，還生了 ${r.gained.babies.length} 隻寶寶 🐣` : ''));
           openBarn();
         } catch {}
       },
@@ -404,11 +421,111 @@ function openBarn() {
       buy);
   });
   openModal(el('h2', { text: '🐔 動物小屋 🐄' }),
-    el('p', { class: 'sub', text: `飼料 ${S.items.feed || 0} 包・錢包 ${S.money.toLocaleString()} 元。走到動物旁邊點牠：摸摸、餵飯、收雞蛋牛奶。` }),
+    el('p', { class: 'sub', text: `飼料 ${S.items.feed || 0} 包・錢包 ${S.money.toLocaleString()} 元。走到動物旁邊點牠：摸摸、餵飯、收產品。滿 5 顆愛心的動物，每週會生一隻寶寶（小屋有位子的話）。` }),
     ...(rows.length ? [...rows, actions] : [el('div', { class: 'empty', text: '還沒有動物，先買一隻雞吧 🐣' })]),
+    el('h2', { class: 'section', text: '🐾 寵物' }), ...petRows(),
     el('h2', { class: 'section', text: '買動物' }), ...buyRows,
     el('h2', { class: 'section', text: '飼料' }), feedRow(openBarn),
     el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
+}
+
+// 改名字（動物）
+function openRename(a) {
+  const input = el('input', { type: 'text', maxlength: '8', value: a.name, 'aria-label': '新的名字' });
+  openModal(el('h2', { text: `幫${a.name}改名字` }), input,
+    el('div', { class: 'actions' },
+      el('button', { class: 'btn', type: 'button', text: '算了', onclick: openBarn }),
+      el('button', {
+        class: 'btn primary', type: 'button', text: '好了',
+        onclick: async () => {
+          const name = input.value.trim();
+          if (!name) return toast('名字不能空白');
+          try { await doAct({ action: 'rename_animal', animalId: a.id, name }); toast(`現在叫「${name}」了`); openBarn(); } catch {}
+        },
+      })));
+  input.focus();
+}
+// 寵物：還沒領養的可以領養（免費），領養了的看愛心、跟著誰
+function petRows() {
+  return Object.entries(S.petKinds).map(([k, P]) => {
+    const pet = S.pets[k];
+    if (pet) {
+      const who = pet.follow === S.meId ? '你' : (S.members.get(pet.follow) || {}).name;
+      return el('div', { class: 'row' }, icon(k + '_0'),
+        el('div', { class: 'grow' }, el('div', { class: 'name', text: `${pet.name}　${heartsText(pet.hearts)}` }),
+          el('div', { class: 'meta', text: `${pet.pettedToday ? '今天摸過了' : '今天還沒摸摸（摸了可能會叼東西回來）'}${who ? `・跟著${who}` : ''}` })));
+    }
+    const input = el('input', { type: 'text', maxlength: '8', placeholder: '幫牠取名字', 'aria-label': `${P.name}的名字` });
+    return el('div', { class: 'row' }, icon(k + '_0'),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: `領養一隻${P.name}（免費）` }),
+        el('div', { class: 'meta', text: '誰摸牠就跟著誰走，每天摸摸可能會叼東西回來' }), input),
+      el('button', {
+        class: 'btn primary', type: 'button', text: '領養',
+        onclick: async () => {
+          const name = input.value.trim();
+          if (!name) { input.focus(); return toast('先幫牠取個名字吧'); }
+          try { await doAct({ action: 'adopt_pet', pet: k, name }); toast(`${P.emoji} ${name}來到牧場了！`); openBarn(); } catch {}
+        },
+      }));
+  });
+}
+
+/* ---------- 寵物 ---------- */
+
+// 寵物跟著最後摸牠的人（照那個人走過的路跟在後面）；那個人不在牧場就在家門口玩，晚上在門口睡覺
+function trailOf(uid) {
+  if (uid === S.meId) return S.area === 'farm' ? S.trails.get(uid) : null;
+  const o = S.others.get(uid);
+  return o && (o.a || 'farm') === 'farm' ? S.trails.get(uid) : null;
+}
+function petTarget(k, now) {
+  const pet = S.pets[k];
+  const tr = pet && pet.follow ? trailOf(pet.follow) : null;
+  // 兩隻都跟著同一個人：一前一後排隊，不要疊在一起
+  const rank = Object.keys(S.petKinds).filter((x) => S.pets[x] && S.pets[x].follow === pet.follow).indexOf(k);
+  if (tr && tr.length) return { ...tr[Math.max(0, tr.length - 5 - rank * 4)], follow: true };
+  const hour = new Date(now + 8 * 3600000).getUTCHours();
+  if (hour >= 21 || hour < 6) return { x: k === 'dog' ? 3 : 7, y: 5, sleep: true };
+  const tiles = S.petZoneTiles;
+  if (!tiles.length) return { x: 4, y: 5 };
+  const n = k === 'dog' ? 11 : 23;
+  const slot = Math.floor((now + n * 997) / 6000);
+  return tiles[hash32(n * 100003 + slot) % tiles.length];
+}
+function updatePets(dt, now) {
+  for (const id of [S.meId, ...S.others.keys()]) {
+    const p = id === S.meId ? S.me : S.others.get(id);
+    const tr = S.trails.get(id) || [];
+    const last = tr[tr.length - 1];
+    if (!last || Math.hypot(last.x - p.x, last.y - p.y) >= 0.25) { tr.push({ x: p.x, y: p.y }); if (tr.length > 12) tr.shift(); }
+    S.trails.set(id, tr);
+  }
+  for (const k of Object.keys(S.pets)) {
+    const t = petTarget(k, now);
+    const p = S.petPos[k] || (S.petPos[k] = { x: t.x, y: t.y });
+    const dx = t.x - p.x, dy = t.y - p.y, d = Math.hypot(dx, dy);
+    if (d > 10) { p.x = t.x; p.y = t.y; }
+    else if (d > 0.02) {
+      const step = Math.min(d, dt * SPEED * (t.follow ? 1.3 : 0.6));
+      p.x += (dx / d) * step; p.y += (dy / d) * step;
+      if (Math.abs(dx) > 0.05) p.flip = dx < 0;
+    }
+    p.moving = d > 0.05; p.sleep = !!t.sleep; p.follow = !!t.follow;
+  }
+}
+function petAt(tx, ty) {
+  if (S.area !== 'farm') return null;
+  return Object.keys(S.pets).find((k) => S.petPos[k] && Math.hypot(S.petPos[k].x - tx, S.petPos[k].y - ty) < 0.8) || null;
+}
+async function patPet(k) {
+  const pet = S.pets[k], p = S.petPos[k] || { x: 0, y: 0 };
+  try {
+    const r = await doAct({ action: 'pat', pet: k });
+    floatAt(p.x, p.y, '❤️', '#ff8fa3');
+    const f = r.gained.find && itemInfo(r.gained.find.item);
+    if (f) toast(`${pet.name}叼了${f.name}${r.gained.find.qty > 1 ? ` ×${r.gained.find.qty}` : ''}回來！放進倉庫了`);
+    else toast(r.gained.first ? `${pet.name}好開心，跟著你走了 🐾` : `${pet.name}跟著你走 🐾`);
+  } catch {}
 }
 
 // 動物在柵欄裡散步：位置由「動物編號＋現在時間」算出來，全家看到的位置一樣，不用一直傳
@@ -419,7 +536,7 @@ function hash32(n) {
 }
 const SLOT = 7000;
 function animalPos(a, now) {
-  const tiles = S.penTiles;
+  const tiles = (S.animalKinds[a.kind] || {}).zone === 'pond' ? S.pondTiles : S.penTiles;
   if (!tiles.length) return { x: 0, y: 0, moving: false, flip: false };
   const hour = new Date(now + 8 * 3600000).getUTCHours();
   if (hour >= 20 || hour < 6) { // 晚上睡覺，不走動
@@ -452,6 +569,7 @@ async function useOnAnimal(a) {
     if (animalReady(a)) {
       const r = await doAct({ action: 'collect', animalId: a.id });
       floatAt(p.x, p.y, `+1 ${itemInfo(r.gained.item).name}`, '#fff3b0');
+      if (r.gained.baby) toast(`🐣 ${a.name}生了一隻${S.animalKinds[a.kind].baby}「${r.gained.baby.name}」！`);
     } else if (!a.pettedToday) {
       await doAct({ action: 'pet', animalId: a.id });
       floatAt(p.x, p.y, '❤️', '#ff8fa3');
@@ -460,7 +578,7 @@ async function useOnAnimal(a) {
       if (!S.items.feed) return toast(`${a.name}肚子餓了，去攤位或動物小屋買飼料吧`);
       await doAct({ action: 'feed', animalId: a.id });
       floatAt(p.x, p.y, '🍽️ -1⚡', '#ffffff');
-      toast(`${a.name}吃飽了，${S.animalKinds[a.kind].hours} 小時後有${pname}`);
+      toast(a.babyUntil > serverNow() ? `${a.name}吃飽了，快快長大 🍼` : `${a.name}吃飽了，${S.animalKinds[a.kind].hours} 小時後有${pname}`);
     } else {
       toast(`${a.name} ${heartsText(a.hearts)}：${animalStatus(a)}`);
     }
@@ -931,6 +1049,7 @@ async function doAct(body) {
     if (r.rocks) S.rocks = r.rocks;
     if (r.dex) S.dex = r.dex;
     if (r.machines) S.machines = r.machines;
+    if (r.pets) S.pets = r.pets;
     if (r.build) applyBuild(r.build);
     if (r.energyMax) S.energyMax = r.energyMax;
     // 田地上的動作：收成飄出「+1 作物」，其他飄出扣了幾點體力（釣魚、挖礦自己處理）
@@ -1108,6 +1227,18 @@ function tapTile(tx, ty, fx = tx + 0.5, fy = ty + 0.5) {
   const me = S.me;
   const cx = Math.round(me.x), cy = Math.round(me.y);
   const ch = terrain(tx, ty);
+  // 點到寵物：走到牠旁邊摸摸
+  const pk = petAt(fx - 0.5, fy - 0.5);
+  if (pk) {
+    const p = S.petPos[pk];
+    const ax = Math.round(p.x), ay = Math.round(p.y);
+    const path = findPath(cx, cy, (x, y) => Math.abs(x - ax) + Math.abs(y - ay) <= 1);
+    if (!path) return toast('走不過去');
+    me.path = path;
+    me.pending = { pet: pk };
+    if (!path.length && !me.step) arrive();
+    return;
+  }
   // 點到動物：走到牠旁邊再跟牠互動
   const an = animalAt(fx - 0.5, fy - 0.5);
   if (an && S.area === 'farm') {
@@ -1192,6 +1323,12 @@ function arrive() {
     me.d = dirTo(me.x, me.y, Math.round(ap.x), Math.round(ap.y));
     return useOnAnimal(a);
   }
+  if (p.pet) {
+    const pp = S.petPos[p.pet];
+    if (!pp || Math.hypot(pp.x - me.x, pp.y - me.y) > 2.5) return toast('牠跑走了，再點一次');
+    me.d = dirTo(me.x, me.y, Math.round(pp.x), Math.round(pp.y));
+    return patPet(p.pet);
+  }
   if (p.rock) { me.d = dirTo(me.x, me.y, p.x, p.y); return mineRock(p.x, p.y); }
   // 面向建築（或湖）裡離自己最近的那一格
   const ch = terrain(p.x, p.y);
@@ -1246,6 +1383,7 @@ function update(dt) {
       o.x += (dx / dist) * stepLen; o.y += (dy / dist) * stepLen; o.anim += dt;
     } else if (!o.m) o.anim = 0;
   }
+  updatePets(dt, serverNow());
   for (const f of S.floats) f.t += dt;
   S.floats = S.floats.filter((f) => f.t < 1.2);
 }
@@ -1298,6 +1436,7 @@ function connectWs() {
       if (ev.rocks) S.rocks = ev.rocks;
       if (ev.dex) S.dex = ev.dex;
       if (ev.machines) S.machines = ev.machines;
+      if (ev.pets) S.pets = ev.pets;
       if (ev.build) {
         // 家人擴建了房子：伺服器已經幫今天打開過牧場的人加了體力
         const add = (ev.build.energyMax || S.energyMax) - S.energyMax;
@@ -1487,6 +1626,11 @@ function draw() {
   const people = [{ ...me, color: S.myColor, mine: true, moving: !!me.step }];
   for (const [id, o] of S.others) if ((o.a || 'farm') === S.area) people.push({ ...o, id, moving: Math.hypot(o.tx - o.x, o.ty - o.y) > 0.01 });
   const beasts = S.area === 'farm' ? S.animals.map((a) => ({ a, ...animalPos(a, now) })) : [];
+  // 寵物也一起排前後（畫法跟動物一樣，名字底下標 🐾）
+  if (S.area === 'farm') for (const [k, pet] of Object.entries(S.pets)) {
+    const p = S.petPos[k];
+    if (p) beasts.push({ a: { kind: k, name: pet.name + (p.follow ? ' 🐾' : ''), pet: true }, x: p.x, y: p.y, moving: p.moving, flip: p.flip, sleep: p.sleep });
+  }
   // 小鎮的村民也一起排前後，用跟家人一樣的小人圖、各自的衣服和髮色
   if (S.area === 'town' && S.villagersOut) {
     for (const id of Object.keys(S.villagers)) {
@@ -1504,7 +1648,9 @@ function draw() {
     } else {
       const b = it.b;
       const frame = b.moving ? Math.floor(Date.now() / 220) % 2 : 0;
-      g.drawImage(sprite(`${b.a.kind}_${frame}`, undefined, b.flip), b.x * T, b.y * T - 2);
+      const img = sprite(`${b.a.kind}_${frame}`, undefined, b.flip);
+      if (b.a.babyUntil > now) g.drawImage(img, b.x * T + 3, b.y * T + 3, 10, 10); // 寶寶小一號
+      else g.drawImage(img, b.x * T, b.y * T - 2);
     }
   }
 
@@ -1546,11 +1692,12 @@ function draw() {
   g.font = `${Math.round(10 * dpr)}px sans-serif`;
   for (const b of beasts) {
     const sx = (b.x + 0.5) * T * k - camX, sy = (b.y * T - 2) * k - camY;
-    const label = (animalReady(b.a, now) ? (PRODUCT_EMOJI[b.a.product] || '✨') + ' ' : '') + b.a.name + (b.sleep ? ' 💤' : '');
+    const label = (!b.a.pet && animalReady(b.a, now) ? (PRODUCT_EMOJI[b.a.product] || '✨') + ' ' : '') + b.a.name + (b.sleep ? ' 💤' : '');
     const w = g.measureText(label).width + 6 * dpr;
-    g.fillStyle = animalReady(b.a, now) ? 'rgba(255,250,235,.92)' : 'rgba(43,36,33,.45)';
+    const ready = !b.a.pet && animalReady(b.a, now);
+    g.fillStyle = ready ? 'rgba(255,250,235,.92)' : 'rgba(43,36,33,.45)';
     g.fillRect(sx - w / 2, sy - 12 * dpr, w, 13 * dpr);
-    g.fillStyle = animalReady(b.a, now) ? '#2b2421' : '#fff';
+    g.fillStyle = ready ? '#2b2421' : '#fff';
     g.fillText(label, sx, sy - 2 * dpr);
   }
   // 加工機：做好了冒出「✨ 美乃滋 ×3」，還在做的小小顯示 ⏳
