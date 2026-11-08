@@ -352,7 +352,7 @@ if (fs0.villagersOut) {
 
 // 料理
 // 村民的故事、成就、週報
-check('有村民的故事、25 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 25
+check('有村民的故事、28 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 28
   && JSON.stringify(fs0.achievements) === '{}' && /^\d{4}-\d{2}-\d{2}$/.test(fs0.thisWeek?.week || ''));
 check('有 28 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 28 && !!fs0.ingredientGroups?.egg);
 check('沒有這道菜', (await farmDo(groupId, { action: 'cook', dish: 'steak' }, TA)).status === 400
@@ -510,6 +510,41 @@ if (!fs0.market.open) {
   check('（夜市開著）買夜市限定（錢夠才買得到）', r.status === 200 ? r.data.money === money : /錢不夠/.test(r.data.error || ''));
   check('（夜市開著）聊天室說撈金魚、套圈圈', (await listIn(groupId, TA)).some((m) => m.content.includes('在夜市撈金魚'))
     && (await listIn(groupId, TA)).some((m) => m.content.includes('在夜市套圈圈')));
+}
+// 後山洞窟
+check('牧場狀態有洞窟（還沒進去過）', fs0.cave?.best === 0 && fs0.cave.floors === 20 && JSON.stringify(fs0.cave.stops) === '[1,5,10,15,20]');
+check('洞窟：亂填樓層被擋、還沒到過的礦車站不能去、沒挖到梯子不能往下', (await farmDo(groupId, { action: 'cave_go', floor: 0 }, TA)).status === 400
+  && (await farmDo(groupId, { action: 'cave_go', floor: '__proto__' }, TA)).status === 400 && (await farmDo(groupId, { action: 'cave_go', floor: 21 }, TA)).status === 400
+  && /第 4 層/.test((await farmDo(groupId, { action: 'cave_go', floor: 5 }, TA)).data.error || '')
+  && /第 1 層/.test((await farmDo(groupId, { action: 'cave_go', floor: 2 }, TA)).data.error || ''));
+if (fs0.weather.today !== 'typhoon') {
+  r = await farmDo(groupId, { action: 'cave_go', floor: 1 }, TA);
+  const cv = r.data.cave;
+  check('下到洞窟第 1 層：16×12 的地圖、14 顆石頭、梯子還沒出現', r.status === 200 && cv.floor === 1 && cv.map.length === 12 && cv.rocks.length === 14 && cv.ladder === null
+    && r.data.caveBest === 1);
+  check('洞窟：沒有石頭的地方不能挖', (await farmDo(groupId, { action: 'cave_mine', floor: 1, x: 1, y: 1 }, TA)).status === 400);
+  // 一顆一顆挖，挖到梯子為止（體力用完就換朋友B）
+  let ladder = null, dug = 0, tok = TA;
+  for (const rk of cv.rocks) {
+    let m = await farmDo(groupId, { action: 'cave_mine', floor: 1, x: rk.x, y: rk.y }, tok);
+    if (m.status === 400 && /體力/.test(m.data.error || '')) { tok = TB; m = await farmDo(groupId, { action: 'cave_mine', floor: 1, x: rk.x, y: rk.y }, tok); }
+    if (m.status !== 200) break;
+    dug++;
+    if (m.data.gained.ladder) { ladder = m.data.cave.ladder; break; }
+  }
+  check(`洞窟：挖到第 ${dug} 顆找到往下的梯子，地圖上出現 v`, !!ladder && r.data.cave && (await farmDo(groupId, { action: 'cave_go', floor: 1 }, TA)).data.cave.map[ladder.y][ladder.x] === 'v');
+  check('洞窟：挖過的石頭不能再挖', (await farmDo(groupId, { action: 'cave_mine', floor: 1, x: cv.rocks[0].x, y: cv.rocks[0].y }, TA)).status === 400);
+  r = await farmDo(groupId, { action: 'cave_go', floor: 2 }, TB);
+  check('找到梯子以後，全家今天都可以下到第 2 層', r.status === 200 && r.data.cave.floor === 2 && r.data.caveBest === 2);
+  check('第 3 層還要再找梯子', (await farmDo(groupId, { action: 'cave_go', floor: 3 }, TA)).status === 400);
+  check('洞窟：第 1 層沒有寶箱就不能開（有的話可以開一次）', await (async () => {
+    const c1 = (await farmDo(groupId, { action: 'cave_go', floor: 1 }, TA)).data.cave;
+    if (!c1.chest) return /沒有寶箱/.test((await farmDo(groupId, { action: 'cave_chest', floor: 1 }, TA)).data.error || '');
+    const o = await farmDo(groupId, { action: 'cave_chest', floor: 1 }, TA);
+    if (o.status !== 200) return false;
+    money += o.data.gained.chest.money || 0;
+    return o.data.cave.chest.opened && /打開過/.test((await farmDo(groupId, { action: 'cave_chest', floor: 1 }, TB)).data.error || '');
+  })());
 }
 check('動物選美：亂填動物被擋、別的牧場的動物不行', (await farmDo(groupId, { action: 'beauty_enter', animalId: '__proto__' }, TA)).status === 400
   && (await farmDo(groupId, { action: 'beauty_enter', animalId: 99999 }, TA)).status === 400);
@@ -735,6 +770,7 @@ check('備份包含圖鑑', (r.data.farmDex || []).length >= 2);
 check('備份包含加工機', Array.isArray(r.data.farmMachines));
 check('備份包含果樹和蜂箱', Array.isArray(r.data.farmTrees) && Array.isArray(r.data.farmHives));
 check('備份包含動物選美', (r.data.farmBeauty || []).some((b) => b.animal_name === '小花'));
+check('備份包含洞窟到過第幾層', Array.isArray(r.data.farmCave));
 check('備份包含成就和累計', (r.data.farmAchievements || []).some((a) => a.id === 'pet') && Array.isArray(r.data.farmStats));
 
 console.log('\n--- 速度與備份上限（防止效能退步）---');

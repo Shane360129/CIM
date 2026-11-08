@@ -78,8 +78,8 @@ export const HILL_MAP = [
   'T..WWWWWWWWW....qqqqqqqqqqqq.T',
   'T..WWWWWWWWW....qqqqqqqqqqqq.T',
   'T...WWWWWWW.....=..........TTT',
-  'T....WWWWW......=....T.......T',
-  'T...............=............T',
+  'T....WWWWW......=....T....VV.T',
+  'T...............=.........VV.T',
   'T....T..........=......T.....T',
   'E================............T',
   'T.......T....................T',
@@ -107,6 +107,8 @@ export const GH_MAP = [
 ];
 export const MAPS = { farm: FARM_MAP, town: TOWN_MAP, hill: HILL_MAP, gh: GH_MAP };
 export const AREAS = ['farm', 'town', 'hill', 'gh'];
+// 即時位置的「在哪裡」：四張地圖，或洞窟的某一層（cave1～cave20）
+export const isAreaKey = (a) => AREAS.includes(a) || /^cave([1-9]|1[0-9]|20)$/.test(String(a));
 // 走到 E 就換地圖。EXITS：每張地圖的出口通到哪；ARRIVE['從>到']：換過去之後站在哪
 export const EXITS = {
   farm: [{ x: 5, y: 19, to: 'town' }, { x: 29, y: 7, to: 'hill' }],
@@ -119,6 +121,7 @@ export const ARRIVE = {
   'farm>town': { x: 5, y: 1 }, 'town>farm': { x: 5, y: 18 },
   'farm>hill': { x: 1, y: 11 }, 'hill>farm': { x: 28, y: 7 },
   'farm>gh': { x: 7, y: 8 }, 'gh>farm': { x: 12, y: 4 },
+  'cave>hill': { x: 26, y: 10 },
 };
 const WALKABLE = new Set(['.', '=', 'F', 'p', ',', 'E', 'q']);
 
@@ -558,6 +561,10 @@ export const ORES = {
   silver: { name: '銀礦', sell: 150, weight: 12 },
   gold: { name: '金礦', sell: 400, weight: 6 },
   amethyst: { name: '紫水晶', sell: 700, weight: 2 },
+  jade: { name: '台灣玉', sell: 900, weight: 0, deep: 11 },
+  ruby: { name: '紅寶石', sell: 1200, weight: 0, deep: 16 },
+  sapphire: { name: '藍寶石', sell: 1200, weight: 0, deep: 16 },
+  diamond: { name: '鑽石', sell: 3000, weight: 0, deep: 16 },
 };
 export const QUARRY = { x0: 16, y0: 1, x1: 27, y1: 6 };
 export const ROCKS_PER_DAY = 20;
@@ -577,7 +584,7 @@ export function rocksOf(farmId, day) {
   const rnd = seededRandom(`${farmId}|${day}|rocks`);
   const spots = [];
   for (let y = QUARRY.y0; y <= QUARRY.y1; y++) for (let x = QUARRY.x0; x <= QUARRY.x1; x++) spots.push({ x, y });
-  const oreList = Object.entries(ORES).map(([id, o]) => ({ id, w: o.weight }));
+  const oreList = Object.entries(ORES).map(([id, o]) => ({ id, w: o.weight })).filter((o) => o.w > 0);
   const out = [];
   while (out.length < ROCKS_PER_DAY && spots.length) {
     const p = spots.splice(Math.floor(rnd() * spots.length), 1)[0];
@@ -825,6 +832,9 @@ export const ACHIEVEMENTS = [
   { id: 'goldfish3', name: '撈金魚高手', desc: '在夜市一次撈到 3 隻金魚', reward: 300, test: (s) => (s.goldfish3 || 0) >= 1 },
   { id: 'beauty', name: '選美冠軍', desc: '動物選美拿到第一名', reward: 500, test: (s) => (s.beautyWin || 0) >= 1 },
   { id: 'harvestGold', name: '豐收金牌', desc: '豐收比賽拿到金牌', reward: 1000, test: (s) => (s.harvestGold || 0) >= 1 },
+  { id: 'cave10', name: '勇敢的探險家', desc: '下到洞窟第 10 層', reward: 800, test: (s) => (s.caveBest || 0) >= 10 },
+  { id: 'caveBottom', name: '洞窟的最深處', desc: '打開洞窟第 20 層古老的寶箱', reward: 3000, test: (s) => (s.caveBottom || 0) >= 1 },
+  { id: 'gems', name: '寶石收藏家', desc: '挖到紅寶石、藍寶石和鑽石', reward: 1500, test: (s) => (s.gems || 0) >= 3 },
   { id: 'stories', name: '說故事的人', desc: '聽完所有村民的故事', reward: 2000, test: (s) => s.stories >= Object.keys(STORIES).length * STORY_HEARTS.length },
 ];
 export const achievementsMet = (stats) => ACHIEVEMENTS.filter((a) => a.test(stats)).map((a) => a.id);
@@ -985,3 +995,100 @@ export function harvestContest(count) {
   const [medal, prize] = HARVEST_MEDALS[place - 1];
   return { count, place, medal, prize };
 }
+
+// ---------------- 後山洞窟 ----------------
+// 後山右邊的山壁有洞窟入口（V）。洞窟有 20 層，每層每天長出一批石頭，越深的礦越好、還有寶石；
+// 其中一顆石頭底下藏著往下的梯子（第 20 層是最深處，沒有梯子）。
+// 礦車可以直接到「去過的」第 1、5、10、15、20 層；有的樓層有寶箱，每 5 層一定有。
+export const CAVE_FLOORS = 20;
+export const CAVE_STOPS = [1, 5, 10, 15, 20];
+export const CAVE_ROCKS = 14;
+export const CAVE_UP = { x: 1, y: 1 };       // 往上爬回後山的梯子
+export const CAVE_ARRIVE = { x: 2, y: 1 };   // 下到新的一層時站的地方
+// 三種洞窟的樣子輪流出現：X 是岩壁、^ 是往上的梯子
+export const CAVE_LAYOUTS = [
+  [
+    'XXXXXXXXXXXXXXXX',
+    'X^.....X.......X',
+    'X......X.......X',
+    'X..XX......XX..X',
+    'X..XX......XX..X',
+    'X..............X',
+    'X......XX......X',
+    'X......XX......X',
+    'X..XX......XX..X',
+    'X..XX..........X',
+    'X.........X....X',
+    'XXXXXXXXXXXXXXXX',
+  ],
+  [
+    'XXXXXXXXXXXXXXXX',
+    'X^.............X',
+    'X.....XXXX.....X',
+    'X..............X',
+    'XXX.......XX...X',
+    'X......X.......X',
+    'X..X...X...X...X',
+    'X..X.......X...X',
+    'X..XXX.........X',
+    'X.........XXX..X',
+    'X..............X',
+    'XXXXXXXXXXXXXXXX',
+  ],
+  [
+    'XXXXXXXXXXXXXXXX',
+    'X^..X..........X',
+    'X...X...XX.....X',
+    'X.......XX..X..X',
+    'X..XX.......X..X',
+    'X..............X',
+    'XXX....XX....XXX',
+    'X......XX......X',
+    'X..X........X..X',
+    'X..X...XX...X..X',
+    'X......XX......X',
+    'XXXXXXXXXXXXXXXX',
+  ],
+];
+export const CAVE_CHEST_SPOTS = [{ x: 14, y: 10 }, { x: 14, y: 1 }, { x: 14, y: 10 }];
+export const caveLayout = (floor) => (floor - 1) % CAVE_LAYOUTS.length;
+export const caveTier = (floor) => Math.min(3, Math.floor((floor - 1) / 5));
+// 每 5 層一段，越深越好：1～5 層多是石頭銅礦；16～20 層有紅寶石、藍寶石，運氣好挖到鑽石
+export const CAVE_ORES = [
+  { stone: 50, copper: 35, silver: 12, gold: 3 },
+  { stone: 35, copper: 28, silver: 22, gold: 12, amethyst: 3 },
+  { stone: 25, copper: 12, silver: 24, gold: 24, amethyst: 7, jade: 8 },
+  { stone: 18, silver: 14, gold: 30, amethyst: 12, jade: 12, ruby: 6, sapphire: 6, diamond: 2 },
+];
+export function caveFloor(farmId, day, floor) {
+  const layout = caveLayout(floor), map = CAVE_LAYOUTS[layout];
+  const rnd = seededRandom(`${farmId}|${day}|cave|${floor}`);
+  const hasChest = floor % 5 === 0 || rnd() < 0.25;
+  const chest = hasChest ? CAVE_CHEST_SPOTS[layout] : null;
+  // 梯子旁邊留空（剛下來不會被擋住）、寶箱那格不放石頭
+  const spots = [];
+  for (let y = 0; y < map.length; y++) for (let x = 0; x < map[y].length; x++)
+    if (map[y][x] === '.' && Math.abs(x - CAVE_UP.x) + Math.abs(y - CAVE_UP.y) > 2 && !(chest && chest.x === x && chest.y === y)) spots.push({ x, y });
+  const ores = Object.entries(CAVE_ORES[caveTier(floor)]).map(([id, w]) => ({ id, w }));
+  const rocks = [];
+  while (rocks.length < CAVE_ROCKS && spots.length) {
+    const p = spots.splice(Math.floor(rnd() * spots.length), 1)[0];
+    rocks.push({ ...p, type: pickWeighted(ores, rnd()) });
+  }
+  const lr = floor < CAVE_FLOORS ? rocks[Math.floor(rnd() * rocks.length)] : null;
+  return { layout, rocks, ladder: lr ? { x: lr.x, y: lr.y } : null, chest };
+}
+// 寶箱：每層每天一個（有寶箱的那層），越深越好
+export const CHEST_LOOT = [
+  [['money', 150], ['feed', 10], ['ore:copper', 4], ['ore:silver', 1]],
+  [['money', 400], ['ore:silver', 3], ['ore:gold', 1], ['ore:amethyst', 1]],
+  [['money', 800], ['ore:gold', 2], ['ore:jade', 1], ['ore:amethyst', 2]],
+  [['money', 1500], ['ore:ruby', 1], ['ore:sapphire', 1], ['ore:gold', 4]],
+];
+export function chestLoot(farmId, day, floor) {
+  const t = CHEST_LOOT[caveTier(floor)];
+  const [item, qty] = t[Math.floor(seededRandom(`${farmId}|${day}|chest|${floor}`)() * t.length)];
+  return item === 'money' ? { money: qty } : { item, qty };
+}
+// 第 20 層第一次打開的「古老的寶箱」（每座牧場一次）
+export const CAVE_TREASURE = { money: 5000, item: 'ore:diamond', qty: 1 };

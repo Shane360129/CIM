@@ -21,6 +21,7 @@ import {
   WEATHERS, realRain, FESTIVAL_ACTIVITIES, RIDDLES, FORTUNES, XMAS_GIFTS, riddlesFor, fortuneOf, xmasGiftOf, activityResult, BOAT_BEATS, BBQ_STICKS,
   MARKET_STALLS, MARKET_ZONE, isNightMarket, NIGHT_FOODS, SPECIALS, specialsOf, GOLDFISH_MAX, RING_THROWS, ringPrize,
   BEAUTY_RIVALS, BEAUTY_PRIZES, beautyResult, HARVEST_RIVALS, HARVEST_MEDALS, harvestContest,
+  CAVE_FLOORS, CAVE_STOPS, CAVE_ROCKS, CAVE_UP, CAVE_ARRIVE, CAVE_LAYOUTS, CAVE_CHEST_SPOTS, CAVE_ORES, caveFloor, caveTier, CHEST_LOOT, chestLoot, CAVE_TREASURE, isAreaKey,
 } from '../src/farm.js';
 import { SPRITES, PALETTE, FISH_SHAPE, BOOT_SHAPE, ROCK_SHAPE, FISH_COLORS, ORE_COLORS, DISH_SHAPES, DISH_COLORS, GOOD_ART, FRUIT_COLORS, honeySprite, fruitTreeSprite } from '../public/farm-sprites.js';
 
@@ -248,7 +249,8 @@ check('同一座牧場同一天的石頭一樣（全家看到的一樣）', JSON
 check('隔天換一批、別座牧場也不一樣', [JSON.stringify(rocksOf(7, '2026-11-07')) !== JSON.stringify(rk), JSON.stringify(rocksOf(8, '2026-11-06')) !== JSON.stringify(rk)], [true, true]);
 const oreCount = {};
 for (let d = 1; d <= 300; d++) for (const r of rocksOf(1, `day-${d}`)) oreCount[r.type] = (oreCount[r.type] || 0) + 1;
-check('越值錢的礦越少見', Object.keys(ORES).every((id, i, a) => i === 0 || oreCount[id] < oreCount[a[i - 1]]), true);
+check('採石場：越值錢的礦越少見（洞窟才有的寶石不會出現）', Object.keys(ORES).filter((id) => ORES[id].weight > 0).every((id, i, a) => i === 0 || oreCount[id] < oreCount[a[i - 1]])
+  && Object.keys(ORES).filter((id) => !ORES[id].weight).every((id) => !oreCount[id]), true);
 check('東西的價錢：魚、礦石、作物、雞蛋都能賣，飼料和亂填的不行',
   [itemPrice('fish:eel'), itemPrice('ore:gold'), itemPrice('crop:carrot'), itemPrice('prod:egg'), itemPrice('feed'), itemPrice('ore:__proto__'), itemPrice('fish:')],
   [300, 400, 110, 50, 0, 0, 0]);
@@ -407,7 +409,7 @@ check('感情很好但還沒聽過：從第一段開始說', storyDue(100, 0), 0
 const zero = { harvest: 0, shipped: 0, requests: 0, babies: 0, animals: 0, pets: 0, machines: 0, fishKinds: 0, dishKinds: 0, goodKinds: 0, amethyst: false, maxHearts: 0, minHearts: 0, stories: 0, gh: 0, house: 1 };
 check('什麼都還沒做：沒有成就', achievementsMet(zero), []);
 check('收成一次、領養寵物：兩個成就', achievementsMet({ ...zero, harvest: 1, pets: 1 }), ['harvest1', 'pet']);
-const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: 4, fishKinds: 9, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1 };
+const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: 4, fishKinds: 9, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3 };
 check('全部做完：每個成就都達成', achievementsMet(full).length, ACHIEVEMENTS.length);
 check('成就的編號不重複、都有名字說明和獎金', new Set(ACHIEVEMENTS.map((a) => a.id)).size === ACHIEVEMENTS.length && ACHIEVEMENTS.every((a) => a.name && a.desc && a.reward > 0), true);
 check('「聽完所有故事」要 18 段', [achievementsMet({ ...full, stories: 17 }).includes('stories'), achievementsMet(full).includes('stories')], [false, true]);
@@ -513,6 +515,47 @@ check('豐收比賽：獎牌和獎金', [harvestContest(300).medal, harvestConte
 check('三個比賽成就', [achievementsMet({ ...zero, goldfish3: 1 }), achievementsMet({ ...zero, beautyWin: 1 }), achievementsMet({ ...zero, harvestGold: 1 })],
   [['goldfish3'], ['beauty'], ['harvestGold']]);
 check('對手的動物都是牧場上有的動物', BEAUTY_RIVALS.every((r) => ANIMALS[r.kind]) && HARVEST_RIVALS.every((r) => r.score > 0), true);
+
+
+console.log('\n--- 後山洞窟 ---');
+check('後山右邊有洞窟入口（2×2），前面站得到', [HILL_MAP[8].slice(26, 28), HILL_MAP[9].slice(26, 28), isWalkable(ARRIVE['cave>hill'].x, ARRIVE['cave>hill'].y, 'hill')], ['VV', 'VV', true]);
+check('洞窟有 20 層，礦車停 1、5、10、15、20 層', [CAVE_FLOORS, CAVE_STOPS], [20, [1, 5, 10, 15, 20]]);
+const caveWalk = (map, blocked = new Set()) => {
+  const seen = new Set([`${CAVE_ARRIVE.x},${CAVE_ARRIVE.y}`]), q = [[CAVE_ARRIVE.x, CAVE_ARRIVE.y]];
+  while (q.length) {
+    const [x, y] = q.shift();
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const k = `${x + dx},${y + dy}`;
+      if (!seen.has(k) && (map[y + dy] || '')[x + dx] === '.' && !blocked.has(k)) { seen.add(k); q.push([x + dx, y + dy]); }
+    }
+  }
+  return seen;
+};
+check('三種洞窟都是 16×12、四周是岩壁、梯子在左上角、地面全部連在一起', CAVE_LAYOUTS.every((m) => m.length === 12 && m.every((r) => r.length === 16)
+  && m[0] === 'X'.repeat(16) && m[11] === 'X'.repeat(16) && m.every((r) => r[0] === 'X' && r[15] === 'X') && m[CAVE_UP.y][CAVE_UP.x] === '^'
+  && m[CAVE_ARRIVE.y][CAVE_ARRIVE.x] === '.' && caveWalk(m).size === m.join('').split('.').length - 1), true);
+check('寶箱的位置是地面、走得到', CAVE_CHEST_SPOTS.every((p, i) => CAVE_LAYOUTS[i][p.y][p.x] === '.'), true);
+const fl = caveFloor(7, '2026-11-08', 3);
+check('每層 14 顆石頭、不重複、不在梯子旁邊和寶箱上', [fl.rocks.length, new Set(fl.rocks.map((r) => `${r.x},${r.y}`)).size,
+  fl.rocks.every((r) => CAVE_LAYOUTS[fl.layout][r.y][r.x] === '.' && Math.abs(r.x - CAVE_UP.x) + Math.abs(r.y - CAVE_UP.y) > 2 && !(fl.chest && fl.chest.x === r.x && fl.chest.y === r.y))],
+  [CAVE_ROCKS, CAVE_ROCKS, true]);
+check('往下的梯子藏在其中一顆石頭底下；第 20 層沒有梯子', [fl.rocks.some((r) => r.x === fl.ladder.x && r.y === fl.ladder.y), caveFloor(7, '2026-11-08', 20).ladder], [true, null]);
+check('同一天同一層永遠一樣、隔天換新', [JSON.stringify(caveFloor(7, '2026-11-08', 3)) === JSON.stringify(fl), JSON.stringify(caveFloor(7, '2026-11-09', 3)) === JSON.stringify(fl)], [true, false]);
+check('每 5 層一定有寶箱', [5, 10, 15, 20].every((f) => !!caveFloor(7, '2026-11-08', f).chest), true);
+check('越深越好：1～5 層沒有寶石，16 層以後有紅寶石、藍寶石、鑽石', [caveTier(1), caveTier(5), caveTier(6), caveTier(20), !!CAVE_ORES[0].ruby, CAVE_ORES[3].ruby > 0 && CAVE_ORES[3].diamond > 0],
+  [0, 0, 1, 3, false, true]);
+check('洞窟裡挖得到的都是圖鑑裡的礦石', CAVE_ORES.every((t) => Object.keys(t).every((id) => ORES[id])), true);
+check('寶石在採石場挖不到（機率 0）、只在夠深的地方', ['jade', 'ruby', 'sapphire', 'diamond'].every((id) => ORES[id].weight === 0 && ORES[id].deep >= 11)
+  && Array.from({ length: 30 }, (_, i) => rocksOf(1, `2026-12-${String(i + 1).padStart(2, '0')}`)).flat().every((r) => ORES[r.type].weight > 0), true);
+const deepRocks = Array.from({ length: 40 }, (_, i) => caveFloor(3, `2027-01-${String((i % 28) + 1).padStart(2, '0')}`, 16 + (i % 5)).rocks).flat();
+check('第 16～20 層真的挖得到紅寶石或藍寶石', deepRocks.some((r) => r.type === 'ruby' || r.type === 'sapphire'), true);
+check('寶箱：每一段都有東西，越深越值錢', CHEST_LOOT.every((t) => t.every(([i, q]) => q > 0 && (i === 'money' || i === 'feed' || itemPrice(i) > 0)))
+  && chestLoot(7, '2026-11-08', 20).money !== 0 && JSON.stringify(chestLoot(7, '2026-11-08', 5)) === JSON.stringify(chestLoot(7, '2026-11-08', 5)), true);
+check('古老的寶箱：5000 元和一顆鑽石', [CAVE_TREASURE.money, CAVE_TREASURE.item, itemPrice('ore:diamond')], [5000, 'ore:diamond', 3000]);
+check('即時位置：四張地圖和洞窟 1～20 層，其他的都不行', ['farm', 'gh', 'cave1', 'cave20'].every(isAreaKey) && !['cave0', 'cave21', 'cave', 'cave1x', '__proto__', null, 5].some(isAreaKey), true);
+check('三個洞窟成就', [achievementsMet({ ...zero, caveBest: 10 }), achievementsMet({ ...zero, caveBottom: 1 }), achievementsMet({ ...zero, gems: 3 }), achievementsMet({ ...zero, caveBest: 9, gems: 2 })],
+  [['cave10'], ['caveBottom'], ['gems'], []]);
+check('新的寶石都有圖', ['jade', 'ruby', 'sapphire', 'diamond'].every((id) => ORE_COLORS[id]), true);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

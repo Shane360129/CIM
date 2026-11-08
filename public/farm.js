@@ -4,14 +4,15 @@
 import {
   sprite, cropSprite, houseSprite, shopSprite, barnSprite, storeSprite, eaterySprite, homeSprite, fountainSprite, SEASON_GROUND,
   greenhouseSprite, machineSprite, machineSpotSprite, ghTileSprite, fruitTreeSprite, treeSpotSprite, hiveSprite, hiveSpotSprite,
-  stallSprite,
+  stallSprite, caveMouthSprite, caveTileSprite, caveLadderSprite, chestSprite,
 } from '/farm-sprites.js';
 
 const T = 16;            // 一格 16 像素
 const SPEED = 4.5;       // 每秒走幾格
 const WALK = new Set(['.', '=', 'F', 'p', ',', 'E']);
-// 點了會走過去互動的東西：田、出貨箱、攤位、房子、動物小屋、溫室、加工機；小鎮的雜貨店、小吃店、民宅、噴水池、告示板
-const TARGETS = 'FBSHAGRQONWJMYZ';
+// 點了會走過去互動的東西：田、出貨箱、攤位、房子、動物小屋、溫室、加工機；小鎮的雜貨店、小吃店、民宅、噴水池、告示板；
+// 後山的洞窟入口；洞窟裡往上、往下的梯子和寶箱
+const TARGETS = 'FBSHAGRQONWJMYZV^vC';
 const EXIT_LABEL = { town: '🏘️ 往小鎮', farm: '🌾 回牧場', hill: '⛰️ 往後山' };
 const SEASON = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
 const SEASON_ORDER = ['spring', 'summer', 'autumn', 'winter'];
@@ -49,6 +50,7 @@ const S = {
   stories: {}, storyHearts: [2, 5, 8], achievementList: [], achievements: {}, thisWeek: null, activity: null, game: null,
   trees: [], hives: [], treeKinds: {}, fruits: {}, treeSpots: [], hiveSpots: [], hive: { price: 1500, max: 3, days: 3 },
   market: null, beauty: null, harvestContest: { count: 0, rivals: [] }, marketOn: false,
+  cave: null, caveInfo: { best: 0, stops: [1], floors: 20 },
   tool: 'hoe', seed: 'bokchoy', busy: false,
   me: { x: 5, y: 5, d: 'd', step: null, path: [], pending: null, anim: 0 },
   others: new Map(), floats: [], keys: [], view: 3, cam: { x: 0, y: 0 },
@@ -67,7 +69,11 @@ const el = (tag, attrs = {}, ...kids) => {
 };
 const key = (x, y) => x + ',' + y;
 const terrain = (x, y) => (S.map[y] && S.map[y][x]) || 'T';
-const rockAt = (x, y) => S.area === 'hill' && S.rocks.find((r) => r.x === x && r.y === y);
+// 後山採石場的石頭、洞窟這一層的石頭
+const rocksHere = () => (S.area === 'hill' ? S.rocks : S.area === 'cave' && S.cave ? S.cave.rocks : []);
+const rockAt = (x, y) => rocksHere().find((r) => r.x === x && r.y === y);
+// 洞窟的每一層算不同的地方：家人要在同一層才看得到彼此
+const areaKey = () => (S.area === 'cave' && S.cave ? 'cave' + S.cave.floor : S.area);
 // 夜市：每個星期六晚上 5 點到 12 點（本機測試可以強迫開著／關著）
 function marketOpen() {
   const m = S.market;
@@ -151,7 +157,8 @@ function applyTown(t) {
 
 function applyState(st) {
   // 兩張地圖：牧場和小鎮；重新同步時留在原本那一張
-  S.maps = { farm: st.map, town: st.town || st.map, hill: st.hill || st.map, gh: st.greenhouse || st.map };
+  S.maps = { farm: st.map, town: st.town || st.map, hill: st.hill || st.map, gh: st.greenhouse || st.map, cave: S.cave ? S.cave.map : st.map };
+  if (st.cave) S.caveInfo = st.cave;
   S.exits = st.exits || {}; S.fishData = st.fish || {}; S.oreData = st.ores || {};
   S.rocks = st.rocks || []; S.dex = st.dex || [];
   S.dishes = st.dishes || {}; S.ingGroups = st.ingredientGroups || {};
@@ -636,7 +643,7 @@ async function useOnAnimal(a) {
 
 /* ---------- 小鎮 ---------- */
 
-const BIG = { H: 1, S: 1, A: 1, G: 1, R: 1, Q: 1, O: 1, J: 1 };
+const BIG = { H: 1, S: 1, A: 1, G: 1, R: 1, Q: 1, O: 1, J: 1, V: 1 };
 const HOMES = ['ama', 'lin', 'jie'];   // 三間民宅由左到右：王阿嬤、林老師、小傑家
 function homeIndex(x, y) {
   const tops = [];
@@ -705,10 +712,11 @@ function fishTap() {
 }
 async function mineRock(x, y) {
   try {
-    const r = await doAct({ action: 'mine', x, y });
+    const r = await doAct(S.area === 'cave' ? { action: 'cave_mine', floor: S.cave.floor, x, y } : { action: 'mine', x, y });
     const c = itemInfo(r.gained.item);
     floatAt(x, y, `+1 ${c.name}`, '#fff3b0');
-    if (r.gained.first && r.gained.item !== 'ore:stone') toast(`🎉 第一次挖到${c.name}！圖鑑新增一種`);
+    if (r.gained.ladder) toast('🪜 石頭底下有往下的梯子！點梯子到下一層');
+    else if (r.gained.first && r.gained.item !== 'ore:stone') toast(`🎉 第一次挖到${c.name}！圖鑑新增一種`);
   } catch {}
 }
 
@@ -758,7 +766,8 @@ function openDex() {
     const got = have.has(`${kind}:${id}`);
     return el('div', { class: 'row' + (got ? '' : ' off') }, got ? icon((kind === 'fish' ? 'fish_' : 'ore_') + id) : el('span', { class: 'big', text: '❔' }),
       el('div', { class: 'grow' }, el('div', { class: 'name', text: got ? d.name : '？？？' }),
-        el('div', { class: 'meta', text: got ? `賣 ${d.sell} 元${kind === 'fish' ? fishHint(d) : ''}` : kind === 'fish' ? fishHint(d, true) : '在後山的採石場挖挖看' })));
+        el('div', { class: 'meta', text: got ? `賣 ${d.sell} 元${kind === 'fish' ? fishHint(d) : ''}` : kind === 'fish' ? fishHint(d, true)
+          : d.deep ? `後山洞窟第 ${d.deep} 層以下才挖得到` : '在後山的採石場或洞窟挖挖看' })));
   });
   const nf = Object.keys(S.fishData).filter((id) => have.has('fish:' + id)).length;
   const no = Object.keys(S.oreData).filter((id) => have.has('ore:' + id)).length;
@@ -1186,6 +1195,8 @@ async function doAct(body) {
     if (r.market) S.market = r.market;
     if (r.beauty) S.beauty = r.beauty;
     if (r.seasonHarvest != null) S.harvestContest.count = r.seasonHarvest;
+    if (r.cave) applyCave(r.cave);
+    if (r.caveBest != null) S.caveInfo.best = r.caveBest;
     for (const a of r.newAchievements || []) setTimeout(() => toast(`🏆 達成成就「${a.name}」！全家拿到 ${a.reward} 元`), 900);
     if (r.build) applyBuild(r.build);
     if (r.energyMax) S.energyMax = r.energyMax;
@@ -1215,6 +1226,12 @@ function useOn(x, y) {
   const ch = terrain(x, y);
   const stall = stallAt(x, y);
   if (stall) return openStall(stall);
+  if (ch === 'V') return openMinecart();
+  if (S.area === 'cave') {
+    if (ch === '^') return leaveCave();
+    if (ch === 'v') return enterCave(S.cave.floor + 1);
+    if (ch === 'C') return openChest();
+  }
   if (ch === 'B') return openBin();
   if (ch === 'S') return openShop();
   if (ch === 'H') return openKitchen();
@@ -1541,6 +1558,61 @@ function playRing() {
     el('p', { class: 'sub', text: '箭頭對到瓶子的時候按「丟！」' }),
     el('div', { class: 'ring-track' }, arrow, ...bottles), info,
     el('div', { class: 'actions' }, el('button', { class: 'btn primary big-btn', type: 'button', text: '⭕ 丟！', onclick: () => g.tap() })));
+}
+
+/* ---------- 後山洞窟 ---------- */
+
+function applyCave(c) {
+  S.cave = c;
+  S.maps.cave = c.map;
+  if (S.area === 'cave') { S.map = c.map; S.H = c.map.length; S.W = c.map[0].length; }
+}
+// 礦車：第 1 層隨時可以去，第 5、10、15、20 層要全家有人到過
+function openMinecart() {
+  const I = S.caveInfo;
+  openModal(el('h2', { text: '⛏️ 後山洞窟' }),
+    el('p', { class: 'sub', text: `洞窟有 ${I.floors} 層，每層每天會長出新的石頭，越深的礦越好，深處還有寶石。有一顆石頭底下藏著往下的梯子；` +
+      `有的樓層有寶箱。${I.best ? `全家最深到過第 ${I.best} 層。` : '還沒有人進去過。'}` }),
+    el('p', { class: 'note', text: '🚃 礦車可以直接到去過的第 1、5、10、15、20 層。挖一顆石頭花 2 點體力。' }),
+    el('div', { class: 'actions wrap' }, ...I.stops.map((f) => el('button', {
+      class: 'btn' + (f === 1 || I.best >= f ? ' primary' : ''), type: 'button', disabled: f !== 1 && I.best < f,
+      text: f === 1 ? '第 1 層' : I.best >= f ? `🚃 第 ${f} 層` : `🔒 第 ${f} 層`, onclick: () => enterCave(f),
+    }))),
+    el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '不進去了', onclick: closeModal })));
+}
+async function enterCave(floor) {
+  let r;
+  try { r = await doAct({ action: 'cave_go', floor }); } catch { return; }
+  applyCave(r.cave);
+  S.area = 'cave';
+  S.map = S.cave.map; S.H = S.map.length; S.W = S.map[0].length;
+  Object.assign(S.me, { x: S.cave.arrive.x, y: S.cave.arrive.y, step: null, path: [], pending: null, d: 'd' });
+  S.floats = []; S.fishing = null;
+  closeModal();
+  sendPos(false);
+  toast(S.cave.last ? `⛏️ 洞窟的最深處（第 ${floor} 層）！` : `⛏️ 洞窟第 ${floor} 層`);
+}
+function leaveCave() { goArea('hill'); }
+// 換日或回到視窗：重新拿一次這一層，進不去了（梯子是昨天挖到的）就回地面
+async function refreshCave() {
+  try {
+    const r = await api(`/api/farm/${convId}`, { method: 'POST', body: { action: 'cave_go', floor: S.cave.floor } });
+    applyCave(r.cave);
+  } catch { goArea('hill'); toast('換了一天，洞窟的石頭都換新了，從入口再進去吧'); }
+}
+async function openChest() {
+  const c = S.cave.chest;
+  if (!c || c.opened) return toast('這個寶箱今天已經打開過了，明天再來');
+  let r;
+  try { r = await doAct({ action: 'cave_chest', floor: S.cave.floor }); } catch { return; }
+  const g = r.gained.chest, it = g.item && itemInfo(g.item);
+  const got = [g.money ? `${g.money.toLocaleString()} 元` : null, it ? `${it.name}${g.qty > 1 ? ` ×${g.qty}` : ''}` : null].filter(Boolean).join('和');
+  openModal(el('h2', { text: g.treasure ? '💎 古老的寶箱' : '🎁 寶箱' }),
+    g.treasure ? el('p', { class: 'speech story', text: '箱子上積滿了灰塵，好像幾百年沒有人打開過。你小心翼翼地掀開蓋子……' }) : null,
+    el('p', { class: g.treasure ? 'speech' : 'speech story', text: `裡面有${got}！` }),
+    it ? el('div', { class: 'row' }, icon(it.icon), el('div', { class: 'grow' }, el('div', { class: 'name', text: it.name }),
+      el('div', { class: 'meta', text: `賣 ${it.sell} 元${g.first ? '・圖鑑新增一種！' : ''}` }))) : null,
+    el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', text: '太好了！', onclick: closeModal })));
 }
 
 /* ---------- 比賽：動物選美、豐收比賽（在告示板報名、看結果） ---------- */
@@ -1935,7 +2007,7 @@ function sendPos(moving) {
   const now = performance.now();
   if (moving && lastMoving && now - lastPosSent < 120) return;
   lastPosSent = now; lastMoving = moving;
-  ws.send(JSON.stringify({ t: 'pos', x: +S.me.x.toFixed(2), y: +S.me.y.toFixed(2), d: S.me.d, m: moving, a: S.area }));
+  ws.send(JSON.stringify({ t: 'pos', x: +S.me.x.toFixed(2), y: +S.me.y.toFixed(2), d: S.me.d, m: moving, a: areaKey() }));
 }
 
 function otherOf(id) {
@@ -1980,6 +2052,9 @@ function connectWs() {
       if (ev.achievements) S.achievements = ev.achievements;
       if (ev.beauty) S.beauty = ev.beauty;
       if (ev.seasonHarvest != null) S.harvestContest.count = ev.seasonHarvest;
+      // 家人在同一層挖石頭、開寶箱：這邊的畫面也跟著變
+      if (ev.cave && S.cave && ev.cave.floor === S.cave.floor) applyCave(ev.cave);
+      if (ev.caveBest != null) S.caveInfo.best = ev.caveBest;
       if (ev.by !== S.meId) for (const a of ev.newAchievements || []) toast(`🏆 達成成就「${a.name}」！全家拿到 ${a.reward} 元`);
       if (ev.build) {
         // 家人擴建了房子：伺服器已經幫今天打開過牧場的人加了體力
@@ -2021,6 +2096,7 @@ function resize() {
 }
 
 function baseSprite(x, y, ch) {
+  if (S.area === 'cave') return caveTileSprite(ch === 'X' ? 'X' : '.', (x * 7 + y * 13) % 3);
   if (S.area === 'gh') {
     // 溫室裡：玻璃牆、石板地，田不會跟著季節變色
     if (ch === 'K' || ch === '.') return ghTileSprite(ch);
@@ -2149,7 +2225,7 @@ function draw() {
   S.cam = { x: camX, y: camY };
 
   g.setTransform(1, 0, 0, 1, 0, 0);
-  g.fillStyle = '#2b7a33';
+  g.fillStyle = S.area === 'cave' ? '#0c0a09' : '#2b7a33'; // 洞窟外面是一片黑
   g.fillRect(0, 0, vw, vh);
   g.imageSmoothingEnabled = false;
   g.setTransform(k, 0, 0, k, -camX, -camY);
@@ -2166,6 +2242,8 @@ function draw() {
     for (let x = x0; x <= x1; x++) {
       const ch = terrain(x, y);
       if (ch === 'T') g.drawImage(treeSprite(x, y), x * T, y * T);
+      else if (ch === '^' || ch === 'v') g.drawImage(caveLadderSprite(ch === 'v'), x * T, y * T);
+      else if (ch === 'C') g.drawImage(chestSprite(!!(S.cave && S.cave.chest && S.cave.chest.opened)), x * T, y * T);
       else if (ch === 'f') g.drawImage(sprite('fence'), x * T, y * T);
       else if (ch === 'B') g.drawImage(sprite('bin'), x * T, y * T);
       else if (ch === 'N') g.drawImage(sprite('board'), x * T, y * T);
@@ -2198,7 +2276,7 @@ function draw() {
     for (let x = 0; x < S.W; x++) {
       const ch = terrain(x, y);
       if (!BIG[ch] || terrain(x - 1, y) === ch || terrain(x, y - 1) === ch) continue;
-      const img = ch === 'H' ? houseSprite(ground, S.houseLevel) : ch === 'S' ? shopSprite() : ch === 'A' ? barnSprite(ground)
+      const img = ch === 'V' ? caveMouthSprite() : ch === 'H' ? houseSprite(ground, S.houseLevel) : ch === 'S' ? shopSprite() : ch === 'A' ? barnSprite(ground)
         : ch === 'J' ? greenhouseSprite(S.ghBuilt, ground)
         : ch === 'G' ? storeSprite() : ch === 'R' ? eaterySprite() : ch === 'Q' ? homeSprite(homes++)
         : fountainSprite(Math.floor(Date.now() / 500) % 2);
@@ -2242,7 +2320,7 @@ function draw() {
 
   // 角色：依 y 排序，後面的先畫
   const people = [{ ...me, color: S.myColor, mine: true, moving: !!me.step }];
-  for (const [id, o] of S.others) if ((o.a || 'farm') === S.area) people.push({ ...o, id, moving: Math.hypot(o.tx - o.x, o.ty - o.y) > 0.01 });
+  for (const [id, o] of S.others) if ((o.a || 'farm') === areaKey()) people.push({ ...o, id, moving: Math.hypot(o.tx - o.x, o.ty - o.y) > 0.01 });
   const beasts = S.area === 'farm' ? S.animals.map((a) => ({ a, ...animalPos(a, now) })) : [];
   // 寵物也一起排前後（畫法跟動物一樣，名字底下標 🐾）
   if (S.area === 'farm') for (const [k, pet] of Object.entries(S.pets)) {
@@ -2287,6 +2365,14 @@ function draw() {
 
   // 文字（名字、飄字）用螢幕座標畫，字才清楚
   g.setTransform(1, 0, 0, 1, 0, 0);
+  if (S.area === 'cave') {
+    const lx = (me.x + 0.5) * T * k - camX, ly = (me.y + 0.3) * T * k - camY;
+    const flick = 1 + Math.sin(performance.now() / 180) * 0.03;
+    const grad = g.createRadialGradient(lx, ly, T * k * 1.8, lx, ly, T * k * 6.5 * flick);
+    grad.addColorStop(0, 'rgba(8,6,12,0)'); grad.addColorStop(1, 'rgba(8,6,12,0.78)');
+    g.fillStyle = grad; g.fillRect(0, 0, vw, vh);
+    g.fillStyle = 'rgba(255,190,90,0.07)'; g.beginPath(); g.arc(lx, ly, T * k * 2.2, 0, Math.PI * 2); g.fill();
+  }
   g.textAlign = 'center';
   g.font = `bold ${Math.round(11 * dpr)}px sans-serif`;
   for (const p of people) {
@@ -2312,6 +2398,26 @@ function draw() {
     g.fillRect(sx - w / 2, sy - 13 * dpr, w, 16 * dpr);
     g.fillStyle = '#fff';
     g.fillText(label, sx, sy);
+  }
+  // 洞窟入口、梯子的牌子
+  const sign = (x, y, label) => {
+    const w = g.measureText(label).width + 10 * dpr;
+    const sx = (x + 0.5) * T * k - camX, sy = (y * T + 2) * k - camY;
+    g.fillStyle = 'rgba(122,78,45,.9)'; g.fillRect(sx - w / 2, sy - 13 * dpr, w, 16 * dpr);
+    g.fillStyle = '#fff'; g.fillText(label, sx, sy);
+  };
+  if (S.area === 'hill') for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++)
+    if (terrain(x, y) === 'V' && terrain(x - 1, y) !== 'V' && terrain(x, y - 1) !== 'V') sign(x + 0.5, y, '⛏️ 洞窟');
+  if (S.area === 'cave' && S.cave) {
+    sign(S.cave.up.x, S.cave.up.y, '🪜 回地面');
+    if (S.cave.ladder) sign(S.cave.ladder.x, S.cave.ladder.y, `⬇️ 第 ${S.cave.floor + 1} 層`);
+    // 現在在第幾層（畫面上方中間）
+    const label = S.cave.last ? `⛏️ 洞窟最深處・第 ${S.cave.floor} 層` : `⛏️ 洞窟第 ${S.cave.floor} 層`;
+    g.font = `bold ${Math.round(13 * dpr)}px sans-serif`;
+    const w = g.measureText(label).width + 16 * dpr, ty = (S.padTop || 0) * dpr + 22 * dpr;
+    g.fillStyle = 'rgba(30,24,20,.85)'; g.fillRect(vw / 2 - w / 2, ty - 16 * dpr, w, 22 * dpr);
+    g.fillStyle = '#ffe08a'; g.fillText(label, vw / 2, ty);
+    g.font = `bold ${Math.round(11 * dpr)}px sans-serif`;
   }
   // 魚上鉤了：浮標上面跳出大大的 ❗
   if (S.fishing && S.fishing.state === 'bite') {
@@ -2381,7 +2487,7 @@ function draw() {
   if (hour >= 17 && hour < 19) tint = `rgba(255,140,60,${0.08 + (hour - 17) * 0.05})`;
   else if (hour >= 19 || hour < 5) tint = 'rgba(20,30,80,0.32)';
   else if (hour >= 5 && hour < 6) tint = 'rgba(255,170,120,0.12)';
-  if (tint) { g.fillStyle = tint; g.fillRect(0, 0, vw, vh); }
+  if (tint && S.area !== 'cave') { g.fillStyle = tint; g.fillRect(0, 0, vw, vh); }
   // 夜市的燈泡在暗暗的天色裡發光
   if (bulbs.length) {
     g.globalCompositeOperation = 'lighter';
@@ -2393,8 +2499,7 @@ function draw() {
     }
     g.globalCompositeOperation = 'source-over';
   }
-  drawWeather(vw, vh);
-  drawFireworks(vw, vh, now);
+  if (S.area !== 'cave') { drawWeather(vw, vh); drawFireworks(vw, vh, now); }
 }
 
 let last = performance.now();
@@ -2429,7 +2534,8 @@ addEventListener('keydown', (e) => {
     if (S.area === 'town') {
       const vi = villagerAt(fx, fy);
       if (vi) return openVillager(vi);
-    } else {
+    } else if (S.area === 'farm') {
+      // 動物只在牧場：在後山、溫室、洞窟按空白鍵不會碰到牧場裡同一個位置的動物
       const an = animalAt(fx, fy);
       if (an) return useOnAnimal(an);
     }
@@ -2464,7 +2570,10 @@ $('btn-close').addEventListener('click', () => {
   else location.href = '/';
 });
 addEventListener('resize', resize);
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') loadState().catch(() => {}); });
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  loadState().then(() => { if (S.area === 'cave') refreshCave(); }).catch(() => {});
+});
 
 /* ---------- 啟動 ---------- */
 
@@ -2507,7 +2616,7 @@ if (params.has('test')) {
       return { x: ((x + 0.5) * T * k - S.cam.x) / dpr, y: ((y + 0.5) * T * k - S.cam.y) / dpr };
     },
     stageAt(x, y) { return stage(S.tiles.get(key(x, y)), serverNow()); },
-    walkable,
+    walkable, areaKey,
     villagerScreen(id) {
       const p = villagerPos(id, serverNow());
       const k = S.view * dpr;
