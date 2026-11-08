@@ -180,7 +180,16 @@ const medianMs = async (fn, reps = 7) => {
 
 console.log('\n--- 家族牧場 ---');
 const farmGet = (cid, tok) => j(`/api/farm/${cid}`, {}, tok);
-const farmDo = (cid, body, tok) => j(`/api/farm/${cid}`, { method: 'POST', body }, tok);
+// 測試群的牧場錢包：成就獎金、村民謝禮的錢也要算進去（money 下面會再加上開墾的 500 元）
+let money = 0;
+const farmDo = async (cid, body, tok) => {
+  const r = await j(`/api/farm/${cid}`, { method: 'POST', body }, tok);
+  if (cid === groupId && r.status === 200) {
+    for (const a of r.data.newAchievements || []) money += a.reward;
+    for (const rw of r.data.gained?.rewards || []) money += rw.money || 0;
+  }
+  return r;
+};
 r = await farmGet(groupId, TA);
 const fs0 = r.data;
 check('第一次打開就開墾牧場（500 元、9 包小白菜種子、體力 60）',
@@ -225,7 +234,7 @@ const price1 = fs0.crops[buyable].seed;
 r = await farmDo(groupId, { action: 'buy', item: 'seed:' + buyable, qty: 1 }, TB);
 check(`買 1 包${fs0.crops[buyable].name}種子 500 → ${500 - price1}（錢全家共用）`,
   r.status === 200 && r.data.money === 500 - price1 && r.data.items['seed:' + buyable] === 1);
-let money = 500 - price1;
+money += 500 - price1;
 r = await farmDo(groupId, { action: 'buy', item: 'seed:' + offSeason, qty: 1 }, TB);
 check('這一季沒賣的種子買不到', r.status === 400 && /才有賣/.test(r.data.error || ''), r.data.error);
 check('錢不夠不能買', (await farmDo(groupId, { action: 'buy', item: 'seed:' + buyable, qty: 99 }, TB)).status === 400);
@@ -342,6 +351,9 @@ if (fs0.villagersOut) {
 }
 
 // 料理
+// 村民的故事、成就、週報
+check('有村民的故事、20 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 20
+  && JSON.stringify(fs0.achievements) === '{}' && /^\d{4}-\d{2}-\d{2}$/.test(fs0.thisWeek?.week || ''));
 check('有 24 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 24 && !!fs0.ingredientGroups?.egg);
 check('沒有這道菜', (await farmDo(groupId, { action: 'cook', dish: 'steak' }, TA)).status === 400
   && (await farmDo(groupId, { action: 'cook', dish: 'constructor' }, TA)).status === 400);
@@ -435,6 +447,13 @@ r = await farmDo(groupId, { action: 'rename_animal', animalId: hen.id, name: '�
 check('再改回小花', r.status === 200 && r.data.animals.find((a) => a.id === hen.id).name === '小花');
 check('別人家的動物不能改名（找不到）', (await farmDo(dmAdminA.id, { action: 'rename_animal', animalId: hen.id, name: '偷改' }, TA)).status === 400);
 
+const wk = (await farmGet(groupId, TB)).data.thisWeek;
+check(`這一週的紀錄：大家做了 ${wk.actions} 件事，最勤勞的是${wk.top?.name}`, wk.actions >= 20 && ['朋友A', '朋友B'].includes(wk.top?.name));
+r = await farmGet(groupId, TA);
+check('領養寵物達成成就「毛小孩」（全家看得到是誰、什麼時候）', !!r.data.achievements.pet?.at && r.data.achievements.pet.by === '朋友A'
+  && (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('達成成就「毛小孩」')));
+check('同一個成就只會達成一次', (await listIn(groupId, TA)).filter((m) => m.content.includes('達成成就「毛小孩」')).length === 1);
+
 const farmMs = await medianMs(() => farmGet(groupId, TA));
 check(`打開牧場在 150ms 內（實測 ${farmMs.toFixed(0)}ms）`, farmMs < 150);
 if (fs0.scale >= 3600) {
@@ -442,6 +461,7 @@ if (fs0.scale >= 3600) {
   await new Promise((ok) => setTimeout(ok, 3500));
   r = await farmDo(groupId, { action: 'harvest', ...f1 }, TA);
   check('（加速模式）熟了可以收成，收進倉庫', r.status === 200 && r.data.items['crop:bokchoy'] === 1);
+  check('（加速模式）第一次收成達成成就，全家拿到 100 元', (r.data.newAchievements || []).some((a) => a.id === 'harvest1' && a.reward === 100));
   r = await farmDo(groupId, { action: 'ship', item: 'crop:bokchoy', qty: 1 }, TB);
   money += 45;
   check(`（加速模式）出貨小白菜 +45 元 → ${money}`, r.status === 200 && r.data.money === money);
@@ -464,6 +484,17 @@ if (fs0.scale >= 3600) {
     r = await farmDo(groupId, { action: 'gift', villager: 'ama', item: 'crop:bokchoy' }, TA);
     check('（加速模式）送王阿嬤小白菜：她喜歡，感情 +5', r.status === 200 && r.data.gained.reaction === 'like' && r.data.town.friends.ama.points === 6);
     check('（加速模式）一天只能送一次', (await farmDo(groupId, { action: 'gift', villager: 'ama', item: 'crop:bokchoy' }, TA)).status === 400);
+    // 村民的故事（本機測試用 FARM_START_FRIEND=lin:50：跟林老師一開始就有 5 顆愛心）
+    if ((fs0.friends?.lin?.points || 0) >= 50) {
+      r = await farmDo(groupId, { action: 'talk', villager: 'lin' }, TA);
+      check('（加速模式）跟林老師聊天：說第一段故事「第一次上台」', r.status === 200 && r.data.gained.story?.chapter === 0
+        && r.data.gained.story.title === '第一次上台' && r.data.gained.story.lines.length === 4 && r.data.town.friends.lin.storyLevel === 1);
+      r = await farmDo(groupId, { action: 'talk', villager: 'lin' }, TB);
+      check('（加速模式）再聊：5 顆愛心的第二段「畢業紀念冊」', r.status === 200 && r.data.gained.story?.chapter === 1 && r.data.town.friends.lin.storyLevel === 2);
+      r = await farmDo(groupId, { action: 'talk', villager: 'lin' }, TA);
+      check('（加速模式）第三段要 8 顆愛心，現在還不會說', r.status === 200 && r.data.gained.story === null);
+      check('（加速模式）聊天室說聽了林老師的故事', (await listIn(groupId, TA)).filter((m) => m.type === 'system' && m.content.includes('聽林老師說了')).length === 2);
+    }
     // 再種兩顆小白菜煮炒青菜
     for (const g of [fields[42], fields[43]]) {
       await farmDo(groupId, { action: 'till', ...g }, TA);
@@ -607,6 +638,7 @@ check('備份包含牧場的動物', (r.data.farmAnimals || []).some((a) => a.na
 check('備份包含跟村民的感情', Array.isArray(r.data.farmFriends));
 check('備份包含圖鑑', (r.data.farmDex || []).length >= 2);
 check('備份包含加工機', Array.isArray(r.data.farmMachines));
+check('備份包含成就和累計', (r.data.farmAchievements || []).some((a) => a.id === 'pet') && Array.isArray(r.data.farmStats));
 
 console.log('\n--- 速度與備份上限（防止效能退步）---');
 // 這段會放 30 張約 450KB 的照片進去，量「打開聊天室」與「取照片」的時間，並檢查備份每頁大小有上限。

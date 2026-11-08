@@ -706,3 +706,92 @@ export function festivalsAfter(day, days = 366) {
 export const nextFestival = (day) => festivalsAfter(day, 400)[0] || null;
 // 行事曆上今天的事情裡，有「生日」的就是有家人生日
 export const isBirthdayEvent = (title) => /生日|壽/.test(String(title));
+
+// ---------------- 村民的故事 ----------------
+// 跟村民的感情到 2、5、8 顆愛心時，找他聊天會說一段自己的故事（每座牧場各聽一次，聽過的可以在告示板重看）
+export const STORY_HEARTS = [2, 5, 8];
+export const STORIES = {
+  fu: [
+    { title: '雜貨店的招牌', lines: ['你有沒有注意到店門口那塊招牌？', '那是我牽手年輕時候親手寫的字，一筆一畫，寫了整個下午。', '後來好幾次颱風，招牌被吹歪了，我都爬上去扶正。', '她走了以後，我更捨不得換。看到那幾個字，就好像她還在店裡幫我顧店。'] },
+    { title: '第一把鋤頭', lines: ['開店第一天，賣出去的第一把鋤頭，你猜是賣給誰？', '是你們家以前的老主人。他說：「阿福仔，你的鋤頭要是不耐用，我天天來找你。」', '結果那把鋤頭用了二十幾年，他一次都沒來找我算帳，倒是天天來找我泡茶。', '現在看你們在那塊地上種東西，阿伯真的很歡喜。'] },
+    { title: '交棒', lines: ['阿伯年紀大了，有時候搬一箱肥料，腰就痠好幾天。', '我那個在台北做電腦的孫子，上個月打電話說，想回來接這間店。', '我跟他說：「回來好啊，但是要先學會怎麼跟客人聊天，不是只會賣東西。」', '到時候你們要多照顧他喔。這間店，是整個鎮的灶腳。'] },
+  ],
+  mei: [
+    { title: '阿母的滷肉', lines: ['我們家的滷肉飯，是我阿母傳下來的。', '小時候我最愛蹲在灶邊，看她一邊攪鍋子一邊哼歌。', '她說滷肉不能急，火要小、心要定，跟做人一樣。', '每次有客人說「這個味道跟我小時候吃的一樣」，我就覺得阿母還在身邊。'] },
+    { title: '差點關店的那一年', lines: ['有一年生意真的很差，我連房租都快付不出來。', '我在門口貼了「本月底歇業」，心想就這樣了吧。', '結果隔天，阿福伯、王阿嬤、林老師……整條街的人都跑來吃飯，一吃就是一個月。', '志明還幫我把傳單送到每一戶。那張歇業的紙，最後被小傑撕下來畫圖了。'] },
+    { title: '牧場特餐', lines: ['我想在菜單上加一道新的菜，叫做「牧場特餐」。', '用的都是你們家種的菜、你們家的雞蛋，客人一吃就知道是我們鎮上的味道。', '以前大家都說，鄉下沒什麼好吃的。我想讓他們知道，鄉下最好吃。', '名字我已經寫好了，就差你們家的菜了。'] },
+  ],
+  jie: [
+    { title: '西瓜日記', lines: ['我跟你說一個祕密，我有一本「西瓜日記」！', '每天放學我都會畫一顆西瓜，有大的、有小的、還有被我吃掉一半的。', '老師說要寫字不要只畫圖……可是西瓜比較好看啊。', '等你們家的西瓜長大了，我可以畫進去嗎？'] },
+    { title: '躲在噴水池後面', lines: ['……你有看到我剛剛在哭嗎？沒有喔？那就好。', '我爸爸在很遠的城市工作，一個月才回來一次。', '今天是他說要回來的日子，可是他打電話說不能回來了。', '……謝謝你陪我坐在這裡。我現在好一點了，我們去看噴水池裡的硬幣好不好？'] },
+    { title: '我的夢想', lines: ['老師今天要我們寫「我的夢想」。', '我寫的是：我想跟你們家一樣，有一塊田、一間動物小屋，還有一隻會跟著我走的狗。', '同學都笑我，說當農夫很累。', '可是我覺得，能把東西種出來、讓大家吃飽，是世界上最厲害的事。你說對不對？'] },
+  ],
+  ama: [
+    { title: '嫁過來的那天', lines: ['阿嬤十九歲那年，從山的那一邊嫁過來。', '那時候沒有車，是坐牛車，走了一整天才到。', '一進村子，整條路的人都出來看新娘，我害羞得頭都不敢抬。', '一轉眼五十年了。這個鎮，比我出生的地方還要像家。'] },
+    { title: '阿公的斗笠', lines: ['你看我家牆上那頂斗笠，是你阿公……我是說，我們家阿公的。', '他一輩子都在田裡，夏天再熱也戴著它，說斗笠比冷氣還涼。', '他走的那天，斗笠還掛在門口，好像等一下就要出門下田。', '我一直沒收起來。看到你們每天下田，我就想到他。'] },
+    { title: '乖孫', lines: ['來，這給你。阿嬤用你們家的羊毛打的圍巾……還沒打完啦，先給你看看。', '阿嬤的孩子都在外地，過年才回來一次。', '你們常常來陪我說話、送東西給我，阿嬤早就把你們當自己的孫子了。', '以後不管多忙，記得常回家看看，家裡的人會一直等你。'] },
+  ],
+  lin: [
+    { title: '第一次上台', lines: ['我第一次站上講台的時候，緊張到把粉筆折斷了三支。', '台下的孩子一直笑，我的臉紅到耳朵。', '後來有個小女生舉手說：「老師，你不要怕，我們會乖乖的。」', '從那天起我就知道，不是只有老師在教學生，學生也在教老師。'] },
+    { title: '畢業紀念冊', lines: ['我抽屜裡收著每一屆的畢業紀念冊。', '有的孩子現在當醫生，有的開了麵包店，還有一個去當了太空工程師。', '他們偶爾寄卡片回來，說：「老師，你說的話我一直記得。」', '其實我早就忘了自己說過什麼，但他們記得，就夠了。'] },
+    { title: '回到鄉下', lines: ['以前我在城市的大學校教書，一班四十幾個學生。', '有一天我回老家，看到鎮上的小學只剩一個老師，要教六個年級。', '我想了一個晚上，隔天就遞了調職申請。', '大家都說我傻。可是看到小傑在作文裡寫「我的夢想是當農夫」，我覺得這是我做過最對的決定。'] },
+  ],
+  zhi: [
+    { title: '每天兩百封', lines: ['你知道我一天要送多少封信嗎？兩百封！', '有帳單、有明信片、有喜帖，偶爾還有情書，信封上會畫愛心。', '每一封信背後都有一個在等的人，所以我從來不敢遲到。', '下雨天我會把信包兩層塑膠袋，濕掉的話，人家的心意也濕掉了。'] },
+    { title: '寄不出去的信', lines: ['我的郵差包裡，一直放著一封寄不出去的信。', '收件人的地址是一間已經拆掉的老房子，寄件人也找不到了。', '我每年都去附近問一次，看有沒有人認得這個名字。', '說不定哪一天就找到了。郵差的工作，就是讓每一句話都送得到。'] },
+    { title: '最後一站', lines: ['我每天送信的路線，最後一站都是你們家牧場。', '送完最後一封，我會在你們家田邊站一下，看看今天又長了什麼。', '騎了一整天的車，看到綠油油的田，什麼累都忘了。', '所以啊，你們家的信，我永遠第一個送……然後最後一個來看。'] },
+  ],
+};
+// 這次聊天要不要說故事：感情夠了、還有下一段沒聽過，就回傳那一段的編號（0～2），不然 null
+export function storyDue(points, storyLevel) {
+  const lv = storyLevel || 0;
+  return lv < STORY_HEARTS.length && friendHearts(points) >= STORY_HEARTS[lv] ? lv : null;
+}
+
+// ---------------- 家族成就 ----------------
+// stats：全家的累計（收成次數、出貨賺的錢、完成的委託、生的寶寶）＋現在的牧場狀況，算出達成了哪些成就
+export const ACHIEVEMENTS = [
+  { id: 'harvest1', name: '第一次收成', desc: '收成一次', reward: 100, test: (s) => s.harvest >= 1 },
+  { id: 'harvest100', name: '豐收', desc: '收成 100 次', reward: 1000, test: (s) => s.harvest >= 100 },
+  { id: 'harvest500', name: '田園大師', desc: '收成 500 次', reward: 3000, test: (s) => s.harvest >= 500 },
+  { id: 'ship10k', name: '小有積蓄', desc: '出貨賺到 1 萬元', reward: 500, test: (s) => s.shipped >= 10000 },
+  { id: 'ship100k', name: '牧場大亨', desc: '出貨賺到 10 萬元', reward: 3000, test: (s) => s.shipped >= 100000 },
+  { id: 'animals5', name: '熱鬧的小屋', desc: '同時養 5 隻動物', reward: 500, test: (s) => s.animals >= 5 },
+  { id: 'baby', name: '新生命', desc: '動物生了寶寶', reward: 300, test: (s) => s.babies >= 1 },
+  { id: 'pet', name: '毛小孩', desc: '領養一隻寵物', reward: 100, test: (s) => s.pets >= 1 },
+  { id: 'fish5', name: '釣魚新手', desc: '釣到 5 種魚', reward: 300, test: (s) => s.fishKinds >= 5 },
+  { id: 'fishAll', name: '釣魚達人', desc: '圖鑑裡的魚全部釣過', reward: 2000, test: (s) => s.fishKinds >= Object.keys(FISH).length },
+  { id: 'amethyst', name: '挖到寶了', desc: '挖到紫水晶', reward: 500, test: (s) => !!s.amethyst },
+  { id: 'dish10', name: '家常好味道', desc: '煮過 10 道不同的菜', reward: 800, test: (s) => s.dishKinds >= 10 },
+  { id: 'goods5', name: '加工小達人', desc: '做過 5 種加工品', reward: 500, test: (s) => s.goodKinds >= 5 },
+  { id: 'friend10', name: '好鄰居', desc: '跟一位村民 10 顆愛心', reward: 1000, test: (s) => s.maxHearts >= 10 },
+  { id: 'friendsAll', name: '全鎮的好朋友', desc: '跟每位村民都有 5 顆愛心', reward: 2000, test: (s) => s.minHearts >= 5 },
+  { id: 'requests10', name: '熱心助人', desc: '完成 10 個委託', reward: 800, test: (s) => s.requests >= 10 },
+  { id: 'greenhouse', name: '四季如春', desc: '蓋好溫室', reward: 500, test: (s) => !!s.gh },
+  { id: 'house3', name: '溫暖的家', desc: '房子擴建到二樓', reward: 1000, test: (s) => s.house >= 3 },
+  { id: 'machines', name: '加工專家', desc: '四台加工機都買齊', reward: 1000, test: (s) => s.machines >= Object.keys(MACHINES).length },
+  { id: 'stories', name: '說故事的人', desc: '聽完所有村民的故事', reward: 2000, test: (s) => s.stories >= Object.keys(STORIES).length * STORY_HEARTS.length },
+];
+export const achievementsMet = (stats) => ACHIEVEMENTS.filter((a) => a.test(stats)).map((a) => a.id);
+
+// ---------------- 牧場週報 ----------------
+// 一週從星期一開始（台灣時間）。week 用那個星期一的日期當名字
+export function weekStart(day) {
+  const t = Date.parse(day + 'T00:00:00Z');
+  const dow = (new Date(t).getUTCDay() + 6) % 7; // 星期一＝0
+  return new Date(t - dow * DAY).toISOString().slice(0, 10);
+}
+export const weekEnd = (week) => new Date(Date.parse(week + 'T00:00:00Z') + 6 * DAY).toISOString().slice(0, 10);
+// 週報的一句話。r：{ week, harvest, shipped, achievements: [名字], dex: [名字], top: { name, actions } }；這週什麼都沒做回傳 null
+export function weeklyReportText(r) {
+  if (!r.actions) return null;
+  const md = (d) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
+  const parts = [];
+  if (r.harvest) parts.push(`收成 ${r.harvest} 次`);
+  if (r.shipped) parts.push(`出貨賺了 ${r.shipped.toLocaleString('en-US')} 元`);
+  if (r.achievements.length) parts.push(`達成成就「${r.achievements.join('」「')}」`);
+  if (r.dex.length) parts.push(`圖鑑多了${r.dex.slice(0, 3).join('、')}${r.dex.length > 3 ? ` 等 ${r.dex.length} 種` : ''}`);
+  if (!parts.length) parts.push(`大家一共做了 ${r.actions} 件事`);
+  const top = r.top ? `；最勤勞的是${r.top.name}（做了 ${r.top.actions} 件事）` : '';
+  return `📰 家族牧場週報（${md(r.week)}～${md(weekEnd(r.week))}）：${parts.join('、')}${top}！新的一週也一起加油 💪`;
+}

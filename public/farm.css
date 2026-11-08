@@ -114,3 +114,5 @@ canvas#world { position: fixed; inset: 0; width: 100%; height: 100%; display: bl
   background: #fff; border: 2px solid #d8c7a6; border-radius: 12px; padding: 10px 12px; margin: 6px 0 4px;
   font-size: 15px; line-height: 1.6; position: relative;
 }
+/* 村民的故事：字大一點、留白多一點，像在聽人講話 */
+.speech.story { font-size: 17px; line-height: 1.8; min-height: 4.5em; }

@@ -16,6 +16,7 @@ import {
   FESTIVALS, LUNAR_DATES, festivalOn, festivalsAfter, nextFestival, isBirthdayEvent,
   GH_MAP, fieldArea, GOODS, MACHINES, MACHINE_SPOTS, MACHINE_BATCH, machineAt, machineReadyAt, BUILDS, HOUSE_ENERGY, energyMaxOf,
   POND_ZONE, BABY_DAYS, BABY_EVERY_DAYS, isBaby, canHaveBaby, babyName, PETS, PET_ZONE, petFind, LOVE_MAX,
+  STORIES, STORY_HEARTS, storyDue, ACHIEVEMENTS, achievementsMet, weekStart, weekEnd, weeklyReportText,
 } from '../src/farm.js';
 import { SPRITES, PALETTE, FISH_SHAPE, BOOT_SHAPE, ROCK_SHAPE, FISH_COLORS, ORE_COLORS, DISH_SHAPES, DISH_COLORS, GOOD_ART } from '../public/farm-sprites.js';
 
@@ -384,6 +385,28 @@ check('叼回來的都是真的東西（飼料、種子、礦石、魚）', [...
 check('小狗叼的種子是當季的', finds('dog', 20).filter((f) => f.item.startsWith('seed:')).every((f) => CROPS[f.item.slice(5)]), true);
 check('沒什麼愛心時，不會叼到金礦、金魚', [...finds('dog', 0), ...finds('cat', 0)].some((f) => ['ore:gold', 'ore:silver', 'fish:goldfish', 'fish:catfish'].includes(f.item)), false);
 check('寵物、鴨、羊都有圖（兩張走路的）', ['dog', 'cat', 'duck', 'sheep'].every((k) => SPRITES[k + '_0'] && SPRITES[k + '_1']), true);
+
+
+console.log('\n--- 村民的故事、成就、週報 ---');
+check('每位村民都有 3 段故事，每段有標題和 4 句話', Object.keys(VILLAGERS).every((id) => STORIES[id] && STORIES[id].length === 3
+  && STORIES[id].every((st) => st.title && st.lines.length === 4 && st.lines.every((l) => l.length > 5))), true);
+check('故事在 2、5、8 顆愛心時說', STORY_HEARTS, [2, 5, 8]);
+check('感情夠了才說下一段，說完 3 段就沒了', [storyDue(19, 0), storyDue(20, 0), storyDue(49, 1), storyDue(50, 1), storyDue(100, 2), storyDue(100, 3)], [null, 0, null, 1, 2, null]);
+check('感情很好但還沒聽過：從第一段開始說', storyDue(100, 0), 0);
+const zero = { harvest: 0, shipped: 0, requests: 0, babies: 0, animals: 0, pets: 0, machines: 0, fishKinds: 0, dishKinds: 0, goodKinds: 0, amethyst: false, maxHearts: 0, minHearts: 0, stories: 0, gh: 0, house: 1 };
+check('什麼都還沒做：沒有成就', achievementsMet(zero), []);
+check('收成一次、領養寵物：兩個成就', achievementsMet({ ...zero, harvest: 1, pets: 1 }), ['harvest1', 'pet']);
+const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: 4, fishKinds: 9, dishKinds: 24, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3 };
+check('全部做完：每個成就都達成', achievementsMet(full).length, ACHIEVEMENTS.length);
+check('成就的編號不重複、都有名字說明和獎金', new Set(ACHIEVEMENTS.map((a) => a.id)).size === ACHIEVEMENTS.length && ACHIEVEMENTS.every((a) => a.name && a.desc && a.reward > 0), true);
+check('「聽完所有故事」要 18 段', [achievementsMet({ ...full, stories: 17 }).includes('stories'), achievementsMet(full).includes('stories')], [false, true]);
+check('一週從星期一開始（台灣日期）', [weekStart('2026-11-08'), weekStart('2026-11-09'), weekStart('2026-11-15'), weekStart('2027-01-01'), weekEnd('2026-11-09')],
+  ['2026-11-02', '2026-11-09', '2026-11-09', '2026-12-28', '2026-11-15']);
+check('這週什麼都沒做：不貼週報', weeklyReportText({ week: '2026-11-02', actions: 0, harvest: 0, shipped: 0, achievements: [], dex: [], top: null }), null);
+const rep = weeklyReportText({ week: '2026-11-02', actions: 120, harvest: 23, shipped: 4560, achievements: ['第一次收成'], dex: ['鰻魚', '紫水晶', '鯉魚', '起司'], top: { name: '媽媽', actions: 80 } });
+const rep0 = weeklyReportText({ week: '2026-11-02', actions: 7, harvest: 0, shipped: 0, achievements: [], dex: [], top: { name: '阿宏', actions: 7 } });
+check('沒收成、沒出貨的那週：不寫 0，改說大家做了幾件事', [rep0.includes('0 次') || rep0.includes(' 0 元'), rep0.includes('大家一共做了 7 件事')], [false, true]);
+check('週報：日期、收成、出貨（有千分位）、成就、圖鑑、最勤勞的人', ['11/2～11/8', '收成 23 次', '4,560 元', '「第一次收成」', '鰻魚、紫水晶、鯉魚 等 4 種', '最勤勞的是媽媽（做了 80 件事）'].every((t) => rep.includes(t)), true);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

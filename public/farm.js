@@ -44,6 +44,7 @@ const S = {
   festivals: {}, festival: null, festivalClaimed: false, nextFestival: null, todayEvents: [], birthdays: [],
   machines: {}, machineKinds: {}, machineSpots: {}, machineBatch: 5, goods: {}, builds: {}, ghBuilt: false, houseLevel: 1,
   pondTiles: [], pets: {}, petKinds: {}, petZoneTiles: [], petPos: {}, trails: new Map(),
+  stories: {}, storyHearts: [2, 5, 8], achievementList: [], achievements: {}, thisWeek: null,
   tool: 'hoe', seed: 'bokchoy', busy: false,
   me: { x: 5, y: 5, d: 'd', step: null, path: [], pending: null, anim: 0 },
   others: new Map(), floats: [], keys: [], view: 3, cam: { x: 0, y: 0 },
@@ -143,6 +144,8 @@ function applyState(st) {
   S.machineBatch = st.machineBatch || 5; S.goods = st.goods || {}; S.builds = st.builds || {};
   applyBuild(st);
   S.pets = st.pets || {}; S.petKinds = st.petKinds || {};
+  S.stories = st.stories || {}; S.storyHearts = st.storyHearts || [2, 5, 8];
+  S.achievementList = st.achievementList || []; S.achievements = st.achievements || {}; S.thisWeek = st.thisWeek || null;
   // 鴨子游泳的範圍：池塘邊的水和旁邊的草地；寵物沒人帶時在家門口玩
   const tilesIn = (z, ok) => {
     const out = [];
@@ -338,6 +341,7 @@ function openBag() {
     ...(rows.filter(Boolean).length ? rows : [el('div', { class: 'empty', text: '倉庫是空的' })]),
     el('div', { class: 'actions' },
       el('button', { class: 'btn', type: 'button', text: '📖 圖鑑', onclick: openDex }),
+      el('button', { class: 'btn', type: 'button', text: '🏆 成就', onclick: openAchievements }),
       el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
 }
 
@@ -733,6 +737,24 @@ function openDex() {
     }),
     el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
 }
+// 家族成就＋這一週的紀錄（打開時重新拿一次，這週的數字才是最新的）
+async function openAchievements() {
+  try { await loadState(); } catch {}
+  const got = S.achievements, w = S.thisWeek;
+  const n = S.achievementList.filter((a) => got[a.id]).length;
+  const md = (d) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
+  const rows = S.achievementList.map((a) => {
+    const g = got[a.id];
+    return el('div', { class: 'row' + (g ? '' : ' off') }, el('span', { class: 'big', text: g ? '🏆' : '🔒' }),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: a.name }),
+        el('div', { class: 'meta', text: g ? `${a.desc}・${g.by || '家人'} ${md(new Date(g.at + 8 * 3600000).toISOString().slice(0, 10))} 達成・獎勵 ${a.reward} 元`
+          : `${a.desc}・獎勵 ${a.reward} 元` })));
+  });
+  openModal(el('h2', { text: `🏆 家族成就 ${n}/${S.achievementList.length}` }),
+    w ? el('p', { class: 'note', text: `📰 這一週（${md(w.week)} 起）：收成 ${w.harvest} 次・出貨賺了 ${w.shipped.toLocaleString()} 元${w.top ? `・最勤勞：${w.top.name}（${w.top.actions} 件事）` : ''}。每週第一次有人打開牧場，聊天室會貼上週的週報。` }) : null,
+    ...rows,
+    el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
+}
 function fishHint(d, unknown) {
   const where = d.where.map((w) => (w === 'pond' ? '牧場池塘' : '後山的湖')).join('、');
   const when = d.time === 'day' ? '白天' : d.time === 'night' ? '晚上' : '';
@@ -804,10 +826,15 @@ function rewardText(rs) {
 }
 
 async function openVillager(id) {
-  const v = S.villagers[id];
   let r;
   try { r = await doAct({ action: 'talk', villager: id }); } catch { return; }
   S.talks++;
+  // 感情夠了：先說一段故事，聽完再回到平常的聊天
+  if (r.gained && r.gained.story) return openStory(id, r.gained.story, () => showVillager(id, r));
+  showVillager(id, r);
+}
+function showVillager(id, r) {
+  const v = S.villagers[id];
   const f = S.friends[id] || { hearts: 0, giftedToday: false };
   const line = lineOf(id);
   openModal(
@@ -823,12 +850,46 @@ async function openVillager(id) {
         text: f.giftedToday ? '今天送過禮了' : '🎁 送禮物', onclick: () => openGift(id),
       })));
 }
+// 村民的故事：一頁一句，按「繼續」往下，最後一頁按「聽完了」
+function openStory(id, story, after) {
+  const v = S.villagers[id];
+  let i = 0;
+  const show = () => {
+    const last = i >= story.lines.length - 1;
+    openModal(
+      el('div', { class: 'talk-head' }, icon('char_d0', v.color, v.hair),
+        el('div', { class: 'grow' }, el('h2', { text: `📖 ${v.name}的故事（${story.chapter + 1}/${S.storyHearts.length}）` }),
+          el('div', { class: 'sub', text: `「${story.title}」` }))),
+      el('p', { class: 'speech story', text: story.lines[i] }),
+      el('p', { class: 'note', text: `${i + 1} / ${story.lines.length}` }),
+      el('div', { class: 'actions' }, el('button', {
+        class: 'btn primary', type: 'button', text: last ? '聽完了' : '繼續 ▸',
+        onclick: () => { if (last) { if (after) after(); else closeModal(); } else { i++; show(); } },
+      })));
+  };
+  show();
+}
+// 聽過的故事（告示板上可以重看）
+function openStoryList(id) {
+  const v = S.villagers[id], f = S.friends[id] || {};
+  const seen = (S.stories[id] || []).slice(0, f.storyLevel || 0);
+  openModal(el('h2', { text: `📖 ${v.name}的故事` }),
+    ...seen.map((st, n) => el('div', { class: 'row' }, el('span', { class: 'big', text: '📖' }),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: `${n + 1}. ${st.title}` })),
+      el('button', { class: 'btn', type: 'button', text: '再看一次', onclick: () => openStory(id, { ...st, chapter: n }, () => openStoryList(id)) }))),
+    ...(S.stories[id] || []).slice(seen.length).map((st, n) => el('div', { class: 'row off' }, el('span', { class: 'big', text: '🔒' }),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: '？？？' }),
+        el('div', { class: 'meta', text: `感情 ${S.storyHearts[seen.length + n]} 顆愛心時找他聊天` })))),
+    el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '回告示板', onclick: openBoard })));
+}
+
 // 感情：每 10 點一顆愛心（最多 10 顆），也顯示點數，送禮後看得出有進步
 const friendText = (f) => `❤️×${(f && f.hearts) || 0}・感情 ${(f && f.points) || 0}/100`;
 
 function openGift(id) {
   const v = S.villagers[id];
-  const list = Object.keys(S.items).filter((item) => /^(crop|prod):/.test(item) && itemInfo(item)).sort();
+  // 作物、雞蛋牛奶、魚、礦石、料理、加工品都能送（種子、飼料不行）
+  const list = Object.keys(S.items).filter((item) => (itemInfo(item) || {}).sell > 0).sort();
   const rows = list.map((item) => {
     const c = itemInfo(item);
     return el('div', { class: 'row' }, icon(c.icon),
@@ -887,7 +948,8 @@ function openBoard() {
     const f = S.friends[id] || { hearts: 0 };
     return el('div', { class: 'row' }, icon('char_d0', v.color, v.hair),
       el('div', { class: 'grow' }, el('div', { class: 'name', text: `${v.name}${isBirthdayToday(id) ? ' 🎂 今天生日！' : ''}` }),
-        el('div', { class: 'meta', text: `${v.role}・生日 ${Number(v.birthday.slice(0, 2))}/${Number(v.birthday.slice(3))}・${friendText(f)}${f.talkedToday ? '・今天聊過了' : ''}` })));
+        el('div', { class: 'meta', text: `${v.role}・生日 ${Number(v.birthday.slice(0, 2))}/${Number(v.birthday.slice(3))}・${friendText(f)}${f.talkedToday ? '・今天聊過了' : ''}` })),
+      el('button', { class: 'btn', type: 'button', text: `📖 ${f.storyLevel || 0}/${S.storyHearts.length}`, 'aria-label': `${v.name}的故事`, onclick: () => openStoryList(id) }));
   });
   openModal(el('h2', { text: '📋 委託告示板' }), ...rows,
     el('h2', { class: 'section', text: '小鎮的人' }), ...people,
@@ -1050,6 +1112,8 @@ async function doAct(body) {
     if (r.dex) S.dex = r.dex;
     if (r.machines) S.machines = r.machines;
     if (r.pets) S.pets = r.pets;
+    if (r.achievements) S.achievements = r.achievements;
+    for (const a of r.newAchievements || []) setTimeout(() => toast(`🏆 達成成就「${a.name}」！全家拿到 ${a.reward} 元`), 900);
     if (r.build) applyBuild(r.build);
     if (r.energyMax) S.energyMax = r.energyMax;
     // 田地上的動作：收成飄出「+1 作物」，其他飄出扣了幾點體力（釣魚、挖礦自己處理）
@@ -1437,6 +1501,8 @@ function connectWs() {
       if (ev.dex) S.dex = ev.dex;
       if (ev.machines) S.machines = ev.machines;
       if (ev.pets) S.pets = ev.pets;
+      if (ev.achievements) S.achievements = ev.achievements;
+      if (ev.by !== S.meId) for (const a of ev.newAchievements || []) toast(`🏆 達成成就「${a.name}」！全家拿到 ${a.reward} 元`);
       if (ev.build) {
         // 家人擴建了房子：伺服器已經幫今天打開過牧場的人加了體力
         const add = (ev.build.energyMax || S.energyMax) - S.energyMax;
