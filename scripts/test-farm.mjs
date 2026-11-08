@@ -17,6 +17,7 @@ import {
   GH_MAP, fieldArea, GOODS, MACHINES, MACHINE_SPOTS, MACHINE_BATCH, machineAt, machineReadyAt, BUILDS, HOUSE_ENERGY, energyMaxOf,
   POND_ZONE, BABY_DAYS, BABY_EVERY_DAYS, isBaby, canHaveBaby, babyName, PETS, PET_ZONE, petFind, LOVE_MAX,
   STORIES, STORY_HEARTS, storyDue, ACHIEVEMENTS, achievementsMet, weekStart, weekEnd, weeklyReportText,
+  WEATHERS, realRain, FESTIVAL_ACTIVITIES, RIDDLES, FORTUNES, XMAS_GIFTS, riddlesFor, fortuneOf, xmasGiftOf, activityResult, BOAT_BEATS, BBQ_STICKS,
 } from '../src/farm.js';
 import { SPRITES, PALETTE, FISH_SHAPE, BOOT_SHAPE, ROCK_SHAPE, FISH_COLORS, ORE_COLORS, DISH_SHAPES, DISH_COLORS, GOOD_ART } from '../public/farm-sprites.js';
 
@@ -150,7 +151,13 @@ check('2 月底的下一季是 3/1', nextSeasonStart(tw(2027, 2, 28, 23)), tw(20
 console.log('\n--- 天氣 ---');
 const yearDays = Array.from({ length: 365 }, (_, i) => taiwanDay(tw(2026, 1, 1, 12) + i * 24 * H));
 const ws = yearDays.map(weatherOf);
-check('天氣只有晴、多雲、雨', ws.every((w) => ['sun', 'cloud', 'rain'].includes(w)), true);
+check('天氣只有晴、多雲、雨、颱風、寒流', ws.every((w) => WEATHERS.includes(w)) && WEATHERS.length === 5, true);
+const monthOf = (d) => Number(d.slice(5, 7));
+check('颱風只在 7～10 月、寒流只在 12～2 月', yearDays.every((d, i) => (ws[i] !== 'typhoon' || [7, 8, 9, 10].includes(monthOf(d)))
+  && (ws[i] !== 'cold' || [12, 1, 2].includes(monthOf(d)))), true);
+const tyN = ws.filter((w) => w === 'typhoon').length, coldN = ws.filter((w) => w === 'cold').length;
+check(`颱風一年幾天（實際 ${tyN} 天）、寒流幾天（實際 ${coldN} 天）`, tyN >= 1 && tyN <= 12 && coldN >= 2 && coldN <= 20, true);
+check('颱風天也會下雨（田地自動澆水）', yearDays.filter((d, i) => ws[i] === 'typhoon').every((d) => realRain(d)), true);
 check('同一天的天氣永遠一樣（才能預報明天）', weatherOf('2026-11-05') === weatherOf('2026-11-05'), true);
 const rainShare = ws.filter((w) => w === 'rain').length / 365;
 check(`一年大約一到三成是雨天（實際 ${(rainShare * 100).toFixed(0)}%）`, rainShare > 0.1 && rainShare < 0.3, true);
@@ -407,6 +414,27 @@ const rep = weeklyReportText({ week: '2026-11-02', actions: 120, harvest: 23, sh
 const rep0 = weeklyReportText({ week: '2026-11-02', actions: 7, harvest: 0, shipped: 0, achievements: [], dex: [], top: { name: '阿宏', actions: 7 } });
 check('沒收成、沒出貨的那週：不寫 0，改說大家做了幾件事', [rep0.includes('0 次') || rep0.includes(' 0 元'), rep0.includes('大家一共做了 7 件事')], [false, true]);
 check('週報：日期、收成、出貨（有千分位）、成就、圖鑑、最勤勞的人', ['11/2～11/8', '收成 23 次', '4,560 元', '「第一次收成」', '鰻魚、紫水晶、鯉魚 等 4 種', '最勤勞的是媽媽（做了 80 件事）'].every((t) => rep.includes(t)), true);
+
+
+console.log('\n--- 節慶活動 ---');
+check('五個節日有活動：春節抽籤、元宵燈謎、端午龍舟、中秋烤肉、聖誕交換禮物', Object.entries(FESTIVAL_ACTIVITIES).map(([f, a]) => f + ':' + a.kind),
+  ['spring:fortune', 'lantern:riddle', 'dragon:boat', 'moon:bbq', 'christmas:xmas']);
+check('每個節慶活動的節日都存在、都有名字和說明', Object.entries(FESTIVAL_ACTIVITIES).every(([f, a]) => FESTIVALS[f] && a.name && a.desc), true);
+check('燈謎：每題三個選項、答案在選項裡、選項不重複', RIDDLES.length >= 9 && RIDDLES.every((r) => r.c.length === 3 && r.a >= 0 && r.a < 3 && new Set(r.c).size === 3), true);
+const rz = riddlesFor('2027-02-20', 7);
+check('每個人猜 3 題不一樣的，同一天同一個人永遠一樣', [rz.length, new Set(rz).size, JSON.stringify(riddlesFor('2027-02-20', 7)) === JSON.stringify(rz)], [3, 3, true]);
+check('不同的人題目不一定一樣', [1, 2, 3, 4, 5, 6].some((u) => JSON.stringify(riddlesFor('2027-02-20', u)) !== JSON.stringify(rz)), true);
+const ctx = { farmId: 3, day: '2027-02-20', userId: 7 };
+const allRight = activityResult('riddle', { ...ctx, answers: rz.map((i) => RIDDLES[i].a) });
+check('全部猜對：300 元＋2 個湯圓', [allRight.score, allRight.money, allRight.item, allRight.qty], [3, 300, 'dish:tangyuan', 2]);
+check('答案亂填（不是陣列、原型鏈）：0 題', [activityResult('riddle', { ...ctx, answers: 'abc' }).score, activityResult('riddle', { ...ctx, answers: { 0: 0 } }).score], [0, 0]);
+check('划龍舟：分數夾在 0～12、打中 10 下送粽子', [activityResult('boat', { score: 99 }).score, activityResult('boat', { score: -5 }).money, activityResult('boat', { score: 1.5 }).score,
+  activityResult('boat', { score: 10 }).item, activityResult('boat', { score: 9 }).item], [BOAT_BEATS, 0, 0, 'dish:zongzi', null]);
+check('中秋烤肉：分數夾在 0～6、烤好幾串帶回幾串', [activityResult('bbq', { score: 50 }).score, activityResult('bbq', { score: 4 }).money, activityResult('bbq', { score: 4 }).qty, activityResult('bbq', { score: 0 }).item],
+  [BBQ_STICKS, 200, 4, null]);
+check('抽籤：同一個人同一天抽到的一樣、紅包大於 0', JSON.stringify(fortuneOf(3, '2027-02-06', 7)) === JSON.stringify(fortuneOf(3, '2027-02-06', 7)) && FORTUNES.every((f) => f.money > 0 && f.level && f.text), true);
+check('聖誕禮物都是真的東西', XMAS_GIFTS.every(([i, q]) => q > 0 && (i === 'feed' || itemPrice(i) > 0)) && !!xmasGiftOf(3, '2026-12-25', 7), true);
+check('烤肉串是節慶食物、有圖', [DISHES.bbq.festival, !!DISH_COLORS.bbq], [true, true]);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

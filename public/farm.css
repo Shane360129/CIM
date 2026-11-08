@@ -116,3 +116,13 @@ canvas#world { position: fixed; inset: 0; width: 100%; height: 100%; display: bl
 }
 /* 村民的故事：字大一點、留白多一點，像在聽人講話 */
 .speech.story { font-size: 17px; line-height: 1.8; min-height: 4.5em; }
+/* 節慶活動：猜燈謎、划龍舟、中秋烤肉 */
+.riddle { border-top: 1px dashed #d8c7a6; padding-top: 6px; margin-top: 6px; }
+.riddle .name { font-weight: 600; margin: 0 0 4px; line-height: 1.6; }
+.boat-track { position: relative; height: 34px; border-radius: 17px; background: #cfe8f6; margin: 14px 4px 6px; overflow: hidden; }
+.boat-zone { position: absolute; left: 38%; width: 24%; top: 0; bottom: 0; border: 3px solid #e0393e; border-radius: 12px; box-sizing: border-box; }
+.boat-marker { position: absolute; top: 5px; width: 24px; height: 24px; margin-left: -12px; border-radius: 50%; background: #3f9a3f; }
+.boat-marker.hit { background: #f6d34a; transform: scale(1.3); }
+.big-btn { font-size: 20px; padding: 10px 28px; }
+.bbq-grill { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0; padding: 12px; border-radius: 12px; background: #3a3a44; }
+.btn.stick { font-size: 28px; padding: 10px 0; }

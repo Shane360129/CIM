@@ -133,6 +133,7 @@ check('別人不能在我的牧場領養寵物、摸寵物、幫動物改名（4
   (await Promise.all([{ action: 'adopt_pet', pet: 'dog', name: '偷養' }, { action: 'pat', pet: 'dog' }, { action: 'rename_animal', animalId: r0.data.animals?.[0]?.id, name: '偷改' }]
     .map((b) => j(`/api/farm/${dm.id}`, { method: 'POST', body: b }, TC)))).every((x) => x.status === 404));
 check('寵物名字裡的隱藏字元也會被拿掉', (await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'adopt_pet', pet: 'cat', name: '\u202e咪\u200b咪' } }, TA)).data.pets?.cat?.name === '咪咪');
+check('別人不能用我的牧場玩節慶活動（404）', (await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'festival_play', score: 6 } }, TC)).status === 404);
 check('牧場內容大小有上限（超大請求被擋）',
   (await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'till', x: 4, y: 9, junk: 'x'.repeat(5000) } }, TA)).status >= 400);
 

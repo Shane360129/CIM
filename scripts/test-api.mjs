@@ -385,6 +385,24 @@ if (fs0.festival) {
 } else {
   check('不是節日不能領禮物', /不是節日/.test((await farmDo(groupId, { action: 'festival_claim' }, TA)).data.error || ''));
 }
+// 節慶活動（中秋烤肉、元宵燈謎…；分數由前端小遊戲送來，伺服器夾在合理範圍）
+if (fs0.activity) {
+  const A = fs0.activity;
+  check(`今天有節慶活動「${A.name}」，還沒玩`, A.played === false && !!A.kind);
+  r = await farmDo(groupId, { action: 'festival_play', score: 4, answers: [0, 0, 0] }, TB);
+  money += r.data.gained?.money || 0;
+  check(`朋友B 參加${A.name}，拿到獎勵`, r.status === 200 && r.data.money === money && r.data.gained.activity === A.kind
+    && (!r.data.gained.item || r.data.items[r.data.gained.item] >= r.data.gained.qty), JSON.stringify(r.data.gained || r.data.error));
+  if (A.kind === 'bbq') check('烤好 4 串：200 元＋4 串烤肉串', r.data.gained.money === 200 && r.data.gained.item === 'dish:bbq' && r.data.gained.qty === 4);
+  check('聊天室說誰參加了活動', (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes(`參加${A.name}`)));
+  check('一個人一個節日只能玩一次', /玩過/.test((await farmDo(groupId, { action: 'festival_play', score: 4 }, TB)).data.error || ''));
+  r = await farmDo(groupId, { action: 'festival_play', score: 999 }, TA);
+  money += r.data.gained?.money || 0;
+  check('朋友A 也能玩一次，分數太大會被夾住', r.status === 200 && r.data.money === money && (A.kind !== 'bbq' || r.data.gained.score === 6));
+  check('朋友A 打開看到自己玩過了', (await farmGet(groupId, TA)).data.activity.played === true);
+} else {
+  check('今天沒有節慶活動', /沒有節慶活動/.test((await farmDo(groupId, { action: 'festival_play', score: 3 }, TA)).data.error || ''));
+}
 // 行事曆上今天有人生日 → 美玲姐送蛋糕（一天一次）
 const cake0 = (await farmGet(groupId, TA)).data.items['dish:cake'] || 0;
 r = await j('/api/events', { method: 'POST', body: { title: '爸爸生日', date: fs0.day, remindAt: Date.now() + 3600000 } }, TA);

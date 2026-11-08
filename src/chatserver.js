@@ -16,6 +16,7 @@ import {
   GH_MAP, fieldArea, GOODS, MACHINES, MACHINE_SPOTS, MACHINE_BATCH, machineReadyAt, BUILDS, energyMaxOf,
   POND_ZONE, BABY_DAYS, isBaby, canHaveBaby, babyName, PETS, PET_ZONE, petFind,
   STORIES, STORY_HEARTS, storyDue, ACHIEVEMENTS, achievementsMet, weekStart, weeklyReportText,
+  isWetWeather, FESTIVAL_ACTIVITIES, RIDDLES, riddlesFor, activityResult, BOAT_BEATS, BBQ_STICKS,
 } from './farm.js';
 const ANIMAL_EMOJI = { chicken: '🐔', duck: '🦆', cow: '🐄', sheep: '🐑' };
 
@@ -389,6 +390,20 @@ CREATE TABLE IF NOT EXISTS farm_achievements (
 ALTER TABLE farms ADD COLUMN report_week TEXT;
 `;
 
+// 颱風：哪天吹過了（熟了沒收的作物被吹倒）、前一天預報過了沒；節慶活動：每人每個節日玩一次
+const SCHEMA_V16 = `
+ALTER TABLE farms ADD COLUMN typhoon_seen TEXT;
+ALTER TABLE farms ADD COLUMN typhoon_warned TEXT;
+CREATE TABLE IF NOT EXISTS farm_festival_play (
+  conversation_id INTEGER NOT NULL,
+  day TEXT NOT NULL,
+  user_id INTEGER NOT NULL,
+  kind TEXT NOT NULL,
+  score INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (conversation_id, day, user_id)
+);
+`;
+
 // 訊息中的網址：http(s):// 或 www. 開頭，遇到空白、引號或中文標點即結束
 // （與前端 public/app.js 的 URL_RE / trimUrlTail 保持一致）
 const URL_RE = /(?:https?:\/\/|www\.)[^\s<>"'`\u3000、，。！？：；（）「」『』【】《》〈〉…]+/i;
@@ -645,6 +660,10 @@ export class ChatServer {
       if (v < 15) {
         this.sql.exec(SCHEMA_V15);
         this.setSetting('schema_version', '15');
+      }
+      if (v < 16) {
+        this.sql.exec(SCHEMA_V16);
+        this.setSetting('schema_version', '16');
       }
     });
     // 心跳不喚醒 DO：客戶端送 "ping"，執行環境自動回 "pong"
@@ -1777,7 +1796,7 @@ export class ChatServer {
     if (remaining.length === 0) {
       this.sql.exec(`DELETE FROM messages WHERE conversation_id = ?`, conversationId);
       this.sql.exec(`DELETE FROM conversations WHERE id = ?`, conversationId);
-      for (const t of ['farms', 'farm_tiles', 'farm_items', 'farm_players', 'farm_animals', 'farm_friends', 'farm_mined', 'farm_dex', 'farm_machines', 'farm_pets', 'farm_stats', 'farm_weekly', 'farm_achievements'])
+      for (const t of ['farms', 'farm_tiles', 'farm_items', 'farm_players', 'farm_animals', 'farm_friends', 'farm_mined', 'farm_dex', 'farm_machines', 'farm_pets', 'farm_stats', 'farm_weekly', 'farm_achievements', 'farm_festival_play'])
         this.sql.exec(`DELETE FROM ${t} WHERE conversation_id = ?`, conversationId);
     } else {
       this.addSystemMessage(conversationId, `${me.display_name} 離開了群組`);
@@ -2429,11 +2448,12 @@ export class ChatServer {
   // FARM_VILLAGERS=out／home 也只給本機測試用：不管幾點，村民都在外面／都在家
   farmVillagersOut(now) {
     const o = this.env && this.env.FARM_VILLAGERS;
+    if (o !== 'out' && this.farmWeather(taiwanDay(now)) === 'typhoon') return false; // 颱風天大家都待在家裡
     return o === 'out' ? true : o === 'home' ? false : villagerOut(now);
   }
   farmRainy() {
     const o = this.env && this.env.FARM_WEATHER;
-    if (WEATHERS.includes(o)) return o === 'rain' ? () => true : NO_RAIN;
+    if (WEATHERS.includes(o)) return isWetWeather(o) ? () => true : NO_RAIN;
     return realRain;
   }
 
@@ -2520,6 +2540,30 @@ export class ChatServer {
     this.farmSpend(conversationId, price);
     for (const [i, q] of Object.entries(need)) this.farmAddItem(conversationId, i, -q);
   }
+  // 颱風：前一天在聊天室預報；當天第一次有人打開或動作時，外面田裡熟了沒收的作物被吹倒（溫室裡的沒事）
+  farmTyphoon(conversationId, farm, now, scale, rainy) {
+    const today = taiwanDay(now);
+    const tomorrow = taiwanDay(dayEndOf(now));
+    if (this.farmWeather(tomorrow) === 'typhoon' && farm.typhoon_warned !== today && this.farmWeather(today) !== 'typhoon') {
+      this.sql.exec(`UPDATE farms SET typhoon_warned = ? WHERE conversation_id = ?`, today, conversationId);
+      farm.typhoon_warned = today;
+      this.addSystemMessage(conversationId, '🌀 氣象報告：明天颱風要來！外面田裡熟了的作物記得今天先收起來，溫室裡的不用擔心');
+    }
+    if (this.farmWeather(today) !== 'typhoon' || farm.typhoon_seen === today) return [];
+    this.sql.exec(`UPDATE farms SET typhoon_seen = ? WHERE conversation_id = ?`, today, conversationId);
+    farm.typhoon_seen = today;
+    const blown = [];
+    for (const t of this.sql.exec(`SELECT * FROM farm_tiles WHERE conversation_id = ? AND crop IS NOT NULL`, conversationId).toArray()) {
+      if (fieldArea(t.x, t.y) !== 'farm' || cropStage(t, now, scale, rainy) < 3) continue;
+      blown.push(CROPS[t.crop] ? CROPS[t.crop].name : t.crop);
+      this.sql.exec(`UPDATE farm_tiles SET crop = NULL, progress_ms = 0, tick_at = ? WHERE conversation_id = ? AND x = ? AND y = ?`,
+        now, conversationId, t.x, t.y);
+    }
+    this.addSystemMessage(conversationId, blown.length
+      ? `🌀 颱風來了！外面田裡 ${blown.length} 顆熟了還沒收的作物被吹倒了（${[...new Set(blown)].join('、')}）。今天村民都待在家裡，後山也別去喔`
+      : '🌀 颱風來了！還好田裡熟的作物都收好了。今天村民都待在家裡，後山也別去喔');
+    return blown;
+  }
   // 全家的累計數字（收成次數、出貨賺的錢、完成的委託、生的寶寶）
   farmStat(conversationId, key, delta) {
     this.sql.exec(`INSERT INTO farm_stats (conversation_id, key, value) VALUES (?, ?, ?)
@@ -2579,6 +2623,17 @@ export class ChatServer {
         conversationId, from, to).toArray().map((r) => (ACHIEVEMENTS.find((a) => a.id === r.id) || { name: r.id }).name),
       dex: this.sql.exec(`SELECT item FROM farm_dex WHERE conversation_id = ? AND at >= ? AND at < ? ORDER BY at`, conversationId, from, to)
         .toArray().map((r) => itemName(r.item)),
+    };
+  }
+  // 今天的節慶活動（沒有就 null）、我玩過了沒；元宵給我的 3 題燈謎（不給答案）
+  farmActivityPub(conversationId, me, fest, today) {
+    const A = fest && FESTIVAL_ACTIVITIES[fest];
+    if (!A) return null;
+    const played = this.sql.exec(`SELECT score FROM farm_festival_play WHERE conversation_id = ? AND day = ? AND user_id = ?`,
+      conversationId, today, me.id).toArray()[0];
+    return {
+      festival: fest, ...A, played: !!played, beats: BOAT_BEATS, sticks: BBQ_STICKS,
+      riddles: A.kind === 'riddle' ? riddlesFor(today, me.id).map((i) => ({ q: RIDDLES[i].q, c: RIDDLES[i].c })) : undefined,
     };
   }
   farmBuildPub(farm) {
@@ -2764,6 +2819,7 @@ export class ChatServer {
       const other = memberRows.find((r) => r.id !== me.id);
       title = other ? `${me.display_name} 和 ${other.display_name}` : `${me.display_name} 的牧場`;
     }
+    this.farmTyphoon(conversationId, farm, now, scale, rainy);
     const tiles = this.sql
       .exec(`SELECT * FROM farm_tiles WHERE conversation_id = ?`, conversationId)
       .toArray()
@@ -2812,6 +2868,7 @@ export class ChatServer {
       greenhouse: GH_MAP, goods: GOODS, machineKinds: MACHINES, machineSpots: MACHINE_SPOTS, machineBatch: MACHINE_BATCH, builds: BUILDS,
       machines: this.farmMachinesPub(conversationId, scale), ...this.farmBuildPub(farm),
       pond: POND_ZONE, petKinds: PETS, petZone: PET_ZONE, pets: this.farmPetsPub(conversationId, today),
+      activity: this.farmActivityPub(conversationId, me, fest, today),
       stories: STORIES, storyHearts: STORY_HEARTS, achievementList: ACHIEVEMENTS.map(({ id, name, desc, reward }) => ({ id, name, desc, reward })),
       achievements: this.farmAchievementsGot(conversationId), thisWeek: this.farmWeekSummary(conversationId, week),
       nextFestival: nextFestival(today), todayEvents, birthdays: bdays,
@@ -2831,6 +2888,8 @@ export class ChatServer {
     const season = this.farmSeason(now);
     const energyMax = energyMaxOf(farm.house_level);
     const p = this.farmPlayer(conversationId, me.id, now, energyMax);
+    this.farmTyphoon(conversationId, farm, now, scale, rainy);
+    const weatherToday = this.farmWeather(taiwanDay(now));
     const spend = (n) => {
       if (p.energy < n) throw new HttpError(400, '體力用完了，明天再來吧 😴');
       p.energy -= n;
@@ -2855,10 +2914,15 @@ export class ChatServer {
       if (area === 'gh' && !farm.gh_built) throw new HttpError(400, '溫室還沒蓋好');
       return area;
     };
+    // 寒流天在外面的田做事比較累：翻土、澆水、播種、挖掉多花 1 點體力（溫室裡不會）
+    const coldExtra = (area, act) => (weatherToday === 'cold' && area === 'farm' && ENERGY_COST[act] > 0 ? 1 : 0);
     const villagerOf = (raw) => {
       const id = String(raw || '');
       if (!Object.hasOwn(VILLAGERS, id)) throw new HttpError(400, '沒有這位村民');
-      if (!this.farmVillagersOut(now)) throw new HttpError(400, `${VILLAGERS[id].name}已經回家睡覺了，早上 6 點以後再來`);
+      if (!this.farmVillagersOut(now)) {
+        throw new HttpError(400, this.farmWeather(today) === 'typhoon' ? `颱風天，${VILLAGERS[id].name}待在家裡不出門`
+          : `${VILLAGERS[id].name}已經回家睡覺了，早上 6 點以後再來`);
+      }
       return id;
     };
 
@@ -2875,8 +2939,9 @@ export class ChatServer {
         if (fieldArea(c.x, c.y) !== area) continue;
         const t = this.farmTileRow(conversationId, c.x, c.y, now);
         if (action === 'till' ? t.tilled : (!t.tilled || t.watered_until - now > fresh)) continue;
-        if (p.energy < ENERGY_COST[action]) { tired = true; break; }
-        p.energy -= ENERGY_COST[action];
+        const cost = ENERGY_COST[action] + coldExtra(area, action);
+        if (p.energy < cost) { tired = true; break; }
+        p.energy -= cost;
         if (action === 'till') Object.assign(t, { tilled: 1, crop: null, progress_ms: 0, tick_at: now });
         else Object.assign(t, { progress_ms: grownMs(t, now, scale, this.tileRain(c.x, c.y, rainy)), tick_at: now, watered_until: waterUntil(now, scale) });
         this.farmSaveTile(conversationId, t);
@@ -2896,11 +2961,11 @@ export class ChatServer {
 
       if (action === 'till') {
         if (t.tilled) throw new HttpError(400, '這塊已經翻好土了');
-        spend(ENERGY_COST.till);
+        spend(ENERGY_COST.till + coldExtra(area, 'till'));
         Object.assign(t, { tilled: 1, crop: null, progress_ms: 0, tick_at: now });
       } else if (action === 'dig') {
         if (!t.crop) throw new HttpError(400, '這裡沒有種東西');
-        spend(ENERGY_COST.dig);
+        spend(ENERGY_COST.dig + coldExtra(area, 'dig'));
         Object.assign(t, { crop: null, progress_ms: 0, tick_at: now });
       } else if (action === 'plant') {
         const crop = String(body.crop || '');
@@ -2911,12 +2976,12 @@ export class ChatServer {
         if (t.crop) throw new HttpError(400, '這裡已經種了東西');
         if ((this.farmItems(conversationId)[`seed:${crop}`] || 0) < 1)
           throw new HttpError(400, `沒有${CROPS[crop].name}種子了，去商店買吧`);
-        spend(ENERGY_COST.plant);
+        spend(ENERGY_COST.plant + coldExtra(area, 'plant'));
         this.farmAddItem(conversationId, `seed:${crop}`, -1);
         Object.assign(t, { crop, progress_ms: 0, tick_at: now }); // 土本來就濕的話繼續算
       } else if (action === 'water') {
         if (!t.tilled) throw new HttpError(400, '要先用鋤頭翻土');
-        spend(ENERGY_COST.water);
+        spend(ENERGY_COST.water + coldExtra(area, 'water'));
         // 先把舊的濕土時間結算進成長量，再重新保濕
         Object.assign(t, { progress_ms: grownMs(t, now, scale, tr), tick_at: now, watered_until: waterUntil(now, scale) });
       } else {
@@ -3036,6 +3101,8 @@ export class ChatServer {
         pet.love, today, me.id, conversationId, kind);
       gained = { pet: kind, first, find };
       petsChanged = true;
+    } else if ((action === 'fish' || action === 'mine') && weatherToday === 'typhoon') {
+      throw new HttpError(400, action === 'fish' ? '颱風天水邊很危險，今天不要釣魚' : '颱風天不要上山，很危險！');
     } else if (action === 'fish') {
       // 拋竿：前端負責「看到 ❗ 有沒有及時拉」的小遊戲，hooked 告訴伺服器有沒有拉到；體力照扣
       const area = String(body.area || '');
@@ -3077,6 +3144,21 @@ export class ChatServer {
       this.addSystemMessage(conversationId, `🎁 ${me.display_name} 領了${FESTIVALS[fest].name}的禮物：${this.farmGiftText(g)}`);
       gained = { festival: fest, ...g };
       townChanged = true;
+    } else if (action === 'festival_play') {
+      // 節慶活動：每人每個節日一次，結果由伺服器算（小遊戲的分數由前端送來，夾在合理範圍）
+      const fest = this.farmFestival(today);
+      const A = fest && FESTIVAL_ACTIVITIES[fest];
+      if (!A) throw new HttpError(400, '今天沒有節慶活動');
+      if (this.sql.exec(`SELECT 1 FROM farm_festival_play WHERE conversation_id = ? AND day = ? AND user_id = ?`, conversationId, today, me.id).toArray().length)
+        throw new HttpError(400, `今天已經玩過${A.name}了，明年再來`);
+      const res = activityResult(A.kind, { farmId: conversationId, day: today, userId: me.id, answers: body.answers, score: body.score });
+      if (res.money) this.sql.exec(`UPDATE farms SET money = money + ? WHERE conversation_id = ?`, res.money, conversationId);
+      if (res.item) this.farmAddItem(conversationId, res.item, res.qty);
+      this.sql.exec(`INSERT INTO farm_festival_play (conversation_id, day, user_id, kind, score) VALUES (?, ?, ?, ?, ?)`,
+        conversationId, today, me.id, A.kind, res.score);
+      const prize = [res.money ? `${res.money} 元` : null, res.item ? `${itemName(res.item)}${res.qty > 1 ? ` ×${res.qty}` : ''}` : null].filter(Boolean).join('、');
+      this.addSystemMessage(conversationId, `🎪 ${me.display_name} 參加${A.name}：${res.text}${prize ? `，拿到 ${prize}` : ''}！`);
+      gained = { activity: A.kind, ...res };
     } else if (action === 'festival_calendar') {
       // 把接下來一年的節日加到家裡的行事曆（已經有同名同日的就跳過），當天早上 9 點提醒
       let added = 0;
@@ -3111,7 +3193,9 @@ export class ChatServer {
       if ((this.farmItems(conversationId)[`dish:${dish}`] || 0) < 1) throw new HttpError(400, `倉庫裡沒有${DISHES[dish].name}`);
       if (p.energy >= energyMax) throw new HttpError(400, '體力是滿的，等累了再吃吧');
       this.farmAddItem(conversationId, `dish:${dish}`, -1);
-      p.energy = Math.min(energyMax, p.energy + DISHES[dish].energy);
+      // 寒流天喝湯（碗裝的菜）特別補：體力 ×1.5
+      const boost = weatherToday === 'cold' && DISHES[dish].shape === 'bowl' ? 1.5 : 1;
+      p.energy = Math.min(energyMax, p.energy + Math.round(DISHES[dish].energy * boost));
     } else if (action === 'talk') {
       // 每天第一次聊天 +1（全家一天算一次）；之後再聊只是聽他說話
       const id = villagerOf(body.villager);

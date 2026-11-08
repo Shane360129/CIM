@@ -15,7 +15,8 @@ const EXIT_LABEL = { town: '🏘️ 往小鎮', farm: '🌾 回牧場', hill: '�
 const SEASON = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
 const SEASON_ORDER = ['spring', 'summer', 'autumn', 'winter'];
 const SEASON_MONTHS = { spring: '3～5 月', summer: '6～8 月', autumn: '9～11 月', winter: '12～2 月' };
-const WEATHER = { sun: ['☀️', '晴天'], cloud: ['⛅', '多雲'], rain: ['🌧️', '下雨'] };
+const WEATHER = { sun: ['☀️', '晴天'], cloud: ['⛅', '多雲'], rain: ['🌧️', '下雨'], typhoon: ['🌀', '颱風'], cold: ['🥶', '寒流'] };
+const wetSky = (w) => w === 'rain' || w === 'typhoon';
 // 春天有些樹是櫻花、秋天有些樹是紅楓
 const TREE_ALT = { spring: 'cherry', autumn: 'maple' };
 const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
@@ -44,7 +45,7 @@ const S = {
   festivals: {}, festival: null, festivalClaimed: false, nextFestival: null, todayEvents: [], birthdays: [],
   machines: {}, machineKinds: {}, machineSpots: {}, machineBatch: 5, goods: {}, builds: {}, ghBuilt: false, houseLevel: 1,
   pondTiles: [], pets: {}, petKinds: {}, petZoneTiles: [], petPos: {}, trails: new Map(),
-  stories: {}, storyHearts: [2, 5, 8], achievementList: [], achievements: {}, thisWeek: null,
+  stories: {}, storyHearts: [2, 5, 8], achievementList: [], achievements: {}, thisWeek: null, activity: null, game: null,
   tool: 'hoe', seed: 'bokchoy', busy: false,
   me: { x: 5, y: 5, d: 'd', step: null, path: [], pending: null, anim: 0 },
   others: new Map(), floats: [], keys: [], view: 3, cam: { x: 0, y: 0 },
@@ -146,6 +147,7 @@ function applyState(st) {
   S.pets = st.pets || {}; S.petKinds = st.petKinds || {};
   S.stories = st.stories || {}; S.storyHearts = st.storyHearts || [2, 5, 8];
   S.achievementList = st.achievementList || []; S.achievements = st.achievements || {}; S.thisWeek = st.thisWeek || null;
+  S.activity = st.activity || null;
   // 鴨子游泳的範圍：池塘邊的水和旁邊的草地；寵物沒人帶時在家門口玩
   const tilesIn = (z, ok) => {
     const out = [];
@@ -250,7 +252,10 @@ function renderToolbar() {
 
 /* ---------- 彈窗：商店、出貨箱、倉庫、選種子 ---------- */
 
-function closeModal() { $('modal-root').textContent = ''; }
+function closeModal() {
+  S.game = null; // 小遊戲（划龍舟、烤肉）跟著關掉
+  $('modal-root').textContent = '';
+}
 function openModal(...kids) {
   const root = $('modal-root');
   root.textContent = '';
@@ -603,6 +608,7 @@ function homeIndex(x, y) {
 // 走到 E：牧場 ↔ 小鎮、後山；溫室是在牧場點它走進去（goArea('gh')）
 function switchArea() {
   const ex = (S.exits[S.area] || []).find((e) => e.x === Math.round(S.me.x) && e.y === Math.round(S.me.y));
+  if (ex && ex.to === 'hill' && S.weather.today === 'typhoon') return toast('🌀 颱風天不要上山，很危險！');
   if (ex) goArea(ex.to);
 }
 function goArea(to) {
@@ -930,6 +936,11 @@ function openBoard() {
         class: 'btn primary', type: 'button', text: '領禮物',
         onclick: async () => { try { await doAct({ action: 'festival_claim' }); toast(`🎁 領到${giftText}！`); openBoard(); } catch {} },
       })));
+    const A = S.activity;
+    if (A) rows.push(el('div', { class: 'row festival' }, el('span', { class: 'big', text: '🎪' }),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: `節慶活動：${A.name}` }),
+        el('div', { class: 'meta', text: A.played ? '你今天已經玩過了，明年再來' : `${A.desc}（每人玩一次）` })),
+      A.played ? null : el('button', { class: 'btn primary', type: 'button', text: '參加', onclick: openActivity })));
   }
   if (q) {
     const c = itemInfo(q.item) || { name: q.item, icon: 'seed' };
@@ -1041,7 +1052,9 @@ function openSeedPicker() {
 function openForecast() {
   const now = serverNow();
   const w = (k) => WEATHER[S.weather[k]] || WEATHER.sun;
-  const rainNote = (k) => (S.weather[k] === 'rain' ? '，田地整天都是濕的，不用澆水' : '');
+  const rainNote = (k) => (S.weather[k] === 'typhoon' ? '，整天大雨大風：外面熟了沒收的作物會被吹倒，村民待在家裡，不能上山、不能釣魚'
+    : S.weather[k] === 'cold' ? '，天氣很冷：在外面的田做事多花 1 點體力（溫室裡不會），喝熱湯特別補'
+    : S.weather[k] === 'rain' ? '，田地整天都是濕的，不用澆水' : '');
   const days = Math.max(1, Math.ceil((S.seasonEndsAt - now) / 86400000));
   const next = SEASON_ORDER[(SEASON_ORDER.indexOf(S.season) + 1) % 4];
   const now_ = Object.values(S.crops).filter((c) => c.seasons.includes(S.season)).map((c) => c.name);
@@ -1052,7 +1065,9 @@ function openForecast() {
         el('div', { class: 'meta', text: `每天的天氣都不一樣${rainNote('today')}` }))),
     el('div', { class: 'row forecast' }, el('span', { class: 'big', text: w('tomorrow')[0] }),
       el('div', { class: 'grow' }, el('div', { class: 'name', text: `明天：${w('tomorrow')[1]}` }),
-        el('div', { class: 'meta', text: S.weather.tomorrow === 'rain' ? '明天會下雨，今天晚上可以省一次澆水' : '記得早上出門前澆水' }))),
+        el('div', { class: 'meta', text: S.weather.tomorrow === 'typhoon' ? '⚠️ 明天颱風！外面田裡熟了的作物今天先收起來，溫室裡的沒關係'
+          : S.weather.tomorrow === 'cold' ? '明天寒流，在外面做事會比較累，可以先煮好熱湯' 
+          : S.weather.tomorrow === 'rain' ? '明天會下雨，今天晚上可以省一次澆水' : '記得早上出門前澆水' }))),
     el('h2', { text: `${{ spring: '🌸', summer: '🌻', autumn: '🍂', winter: '⛄' }[S.season]} 現在是${SEASON[S.season]}天` }),
     el('p', { class: 'sub', text: `${SEASON_MONTHS[S.season]}・再 ${days} 天進入${SEASON[next]}天` }),
     el('p', { class: 'note', text: `這一季可以種：${now_.join('、')}` }),
@@ -1167,7 +1182,7 @@ function useOn(x, y) {
   if (S.tool === 'can') {
     if (!t.tilled) return toast('要先用鋤頭翻土');
     // 下雨天第一次澆水先提醒一下（省體力）；真的要澆再點一次
-    if (S.weather.today === 'rain' && S.area !== 'gh' && !S.rainWarned) {
+    if (wetSky(S.weather.today) && S.area !== 'gh' && !S.rainWarned) {
       S.rainWarned = true;
       return toast('今天下雨，田地整天都是濕的，不用澆水 ☔（真的要澆再點一次）');
     }
@@ -1190,6 +1205,125 @@ function describe(t, now) {
   const left = (t.total - grown(t, now)) / S.scale;
   if (!wet(t, now)) return toast(`${c.name}：土乾了，澆水才會繼續長（還差 ${fmtLeft(left)}）`);
   toast(`${c.name}：再 ${fmtLeft(left)} 就能收成${c.regrow ? '（收完會再長）' : ''}`);
+}
+
+/* ---------- 節慶活動 ---------- */
+
+async function playActivity(body) {
+  try {
+    const r = await doAct({ action: 'festival_play', ...body });
+    S.activity = { ...S.activity, played: true };
+    return r.gained;
+  } catch { return null; }
+}
+function prizeText(g) {
+  const it = g.item && itemInfo(g.item);
+  return [g.money ? `${g.money} 元` : null, it ? `${it.name}${g.qty > 1 ? ` ×${g.qty}` : ''}` : null].filter(Boolean).join('、') || '一個好回憶';
+}
+function activityDone(title, g) {
+  S.game = null;
+  if (!g) return closeModal();
+  openModal(el('h2', { text: title }), el('p', { class: 'speech story', text: g.text }),
+    el('p', { class: 'note', text: `拿到：${prizeText(g)}` }),
+    el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', text: '好開心！', onclick: closeModal })));
+}
+function openActivity() {
+  const A = S.activity;
+  if (!A || A.played) return;
+  const close = el('button', { class: 'btn', type: 'button', text: '等一下再玩', onclick: () => { S.game = null; openBoard(); } });
+  if (A.kind === 'fortune' || A.kind === 'xmas') {
+    const fortune = A.kind === 'fortune';
+    return openModal(el('h2', { text: fortune ? '🏮 新春抽籤' : '🎄 交換禮物' }),
+      el('p', { class: 'sub', text: fortune ? '雙手合十，誠心抽一支籤。' : '聖誕樹下有好多禮物，挑一個吧！' }),
+      el('div', { class: 'actions' }, close, el('button', {
+        class: 'btn primary', type: 'button', text: fortune ? '抽籤' : '拆禮物',
+        onclick: async () => activityDone(fortune ? '🏮 新春抽籤' : '🎄 交換禮物', await playActivity({})),
+      })));
+  }
+  if (A.kind === 'riddle') {
+    const picks = A.riddles.map(() => -1);
+    const rows = A.riddles.map((r, i) => el('div', { class: 'riddle' }, el('p', { class: 'name', text: `${i + 1}. ${r.q}` }),
+      el('div', { class: 'actions wrap' }, ...r.c.map((c, k) => el('button', {
+        class: 'btn', type: 'button', text: c, 'data-q': String(i),
+        onclick: (e) => {
+          picks[i] = k;
+          for (const b of e.target.parentNode.children) b.classList.toggle('primary', b === e.target);
+        },
+      })))));
+    return openModal(el('h2', { text: '🏮 猜燈謎' }), el('p', { class: 'sub', text: '每題選一個答案，選好按「交答案」。' }), ...rows,
+      el('div', { class: 'actions' }, close, el('button', {
+        class: 'btn primary', type: 'button', text: '交答案',
+        onclick: async () => {
+          if (picks.includes(-1)) return toast('還有題目沒選喔');
+          activityDone('🏮 猜燈謎', await playActivity({ answers: picks }));
+        },
+      })));
+  }
+  if (A.kind === 'boat') {
+    // 划龍舟：鼓聲一拍一秒，綠色的格子跑到中間（框框裡）時按「划！」或空白鍵
+    const BEAT = 1000;
+    const marker = el('div', { class: 'boat-marker' });
+    const info = el('p', { class: 'note', text: `0 / ${A.beats}` });
+    const g = S.game = { kind: 'boat', start: performance.now() + 1200, hits: 0, lastBeat: -1, done: false, phase: 0, beat: -1 };
+    const finish = async () => { g.done = true; activityDone('🐉 划龍舟', await playActivity({ score: g.hits })); };
+    g.tap = () => {
+      if (g.done || g.beat < 0 || g.beat === g.lastBeat) return;
+      g.lastBeat = g.beat;
+      if (g.phase >= 0.38 && g.phase <= 0.62) { g.hits++; marker.classList.add('hit'); setTimeout(() => marker.classList.remove('hit'), 150); }
+      info.textContent = `打中 ${g.hits} 下`;
+    };
+    const tick = () => {
+      if (g.done || S.game !== g) return;
+      const t = performance.now() - g.start;
+      g.beat = t < 0 ? -1 : Math.floor(t / BEAT);
+      g.phase = t < 0 ? 0 : (t % BEAT) / BEAT;
+      marker.style.left = `${g.phase * 100}%`;
+      if (g.beat >= A.beats) return finish();
+      info.textContent = g.beat < 0 ? '準備……' : `第 ${g.beat + 1} / ${A.beats} 拍・打中 ${g.hits} 下`;
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    return openModal(el('h2', { text: '🐉 划龍舟' }),
+      el('p', { class: 'sub', text: '咚！咚！綠色的鼓點跑到中間的框框時按「划！」（電腦可以按空白鍵），每一拍只能按一次。' }),
+      el('div', { class: 'boat-track' }, el('div', { class: 'boat-zone' }), marker), info,
+      el('div', { class: 'actions' }, el('button', { class: 'btn primary big-btn', type: 'button', text: '🚣 划！', onclick: () => g.tap() })));
+  }
+  // 中秋烤肉：6 串肉一串一串放上去，從生的變成金黃色就按一下收起來；太晚會烤焦
+  const g = S.game = { kind: 'bbq', start: performance.now(), sticks: [], done: false };
+  const btns = [];
+  for (let i = 0; i < A.sticks; i++) {
+    const s0 = i * 700 + Math.floor(Math.random() * 400);
+    g.sticks.push({ start: s0, state: 'wait', taken: false, good: false });
+    btns.push(el('button', { class: 'btn stick', type: 'button', text: '⬜', onclick: () => takeStick(i) }));
+  }
+  const info = el('p', { class: 'note', text: '' });
+  const stateOf = (st, t) => (st.taken ? (st.good ? 'good' : 'bad') : t < st.start ? 'wait' : t < st.start + 2200 ? 'raw' : t < st.start + 3700 ? 'golden' : 'burnt');
+  const LOOK = { wait: '⬜', raw: '🥩', golden: '🍢', burnt: '🔥', good: '✅', bad: '❌' };
+  const finish = async () => { g.done = true; activityDone('🥮 中秋烤肉', await playActivity({ score: g.sticks.filter((x) => x.good).length })); };
+  function takeStick(i) {
+    const st = g.sticks[i], t = performance.now() - g.start;
+    if (g.done || st.taken || stateOf(st, t) === 'wait') return;
+    st.good = stateOf(st, t) === 'golden';
+    st.taken = true;
+  }
+  g.take = takeStick;
+  const tick = () => {
+    if (g.done || S.game !== g) return;
+    const t = performance.now() - g.start;
+    g.sticks.forEach((st, i) => {
+      st.state = stateOf(st, t);
+      if (st.state === 'burnt') { st.taken = true; st.good = false; st.state = 'bad'; }
+      btns[i].textContent = LOOK[st.state];
+      btns[i].classList.toggle('primary', st.state === 'golden');
+    });
+    info.textContent = `烤好 ${g.sticks.filter((x) => x.good).length} 串`;
+    if (g.sticks.every((x) => x.taken)) return finish();
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+  openModal(el('h2', { text: '🥮 中秋烤肉' }),
+    el('p', { class: 'sub', text: '肉串一串一串放上烤架，變成金黃色的 🍢 就快按下去收起來！太早是生的，太晚會烤焦。' }),
+    el('div', { class: 'bbq-grill' }, ...btns), info);
 }
 
 /* ---------- 加工機、溫室 ---------- */
@@ -1571,22 +1705,61 @@ function drawWeather(vw, vh) {
   const w = S.weather.today;
   if (S.area === 'gh') return; // 溫室裡淋不到雨
   if (w === 'cloud') { g.fillStyle = 'rgba(90,100,115,0.14)'; g.fillRect(0, 0, vw, vh); return; }
-  if (w !== 'rain') return;
-  g.fillStyle = 'rgba(40,60,95,0.2)';
-  g.fillRect(0, 0, vw, vh);
   const t = performance.now() / 1000;
-  const n = Math.round((vw * vh) / (dpr * dpr) / 3500);
-  g.strokeStyle = 'rgba(210,225,255,0.6)';
+  if (w === 'cold') {
+    // 寒流：畫面偏藍、飄著小雪
+    g.fillStyle = 'rgba(170,200,240,0.18)'; g.fillRect(0, 0, vw, vh);
+    const n = Math.round((vw * vh) / (dpr * dpr) / 5000);
+    g.fillStyle = 'rgba(255,255,255,0.85)';
+    for (let i = 0; i < n; i++) {
+      const y = ((i * 0.4142 + t * (0.08 + ((i * 0.618) % 1) * 0.06)) % 1) * vh;
+      const x = (((i * 0.7548) % 1) * vw + Math.sin(t + i) * 12 * dpr + vw) % vw;
+      g.fillRect(x, y, 2.5 * dpr, 2.5 * dpr);
+    }
+    return;
+  }
+  if (!wetSky(w)) return;
+  // 下雨；颱風更暗、雨更大、被風吹得更斜
+  const ty = w === 'typhoon';
+  g.fillStyle = ty ? 'rgba(25,35,60,0.35)' : 'rgba(40,60,95,0.2)';
+  g.fillRect(0, 0, vw, vh);
+  const n = Math.round((vw * vh) / (dpr * dpr) / (ty ? 1400 : 3500));
+  const slant = ty ? 0.6 + Math.sin(t * 0.7) * 0.15 : 0.12;
+  g.strokeStyle = ty ? 'rgba(200,215,245,0.7)' : 'rgba(210,225,255,0.6)';
   g.lineWidth = 1.2 * dpr;
   g.beginPath();
   for (let i = 0; i < n; i++) {
-    const sp = 0.9 + ((i * 0.618) % 1) * 0.6;
+    const sp = (ty ? 1.6 : 0.9) + ((i * 0.618) % 1) * 0.6;
     const y = (((i * 0.4142 + t * sp) % 1) * (vh + 40 * dpr)) - 20 * dpr;
-    const x = ((i * 0.7548) % 1) * (vw + 60 * dpr) - y * 0.12;
+    const x = ((i * 0.7548) % 1) * (vw + 60 * dpr + vh * slant) - y * slant;
     g.moveTo(x, y);
-    g.lineTo(x - 3 * dpr, y + 14 * dpr);
+    g.lineTo(x - 14 * slant * dpr - 3 * dpr, y + 14 * dpr);
   }
   g.stroke();
+}
+// 元旦、跨年、春節的晚上：天上放煙火（溫室裡看不到）
+const fireworks = [];
+function drawFireworks(vw, vh, now) {
+  const hour = new Date(now + 8 * 3600000).getUTCHours();
+  if (S.area === 'gh' || !['newyear', 'nye', 'spring'].includes(S.festival) || !(hour >= 19 || hour < 1)) return;
+  const t = performance.now();
+  if (fireworks.length < 5 && Math.random() < 0.05) {
+    const cols = ['#ff5a5a', '#ffd84a', '#7ad0ff', '#b98cff', '#7dff9a'];
+    fireworks.push({ x: (0.15 + Math.random() * 0.7) * vw, y: (0.1 + Math.random() * 0.3) * vh, born: t, col: cols[Math.floor(Math.random() * cols.length)] });
+  }
+  for (let i = fireworks.length - 1; i >= 0; i--) {
+    const f = fireworks[i], age = (t - f.born) / 1400;
+    if (age > 1) { fireworks.splice(i, 1); continue; }
+    g.fillStyle = f.col; g.globalAlpha = 1 - age;
+    for (let ring = 0; ring < 2; ring++) {          // 兩圈：外圈大、內圈小，往下掉一點
+      const n = ring ? 14 : 22, rr = (ring ? 55 : 110) * age * dpr, size = (ring ? 3 : 4.5) * dpr;
+      for (let k = 0; k < n; k++) {
+        const a = (k / n) * Math.PI * 2 + ring * 0.2;
+        g.fillRect(f.x + Math.cos(a) * rr, f.y + Math.sin(a) * rr + age * age * 40 * dpr, size, size);
+      }
+    }
+  }
+  g.globalAlpha = 1;
 }
 
 function draw() {
@@ -1799,6 +1972,7 @@ function draw() {
   else if (hour >= 5 && hour < 6) tint = 'rgba(255,170,120,0.12)';
   if (tint) { g.fillStyle = tint; g.fillRect(0, 0, vw, vh); }
   drawWeather(vw, vh);
+  drawFireworks(vw, vh, now);
 }
 
 let last = performance.now();
@@ -1814,7 +1988,8 @@ function frame(t) {
 
 const KEYMAP = { ArrowUp: 'u', ArrowDown: 'd', ArrowLeft: 'l', ArrowRight: 'r', w: 'u', s: 'd', a: 'l', d: 'r', W: 'u', S: 'd', A: 'l', D: 'r' };
 addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') return closeModal();
+  if (e.key === 'Escape') { S.game = null; return closeModal(); }
+  if (S.game && S.game.kind === 'boat' && e.key === ' ') { e.preventDefault(); return S.game.tap(); }
   if (document.querySelector('.modal')) return;
   const dir = KEYMAP[e.key];
   if (dir && S.fishing) { e.preventDefault(); return; }

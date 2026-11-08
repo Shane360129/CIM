@@ -256,7 +256,10 @@ export function nextSeasonStart(now) {
 
 // 天氣：每天（台灣時間）一種，全部牧場同一個天氣，由日期算出來（不用存、不用排程，
 // 前後一致，所以可以有「明天的天氣預報」）。下雨天整天，所有翻好的土都是濕的。
-export const WEATHERS = ['sun', 'cloud', 'rain'];
+// typhoon 颱風（7～10 月偶爾來，整天下雨、熟了沒收的作物會被吹倒）、cold 寒流（12～2 月，在外面做事比較累）
+export const WEATHERS = ['sun', 'cloud', 'rain', 'typhoon', 'cold'];
+const TYPHOON_MONTHS = [7, 8, 9, 10], TYPHOON_PCT = 4;
+const COLD_MONTHS = [12, 1, 2], COLD_PCT = 8;
 const RAIN_PCT = { spring: 30, summer: 25, autumn: 12, winter: 20 }; // 春天梅雨、夏天午後雷陣雨
 const CLOUD_PCT = { spring: 25, summer: 20, autumn: 25, winter: 30 };
 function hashDay(day) {
@@ -265,13 +268,19 @@ function hashDay(day) {
   return h >>> 0;
 }
 export function weatherOf(day) {
-  const season = seasonOfMonth(Number(day.slice(5, 7)));
-  const r = hashDay(day) % 100;
+  const month = Number(day.slice(5, 7));
+  const season = seasonOfMonth(month);
+  const h = hashDay(day);
+  const special = Math.floor(h / 100) % 100;
+  if (TYPHOON_MONTHS.includes(month) && special < TYPHOON_PCT) return 'typhoon';
+  if (COLD_MONTHS.includes(month) && special < COLD_PCT) return 'cold';
+  const r = h % 100;
   if (r < RAIN_PCT[season]) return 'rain';
   if (r < RAIN_PCT[season] + CLOUD_PCT[season]) return 'cloud';
   return 'sun';
 }
-export const realRain = (day) => weatherOf(day) === 'rain';
+export const isWetWeather = (w) => w === 'rain' || w === 'typhoon';
+export const realRain = (day) => isWetWeather(weatherOf(day));
 export const NO_RAIN = () => false;
 
 // from～to 之間，土是濕的總共多久：澆水保濕的那段 [from, wateredUntil]，加上下雨的日子。
@@ -639,6 +648,7 @@ export const DISHES = {
   mooncake: { name: '月餅', need: null, festival: true, energy: 30, sell: 150, shape: 'plate' },
   candy: { name: '糖果', need: null, festival: true, energy: 10, sell: 30, shape: 'plate' },
   cake: { name: '蛋糕', need: null, festival: true, energy: 50, sell: 300, shape: 'plate' },
+  bbq: { name: '烤肉串', need: null, festival: true, energy: 20, sell: 80, shape: 'plate' },
 };
 export const ingredientItems = (key) => (INGREDIENT_GROUPS[key] ? INGREDIENT_GROUPS[key].items : [key]);
 export const ingredientName = (key) => (INGREDIENT_GROUPS[key] ? INGREDIENT_GROUPS[key].name : itemName(key));
@@ -794,4 +804,76 @@ export function weeklyReportText(r) {
   if (!parts.length) parts.push(`大家一共做了 ${r.actions} 件事`);
   const top = r.top ? `；最勤勞的是${r.top.name}（做了 ${r.top.actions} 件事）` : '';
   return `📰 家族牧場週報（${md(r.week)}～${md(weekEnd(r.week))}）：${parts.join('、')}${top}！新的一週也一起加油 💪`;
+}
+
+// ---------------- 節慶活動 ----------------
+// 節日當天在小鎮的告示板參加活動，每個人每個節日玩一次：
+// 春節抽籤、元宵猜燈謎、端午划龍舟（跟著鼓聲按）、中秋烤肉（烤到金黃色就翻）、聖誕交換禮物
+export const FESTIVAL_ACTIVITIES = {
+  spring: { kind: 'fortune', name: '新春抽籤', desc: '抽一支籤，看看今年的運氣（有紅包）' },
+  lantern: { kind: 'riddle', name: '猜燈謎', desc: '猜 3 個燈謎，猜中一題 100 元，全對再送湯圓' },
+  dragon: { kind: 'boat', name: '划龍舟', desc: '跟著鼓聲划槳，12 下拍子，打中一下 20 元，打中 10 下以上再送粽子' },
+  moon: { kind: 'bbq', name: '中秋烤肉', desc: '6 串肉烤到金黃色就收起來，一串 50 元，還能帶回家吃' },
+  christmas: { kind: 'xmas', name: '交換禮物', desc: '從聖誕樹下拿一份禮物' },
+};
+export const BOAT_BEATS = 12;
+export const BBQ_STICKS = 6;
+export const RIDDLES = [
+  { q: '身穿綠衣裳，肚裡水汪汪，生的子兒多，個個黑臉膛。（猜一種水果）', c: ['西瓜', '木瓜', '芭樂'], a: 0 },
+  { q: '麻屋子，紅帳子，裡面住個白胖子。（猜一種食物）', c: ['紅豆', '花生', '蒜頭'], a: 1 },
+  { q: '小時穿黑衣，大時穿綠袍，水裡過日子，岸上來睡覺。（猜一種動物）', c: ['烏龜', '鴨子', '青蛙'], a: 2 },
+  { q: '一身都是刺，頭上戴綠帽，切開黃澄澄，又酸又甜。（猜一種水果）', c: ['鳳梨', '榴槤', '楊桃'], a: 0 },
+  { q: '兄弟七八個，圍著柱子坐，大家一分手，衣服就扯破。（猜一種蔬菜）', c: ['洋蔥', '蒜頭', '高麗菜'], a: 1 },
+  { q: '紅公雞，綠尾巴，身體鑽到地底下。（猜一種蔬菜）', c: ['白蘿蔔', '地瓜', '紅蘿蔔'], a: 2 },
+  { q: '圓圓臉兒像蘋果，又酸又甜營養多，能做菜也能當水果。（猜一種蔬果）', c: ['番茄', '柿子', '草莓'], a: 0 },
+  { q: '千條線，萬條線，掉到水裡看不見。（猜一種天氣）', c: ['風', '雨', '雪'], a: 1 },
+  { q: '有面沒有口，有腳沒有手，大家吃飯時，靠它來幫忙。（猜一樣家具）', c: ['椅子', '櫃子', '桌子'], a: 2 },
+  { q: '白白像雪，鹹鹹像海，煮菜少不了它。（猜一種調味料）', c: ['鹽', '糖', '味精'], a: 0 },
+  { q: '一個老公公，天天起得早，嘴裡喊喔喔，叫大家起床。（猜一種動物）', c: ['小狗', '公雞', '鴨子'], a: 1 },
+  { q: '小小紅房子，外面長滿黑點點，咬一口又酸又甜。（猜一種水果）', c: ['芒果', '香蕉', '草莓'], a: 2 },
+];
+export const FORTUNES = [
+  { level: '大吉', text: '今年種什麼都大豐收，倉庫裝不下！', money: 168 },
+  { level: '大吉', text: '全家平安，天天笑口常開。', money: 168 },
+  { level: '中吉', text: '動物都健健康康，雞蛋一顆接一顆。', money: 88 },
+  { level: '中吉', text: '多跟村民聊天，會遇到好事。', money: 88 },
+  { level: '小吉', text: '記得每天澆水，努力就有收穫。', money: 66 },
+  { level: '小吉', text: '後山的石頭裡，好像藏著寶貝。', money: 66 },
+  { level: '吉', text: '慢慢來，做田人不要急。', money: 36 },
+];
+export const XMAS_GIFTS = [['ore:gold', 1], ['dish:cake', 1], ['good:jam_strawberry', 2], ['fish:goldfish', 1], ['feed', 20], ['prod:milk_l', 2], ['ore:amethyst', 1]];
+const pick = (seed, n) => Math.floor(seededRandom(seed)() * n);
+export const fortuneOf = (farmId, day, userId) => FORTUNES[pick(`${farmId}|${day}|${userId}|fortune`, FORTUNES.length)];
+export const xmasGiftOf = (farmId, day, userId) => XMAS_GIFTS[pick(`${farmId}|${day}|${userId}|xmas`, XMAS_GIFTS.length)];
+// 每個人每年元宵猜的 3 題（不一樣的 3 題，同一天同一個人永遠一樣）
+export function riddlesFor(day, userId) {
+  const rnd = seededRandom(`${day}|${userId}|riddle`);
+  const ids = RIDDLES.map((_, i) => i);
+  const out = [];
+  while (out.length < 3) out.push(ids.splice(Math.floor(rnd() * ids.length), 1)[0]);
+  return out;
+}
+const clampInt = (v, max) => Math.max(0, Math.min(max, Number.isInteger(v) ? v : 0));
+// 活動的結果：錢、東西、一句說明（score 由前端的小遊戲送來，伺服器只負責夾在合理範圍、算獎勵）
+export function activityResult(kind, { farmId, day, userId, answers, score }) {
+  if (kind === 'fortune') {
+    const f = fortuneOf(farmId, day, userId);
+    return { score: 0, money: f.money, item: null, qty: 0, level: f.level, text: `抽到「${f.level}」：${f.text}` };
+  }
+  if (kind === 'riddle') {
+    const ids = riddlesFor(day, userId);
+    const a = Array.isArray(answers) ? answers : [];
+    const correct = ids.filter((id, i) => a[i] === RIDDLES[id].a).length;
+    return { score: correct, money: correct * 100, item: correct === 3 ? 'dish:tangyuan' : null, qty: correct === 3 ? 2 : 0, text: `猜中了 ${correct} 題燈謎` };
+  }
+  if (kind === 'boat') {
+    const n = clampInt(score, BOAT_BEATS);
+    return { score: n, money: n * 20, item: n >= 10 ? 'dish:zongzi' : null, qty: n >= 10 ? 2 : 0, text: `划龍舟打中了 ${n} 下鼓聲` };
+  }
+  if (kind === 'bbq') {
+    const n = clampInt(score, BBQ_STICKS);
+    return { score: n, money: n * 50, item: n ? 'dish:bbq' : null, qty: n, text: `烤好了 ${n} 串肉` };
+  }
+  const [item, qty] = xmasGiftOf(farmId, day, userId);
+  return { score: 0, money: 0, item, qty, text: `拆到了${itemName(item)}${qty > 1 ? ` ×${qty}` : ''}` };
 }
