@@ -18,6 +18,8 @@ import {
   STORIES, STORY_HEARTS, storyDue, ACHIEVEMENTS, achievementsMet, weekStart, weeklyReportText,
   isWetWeather, FESTIVAL_ACTIVITIES, RIDDLES, riddlesFor, activityResult, BOAT_BEATS, BBQ_STICKS,
   TREE_SPOTS, HIVE_SPOTS, TREES, FRUITS, HIVE, treeMatureAt, treeReadyAt, hiveReadyAt,
+  MARKET_STALLS, MARKET_ZONE, isNightMarket, NIGHT_FOODS, specialsOf, GOLDFISH_MAX, RING_THROWS, ringPrize,
+  BEAUTY_RIVALS, beautyResult, HARVEST_RIVALS, harvestContest,
 } from './farm.js';
 const ANIMAL_EMOJI = { chicken: '🐔', duck: '🦆', cow: '🐄', sheep: '🐑' };
 
@@ -424,6 +426,30 @@ CREATE TABLE IF NOT EXISTS farm_hives (
 );
 `;
 
+// 夜市：每人每晚每個攤位玩一次（撈金魚、套圈圈）；動物選美：每座牧場每週報名一隻
+const SCHEMA_V18 = `
+CREATE TABLE IF NOT EXISTS farm_market_play (
+  conversation_id INTEGER NOT NULL,
+  day TEXT NOT NULL,
+  user_id INTEGER NOT NULL,
+  stall TEXT NOT NULL,
+  score INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (conversation_id, day, user_id, stall)
+);
+CREATE TABLE IF NOT EXISTS farm_beauty (
+  conversation_id INTEGER NOT NULL,
+  week TEXT NOT NULL,
+  animal_id INTEGER NOT NULL,
+  animal_name TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  love INTEGER NOT NULL,
+  entered_by INTEGER NOT NULL,
+  decided INTEGER NOT NULL DEFAULT 0,
+  place INTEGER,
+  PRIMARY KEY (conversation_id, week)
+);
+`;
+
 // 訊息中的網址：http(s):// 或 www. 開頭，遇到空白、引號或中文標點即結束
 // （與前端 public/app.js 的 URL_RE / trimUrlTail 保持一致）
 const URL_RE = /(?:https?:\/\/|www\.)[^\s<>"'`\u3000、，。！？：；（）「」『』【】《》〈〉…]+/i;
@@ -688,6 +714,10 @@ export class ChatServer {
       if (v < 17) {
         this.sql.exec(SCHEMA_V17);
         this.setSetting('schema_version', '17');
+      }
+      if (v < 18) {
+        this.sql.exec(SCHEMA_V18);
+        this.setSetting('schema_version', '18');
       }
     });
     // 心跳不喚醒 DO：客戶端送 "ping"，執行環境自動回 "pong"
@@ -1820,7 +1850,7 @@ export class ChatServer {
     if (remaining.length === 0) {
       this.sql.exec(`DELETE FROM messages WHERE conversation_id = ?`, conversationId);
       this.sql.exec(`DELETE FROM conversations WHERE id = ?`, conversationId);
-      for (const t of ['farms', 'farm_tiles', 'farm_items', 'farm_players', 'farm_animals', 'farm_friends', 'farm_mined', 'farm_dex', 'farm_machines', 'farm_pets', 'farm_stats', 'farm_weekly', 'farm_achievements', 'farm_festival_play', 'farm_trees', 'farm_hives'])
+      for (const t of ['farms', 'farm_tiles', 'farm_items', 'farm_players', 'farm_animals', 'farm_friends', 'farm_mined', 'farm_dex', 'farm_machines', 'farm_pets', 'farm_stats', 'farm_weekly', 'farm_achievements', 'farm_festival_play', 'farm_trees', 'farm_hives', 'farm_market_play', 'farm_beauty'])
         this.sql.exec(`DELETE FROM ${t} WHERE conversation_id = ?`, conversationId);
     } else {
       this.addSystemMessage(conversationId, `${me.display_name} 離開了群組`);
@@ -1929,6 +1959,7 @@ export class ChatServer {
         farmAchievements: this.sql.exec(`SELECT * FROM farm_achievements`).toArray(),
         farmTrees: this.sql.exec(`SELECT * FROM farm_trees`).toArray(),
         farmHives: this.sql.exec(`SELECT * FROM farm_hives`).toArray(),
+        farmBeauty: this.sql.exec(`SELECT * FROM farm_beauty`).toArray(),
         messageCount: this.sql.exec(`SELECT COUNT(*) AS c FROM messages`).one().c,
       });
     }
@@ -2476,6 +2507,11 @@ export class ChatServer {
     const n = Number(this.env && this.env.FARM_FAST_TREES);
     return Number.isFinite(n) && n > 0 ? n : null;
   }
+  // FARM_NIGHT_MARKET=open／closed 也只給本機測試用：不管今天星期幾，夜市都開著／都沒開
+  farmMarketOpen(now) {
+    const o = this.env && this.env.FARM_NIGHT_MARKET;
+    return o === 'open' ? true : o === 'closed' ? false : isNightMarket(now);
+  }
   // FARM_VILLAGERS=out／home 也只給本機測試用：不管幾點，村民都在外面／都在家
   farmVillagersOut(now) {
     const o = this.env && this.env.FARM_VILLAGERS;
@@ -2619,6 +2655,7 @@ export class ChatServer {
       stories: pts.reduce((n, f) => n + (f.story_level || 0), 0), gh: farm.gh_built, house: farm.house_level,
       trees: one(`SELECT COUNT(*) AS n FROM farm_trees WHERE conversation_id = ?`, conversationId),
       honey: dex.includes('prod:honey') || dex.includes('prod:honey_l'),
+      goldfish3: st.goldfish3 || 0, beautyWin: st.beauty_win || 0, harvestGold: st.harvest_gold || 0,
     };
   }
   // 新達成的成就：記下來、發獎金、在聊天室說一聲
@@ -2688,6 +2725,39 @@ export class ChatServer {
     const longan = this.sql.exec(`SELECT * FROM farm_trees WHERE conversation_id = ? AND kind = 'longan'`, conversationId).toArray()
       .some((t) => now >= treeMatureAt(t, scale, fast));
     return longan ? 'honey_l' : 'honey';
+  }
+  // 夜市：開了沒、攤位、小吃、這週的限定商品、我今晚玩過哪些
+  farmMarketPub(conversationId, me, now, week) {
+    const day = taiwanDay(now);
+    const played = this.sql.exec(`SELECT stall FROM farm_market_play WHERE conversation_id = ? AND day = ? AND user_id = ?`, conversationId, day, me.id)
+      .toArray().map((r) => r.stall);
+    const o = this.env && this.env.FARM_NIGHT_MARKET;
+    return { open: this.farmMarketOpen(now), override: o === 'open' || o === 'closed' ? o : null, stalls: MARKET_STALLS, zone: MARKET_ZONE, foods: NIGHT_FOODS,
+      specials: specialsOf(week), played, goldfishMax: GOLDFISH_MAX, ringThrows: RING_THROWS };
+  }
+  // 動物選美：這週報名了誰、上一次的結果
+  farmBeautyPub(conversationId, week) {
+    const cur = this.sql.exec(`SELECT animal_id, animal_name, kind FROM farm_beauty WHERE conversation_id = ? AND week = ?`, conversationId, week).toArray()[0];
+    const last = this.sql.exec(`SELECT week, animal_name, kind, place FROM farm_beauty WHERE conversation_id = ? AND decided = 1 ORDER BY week DESC LIMIT 1`, conversationId).toArray()[0];
+    return { week, entry: cur ? { animalId: cur.animal_id, name: cur.animal_name, kind: cur.kind } : null,
+      last: last ? { week: last.week, name: last.animal_name, kind: last.kind, place: last.place } : null, rivals: BEAUTY_RIVALS };
+  }
+  // 過了那一週的動物選美就評審：在聊天室公布名次、發獎金
+  farmJudgeBeauty(conversationId, week) {
+    let judged = false;
+    for (const e of this.sql.exec(`SELECT * FROM farm_beauty WHERE conversation_id = ? AND decided = 0 AND week < ?`, conversationId, week).toArray()) {
+      // 報名後這週繼續照顧，愛心會算到評審那天（動物不在了就用報名時的）
+      const cur = this.sql.exec(`SELECT love FROM farm_animals WHERE id = ? AND conversation_id = ?`, e.animal_id, conversationId).toArray()[0];
+      const res = beautyResult(e.week, conversationId, { ...e, love: cur ? Math.max(cur.love, e.love) : e.love });
+      this.sql.exec(`UPDATE farm_beauty SET decided = 1, place = ? WHERE conversation_id = ? AND week = ?`, res.place, conversationId, e.week);
+      if (res.place === 1) this.farmStat(conversationId, 'beauty_win', 1);
+      judged = true;
+      this.sql.exec(`UPDATE farms SET money = money + ? WHERE conversation_id = ?`, res.prize, conversationId);
+      const others = res.rivals.map((r) => `${r.owner}的${r.name} ${r.score} 分`).join('、');
+      this.addSystemMessage(conversationId, `🎀 動物選美結果：${e.animal_name}（${ANIMALS[e.kind] ? ANIMALS[e.kind].name : ''}）得了 ${res.score} 分，`
+        + `第 ${res.place} 名！（${others}）獎金 ${res.prize} 元`);
+    }
+    return judged;
   }
   farmBuildPub(farm) {
     return { ghBuilt: !!farm.gh_built, houseLevel: farm.house_level, energyMax: energyMaxOf(farm.house_level) };
@@ -2787,10 +2857,12 @@ export class ChatServer {
     return this.sql.exec(`SELECT item FROM farm_dex WHERE conversation_id = ?`, conversationId).toArray().map((r) => r.item);
   }
   // 第一次拿到某種魚／礦石：記進圖鑑，在聊天室說一聲（破鞋子、石頭就不說了）
-  farmDexAdd(conversationId, item, me, now) {
+  // quiet：已經有別的訊息說過了（例如夜市撈到金魚），就不再說「第一次釣到」
+  farmDexAdd(conversationId, item, me, now, quiet = false) {
     const had = this.sql.exec(`SELECT 1 FROM farm_dex WHERE conversation_id = ? AND item = ?`, conversationId, item).toArray().length;
     if (had) return false;
     this.sql.exec(`INSERT INTO farm_dex (conversation_id, item, by_user, at) VALUES (?, ?, ?, ?)`, conversationId, item, me.id, now);
+    if (quiet) return true;
     if (item.startsWith('dish:')) {
       this.addSystemMessage(conversationId, `🍳 ${me.display_name} 第一次做了${itemName(item)}！今天晚餐要不要也吃這個？`);
     } else if (item.startsWith('good:')) {
@@ -2856,13 +2928,25 @@ export class ChatServer {
     const rainy = this.farmRainy();
     const season = this.farmSeason(now);
     // 換季後第一次有人打開：在聊天室說一聲，並列出這一季能種什麼
+    let contested = false;
     if (farm.season_seen !== season) {
       this.sql.exec(`UPDATE farms SET season_seen = ? WHERE conversation_id = ?`, season, conversationId);
       if (farm.season_seen) {
         const names = Object.keys(CROPS).filter((c) => inSeason(c, season)).map((c) => CROPS[c].name);
         this.addSystemMessage(conversationId,
           `${SEASON_EMOJI[season]} 家族牧場進入${SEASON_NAME[season]}天了！這一季可以種：${names.join('、')}`);
+        // 上一季的豐收比賽：全家收成幾次，跟另外三戶人家比（一次都沒收就不算參加）
+        const count = this.sql.exec(`SELECT value FROM farm_stats WHERE conversation_id = ? AND key = 'season_harvest'`, conversationId).toArray()[0]?.value || 0;
+        if (count > 0) {
+          const res = harvestContest(count);
+          this.sql.exec(`UPDATE farms SET money = money + ? WHERE conversation_id = ?`, res.prize, conversationId);
+          if (res.place === 1) this.farmStat(conversationId, 'harvest_gold', 1);
+          contested = true;
+          this.addSystemMessage(conversationId, `🏆 ${SEASON_NAME[farm.season_seen]}季豐收比賽：你們家收成了 ${count} 次，`
+            + `第 ${res.place} 名（${HARVEST_RIVALS.map((r) => `${r.owner} ${r.score} 次`).join('、')}），拿到${res.medal}，獎金 ${res.prize} 元！`);
+        }
       }
+      this.sql.exec(`DELETE FROM farm_stats WHERE conversation_id = ? AND key = 'season_harvest'`, conversationId);
     }
     const energyMax = energyMaxOf(farm.house_level);
     const p = this.farmPlayer(conversationId, me.id, now, energyMax);
@@ -2900,6 +2984,13 @@ export class ChatServer {
     }
     // 換週後第一次有人打開：在聊天室貼上週的週報（那週什麼都沒做就不貼），只留最近 8 週的紀錄
     const week = this.farmWeek(today);
+    // 比賽結果出來了：拿到第一名的成就現在就算
+    if (this.farmJudgeBeauty(conversationId, week) || contested) this.farmCheckAchievements(conversationId, me, now);
+    // 星期六晚上夜市開了：第一個打開牧場的人在聊天室說一聲（一晚一次）
+    if (this.farmMarketOpen(now) && !this.sql.exec(`SELECT 1 FROM farm_market_play WHERE conversation_id = ? AND day = ? AND user_id = 0`, conversationId, today).toArray().length) {
+      this.sql.exec(`INSERT INTO farm_market_play (conversation_id, day, user_id, stall) VALUES (?, ?, 0, 'announce')`, conversationId, today);
+      this.addSystemMessage(conversationId, '🏮 今晚小鎮南邊有夜市！撈金魚、套圈圈、雞排珍奶，晚上 12 點收攤');
+    }
     if (farm.report_week !== week) {
       this.sql.exec(`UPDATE farms SET report_week = ? WHERE conversation_id = ?`, week, conversationId);
       const text = farm.report_week ? weeklyReportText(this.farmWeekSummary(conversationId, farm.report_week)) : null;
@@ -2926,6 +3017,8 @@ export class ChatServer {
       machines: this.farmMachinesPub(conversationId, scale), ...this.farmBuildPub(farm),
       pond: POND_ZONE, petKinds: PETS, petZone: PET_ZONE, pets: this.farmPetsPub(conversationId, today),
       activity: this.farmActivityPub(conversationId, me, fest, today),
+      market: this.farmMarketPub(conversationId, me, now, week), beauty: this.farmBeautyPub(conversationId, week),
+      harvestContest: { count: this.sql.exec(`SELECT value FROM farm_stats WHERE conversation_id = ? AND key = 'season_harvest'`, conversationId).toArray()[0]?.value || 0, rivals: HARVEST_RIVALS },
       treeSpots: TREE_SPOTS, hiveSpots: HIVE_SPOTS, treeKinds: TREES, fruits: FRUITS, hive: HIVE,
       trees: this.farmTreesPub(conversationId, season, scale), hives: this.farmHivesPub(conversationId, scale, now),
       stories: STORIES, storyHearts: STORY_HEARTS, achievementList: ACHIEVEMENTS.map(({ id, name, desc, reward }) => ({ id, name, desc, reward })),
@@ -2964,6 +3057,8 @@ export class ChatServer {
     let buildChanged = false;
     let petsChanged = false;
     let treesChanged = false;
+    let marketChanged = false;
+    let beautyChanged = false;
     const weekAdd = { harvest: 0, shipped: 0 };
     const today = taiwanDay(now);
     // 田在牧場還是溫室：溫室要先蓋好；溫室的田雨淋不到
@@ -3050,6 +3145,7 @@ export class ChatServer {
         spend(ENERGY_COST.harvest);
         this.farmAddItem(conversationId, `crop:${t.crop}`, 1);
         this.farmStat(conversationId, 'harvest', 1);
+        this.farmStat(conversationId, 'season_harvest', 1);
         weekAdd.harvest = 1;
         gained = { item: `crop:${t.crop}`, qty: 1 };
         // 番茄、草莓這類收完會再長；其他的收完就空出來
@@ -3267,12 +3363,68 @@ export class ChatServer {
           this.farmAddItem(conversationId, item, T.yield);
           this.sql.exec(`UPDATE farm_trees SET picked_at = ? WHERE conversation_id = ? AND spot = ?`, now, conversationId, spot);
           this.farmStat(conversationId, 'harvest', 1);
+          this.farmStat(conversationId, 'season_harvest', 1);
           weekAdd.harvest = 1;
           gained = { item, qty: T.yield, first: this.farmDexAdd(conversationId, item, me, now) };
           dexChanged = true;
         }
       }
       treesChanged = true;
+    } else if (action === 'market') {
+      // 夜市：撈金魚、套圈圈（每人每晚各玩一次，分數由前端小遊戲送來）、小吃、限定商品
+      if (!this.farmMarketOpen(now)) throw new HttpError(400, '夜市星期六晚上 5 點才開');
+      const stall = String(body.stall || '');
+      if (!Object.hasOwn(MARKET_STALLS, stall)) throw new HttpError(400, '沒有這個攤位');
+      if (stall === 'goldfish' || stall === 'ring') {
+        if (this.sql.exec(`SELECT 1 FROM farm_market_play WHERE conversation_id = ? AND day = ? AND user_id = ? AND stall = ?`,
+          conversationId, today, me.id, stall).toArray().length) throw new HttpError(400, `今晚已經玩過${MARKET_STALLS[stall].name}了，下週六再來`);
+        this.farmSpend(conversationId, MARKET_STALLS[stall].price);
+        const n = Number.isInteger(body.score) ? body.score : 0;
+        let res;
+        if (stall === 'goldfish') {
+          const caught = Math.max(0, Math.min(GOLDFISH_MAX, n));
+          res = { score: caught, item: caught ? 'fish:goldfish' : null, qty: caught };
+        } else res = ringPrize(n);
+        if (res.item) this.farmAddItem(conversationId, res.item, res.qty);
+        if (res.item === 'fish:goldfish') this.farmDexAdd(conversationId, 'fish:goldfish', me, now, true);
+        if (stall === 'goldfish' && res.score >= GOLDFISH_MAX) this.farmStat(conversationId, 'goldfish3', 1);
+        this.sql.exec(`INSERT INTO farm_market_play (conversation_id, day, user_id, stall, score) VALUES (?, ?, ?, ?, ?)`,
+          conversationId, today, me.id, stall, res.score);
+        this.addSystemMessage(conversationId, stall === 'goldfish'
+          ? `🐟 ${me.display_name} 在夜市撈金魚，撈到 ${res.score} 隻！`
+          : `⭕ ${me.display_name} 在夜市套圈圈，套中 ${res.score} 個，拿到${itemName(res.item)}${res.qty > 1 ? ` ×${res.qty}` : ''}！`);
+        gained = { stall, ...res };
+        dexChanged = true;
+        marketChanged = true;
+      } else if (stall === 'snack') {
+        const food = NIGHT_FOODS[Object.hasOwn(NIGHT_FOODS, String(body.food || '')) ? String(body.food) : ''];
+        if (!food) throw new HttpError(400, '沒有這種小吃');
+        if (p.energy >= energyMax) throw new HttpError(400, '體力是滿的，等累了再來吃吧');
+        this.farmSpend(conversationId, food.price);
+        p.energy = Math.min(energyMax, p.energy + food.energy);
+        gained = { stall, food: body.food };
+      } else {
+        const sp = specialsOf(this.farmWeek(today)).find((x) => x.item === String(body.item || ''));
+        if (!sp) throw new HttpError(400, '這週沒有賣這個');
+        this.farmSpend(conversationId, sp.price);
+        this.farmAddItem(conversationId, sp.item, 1);
+        gained = { stall, item: sp.item, qty: 1 };
+      }
+    } else if (action === 'beauty_enter') {
+      // 動物選美：這週報名一隻（評審前可以換），寶寶不能參加
+      const animalId = Number(body.animalId);
+      const a = Number.isInteger(animalId) && this.sql
+        .exec(`SELECT * FROM farm_animals WHERE id = ? AND conversation_id = ?`, animalId, conversationId).toArray()[0];
+      if (!a) throw new HttpError(400, '找不到這隻動物');
+      if (isBaby(a, now)) throw new HttpError(400, '寶寶還太小，長大再來參加');
+      const week = this.farmWeek(today);
+      this.sql.exec(`INSERT INTO farm_beauty (conversation_id, week, animal_id, animal_name, kind, love, entered_by) VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(conversation_id, week) DO UPDATE SET animal_id = excluded.animal_id, animal_name = excluded.animal_name,
+          kind = excluded.kind, love = excluded.love, entered_by = excluded.entered_by`,
+        conversationId, week, a.id, a.name, a.kind, a.love, me.id);
+      this.addSystemMessage(conversationId, `🎀 ${me.display_name} 幫${a.name}報名了這週的動物選美，下週一公布結果`);
+      gained = { beauty: { animalId: a.id, name: a.name, kind: a.kind } };
+      beautyChanged = true;
     } else if (action === 'festival_play') {
       // 節慶活動：每人每個節日一次，結果由伺服器算（小遊戲的分數由前端送來，夾在合理範圍）
       const fest = this.farmFestival(today);
@@ -3507,13 +3659,17 @@ export class ChatServer {
     const achievements = newAchievements.length ? this.farmAchievementsGot(conversationId) : undefined;
     const trees = treesChanged ? this.farmTreesPub(conversationId, season, scale) : undefined;
     const hives = treesChanged ? this.farmHivesPub(conversationId, scale, now) : undefined;
+    const market = marketChanged ? this.farmMarketPub(conversationId, me, now, this.farmWeek(today)) : undefined;
+    const beauty = beautyChanged ? this.farmBeautyPub(conversationId, this.farmWeek(today)) : undefined;
+    // 這一季全家收成幾次（豐收比賽用）：有收成才送
+    const seasonHarvest = weekAdd.harvest ? this.sql.exec(`SELECT value FROM farm_stats WHERE conversation_id = ? AND key = 'season_harvest'`, conversationId).one().value : undefined;
     // 同一座牧場的其他人：田地、錢、倉庫、動物、小鎮的感情、加工機、建築即時同步（體力是個人的，不廣播）
     this.sendToFarm(conversationId, {
       type: 'farm-update', by: me.id, action, tiles, money, items, animals, town, rocks, dex, machines, build, pets,
-      achievements, newAchievements, trees, hives, now,
+      achievements, newAchievements, trees, hives, beauty, seasonHarvest, now,
     });
     return json({ ok: true, energy: p.energy, energyMax: energyMaxOf(farm.house_level), tile: tileOut, tiles, money, items,
-      animals, town, rocks, dex, machines, build, pets, achievements, newAchievements, trees, hives, gained, now });
+      animals, town, rocks, dex, machines, build, pets, achievements, newAchievements, trees, hives, market, beauty, seasonHarvest, gained, now });
   }
 
   farmSpend(conversationId, cost) {

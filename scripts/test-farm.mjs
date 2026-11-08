@@ -19,6 +19,8 @@ import {
   STORIES, STORY_HEARTS, storyDue, ACHIEVEMENTS, achievementsMet, weekStart, weekEnd, weeklyReportText,
   TREE_SPOTS, HIVE_SPOTS, TREES, FRUITS, HIVE, treeMatureAt, treeReadyAt, hiveReadyAt,
   WEATHERS, realRain, FESTIVAL_ACTIVITIES, RIDDLES, FORTUNES, XMAS_GIFTS, riddlesFor, fortuneOf, xmasGiftOf, activityResult, BOAT_BEATS, BBQ_STICKS,
+  MARKET_STALLS, MARKET_ZONE, isNightMarket, NIGHT_FOODS, SPECIALS, specialsOf, GOLDFISH_MAX, RING_THROWS, ringPrize,
+  BEAUTY_RIVALS, BEAUTY_PRIZES, beautyResult, HARVEST_RIVALS, HARVEST_MEDALS, harvestContest,
 } from '../src/farm.js';
 import { SPRITES, PALETTE, FISH_SHAPE, BOOT_SHAPE, ROCK_SHAPE, FISH_COLORS, ORE_COLORS, DISH_SHAPES, DISH_COLORS, GOOD_ART, FRUIT_COLORS, honeySprite, fruitTreeSprite } from '../public/farm-sprites.js';
 
@@ -405,7 +407,7 @@ check('感情很好但還沒聽過：從第一段開始說', storyDue(100, 0), 0
 const zero = { harvest: 0, shipped: 0, requests: 0, babies: 0, animals: 0, pets: 0, machines: 0, fishKinds: 0, dishKinds: 0, goodKinds: 0, amethyst: false, maxHearts: 0, minHearts: 0, stories: 0, gh: 0, house: 1 };
 check('什麼都還沒做：沒有成就', achievementsMet(zero), []);
 check('收成一次、領養寵物：兩個成就', achievementsMet({ ...zero, harvest: 1, pets: 1 }), ['harvest1', 'pet']);
-const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: 4, fishKinds: 9, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true };
+const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: 4, fishKinds: 9, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1 };
 check('全部做完：每個成就都達成', achievementsMet(full).length, ACHIEVEMENTS.length);
 check('成就的編號不重複、都有名字說明和獎金', new Set(ACHIEVEMENTS.map((a) => a.id)).size === ACHIEVEMENTS.length && ACHIEVEMENTS.every((a) => a.name && a.desc && a.reward > 0), true);
 check('「聽完所有故事」要 18 段', [achievementsMet({ ...full, stories: 17 }).includes('stories'), achievementsMet(full).includes('stories')], [false, true]);
@@ -459,6 +461,58 @@ check('水果、蜂蜜能賣能送', [itemPrice('fruit:mango'), itemPrice('prod:
 check('蜂蜜是一組（百花蜜、龍眼蜜都能做菜，先用百花蜜）', cookTakes({ 'crop:sweetpotato': 2, 'prod:honey_l': 1 }, 'honey_potato'), { 'crop:sweetpotato': 2, 'prod:honey_l': 1 });
 check('每種水果都有圖', Object.keys(FRUITS).every((id) => FRUIT_COLORS[id]), true);
 check('果園主人、甜蜜蜜兩個成就', [achievementsMet({ ...zero, trees: 5 }), achievementsMet({ ...zero, honey: true })], [['orchard'], ['honey']]);
+
+
+console.log('\n--- 夜市與比賽 ---');
+const TW_ = (s) => Date.parse(s + '+08:00');
+check('夜市：星期六晚上 5 點開到 12 點（台灣時間）', [isNightMarket(TW_('2026-11-07T16:59:00')), isNightMarket(TW_('2026-11-07T17:00:00')),
+  isNightMarket(TW_('2026-11-07T23:59:00')), isNightMarket(TW_('2026-11-08T00:00:00')), isNightMarket(TW_('2026-11-06T20:00:00'))], [false, true, true, false, false]);
+const town = (x, y) => (TOWN_MAP[y] || '')[x];
+const stallTiles = Object.values(MARKET_STALLS).flatMap((st) => Array.from({ length: st.w }, (_, i) => `${st.x + i},${st.y}`));
+check('每個攤位都擺在空地上，上面（遮雨棚）、前面也是空地', Object.values(MARKET_STALLS).every((st) => Array.from({ length: st.w }, (_, i) => st.x + i)
+  .every((x) => town(x, st.y) === '.' && town(x, st.y - 1) === '.' && town(x, st.y + 1) !== 'T')), true);
+// 攤位擋住那幾格之後，小鎮其他走得到的地方還是都走得到（不會把民宅的門堵住）
+const TWALK = new Set(['.', '=', 'p', ',', 'E']);
+const townReach = (blocked) => {
+  const start = `${ARRIVE['farm>town'].x},${ARRIVE['farm>town'].y}`, seen = new Set([start]), q = [start];
+  while (q.length) {
+    const [x, y] = q.shift().split(',').map(Number);
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const k = `${x + dx},${y + dy}`;
+      if (!seen.has(k) && TWALK.has(town(x + dx, y + dy)) && !blocked.has(k)) { seen.add(k); q.push(k); }
+    }
+  }
+  return seen;
+};
+const open_ = townReach(new Set()), market = townReach(new Set(stallTiles));
+check('夜市開著的時候，小鎮其他地方都還走得到', [...open_].filter((k) => !stallTiles.includes(k)).every((k) => market.has(k)), true);
+check('村民逛夜市的範圍在攤位前面，都是走得到的地方', (() => {
+  const out = [];
+  for (let y = MARKET_ZONE.y0; y <= MARKET_ZONE.y1; y++) for (let x = MARKET_ZONE.x0; x <= MARKET_ZONE.x1; x++) if (TWALK.has(town(x, y))) out.push(`${x},${y}`);
+  return out.length > 20 && out.every((k) => market.has(k) && !stallTiles.includes(k)) && MARKET_ZONE.y0 > Math.max(...Object.values(MARKET_STALLS).map((s) => s.y));
+})(), true);
+check('夜市小吃都有名字、價錢、體力', Object.values(NIGHT_FOODS).every((f) => f.name && f.price > 0 && f.energy > 0), true);
+check('夜市限定：比賣出去的價錢貴（不能買來賣賺錢）', SPECIALS.every(([i, p]) => p > itemPrice(i)), true);
+const sp1 = specialsOf('2026-11-02');
+check('夜市限定：每週 3 樣、不重複、同一週永遠一樣', [sp1.length, new Set(sp1.map((x) => x.item)).size, JSON.stringify(specialsOf('2026-11-02')) === JSON.stringify(sp1)], [3, 3, true]);
+check('不同週會換', ['2026-11-09', '2026-11-16', '2026-11-23', '2026-11-30'].some((w) => JSON.stringify(specialsOf(w)) !== JSON.stringify(sp1)), true);
+check('套圈圈：5 個全中紫水晶、3 個金礦、1 個飼料、0 個糖果', [ringPrize(5).item, ringPrize(4).item, ringPrize(3).item, ringPrize(1).item, ringPrize(0).item],
+  ['ore:amethyst', 'ore:gold', 'ore:gold', 'feed', 'dish:candy']);
+check('套圈圈：分數夾在 0～5（亂送也一樣）', [ringPrize(99).score, ringPrize(-3).score, ringPrize(2.5).score, ringPrize('5').score], [RING_THROWS, 0, 0, 0]);
+check('撈金魚：紙網撈 3 下', GOLDFISH_MAX, 3);
+const entry = (love) => ({ animal_id: 7, love });
+const b20 = beautyResult('2026-11-02', 1, entry(20)), b0 = beautyResult('2026-11-02', 1, entry(0));
+check('動物選美：愛心越多分數越高、名次 1～4、獎金對得上', [b20.score > b0.score, b20.place >= 1 && b20.place <= 4, b20.prize === BEAUTY_PRIZES[b20.place - 1], b20.rivals.length], [true, true, true, BEAUTY_RIVALS.length]);
+check('動物選美：同一週同一隻結果一樣', JSON.stringify(beautyResult('2026-11-02', 1, entry(12))) === JSON.stringify(beautyResult('2026-11-02', 1, entry(12))), true);
+check('動物選美：愛心滿的大多拿前兩名', ['2026-11-02', '2026-11-09', '2026-11-16', '2026-11-23', '2026-11-30', '2026-12-07', '2026-12-14', '2026-12-21']
+  .filter((w) => beautyResult(w, 1, entry(20)).place <= 2).length >= 6, true);
+check('動物選美：愛心超過上限也只算到上限', beautyResult('2026-11-02', 1, entry(999)).score, beautyResult('2026-11-02', 1, entry(LOVE_MAX)).score);
+check('豐收比賽：收成次數跟另外三家比', [harvestContest(1).place, harvestContest(41).place, harvestContest(121).place, harvestContest(251).place, harvestContest(250).place],
+  [4, 3, 2, 1, 2]);
+check('豐收比賽：獎牌和獎金', [harvestContest(300).medal, harvestContest(300).prize, harvestContest(5).medal], [HARVEST_MEDALS[0][0], HARVEST_MEDALS[0][1], '參加獎']);
+check('三個比賽成就', [achievementsMet({ ...zero, goldfish3: 1 }), achievementsMet({ ...zero, beautyWin: 1 }), achievementsMet({ ...zero, harvestGold: 1 })],
+  [['goldfish3'], ['beauty'], ['harvestGold']]);
+check('對手的動物都是牧場上有的動物', BEAUTY_RIVALS.every((r) => ANIMALS[r.kind]) && HARVEST_RIVALS.every((r) => r.score > 0), true);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

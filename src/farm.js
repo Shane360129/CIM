@@ -822,6 +822,9 @@ export const ACHIEVEMENTS = [
   { id: 'machines', name: '加工專家', desc: '四台加工機都買齊', reward: 1000, test: (s) => s.machines >= Object.keys(MACHINES).length },
   { id: 'orchard', name: '果園主人', desc: '同時種 5 棵果樹', reward: 800, test: (s) => (s.trees || 0) >= 5 },
   { id: 'honey', name: '甜蜜蜜', desc: '收到第一罐蜂蜜', reward: 300, test: (s) => !!s.honey },
+  { id: 'goldfish3', name: '撈金魚高手', desc: '在夜市一次撈到 3 隻金魚', reward: 300, test: (s) => (s.goldfish3 || 0) >= 1 },
+  { id: 'beauty', name: '選美冠軍', desc: '動物選美拿到第一名', reward: 500, test: (s) => (s.beautyWin || 0) >= 1 },
+  { id: 'harvestGold', name: '豐收金牌', desc: '豐收比賽拿到金牌', reward: 1000, test: (s) => (s.harvestGold || 0) >= 1 },
   { id: 'stories', name: '說故事的人', desc: '聽完所有村民的故事', reward: 2000, test: (s) => s.stories >= Object.keys(STORIES).length * STORY_HEARTS.length },
 ];
 export const achievementsMet = (stats) => ACHIEVEMENTS.filter((a) => a.test(stats)).map((a) => a.id);
@@ -918,4 +921,67 @@ export function activityResult(kind, { farmId, day, userId, answers, score }) {
   }
   const [item, qty] = xmasGiftOf(farmId, day, userId);
   return { score: 0, money: 0, item, qty, text: `拆到了${itemName(item)}${qty > 1 ? ` ×${qty}` : ''}` };
+}
+
+// ---------------- 夜市 ----------------
+// 每個星期六晚上 5 點到半夜 12 點，小鎮南邊的空地有夜市：撈金魚、套圈圈、夜市小吃、夜市限定
+// 每個攤位佔兩格（x、x+1），擺在民宅中間的空地，不會擋到民宅的門
+export const MARKET_STALLS = {
+  goldfish: { name: '撈金魚', x: 6, y: 16, w: 2, price: 100 },
+  ring: { name: '套圈圈', x: 9, y: 16, w: 2, price: 100 },
+  snack: { name: '夜市小吃', x: 16, y: 16, w: 2 },
+  special: { name: '夜市限定', x: 19, y: 16, w: 2 },
+};
+// 村民逛夜市：在攤位前面那兩排走來走去
+export const MARKET_ZONE = { x0: 3, y0: 17, x1: 26, y1: 18 };
+export const isNightMarket = (now) => { const d = new Date(now + TW); return d.getUTCDay() === 6 && d.getUTCHours() >= 17; };
+export const NIGHT_FOODS = {
+  chicken: { name: '雞排', price: 80, energy: 30 },
+  tea: { name: '珍珠奶茶', price: 60, energy: 20 },
+  tofu: { name: '臭豆腐', price: 70, energy: 25 },
+  oyster: { name: '蚵仔煎', price: 90, energy: 35 },
+};
+// 夜市限定：每週換 3 樣（價錢都比賣出去的價錢高，不能套利）
+export const SPECIALS = [['ore:amethyst', 900], ['sapling:mango', 1000], ['good:jam_pineapple', 1300], ['prod:honey_l', 400], ['fish:eel', 380], ['dish:cake', 400]];
+export function specialsOf(week) {
+  const rnd = seededRandom(`${week}|night-market`);
+  const list = SPECIALS.slice();
+  const out = [];
+  while (out.length < 3) out.push(list.splice(Math.floor(rnd() * list.length), 1)[0]);
+  return out.map(([item, price]) => ({ item, price }));
+}
+export const GOLDFISH_MAX = 3;   // 紙網撈 3 下就破
+export const RING_THROWS = 5;
+export function ringPrize(score) {
+  const n = Math.max(0, Math.min(RING_THROWS, Number.isInteger(score) ? score : 0));
+  const [item, qty] = n >= 5 ? ['ore:amethyst', 1] : n >= 3 ? ['ore:gold', 1] : n >= 1 ? ['feed', 10] : ['dish:candy', 1];
+  return { score: n, item, qty };
+}
+
+// ---------------- 比賽 ----------------
+// 動物選美：每週報名一隻動物，週末過後評審。分數＝愛心 ×4 ＋評審的心情（0～20），跟另外三戶人家的動物比
+export const BEAUTY_RIVALS = [
+  { owner: '隔壁村的陳家', name: '阿花', kind: 'cow' },
+  { owner: '山腳下的老王', name: '大白', kind: 'sheep' },
+  { owner: '鎮上的林家', name: '咕咕', kind: 'chicken' },
+];
+export const BEAUTY_PRIZES = [800, 400, 200, 50];
+const luck = (seed, n) => Math.floor(seededRandom(seed)() * n);
+export function beautyResult(week, farmId, entry) {
+  const mine = Math.min(LOVE_MAX, entry.love || 0) * 4 + luck(`${week}|${farmId}|${entry.animal_id}|beauty`, 21);
+  const rivals = BEAUTY_RIVALS.map((r, i) => ({ ...r, score: 40 + luck(`${week}|rival${i}|beauty`, 50) }));
+  const place = 1 + rivals.filter((r) => r.score > mine).length;
+  return { score: mine, rivals, place, prize: BEAUTY_PRIZES[place - 1] };
+}
+// 豐收比賽：每一季全家收成（作物＋水果）幾次，換季時跟另外三戶人家比
+export const HARVEST_RIVALS = [
+  { owner: '隔壁村的陳家', score: 40 },
+  { owner: '鎮上的林家', score: 120 },
+  { owner: '山腳下的老王', score: 250 },
+];
+export const HARVEST_MEDALS = [['金牌', 3000], ['銀牌', 1500], ['銅牌', 500], ['參加獎', 100]];
+export function harvestContest(count) {
+  const place = 1 + HARVEST_RIVALS.filter((r) => r.score >= count).length;
+  const [medal, prize] = HARVEST_MEDALS[place - 1];
+  return { count, place, medal, prize };
 }

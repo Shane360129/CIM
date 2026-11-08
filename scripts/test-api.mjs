@@ -352,7 +352,7 @@ if (fs0.villagersOut) {
 
 // 料理
 // 村民的故事、成就、週報
-check('有村民的故事、22 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 22
+check('有村民的故事、25 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 25
   && JSON.stringify(fs0.achievements) === '{}' && /^\d{4}-\d{2}-\d{2}$/.test(fs0.thisWeek?.week || ''));
 check('有 28 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 28 && !!fs0.ingredientGroups?.egg);
 check('沒有這道菜', (await farmDo(groupId, { action: 'cook', dish: 'steak' }, TA)).status === 400
@@ -481,6 +481,44 @@ check('沒有樹苗不能種、位置亂填被擋', /沒有芭樂樹苗/.test((a
 check('空的位置不能摘、沒有蜂箱不能收', /沒有果樹/.test((await farmDo(groupId, { action: 'pick', spot: 0 }, TA)).data.error || '')
   && /沒有蜂箱/.test((await farmDo(groupId, { action: 'collect_honey', spot: 0 }, TA)).data.error || ''));
 check('樹苗不能出貨、不能送人（賣不了錢）', (await farmDo(groupId, { action: 'ship', item: 'sapling:guava', qty: 1 }, TA)).status === 400);
+
+// 夜市與比賽
+check('牧場狀態有夜市（4 個攤位、這週 3 樣限定）、動物選美、豐收比賽', Object.keys(fs0.market?.stalls || {}).length === 4 && fs0.market.specials.length === 3
+  && fs0.beauty?.entry === null && fs0.beauty.rivals.length === 3 && typeof fs0.harvestContest?.count === 'number');
+if (!fs0.market.open) {
+  r = await farmDo(groupId, { action: 'market', stall: 'snack', food: 'tea' }, TA);
+  check('夜市沒開（星期六晚上 5 點才開）：不能逛', r.status === 400 && /星期六/.test(r.data.error || ''));
+} else {
+  check('（夜市開著）攤位、小吃、商品亂填被擋', (await farmDo(groupId, { action: 'market', stall: '__proto__' }, TA)).status === 400
+    && (await farmDo(groupId, { action: 'market', stall: 'snack', food: 'constructor' }, TA)).status === 400
+    && (await farmDo(groupId, { action: 'market', stall: 'special', item: 'ore:gold' }, TA)).status === 400);
+  r = await farmDo(groupId, { action: 'market', stall: 'goldfish', score: 99 }, TA);
+  money -= 100;
+  check('（夜市開著）撈金魚：分數亂送也最多 3 隻，付 100 元', r.status === 200 && r.data.gained.score === 3 && r.data.items['fish:goldfish'] >= 3 && r.data.money === money
+    && r.data.market.played.includes('goldfish'));
+  check('（夜市開著）撈 3 隻達成成就「撈金魚高手」', (r.data.newAchievements || []).some((a) => a.id === 'goldfish3'));
+  check('（夜市開著）同一個人一晚只能撈一次', /今晚已經玩過/.test((await farmDo(groupId, { action: 'market', stall: 'goldfish', score: 1 }, TA)).data.error || ''));
+  r = await farmDo(groupId, { action: 'market', stall: 'goldfish', score: 0 }, TB);
+  money -= 100;
+  check('（夜市開著）別人可以再撈一次（沒撈到也要付錢）', r.status === 200 && r.data.gained.score === 0 && r.data.money === money);
+  r = await farmDo(groupId, { action: 'market', stall: 'ring', score: '5' }, TA);
+  money -= 100;
+  check('（夜市開著）套圈圈：分數不是整數算 0 個，拿到糖果', r.status === 200 && r.data.gained.score === 0 && r.data.gained.item === 'dish:candy' && r.data.money === money);
+  const sp = fs0.market.specials[0];
+  r = await farmDo(groupId, { action: 'market', stall: 'special', item: sp.item }, TA);
+  if (r.status === 200) money -= sp.price;
+  check('（夜市開著）買夜市限定（錢夠才買得到）', r.status === 200 ? r.data.money === money : /錢不夠/.test(r.data.error || ''));
+  check('（夜市開著）聊天室說撈金魚、套圈圈', (await listIn(groupId, TA)).some((m) => m.content.includes('在夜市撈金魚'))
+    && (await listIn(groupId, TA)).some((m) => m.content.includes('在夜市套圈圈')));
+}
+check('動物選美：亂填動物被擋、別的牧場的動物不行', (await farmDo(groupId, { action: 'beauty_enter', animalId: '__proto__' }, TA)).status === 400
+  && (await farmDo(groupId, { action: 'beauty_enter', animalId: 99999 }, TA)).status === 400);
+r = await farmDo(groupId, { action: 'beauty_enter', animalId: hen.id }, TA);
+check('動物選美：幫小花報名這一週', r.status === 200 && r.data.beauty.entry?.name === '小花' && r.data.beauty.entry.animalId === hen.id);
+r = await farmDo(groupId, { action: 'beauty_enter', animalId: hen.id }, TB);
+check('動物選美：再報名一次只是換人（一週只有一個名額）', r.status === 200 && r.data.beauty.entry.name === '小花');
+check('聊天室說小花報名了選美', (await listIn(groupId, TA)).filter((m) => m.content.includes('幫小花報名了這週的動物選美')).length === 2);
+check('朋友B 打開牧場也看到小花報名了', (await farmGet(groupId, TB)).data.beauty.entry?.name === '小花');
 
 const farmMs = await medianMs(() => farmGet(groupId, TA));
 check(`打開牧場在 150ms 內（實測 ${farmMs.toFixed(0)}ms）`, farmMs < 150);
@@ -677,6 +715,7 @@ if (fs0.scale >= 3600) {
       r = await farmDo(groupId, { action: 'feed', animalId: baby.id }, TB);
       const b2 = r.data.animals?.find((a) => a.id === baby.id);
       check('（加速模式）寶寶吃飯會長愛心，但還沒有產品', r.status === 200 && b2.love === 1 && b2.fedToday && b2.readyAt === 0);
+      check('（加速模式）寶寶不能參加動物選美', /寶寶還太小/.test((await farmDo(groupId, { action: 'beauty_enter', animalId: baby.id }, TA)).data.error || ''));
       check('（加速模式）鴨子今天吃過了，不能再餵（一天一次）', /吃過了/.test((await farmDo(groupId, { action: 'feed', animalId: duck.id }, TA)).data.error || ''));
     }
   }
@@ -695,6 +734,7 @@ check('備份包含跟村民的感情', Array.isArray(r.data.farmFriends));
 check('備份包含圖鑑', (r.data.farmDex || []).length >= 2);
 check('備份包含加工機', Array.isArray(r.data.farmMachines));
 check('備份包含果樹和蜂箱', Array.isArray(r.data.farmTrees) && Array.isArray(r.data.farmHives));
+check('備份包含動物選美', (r.data.farmBeauty || []).some((b) => b.animal_name === '小花'));
 check('備份包含成就和累計', (r.data.farmAchievements || []).some((a) => a.id === 'pet') && Array.isArray(r.data.farmStats));
 
 console.log('\n--- 速度與備份上限（防止效能退步）---');

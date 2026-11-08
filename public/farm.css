@@ -126,3 +126,20 @@ canvas#world { position: fixed; inset: 0; width: 100%; height: 100%; display: bl
 .big-btn { font-size: 20px; padding: 10px 28px; }
 .bbq-grill { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0; padding: 12px; border-radius: 12px; background: #3a3a44; }
 .btn.stick { font-size: 28px; padding: 10px 0; }
+/* 夜市：撈金魚的水盆、套圈圈的瓶子 */
+.tub { position: relative; height: 210px; margin: 10px 0 6px; border-radius: 50% / 38%; background: radial-gradient(#8fd3f4, #4aa3df); border: 6px solid #c9dde6; overflow: hidden; touch-action: manipulation; }
+.gfish { position: absolute; transform: translate(-50%, -50%); line-height: 0; background: none; border: 0; padding: 6px; border-radius: 50%; cursor: pointer; transition: background .15s; }
+.gfish canvas { width: 40px; height: 40px; image-rendering: pixelated; }
+.gfish.flip { transform: translate(-50%, -50%) scaleX(-1); }
+.gfish.rest { background: rgba(255, 246, 170, .55); box-shadow: 0 0 10px 4px rgba(255, 246, 170, .6); }
+.gfish.miss { opacity: .55; }
+.gfish.caught { pointer-events: none; animation: fish-up .7s forwards; }
+@keyframes fish-up { to { transform: translate(-50%, -160%) scale(1.4); opacity: 0; } }
+.ring-track { position: relative; height: 92px; margin: 14px 4px 6px; border-radius: 12px; background: #7a2e22; overflow: hidden; }
+.ring-arrow { position: absolute; top: 4px; transform: translateX(-50%); color: #ffe08a; font-size: 18px; line-height: 1; }
+.bottle { position: absolute; bottom: 10px; width: 14px; height: 40px; transform: translateX(-50%); border-radius: 5px 5px 3px 3px; background: linear-gradient(90deg, #2f7a3a, #5fbf5f 45%, #2f7a3a); }
+.bottle::before { content: ''; position: absolute; left: 4px; top: -12px; width: 6px; height: 14px; border-radius: 2px; background: #2f7a3a; }
+.bottle.ringed::after { content: ''; position: absolute; left: -7px; top: -6px; width: 22px; height: 7px; border: 3px solid #f6d34a; border-radius: 50%; box-sizing: border-box; }
+.ring-drop { position: absolute; top: 34px; width: 24px; height: 10px; transform: translateX(-50%); border: 3px solid #ffe08a; border-radius: 50%; box-sizing: border-box; opacity: .9; animation: ring-fall .6s forwards; }
+.ring-drop.hit { border-color: #7ee06a; }
+@keyframes ring-fall { to { top: 52px; opacity: 0; } }
