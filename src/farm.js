@@ -49,8 +49,8 @@ export const FARM_SPAWN = { x: 5, y: 5 }; // 家門口
 export const TOWN_MAP = [
   'TTTTTETTTTTTTTTTTTTTTTTTTTTTTT',
   'T....=.......................T',
-  'T....=..GGGG......RRRR....T..T',
-  'T....=..GGGG......RRRR.......T',
+  'T.UU.=..GGGG......RRRR.II.T..T',
+  'T.UU.=..GGGG......RRRR.II....T',
   'T....=..GGGG......RRRR.......T',
   'T....========================T',
   'T..............=.............T',
@@ -61,8 +61,8 @@ export const TOWN_MAP = [
   'T........pppppppppppp........T',
   'T..............=.............T',
   'T...======================...T',
-  'T..QQQ......QQQ......QQQ.....T',
-  'T..QQQ......QQQ......QQQ.....T',
+  'T..QQQ......QQQ......QQQ.LL..T',
+  'T..QQQ......QQQ......QQQ.LL..T',
   'T............................T',
   'T..,,,..T........,,,....T....T',
   'T............................T',
@@ -114,8 +114,8 @@ export const BEACH_MAP = [
   'T..,,......sssssssddddWWWWWWWW',
   'T.....T....sssPPPPPPPPPPPPWWWW',
   'T..........ssssssdddWWWWWWWWWW',
-  'T..T.......sssssskddWWWWWWWWWW',
-  'T..........sssssssdddWWWWWWWWW',
+  'T..T..DD...sssssskddWWWWWWWWWW',
+  'T.....DD...sssssssdddWWWWWWWWW',
   'T.........ssssssssdddWWWWWWWWW',
   'E=========sssssssssddWWWWWWWWW',
   'T.........ssssssssdddWWWWWWWWW',
@@ -570,11 +570,11 @@ export const FISH_WINDOW_MS = 1500;     // 看到 ❗ 之後幾毫秒內要拉
 export const fishSpot = (area, x = 0) => (area === 'farm' ? 'pond' : area === 'hill' ? 'lake' : area === 'beach' ? (x >= 24 ? 'deep' : 'sea') : null);
 export const isDaytime = (now) => { const h = new Date(now + TW).getUTCHours(); return h >= 6 && h < 18; };
 // 這一刻在這裡可能釣到哪些魚，各自的機會（權重）
-export function fishChoices(spot, season, day, rain) {
+export function fishChoices(spot, season, day, rain, goodRod = false) {
   const out = [];
   for (const [id, f] of Object.entries(FISH)) {
     if (!f.where.includes(spot) || !f.seasons.includes(season)) continue;
-    let w = f.weight;
+    let w = goodRod && f.weight <= 6 && id !== 'junk' ? f.weight * 2 : f.weight;
     if (id === 'eel') { if (!day || rain) w *= rain ? 3 : 1; else continue; }
     else if (f.time === 'day' && !day) continue;
     else if (f.time === 'night' && day) continue;
@@ -884,6 +884,8 @@ export const ACHIEVEMENTS = [
   { id: 'seaFish5', name: '海釣新手', desc: '釣到 5 種海魚', reward: 500, test: (s) => (s.seaFishKinds || 0) >= 5 },
   { id: 'tuna', name: '黑鮪魚', desc: '在防波堤釣到黑鮪魚', reward: 2000, test: (s) => !!s.tuna },
   { id: 'beachcomber', name: '海邊撿寶', desc: '撿過 6 種海邊的東西', reward: 300, test: (s) => (s.forageKinds || 0) >= 6 },
+  { id: 'restore1', name: '小鎮的好幫手', desc: '修好小鎮的第一個地方', reward: 500, test: (s) => (s.projects || 0) >= 1 },
+  { id: 'restoreAll', name: '小鎮重生', desc: '小鎮修復計畫的四個地方都修好', reward: 3000, test: (s) => (s.projects || 0) >= 4 },
   { id: 'stories', name: '說故事的人', desc: '聽完所有村民的故事', reward: 2000, test: (s) => s.stories >= Object.keys(STORIES).length * STORY_HEARTS.length },
 ];
 export const achievementsMet = (stats) => ACHIEVEMENTS.filter((a) => a.test(stats)).map((a) => a.id);
@@ -1185,4 +1187,70 @@ export function forageOf(farmId, day, area) {
     }
   }
   return out;
+}
+
+// ---------------- 小鎮修復計畫 ----------------
+// 小鎮有四個年久失修的地方。每個地方有三份「收集清單」，全家一起把清單上的東西交齊就修好，
+// 修好了各有用處。四個都修好，小鎮辦一場慶典。清單的 key 跟料理一樣：倉庫裡的東西，或 egg／milk／honey 這種組
+export const PROJECTS = {
+  temple: {
+    name: '土地公廟', emoji: '🏯', area: 'town', x: 2, y: 2,
+    reward: '每個人每天可以來拜拜一次：體力 +15，還會抽到今天的運勢，大吉的時候土地公會送種子',
+    bundles: {
+      offer_spring: { name: '春天的供品', need: { 'crop:bokchoy': 5, 'crop:potato': 3, 'crop:strawberry': 3 } },
+      offer_summer: { name: '夏天的供品', need: { 'crop:tomato': 3, 'crop:corn': 3, 'crop:watermelon': 1 } },
+      offer_autumn: { name: '秋冬的供品', need: { 'crop:sweetpotato': 3, 'crop:pumpkin': 1, 'crop:cabbage': 1 } },
+    },
+  },
+  harbor: {
+    name: '漁會', emoji: '⚓', area: 'beach', x: 6, y: 6,
+    reward: '漁會送全家一支好釣竿：魚上鉤以後有比較久的時間可以拉，稀有的魚也比較容易上鉤',
+    bundles: {
+      fish_lake: { name: '湖裡的魚', need: { 'fish:tilapia': 2, 'fish:crucian': 2, 'fish:carp': 1 } },
+      fish_sea: { name: '海裡的魚', need: { 'fish:mackerel': 2, 'fish:porgy': 1, 'fish:hairtail': 1 } },
+      beach_finds: { name: '海邊的寶', need: { 'forage:shell': 5, 'forage:clam': 3, 'forage:crab': 1 } },
+    },
+  },
+  station: {
+    name: '老車站', emoji: '🚉', area: 'town', x: 23, y: 2,
+    reward: '小火車又開了：每個人每天可以花 100 元坐火車去泡溫泉，體力一下子全滿',
+    bundles: {
+      ores: { name: '修鐵軌的礦石', need: { 'ore:copper': 5, 'ore:silver': 3, 'ore:gold': 1 } },
+      goods: { name: '車站商店的貨', need: { mayo: 1, cheese: 1, 'good:pickled_radish': 1 } },
+      bento: { name: '鐵路便當', need: { 'dish:stirfry': 1, 'dish:tomato_egg': 1, 'dish:sweetpotato_congee': 1 } },
+    },
+  },
+  coop: {
+    name: '農會', emoji: '🏬', area: 'town', x: 25, y: 14,
+    reward: '農會幫忙賣東西：作物、水果出貨的價錢多一成（+10%）',
+    bundles: {
+      animal: { name: '動物的禮物', need: { egg: 5, milk: 3, 'prod:wool': 1 } },
+      fruits: { name: '當季水果', need: { 'fruit:guava': 3, 'fruit:orange': 3, 'fruit:mango': 1 } },
+      sweets: { name: '甜蜜的東西', need: { honey: 1, 'good:jam_strawberry': 1, 'dish:pudding': 1 } },
+    },
+  },
+};
+export const bundleOf = (id) => { for (const [pid, P] of Object.entries(PROJECTS)) if (Object.hasOwn(P.bundles, id)) return { project: pid, ...P.bundles[id] }; return null; };
+export const PROJECT_DONE_REWARD = 10000;   // 四個都修好：小鎮慶典的謝禮
+export const COOP_BONUS = 1.1;              // 農會：作物、水果出貨 +10%
+export const shipPrice = (item, coop) => {
+  const p = itemPrice(item);
+  return coop && /^(crop|fruit):/.test(item) ? Math.round(p * COOP_BONUS) : p;
+};
+export const ONSEN_PRICE = 100;
+export const PRAY_ENERGY = 15;
+// 土地公廟的運勢：同一個人同一天抽到的一樣；大吉送種子
+export const PRAYERS = [
+  { level: '大吉', text: '土地公笑咪咪：今年風調雨順，作物會長得又大又好！', gift: true },
+  { level: '中吉', text: '出門遇貴人，今天跟村民聊天特別開心。' },
+  { level: '小吉', text: '慢慢來比較快，一步一步把田顧好。' },
+  { level: '吉', text: '家和萬事興，記得跟家人說說話。' },
+  { level: '平', text: '平平安安就是福，多喝水、別太累。' },
+];
+export function prayerOf(farmId, day, userId, season) {
+  const rnd = seededRandom(`${farmId}|${day}|${userId}|pray`);
+  const p = PRAYERS[Math.floor(rnd() * PRAYERS.length)];
+  if (!p.gift) return { ...p, giftItem: null };
+  const ids = Object.keys(CROPS).filter((c) => inSeason(c, season));
+  return { ...p, giftItem: { item: `seed:${ids[Math.floor(rnd() * ids.length)]}`, qty: 3 } };
 }

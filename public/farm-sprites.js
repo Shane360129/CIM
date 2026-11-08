@@ -1816,3 +1816,46 @@ const FORAGE_ART = {
   oyster: (r) => { r('#8a8680', 3, 6, 10, 7); r('#a4a09a', 4, 7, 8, 2); r('#e8e4dc', 6, 9, 4, 2); r('#5e5a54', 3, 12, 10, 1); },
 };
 export const forageSprite = (id) => building('forage_' + id, 16, 16, (r) => (FORAGE_ART[id] || FORAGE_ART.shell)(r));
+
+// ---------------- 小鎮修復計畫 ----------------
+// 四個地方（2×2 格，32×32）：修好之前顏色褪掉、屋頂破洞、釘著木板；修好之後漂漂亮亮
+const PROJECT_LOOK = {
+  temple: { roof: '#c8302e', trim: '#f2c94a', wall: '#f2e2c4', door: '#8a2a20', old: ['#7a6a5e', '#9c8e80', '#b8ab98'] },
+  station: { roof: '#3b6ea8', trim: '#f4f1e8', wall: '#e8e4dc', door: '#5e3b20', old: ['#5e6670', '#8a8e92', '#b4b0a8'] },
+  coop: { roof: '#3f7a3a', trim: '#f6d34a', wall: '#f4efe0', door: '#7a4e2d', old: ['#5e6a58', '#8e9484', '#b8b4a4'] },
+  harbor: { roof: '#7a4e2d', trim: '#4aa3df', wall: '#c9a477', door: '#5e3b20', old: ['#5e5048', '#7e7064', '#a09280'] },
+};
+export const projectSprite = (kind, restored) => building(`project_${kind}_${restored ? 1 : 0}`, 32, 32, (r) => {
+  const L = PROJECT_LOOK[kind] || PROJECT_LOOK.coop;
+  const roof = restored ? L.roof : L.old[0], trim = restored ? L.trim : L.old[1], wall = restored ? L.wall : L.old[2];
+  if (kind === 'temple') {
+    // 土地公廟：翹起來的屋簷、紅柱子、香爐
+    r(roof, 2, 6, 28, 4); r(roof, 0, 5, 4, 2); r(roof, 28, 5, 4, 2); r(roof, 6, 2, 20, 4); r(trim, 4, 10, 24, 1); r(trim, 13, 0, 6, 3);
+    r(wall, 4, 11, 24, 19); r(restored ? '#c8302e' : L.old[1], 5, 11, 3, 19); r(restored ? '#c8302e' : L.old[1], 24, 11, 3, 19);
+    r(L.door, 12, 16, 8, 14); r(restored ? '#f6d34a' : '#8a8680', 14, 13, 4, 2);
+    if (restored) { r('#8d5d32', 13, 26, 6, 3); r('#c9a227', 14, 25, 4, 1); r('#ffffff', 15, 21, 1, 4); r('#ffffff', 17, 22, 1, 3); }
+  } else if (kind === 'station') {
+    // 老車站：斜屋頂、時鐘、站牌、月台
+    r(roof, 0, 4, 32, 6); r(trim, 0, 10, 32, 1); r(wall, 2, 11, 28, 17); r('#8a8680', 0, 28, 32, 4);
+    r(trim, 12, 0, 8, 6); r(restored ? '#2b2421' : L.old[0], 15, 2, 2, 2);
+    r(L.door, 13, 18, 6, 10); r(restored ? '#9ad6f6' : L.old[0], 4, 15, 6, 6); r(restored ? '#9ad6f6' : L.old[0], 22, 15, 6, 6);
+    if (restored) { r('#3b6ea8', 4, 12, 24, 2); r('#f4f1e8', 8, 12, 16, 2); }
+  } else if (kind === 'coop') {
+    // 農會：倉庫式的屋頂、招牌、門口的稻穀袋
+    for (let k = 0; k < 8; k++) r(roof, 8 - k, 2 + k, 16 + 2 * k, 1);
+    r(wall, 2, 10, 28, 20); r(trim, 6, 11, 20, 3); r(L.door, 12, 18, 8, 12); r('#5e3b20', 15, 18, 2, 12);
+    if (restored) { r('#e8d29a', 3, 24, 5, 6); r('#c9a96a', 3, 24, 5, 1); r('#e8d29a', 24, 25, 5, 5); r('#4f9d3f', 9, 12, 3, 1); }
+  } else {
+    // 漁會：木頭小屋、晾著的漁網、船錨
+    r(roof, 0, 6, 32, 5); r(roof, 4, 3, 24, 3); r(wall, 2, 11, 28, 18); for (let x = 2; x < 30; x += 4) r(L.old[0], x, 11, 1, 18);
+    r(L.door, 13, 18, 6, 11); r(trim, 4, 14, 6, 5); r(trim, 22, 14, 6, 5);
+    if (restored) { for (let x = 22; x < 30; x += 2) r('#e8e4dc', x, 21, 1, 8); for (let y = 21; y < 29; y += 2) r('#e8e4dc', 22, y, 8, 1);
+      r('#5e5a54', 4, 22, 1, 6); r('#5e5a54', 2, 26, 5, 1); r('#5e5a54', 3, 22, 3, 1); }
+  }
+  if (!restored) {
+    // 釘起來的木板、裂痕、施工中的牌子
+    r('#a8743f', 10, 19, 12, 2); r('#a8743f', 11, 24, 10, 2); r('#5e3b20', 10, 19, 1, 2); r('#5e3b20', 21, 24, 1, 2);
+    r('#2b2421', 6, 13, 1, 4); r('#2b2421', 7, 16, 1, 3); r('#2b2421', 25, 6, 3, 1);
+    r('#f6d34a', 1, 26, 8, 5); r('#2b2421', 2, 27, 6, 1); r('#2b2421', 2, 29, 6, 1); r('#5e3b20', 4, 31, 2, 1);
+  }
+});

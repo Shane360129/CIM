@@ -4,15 +4,16 @@
 import {
   sprite, cropSprite, houseSprite, shopSprite, barnSprite, storeSprite, eaterySprite, homeSprite, fountainSprite, SEASON_GROUND,
   greenhouseSprite, machineSprite, machineSpotSprite, ghTileSprite, fruitTreeSprite, treeSpotSprite, hiveSprite, hiveSpotSprite,
-  stallSprite, caveMouthSprite, caveTileSprite, caveLadderSprite, chestSprite, beachTileSprite, forageSprite,
+  stallSprite, caveMouthSprite, caveTileSprite, caveLadderSprite, chestSprite, beachTileSprite, forageSprite, projectSprite,
 } from '/farm-sprites.js';
 
 const T = 16;            // 一格 16 像素
 const SPEED = 4.5;       // 每秒走幾格
 const WALK = new Set(['.', '=', 'F', 'p', ',', 'E', 's', 'P']); // s 沙灘、P 防波堤；潮間帶 d 退潮才走得過去
 // 點了會走過去互動的東西：田、出貨箱、攤位、房子、動物小屋、溫室、加工機；小鎮的雜貨店、小吃店、民宅、噴水池、告示板；
-// 後山的洞窟入口；洞窟裡往上、往下的梯子和寶箱
-const TARGETS = 'FBSHAGRQONWJMYZV^vC';
+// 後山的洞窟入口；洞窟裡往上、往下的梯子和寶箱；小鎮修復計畫的土地公廟、老車站、農會、海邊的漁會
+const TARGETS = 'FBSHAGRQONWJMYZV^vCUILD';
+const PROJECT_AT = { U: 'temple', I: 'station', L: 'coop', D: 'harbor' };
 const EXIT_LABEL = { town: '🏘️ 往小鎮', farm: '🌾 回牧場', hill: '⛰️ 往後山', beach: '🌊 往海邊' };
 const SEASON = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
 const SEASON_ORDER = ['spring', 'summer', 'autumn', 'winter'];
@@ -52,6 +53,7 @@ const S = {
   market: null, beauty: null, harvestContest: { count: 0, rivals: [] }, marketOn: false,
   cave: null, caveInfo: { best: 0, stops: [1], floors: 20 },
   tide: { override: null, windows: [] }, lowTide: false, forage: {}, forageKinds: {},
+  projects: { list: {}, done: {}, given: {}, prayed: false, onsen: false },
   tool: 'hoe', seed: 'bokchoy', busy: false,
   me: { x: 5, y: 5, d: 'd', step: null, path: [], pending: null, anim: 0 },
   others: new Map(), floats: [], keys: [], view: 3, cam: { x: 0, y: 0 },
@@ -170,6 +172,7 @@ function applyState(st) {
   S.maps = { farm: st.map, town: st.town || st.map, hill: st.hill || st.map, gh: st.greenhouse || st.map, beach: st.beach || st.map, cave: S.cave ? S.cave.map : st.map };
   if (st.tide) { S.tide = st.tide; S.lowTide = lowTideNow(); }
   S.forage = st.forage || {}; S.forageKinds = st.forageKinds || {};
+  if (st.projects) S.projects = st.projects;
   if (st.cave) S.caveInfo = st.cave;
   S.exits = st.exits || {}; S.fishData = st.fish || {}; S.oreData = st.ores || {};
   S.rocks = st.rocks || []; S.dex = st.dex || [];
@@ -362,10 +365,12 @@ function openShop() {
     el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
 }
 
+// 出貨的價錢：農會修好了，作物、水果多一成
+const shipPrice = (item) => { const c = itemInfo(item); return c ? (S.projects.done.coop && /^(crop|fruit):/.test(item) ? Math.round(c.sell * 1.1) : c.sell) : 0; };
 function openBin() {
   const sellable = Object.keys(S.items).filter((item) => (itemInfo(item) || {}).sell).sort();
   const rows = sellable.map((item) => {
-    const c = itemInfo(item);
+    const c = { ...itemInfo(item), sell: shipPrice(item) };
     const have = S.items[item];
     return el('div', { class: 'row' }, icon(c.icon),
       el('div', { class: 'grow' }, el('div', { class: 'name', text: `${c.name} ×${have}` }),
@@ -381,7 +386,7 @@ function openBin() {
         },
       }));
   });
-  openModal(el('h2', { text: '📦 出貨箱' }), el('p', { class: 'sub', text: '放進來的東西會馬上換成錢，存進全家共用的錢包' }),
+  openModal(el('h2', { text: '📦 出貨箱' }), el('p', { class: 'sub', text: '放進來的東西會馬上換成錢，存進全家共用的錢包' + (S.projects.done.coop ? '（農會幫忙賣：作物、水果多一成）' : '') }),
     ...(rows.length ? rows : [el('div', { class: 'empty', text: '倉庫裡還沒有作物或雞蛋牛奶，先去收成吧' })]),
     el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
 }
@@ -655,7 +660,7 @@ async function useOnAnimal(a) {
 
 /* ---------- 小鎮 ---------- */
 
-const BIG = { H: 1, S: 1, A: 1, G: 1, R: 1, Q: 1, O: 1, J: 1, V: 1 };
+const BIG = { H: 1, S: 1, A: 1, G: 1, R: 1, Q: 1, O: 1, J: 1, V: 1, U: 1, I: 1, L: 1, D: 1 };
 const HOMES = ['ama', 'lin', 'jie'];   // 三間民宅由左到右：王阿嬤、林老師、小傑家
 function homeIndex(x, y) {
   const tops = [];
@@ -699,7 +704,7 @@ function fishTick() {
   const f = S.fishing;
   if (!f) return;
   const now = performance.now();
-  if (f.state === 'wait' && now >= f.bite) { f.state = 'bite'; f.end = now + 1500; }
+  if (f.state === 'wait' && now >= f.bite) { f.state = 'bite'; f.end = now + (S.projects.done.harbor ? 2500 : 1500); }
   else if (f.state === 'bite' && now > f.end) finishFishing(false, '太慢了，魚跑掉了');
 }
 async function finishFishing(hooked, why) {
@@ -1045,6 +1050,7 @@ function openBoard() {
       el('div', { class: 'meta', text: '就在小鎮南邊：撈金魚、套圈圈、夜市小吃、夜市限定，晚上 12 點收攤' }))));
   openModal(el('h2', { text: '📋 委託告示板' }), ...rows,
     el('h2', { class: 'section', text: '比賽' }), ...contestRows(),
+    el('h2', { class: 'section', text: '🏗️ 小鎮修復計畫' }), ...projectRows(),
     el('h2', { class: 'section', text: '小鎮的人' }), ...people,
     el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
 }
@@ -1221,6 +1227,7 @@ async function doAct(body) {
     if (r.seasonHarvest != null) S.harvestContest.count = r.seasonHarvest;
     if (r.cave) applyCave(r.cave);
     if (r.forage) S.forage = r.forage;
+    if (r.projects) S.projects = r.projects;
     if (r.caveBest != null) S.caveInfo.best = r.caveBest;
     for (const a of r.newAchievements || []) setTimeout(() => toast(`🏆 達成成就「${a.name}」！全家拿到 ${a.reward} 元`), 900);
     if (r.build) applyBuild(r.build);
@@ -1252,6 +1259,7 @@ function useOn(x, y) {
   const stall = stallAt(x, y);
   if (stall) return openStall(stall);
   if (ch === 'V') return openMinecart();
+  if (PROJECT_AT[ch]) return openProject(PROJECT_AT[ch]);
   if (S.area === 'cave') {
     if (ch === '^') return leaveCave();
     if (ch === 'v') return enterCave(S.cave.floor + 1);
@@ -1584,6 +1592,77 @@ function playRing() {
     el('p', { class: 'sub', text: '箭頭對到瓶子的時候按「丟！」' }),
     el('div', { class: 'ring-track' }, arrow, ...bottles), info,
     el('div', { class: 'actions' }, el('button', { class: 'btn primary big-btn', type: 'button', text: '⭕ 丟！', onclick: () => g.tap() })));
+}
+
+/* ---------- 小鎮修復計畫 ---------- */
+
+const bundleProgress = (bid, B) => Object.entries(B.need).filter(([k, q]) => ((S.projects.given[bid] || {})[k] || 0) >= q).length;
+const bundleDone = (bid, B) => bundleProgress(bid, B) === Object.keys(B.need).length;
+function projectRows() {
+  return Object.entries(S.projects.list).map(([pid, P]) => {
+    const done = S.projects.done[pid];
+    const nb = Object.entries(P.bundles).filter(([bid, B]) => bundleDone(bid, B)).length;
+    return el('div', { class: 'row' + (done ? '' : ' festival') }, el('span', { class: 'big', text: P.emoji }),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: `${P.name}${done ? '：修好了 ✅' : `：清單 ${nb}/${Object.keys(P.bundles).length}`}` }),
+        el('div', { class: 'meta', text: done ? P.reward : `${P.area === 'beach' ? '在海邊' : '在小鎮'}・修好以後：${P.reward}` })),
+      el('button', { class: 'btn', type: 'button', text: done ? '看看' : '看清單', onclick: () => openProject(pid, openBoard) }));
+  });
+}
+function openProject(pid, back) {
+  const P = S.projects.list[pid];
+  if (!P) return;
+  const done = S.projects.done[pid];
+  const backBtn = el('button', { class: 'btn', type: 'button', text: back ? '回告示板' : '關閉', onclick: () => (back ? back() : closeModal()) });
+  if (done) {
+    const act = pid === 'temple'
+      ? el('button', { class: 'btn primary', type: 'button', text: S.projects.prayed ? '今天拜過了' : '🙏 拜拜', disabled: S.projects.prayed, onclick: () => prayTemple(back) })
+      : pid === 'station'
+        ? el('button', { class: 'btn primary', type: 'button', text: S.projects.onsen ? '今天泡過了' : '♨️ 坐火車去泡溫泉（100 元）',
+          disabled: S.projects.onsen || S.energy >= S.energyMax, onclick: () => goOnsen(back) })
+        : null;
+    return openModal(el('h2', { text: `${P.emoji} ${P.name}` }),
+      el('p', { class: 'sub', text: `${done.by ? `${done.by}交了最後一份清單，` : ''}修好了！${P.reward}。` }),
+      pid === 'station' && S.energy >= S.energyMax ? el('p', { class: 'note', text: '體力是滿的，等累了再來坐火車' }) : null,
+      el('div', { class: 'actions' }, backBtn, act));
+  }
+  const sections = Object.entries(P.bundles).flatMap(([bid, B]) => {
+    const given = S.projects.given[bid] || {};
+    const ok = bundleDone(bid, B);
+    return [el('h2', { class: 'section', text: `${ok ? '✅' : '📦'} ${B.name}（${bundleProgress(bid, B)}/${Object.keys(B.need).length}）` }),
+      ...Object.entries(B.need).map(([k, q]) => {
+        const got = Math.min(q, given[k] || 0), have = ingHave(k), c = itemInfo(ingItems(k)[0]) || { icon: 'seed' };
+        return el('div', { class: 'row' + (got >= q ? ' off' : '') }, icon(c.icon),
+          el('div', { class: 'grow' }, el('div', { class: 'name', text: `${ingName(k)} ${got}/${q}` }),
+            el('div', { class: 'meta', text: got >= q ? '交齊了' : `倉庫有 ${have} 個` })),
+          got >= q ? null : el('button', {
+            class: 'btn primary', type: 'button', text: '交出', disabled: !have,
+            onclick: async () => {
+              let r;
+              try { r = await doAct({ action: 'donate', bundle: bid, item: k }); } catch { return; }
+              const g = r.gained;
+              toast(g.allDone ? '🎉 小鎮的四個地方都修好了！' : g.projectDone ? `${P.emoji} ${P.name}修好了！` : g.bundleDone ? `📦 「${B.name}」交齊了！` : `交了 ${g.donated} 個${ingName(k)}`);
+              openProject(pid, back);
+            },
+          }));
+      })];
+  });
+  openModal(el('h2', { text: `${P.emoji} ${P.name}（年久失修）` }),
+    el('p', { class: 'sub', text: `全家一起把下面三份清單交齊，就能把${P.name}修好。修好以後：${P.reward}。` }),
+    ...sections, el('div', { class: 'actions' }, backBtn));
+}
+async function prayTemple(back) {
+  let r;
+  try { r = await doAct({ action: 'pray' }); } catch { return; }
+  const g = r.gained, it = g.gift && itemInfo(g.gift.item);
+  openModal(el('h2', { text: `🏯 今天的運勢：${g.prayer.level}` }), el('p', { class: 'speech story', text: g.prayer.text }),
+    el('p', { class: 'note', text: `體力 +15${it ? `，土地公送了${it.name} ×${g.gift.qty}！` : ''}` }),
+    el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', text: '謝謝土地公', onclick: () => (back ? back() : closeModal()) })));
+}
+async function goOnsen(back) {
+  try { await doAct({ action: 'onsen' }); } catch { return; }
+  openModal(el('h2', { text: '♨️ 泡溫泉' }), el('p', { class: 'speech story', text: '小火車搖搖晃晃開進山裡，泡完熱呼呼的溫泉，整個人都輕鬆了！' }),
+    el('p', { class: 'note', text: `體力全滿（${S.energy}/${S.energyMax}）` }),
+    el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', text: '好舒服', onclick: () => (back ? back() : closeModal()) })));
 }
 
 /* ---------- 海邊 ---------- */
@@ -2111,6 +2190,7 @@ function connectWs() {
       // 家人在同一層挖石頭、開寶箱：這邊的畫面也跟著變
       if (ev.cave && S.cave && ev.cave.floor === S.cave.floor) applyCave(ev.cave);
       if (ev.forage) S.forage = ev.forage;
+      if (ev.projects) S.projects = { ...S.projects, ...ev.projects }; // 家人交了東西、修好了地方
       if (ev.caveBest != null) S.caveInfo.best = ev.caveBest;
       if (ev.by !== S.meId) for (const a of ev.newAchievements || []) toast(`🏆 達成成就「${a.name}」！全家拿到 ${a.reward} 元`);
       if (ev.build) {
@@ -2344,7 +2424,7 @@ function draw() {
     for (let x = 0; x < S.W; x++) {
       const ch = terrain(x, y);
       if (!BIG[ch] || terrain(x - 1, y) === ch || terrain(x, y - 1) === ch) continue;
-      const img = ch === 'V' ? caveMouthSprite() : ch === 'H' ? houseSprite(ground, S.houseLevel) : ch === 'S' ? shopSprite() : ch === 'A' ? barnSprite(ground)
+      const img = PROJECT_AT[ch] ? projectSprite(PROJECT_AT[ch], !!S.projects.done[PROJECT_AT[ch]]) : ch === 'V' ? caveMouthSprite() : ch === 'H' ? houseSprite(ground, S.houseLevel) : ch === 'S' ? shopSprite() : ch === 'A' ? barnSprite(ground)
         : ch === 'J' ? greenhouseSprite(S.ghBuilt, ground)
         : ch === 'G' ? storeSprite() : ch === 'R' ? eaterySprite() : ch === 'Q' ? homeSprite(homes++)
         : fountainSprite(Math.floor(Date.now() / 500) % 2);

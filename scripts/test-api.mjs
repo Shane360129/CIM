@@ -352,7 +352,7 @@ if (fs0.villagersOut) {
 
 // 料理
 // 村民的故事、成就、週報
-check('有村民的故事、31 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 31
+check('有村民的故事、33 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 33
   && JSON.stringify(fs0.achievements) === '{}' && /^\d{4}-\d{2}-\d{2}$/.test(fs0.thisWeek?.week || ''));
 check('有 35 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 35 && !!fs0.ingredientGroups?.egg);
 check('沒有這道菜', (await farmDo(groupId, { action: 'cook', dish: 'steak' }, TA)).status === 400
@@ -574,6 +574,15 @@ if (fs0.weather.today !== 'typhoon') {
   r = await farmDo(groupId, { action: 'forage', area: 'beach', x: tidal.x, y: tidal.y }, TB);
   check(fs0.tide.low ? `退潮了：潮間帶撿到${tidal.item}` : '漲潮時潮間帶的東西撿不到', fs0.tide.low ? r.status === 200 && r.data.items[tidal.item] >= 1 : /漲潮/.test(r.data.error || ''));
 }
+// 小鎮修復計畫
+check('牧場狀態有小鎮修復計畫（四個地方都還沒修好）', Object.keys(fs0.projects?.list || {}).length === 4 && JSON.stringify(fs0.projects.done) === '{}'
+  && fs0.projects.prayed === false && fs0.town[2][2] === 'U' && fs0.beach[6][6] === 'D');
+check('修復計畫：亂填清單、清單上沒有的東西被擋', (await farmDo(groupId, { action: 'donate', bundle: '__proto__', item: 'crop:bokchoy' }, TA)).status === 400
+  && (await farmDo(groupId, { action: 'donate', bundle: 'ores', item: 'crop:bokchoy' }, TA)).status === 400
+  && (await farmDo(groupId, { action: 'donate', bundle: 'ores', item: 'constructor' }, TA)).status === 400);
+check('修復計畫：倉庫沒有就不能交', /倉庫裡沒有/.test((await farmDo(groupId, { action: 'donate', bundle: 'fruits', item: 'fruit:mango' }, TA)).data.error || ''));
+check('還沒修好：不能拜拜、不能泡溫泉', /還沒修好/.test((await farmDo(groupId, { action: 'pray' }, TA)).data.error || '')
+  && /還沒修好/.test((await farmDo(groupId, { action: 'onsen' }, TA)).data.error || ''));
 check('動物選美：亂填動物被擋、別的牧場的動物不行', (await farmDo(groupId, { action: 'beauty_enter', animalId: '__proto__' }, TA)).status === 400
   && (await farmDo(groupId, { action: 'beauty_enter', animalId: 99999 }, TA)).status === 400);
 r = await farmDo(groupId, { action: 'beauty_enter', animalId: hen.id }, TA);
@@ -760,6 +769,20 @@ if (fs0.scale >= 3600) {
       r = await farmDo(groupId, { action: 'remove_tree', spot: 1 }, TA);
       check('（加速模式）可以把樹移走', r.status === 200 && r.data.trees.length === 1);
     }
+    // 小鎮修復計畫：找一樣倉庫裡有、清單上也有的東西交出去
+    {
+      const st = (await farmGet(groupId, TA)).data;
+      const pick = Object.values(st.projects.list).flatMap((P) => Object.entries(P.bundles))
+        .flatMap(([bid, B]) => Object.entries(B.need).map(([k, q]) => ({ bid, k, q }))).find((x) => x.k.includes(':') && st.items[x.k] > 0);
+      if (pick) {
+        const before = st.items[pick.k], want = Math.min(before, pick.q);
+        r = await farmDo(groupId, { action: 'donate', bundle: pick.bid, item: pick.k }, TA);
+        check(`（加速模式）修復計畫：交了 ${want} 個 ${pick.k}（只交需要的數量）`, r.status === 200 && r.data.gained.donated === want
+          && r.data.projects.given[pick.bid][pick.k] === want && (r.data.items[pick.k] || 0) === before - want);
+        if (want === pick.q) check('（加速模式）交齊的那一項不能再交', /交齊/.test((await farmDo(groupId, { action: 'donate', bundle: pick.bid, item: pick.k }, TB)).data.error || ''));
+        check('（加速模式）朋友B 打開牧場也看到交了', (await farmGet(groupId, TB)).data.projects.given[pick.bid][pick.k] === want);
+      }
+    }
     // 動物寶寶（本機測試用 FARM_START_LOVE=duck:20：買來的鴨子就是滿愛心）
     r = await farmDo(groupId, { action: 'buy_animal', kind: 'duck', name: '阿呱' }, TA);
     money -= fs0.animalKinds.duck.price;
@@ -799,6 +822,7 @@ check('備份包含加工機', Array.isArray(r.data.farmMachines));
 check('備份包含果樹和蜂箱', Array.isArray(r.data.farmTrees) && Array.isArray(r.data.farmHives));
 check('備份包含動物選美', (r.data.farmBeauty || []).some((b) => b.animal_name === '小花'));
 check('備份包含洞窟到過第幾層', Array.isArray(r.data.farmCave));
+check('備份包含小鎮修復計畫', Array.isArray(r.data.farmBundles) && Array.isArray(r.data.farmProjects));
 check('備份包含成就和累計', (r.data.farmAchievements || []).some((a) => a.id === 'pet') && Array.isArray(r.data.farmStats));
 
 console.log('\n--- 速度與備份上限（防止效能退步）---');

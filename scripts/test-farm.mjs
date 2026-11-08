@@ -23,8 +23,9 @@ import {
   BEAUTY_RIVALS, BEAUTY_PRIZES, beautyResult, HARVEST_RIVALS, HARVEST_MEDALS, harvestContest,
   CAVE_FLOORS, CAVE_STOPS, CAVE_ROCKS, CAVE_UP, CAVE_ARRIVE, CAVE_LAYOUTS, CAVE_CHEST_SPOTS, CAVE_ORES, caveFloor, caveTier, CHEST_LOOT, chestLoot, CAVE_TREASURE, isAreaKey,
   BEACH_MAP, TIDE_HOURS, tideLevel, isLowTide, lowTideWindows, FORAGE, BEACH_FINDS, forageOf, fishSpot,
+  PROJECTS, bundleOf, PROJECT_DONE_REWARD, shipPrice, COOP_BONUS, PRAYERS, prayerOf,
 } from '../src/farm.js';
-import { forageSprite } from '../public/farm-sprites.js';
+import { forageSprite, projectSprite } from '../public/farm-sprites.js';
 import { SPRITES, PALETTE, FISH_SHAPE, BOOT_SHAPE, ROCK_SHAPE, FISH_COLORS, ORE_COLORS, DISH_SHAPES, DISH_COLORS, GOOD_ART, FRUIT_COLORS, honeySprite, fruitTreeSprite } from '../public/farm-sprites.js';
 
 let pass = 0, fail = 0;
@@ -411,7 +412,7 @@ check('感情很好但還沒聽過：從第一段開始說', storyDue(100, 0), 0
 const zero = { harvest: 0, shipped: 0, requests: 0, babies: 0, animals: 0, pets: 0, machines: 0, fishKinds: 0, dishKinds: 0, goodKinds: 0, amethyst: false, maxHearts: 0, minHearts: 0, stories: 0, gh: 0, house: 1 };
 check('什麼都還沒做：沒有成就', achievementsMet(zero), []);
 check('收成一次、領養寵物：兩個成就', achievementsMet({ ...zero, harvest: 1, pets: 1 }), ['harvest1', 'pet']);
-const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: 4, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: 7 };
+const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: 4, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: 7, projects: 4 };
 check('全部做完：每個成就都達成', achievementsMet(full).length, ACHIEVEMENTS.length);
 check('成就的編號不重複、都有名字說明和獎金', new Set(ACHIEVEMENTS.map((a) => a.id)).size === ACHIEVEMENTS.length && ACHIEVEMENTS.every((a) => a.name && a.desc && a.reward > 0), true);
 check('「聽完所有故事」要 18 段', [achievementsMet({ ...full, stories: 17 }).includes('stories'), achievementsMet(full).includes('stories')], [false, true]);
@@ -603,6 +604,40 @@ check('海魚都有圖、海鮮料理都有顏色', seaFish.every((id) => FISH_C
 check('三個海邊成就', [achievementsMet({ ...zero, seaFishKinds: 5 }), achievementsMet({ ...zero, tuna: true }), achievementsMet({ ...zero, forageKinds: 6 }), achievementsMet({ ...zero, seaFishKinds: 4, forageKinds: 5 })],
   [['seaFish5'], ['tuna'], ['beachcomber'], []]);
 check('即時位置可以是海邊', isAreaKey('beach'), true);
+
+
+console.log('\n--- 小鎮修復計畫 ---');
+const allBundles = Object.values(PROJECTS).flatMap((P) => Object.entries(P.bundles));
+check('四個地方，每個三份清單、每份三樣東西，清單的編號不重複', [Object.keys(PROJECTS).length, Object.values(PROJECTS).every((P) => Object.keys(P.bundles).length === 3),
+  allBundles.every(([, B]) => Object.keys(B.need).length === 3), new Set(allBundles.map(([id]) => id)).size], [4, true, true, 12]);
+check('清單上的東西都是真的東西（或雞蛋、牛奶這種組），數量大於 0', allBundles.every(([, B]) => Object.entries(B.need).every(([k, q]) => q > 0 && (INGREDIENT_GROUPS[k] || itemPrice(k) > 0))), true);
+check('bundleOf 找得到每一份清單是哪個地方的，亂填找不到', [bundleOf('ores').project, bundleOf('beach_finds').project, bundleOf('__proto__'), bundleOf('nope')], ['station', 'harbor', null, null]);
+const MAPS_ = { town: TOWN_MAP, beach: BEACH_MAP };
+check('四棟建築都在地圖上（2×2）', Object.values(PROJECTS).every((P) => { const m = MAPS_[P.area], c = m[P.y][P.x]; return 'UILD'.includes(c) && m[P.y][P.x + 1] === c && m[P.y + 1][P.x] === c && m[P.y + 1][P.x + 1] === c; }), true);
+const reachOf = (area, start) => {
+  const seen = new Set([`${start.x},${start.y}`]), q = [[start.x, start.y]];
+  while (q.length) {
+    const [x, y] = q.shift();
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const k = `${x + dx},${y + dy}`;
+      if (!seen.has(k) && isWalkable(x + dx, y + dy, area)) { seen.add(k); q.push([x + dx, y + dy]); }
+    }
+  }
+  return seen;
+};
+const tReach = reachOf('town', ARRIVE['farm>town']), bReach = reachOf('beach', ARRIVE['town>beach']);
+check('四棟建築旁邊都走得到', Object.values(PROJECTS).every((P) => [[0, -1], [1, -1], [-1, 0], [2, 0], [-1, 1], [2, 1], [0, 2], [1, 2]]
+  .some(([dx, dy]) => (P.area === 'town' ? tReach : bReach).has(`${P.x + dx},${P.y + dy}`))), true);
+check('農會：作物、水果出貨多一成，魚、礦石不變', [shipPrice('crop:bokchoy', true), shipPrice('crop:bokchoy', false), shipPrice('fruit:mango', true), shipPrice('fish:tilapia', true), shipPrice('ore:gold', true), COOP_BONUS],
+  [Math.round(45 * 1.1), 45, Math.round(140 * 1.1), 40, 400, 1.1]);
+const pr = prayerOf(2, '2026-11-08', 5, 'autumn');
+check('拜拜的運勢：同一個人同一天一樣、只有大吉送種子（這一季的）', [JSON.stringify(prayerOf(2, '2026-11-08', 5, 'autumn')) === JSON.stringify(pr),
+  Array.from({ length: 40 }, (_, i) => prayerOf(2, '2026-11-08', i, 'autumn')).every((x) => (x.level === '大吉') === !!x.giftItem && (!x.giftItem || inSeason(x.giftItem.item.slice(5), 'autumn')))], [true, true]);
+check('五種運勢都抽得到', new Set(Array.from({ length: 200 }, (_, i) => prayerOf(2, '2026-11-08', i, 'spring').level)).size, PRAYERS.length);
+const wOf = (cs, id) => (cs.find((c) => c.id === id) || {}).w;
+check('好釣竿：稀有的魚機會加倍、破鞋子不會', [wOf(fishChoices('deep', 'summer', true, false, true), 'tuna'), wOf(fishChoices('deep', 'summer', true, false), 'tuna'),
+  wOf(fishChoices('sea', 'summer', true, false, true), 'junk'), wOf(fishChoices('sea', 'summer', true, false, true), 'mackerel')], [2, 1, FISH.junk.weight, FISH.mackerel.weight]);
+check('兩個修復成就、四棟都有圖', [achievementsMet({ ...zero, projects: 1 }), achievementsMet({ ...zero, projects: 4 }), typeof projectSprite === 'function', PROJECT_DONE_REWARD], [['restore1'], ['restore1', 'restoreAll'], true, 10000]);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);
