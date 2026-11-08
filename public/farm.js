@@ -101,8 +101,8 @@ function lowTideNow() {
   const now = serverNow();
   return S.tide.windows.some(([a, b]) => now >= a && now < b);
 }
-// 海邊今天撿得到的東西（潮間帶的只有退潮看得到）
-const forageAt = (x, y) => S.area === 'beach' && (S.forage.beach || []).find((f) => f.x === x && f.y === y && (!f.tidal || S.lowTide));
+// 海邊、後山、小鎮今天撿得到的東西（潮間帶的只有退潮看得到）
+const forageAt = (x, y) => (S.forage[S.area] || []).find((f) => f.x === x && f.y === y && (!f.tidal || S.lowTide));
 const serverNow = () => Date.now() + S.offset;
 const inSeason = (id) => !!S.crops[id] && S.crops[id].seasons.includes(S.season);
 // 溫室裡什麼季節的種子都能種
@@ -808,7 +808,8 @@ function openDex() {
       const got = have.has('forage:' + id);
       return el('div', { class: 'row' + (got ? '' : ' off') }, got ? icon('forage_' + id) : el('span', { class: 'big', text: '❔' }),
         el('div', { class: 'grow' }, el('div', { class: 'name', text: got ? d.name : '？？？' }),
-          el('div', { class: 'meta', text: got ? `賣 ${d.sell} 元` : d.where === 'tide' ? '提示：海邊的潮間帶，退潮時撿' : d.where === 'sand' ? '提示：海邊的沙灘' : '提示：到外面走走看看' })));
+          el('div', { class: 'meta', text: got ? `賣 ${d.sell} 元` : d.where === 'tide' ? '提示：海邊的潮間帶，退潮時撿' : d.where === 'sand' ? '提示：海邊的沙灘'
+            : `提示：${d.where === 'hill' ? '後山' : '小鎮'}的草地・${d.seasons.length === 4 ? '一年四季（很少見）' : d.seasons.map((x) => SEASON[x]).join('') + '天'}` })));
     }),
     el('h2', { class: 'section', text: `🌳 水果 ${Object.keys(S.fruits).filter((id) => have.has('fruit:' + id)).length}/${Object.keys(S.fruits).length}` }),
     ...Object.entries(S.fruits).map(([id, d]) => {
@@ -2498,8 +2499,8 @@ function draw() {
   }
   // 地毯平平的，畫在地上
   for (const d of S.decos) if (d.area === S.area && (S.decoKinds[d.kind] || {}).flat) g.drawImage(decoSprite(d.kind), d.x * T, d.y * T);
-  // 海邊撿得到的東西
-  if (S.area === 'beach') for (const f of S.forage.beach || []) {
+  // 撿得到的東西（海邊、後山、小鎮）
+  for (const f of S.forage[S.area] || []) {
     if (f.tidal && !S.lowTide) continue;
     g.drawImage(sprite('forage_' + f.item.slice(7)), f.x * T, f.y * T + (Math.floor(Date.now() / 500 + f.x) % 2));
   }

@@ -24,7 +24,7 @@ import {
   CAVE_FLOORS, CAVE_STOPS, CAVE_ROCKS, CAVE_UP, CAVE_ARRIVE, CAVE_LAYOUTS, CAVE_CHEST_SPOTS, CAVE_ORES, caveFloor, caveTier, CHEST_LOOT, chestLoot, CAVE_TREASURE, isAreaKey,
   BEACH_MAP, TIDE_HOURS, tideLevel, isLowTide, lowTideWindows, FORAGE, BEACH_FINDS, forageOf, fishSpot,
   PROJECTS, bundleOf, PROJECT_DONE_REWARD, shipPrice, COOP_BONUS, PRAYERS, prayerOf,
-  HOME_MAP, DECOS, DECO_MAX, decoCheck,
+  HOME_MAP, DECOS, DECO_MAX, decoCheck, LAND_FINDS,
 } from '../src/farm.js';
 import { forageSprite, projectSprite, decoSprite, homeTileSprite } from '../public/farm-sprites.js';
 import { SPRITES, PALETTE, FISH_SHAPE, BOOT_SHAPE, ROCK_SHAPE, FISH_COLORS, ORE_COLORS, DISH_SHAPES, DISH_COLORS, GOOD_ART, FRUIT_COLORS, honeySprite, fruitTreeSprite } from '../public/farm-sprites.js';
@@ -305,7 +305,7 @@ check('3×3 範圍不重複', new Set(area3x3(5, 5).map((c) => c.x + ',' + c.y))
 
 console.log('\n--- 料理 ---');
 const dishes = Object.entries(DISHES).filter(([, d]) => d.need);
-check('有 35 道自己煮得出來的菜（8 道用加工品）', [dishes.length, dishes.filter(([, d]) => Object.keys(d.need).some((k) => k.startsWith('good:') || k === 'mayo' || k === 'cheese')).length], [35, 8]);
+check('有 41 道自己煮得出來的菜（8 道用加工品）', [dishes.length, dishes.filter(([, d]) => Object.keys(d.need).some((k) => k.startsWith('good:') || k === 'mayo' || k === 'cheese')).length], [41, 8]);
 check('每道菜的材料都是真的東西（或雞蛋、牛奶這種組）', dishes.filter(([, d]) => !Object.keys(d.need).every((k) => INGREDIENT_GROUPS[k] || itemPrice(k) > 0)).map(([id]) => id), []);
 check('煮成菜比直接賣材料值錢', dishes.filter(([, d]) => d.sell <= Object.entries(d.need).reduce((n, [k, q]) => n + itemPrice(ingredientItems(k)[0]) * q, 0)).map(([id]) => id), []);
 check('每道菜都能補體力（不超過一整天的量）', dishes.every(([, d]) => d.energy > 0 && d.energy <= ENERGY_MAX), true);
@@ -359,7 +359,7 @@ check('四台加工機的位置都是 M、各自走得到旁邊', Object.entries
 check('地圖上的 M 剛好四個', cells.filter((p) => p.c === 'M').length, Object.keys(MACHINES).length);
 const recipesM = Object.values(MACHINES).flatMap((m) => Object.entries(m.makes));
 check('加工機放得進去的都是真的東西、做出來的都是加工品', recipesM.every(([i, g]) => itemPrice(i) > 0 && !!GOODS[g]), true);
-check('每種加工品都只有一台加工機做得出來', Object.keys(GOODS).map((g) => recipesM.filter(([, x]) => x === g).length).every((n) => n === 1), true);
+check('每種加工品都只有一台加工機做得出來（筍乾：竹筍、冬筍都可以曬）', Object.keys(GOODS).every((g) => Object.values(MACHINES).filter((m) => Object.values(m.makes).includes(g)).length === 1), true);
 check('加工品比材料值錢（超過兩倍）', recipesM.filter(([i, g]) => GOODS[g].sell <= 2 * itemPrice(i)).map(([, g]) => g), []);
 check('加工機要的材料都是礦石，價錢都大於 0、時間都大於 0', Object.values(MACHINES).every((m) => m.price > 0 && m.hours > 0
   && Object.keys(m.need).every((i) => i.startsWith('ore:') && itemPrice(i) > 0)), true);
@@ -413,7 +413,7 @@ check('感情很好但還沒聽過：從第一段開始說', storyDue(100, 0), 0
 const zero = { harvest: 0, shipped: 0, requests: 0, babies: 0, animals: 0, pets: 0, machines: 0, fishKinds: 0, dishKinds: 0, goodKinds: 0, amethyst: false, maxHearts: 0, minHearts: 0, stories: 0, gh: 0, house: 1 };
 check('什麼都還沒做：沒有成就', achievementsMet(zero), []);
 check('收成一次、領養寵物：兩個成就', achievementsMet({ ...zero, harvest: 1, pets: 1 }), ['harvest1', 'pet']);
-const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: 4, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: 7, projects: 4, decoFarm: 5, decoHome: 5 };
+const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: Object.keys(MACHINES).length, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: Object.keys(FORAGE).length, beachKinds: 7, mushrooms: 3, projects: 4, decoFarm: 5, decoHome: 5 };
 check('全部做完：每個成就都達成', achievementsMet(full).length, ACHIEVEMENTS.length);
 check('成就的編號不重複、都有名字說明和獎金', new Set(ACHIEVEMENTS.map((a) => a.id)).size === ACHIEVEMENTS.length && ACHIEVEMENTS.every((a) => a.name && a.desc && a.reward > 0), true);
 check('「聽完所有故事」要 18 段', [achievementsMet({ ...full, stories: 17 }).includes('stories'), achievementsMet(full).includes('stories')], [false, true]);
@@ -598,11 +598,11 @@ check(`潮汐週期 ${TIDE_HOURS} 小時：時段跟一分鐘一分鐘算的一�
 const fg = forageOf(4, '2026-11-08', 'beach');
 check('海邊每天 8 個沙灘的、6 個潮間帶的東西，位置對、不重複', [fg.filter((f) => !f.tidal).length, fg.filter((f) => f.tidal).length, new Set(fg.map((f) => `${f.x},${f.y}`)).size,
   fg.every((f) => BEACH_MAP[f.y][f.x] === (f.tidal ? 'd' : 's') && FORAGE[f.item.slice(7)]?.where === (f.tidal ? 'tide' : 'sand'))], [BEACH_FINDS.sand, BEACH_FINDS.tide, 14, true]);
-check('同一天一樣、隔天換新；別的地方（還）沒有', [JSON.stringify(forageOf(4, '2026-11-08', 'beach')) === JSON.stringify(fg), JSON.stringify(forageOf(4, '2026-11-09', 'beach')) === JSON.stringify(fg), forageOf(4, '2026-11-08', 'hill').length], [true, false, 0]);
+check('同一天一樣、隔天換新；牧場上沒有', [JSON.stringify(forageOf(4, '2026-11-08', 'beach')) === JSON.stringify(fg), JSON.stringify(forageOf(4, '2026-11-09', 'beach')) === JSON.stringify(fg), forageOf(4, '2026-11-08', 'farm').length], [true, false, 0]);
 check('撿到的東西能賣能送、有圖', Object.keys(FORAGE).every((id) => itemPrice('forage:' + id) > 0 && typeof forageSprite === 'function'), true);
 check('海鮮料理：蛤蜊湯、海鮮粥、黑鮪魚生魚片', [DISHES.clam_soup.need, DISHES.seafood_congee.need['forage:crab'], DISHES.tuna_sashimi.sell > itemPrice('fish:tuna')], [{ 'forage:clam': 3 }, 1, true]);
 check('海魚都有圖、海鮮料理都有顏色', seaFish.every((id) => FISH_COLORS[id]) && ['saury_grill', 'clam_soup', 'squid_sanbei', 'hairtail_sweet', 'seafood_congee', 'karasumi', 'tuna_sashimi'].every((id) => DISH_COLORS[id]), true);
-check('三個海邊成就', [achievementsMet({ ...zero, seaFishKinds: 5 }), achievementsMet({ ...zero, tuna: true }), achievementsMet({ ...zero, forageKinds: 6 }), achievementsMet({ ...zero, seaFishKinds: 4, forageKinds: 5 })],
+check('三個海邊成就', [achievementsMet({ ...zero, seaFishKinds: 5 }), achievementsMet({ ...zero, tuna: true }), achievementsMet({ ...zero, beachKinds: 6 }), achievementsMet({ ...zero, seaFishKinds: 4, beachKinds: 5 })],
   [['seaFish5'], ['tuna'], ['beachcomber'], []]);
 check('即時位置可以是海邊', isAreaKey('beach'), true);
 
@@ -668,6 +668,32 @@ check('牧場裡擋住出貨箱旁邊唯一的空位也不行', (() => {
 check('每種裝飾都有圖', Object.keys(DECOS).every(() => typeof decoSprite === 'function') && typeof homeTileSprite === 'function', true);
 check('兩個佈置成就', [achievementsMet({ ...zero, decoFarm: 5 }), achievementsMet({ ...zero, decoHome: 5 }), achievementsMet({ ...zero, decoFarm: 4, decoHome: 4 })], [['deco5'], ['cozyHome'], []]);
 check('即時位置可以是屋子裡', isAreaKey('home'), true);
+
+
+console.log('\n--- 野外採集與菇類 ---');
+const land = Object.entries(FORAGE).filter(([, f]) => f.where === 'hill' || f.where === 'town');
+check('11 種野外採集的東西，都有季節、價錢', [land.length, land.every(([, f]) => f.seasons.length && f.seasons.every((x) => SEASONS.includes(x)) && f.sell > 0)], [11, true]);
+check('每一季後山、小鎮都有東西可以撿', SEASONS.every((se) => ['hill', 'town'].every((a) => land.some(([, f]) => f.where === a && f.seasons.includes(se)))), true);
+for (const se of SEASONS) {
+  const h = forageOf(5, '2026-11-08', 'hill', se), t = forageOf(5, '2026-11-08', 'town', se);
+  check(`${se}：後山 ${LAND_FINDS.hill} 個、小鎮 ${LAND_FINDS.town} 個，都是這一季的、在草地上、不在採石場和小鎮南邊`, [h.length, t.length,
+    [...h.map((f) => ['hill', f]), ...t.map((f) => ['town', f])].every(([a, f]) => ',.'.includes(MAPS[a][f.y][f.x]) && FORAGE[f.item.slice(7)].where === a && FORAGE[f.item.slice(7)].seasons.includes(se) && !f.tidal),
+    h.every((f) => !(f.x >= QUARRY.x0 - 1 && f.x <= QUARRY.x1 + 1 && f.y >= QUARRY.y0 && f.y <= QUARRY.y1 + 1)), t.every((f) => f.y < 15)],
+    [LAND_FINDS.hill, LAND_FINDS.town, true, true, true]);
+}
+check('同一天一樣、隔天換新', [JSON.stringify(forageOf(5, '2026-11-08', 'hill', 'autumn')) === JSON.stringify(forageOf(5, '2026-11-08', 'hill', 'autumn')),
+  JSON.stringify(forageOf(5, '2026-11-09', 'hill', 'autumn')) === JSON.stringify(forageOf(5, '2026-11-08', 'hill', 'autumn'))], [true, false]);
+check('撿到的東西走得到：後山、小鎮的都在走得到的格子上', [...forageOf(5, '2026-11-08', 'hill', 'autumn').map((f) => hillSeen.has(`${f.x},${f.y}`)),
+  ...forageOf(5, '2026-11-08', 'town', 'summer').map((f) => townSeen.has(`${f.x},${f.y}`))].every(Boolean), true);
+check('菇類：木耳、香菇、靈芝（靈芝很稀有）', [land.filter(([, f]) => f.mushroom).map(([id]) => id).sort(), FORAGE.lingzhi.weight < 5, FORAGE.lingzhi.sell], [['lingzhi', 'shiitake', 'wood_ear'], true, 600]);
+check('曬架：在第五個加工機的位置，香菇、木耳、竹筍曬乾比原本值錢兩倍以上', [MACHINE_SPOTS.dryer, terrainAt(22, 4), Object.entries(MACHINES.dryer.makes).every(([i, g]) => GOODS[g] && GOODS[g].sell >= itemPrice(i) * 2)],
+  [{ x: 22, y: 4 }, 'M', true]);
+check('山上的料理：竹筍湯、香菇蒸蛋、木耳露、靈芝茶', [DISHES.bamboo_soup.need, DISHES.shiitake_egg.need.egg, DISHES.woodear_drink.need.honey, DISHES.lingzhi_tea.sell > itemPrice('forage:lingzhi')],
+  [{ 'forage:bamboo_shoot': 2 }, 1, 1, true]);
+check('新的東西都有圖', ['bamboo_soup', 'fern_stirfry', 'shiitake_egg', 'chestnut_roast', 'woodear_drink', 'lingzhi_tea'].every((id) => DISH_COLORS[id])
+  && ['dried_shiitake', 'dried_woodear', 'dried_shoot'].every((id) => GOOD_ART[id]), true);
+check('成就：菇菇採集家、採集達人；海邊撿寶只算海邊的', [achievementsMet({ ...zero, mushrooms: 3 }), achievementsMet({ ...zero, forageKinds: Object.keys(FORAGE).length }),
+  achievementsMet({ ...zero, forageKinds: 6 }), achievementsMet({ ...zero, beachKinds: 6 })], [['mushrooms'], ['forageAll'], [], ['beachcomber']]);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

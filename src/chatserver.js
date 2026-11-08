@@ -2638,10 +2638,11 @@ export class ChatServer {
   // 海邊今天還剩哪些東西可以撿
   farmForagePub(conversationId, today) {
     const out = {};
-    for (const area of ['beach']) {
+    const season = this.farmSeason(Date.now());
+    for (const area of ['beach', 'hill', 'town']) {
       const taken = new Set(this.sql.exec(`SELECT x, y FROM farm_foraged WHERE conversation_id = ? AND day = ? AND area = ?`, conversationId, today, area)
         .toArray().map((r) => `${r.x},${r.y}`));
-      out[area] = forageOf(conversationId, today, area).filter((f) => !taken.has(`${f.x},${f.y}`));
+      out[area] = forageOf(conversationId, today, area, season).filter((f) => !taken.has(`${f.x},${f.y}`));
     }
     return out;
   }
@@ -2803,6 +2804,8 @@ export class ChatServer {
       gems: ['ore:ruby', 'ore:sapphire', 'ore:diamond'].filter((i) => dex.includes(i)).length,
       seaFishKinds: dex.filter((i) => i.startsWith('fish:') && FISH[i.slice(5)]?.sea).length, tuna: dex.includes('fish:tuna'),
       forageKinds: dex.filter((i) => i.startsWith('forage:')).length,
+      beachKinds: dex.filter((i) => i.startsWith('forage:') && ['sand', 'tide'].includes(FORAGE[i.slice(7)]?.where)).length,
+      mushrooms: dex.filter((i) => i.startsWith('forage:') && FORAGE[i.slice(7)]?.mushroom).length,
       projects: one(`SELECT COUNT(*) AS n FROM farm_projects WHERE conversation_id = ?`, conversationId),
       decoFarm: one(`SELECT COUNT(*) AS n FROM farm_decos WHERE conversation_id = ? AND area = 'farm'`, conversationId),
       decoHome: one(`SELECT COUNT(*) AS n FROM farm_decos WHERE conversation_id = ? AND area = 'home'`, conversationId),
@@ -3640,12 +3643,12 @@ export class ChatServer {
       }
       caveOut = this.farmCaveFloorPub(conversationId, today, floor);
     } else if (action === 'forage') {
-      // 撿東西：海邊的沙灘隨時可以撿，潮間帶要退潮才撿得到
+      // 撿東西：海邊的沙灘隨時可以撿、潮間帶要退潮才撿得到；後山、小鎮的草地上有這一季的野菜、菇類
       const area = String(body.area || '');
-      if (area !== 'beach') throw new HttpError(400, '這裡沒有東西可以撿');
-      if (weatherToday === 'typhoon') throw new HttpError(400, '颱風天不要去海邊，很危險！');
+      if (!['beach', 'hill', 'town'].includes(area)) throw new HttpError(400, '這裡沒有東西可以撿');
+      if (weatherToday === 'typhoon' && area !== 'town') throw new HttpError(400, area === 'beach' ? '颱風天不要去海邊，很危險！' : '颱風天不要上山，很危險！');
       const x = Number(body.x), y = Number(body.y);
-      const f = Number.isInteger(x) && Number.isInteger(y) && forageOf(conversationId, today, area).find((r) => r.x === x && r.y === y);
+      const f = Number.isInteger(x) && Number.isInteger(y) && forageOf(conversationId, today, area, season).find((r) => r.x === x && r.y === y);
       if (!f || this.sql.exec(`SELECT 1 FROM farm_foraged WHERE conversation_id = ? AND day = ? AND area = ? AND x = ? AND y = ?`,
         conversationId, today, area, x, y).toArray().length) throw new HttpError(400, '這裡的東西被撿走了');
       if (f.tidal && !this.farmLowTide(now)) throw new HttpError(400, '漲潮了，等退潮再來撿');

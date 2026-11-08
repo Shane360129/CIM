@@ -1418,7 +1418,7 @@ function shaped(key, shape, colors) {
 }
 // 料理：盤子（3 盤子、4 陰影）、碗（4 是碗上的藍色花紋）、杯子（4 是吸管），1、2 是菜的顏色
 export const DISH_SHAPES = { plate: ["................", "................", "................", "................", "................", "......1121......", "....11211211....", "...1121112111...", "..112111121112..", ".33333333333333.", ".43333333333334.", "..444444444444..", "................", "................", "................", "................"], bowl: ["................", "................", "................", "................", "....11211211....", "..112111121111..", ".33333333333333.", ".34444444444443.", "..333333333333..", "...3333333333...", "....33333333....", ".....444444.....", "................", "................", "................", "................"], cup: ["................", "..........4.....", ".........4......", "....33334333....", "....31141113....", "....31411113....", "....31111113....", "....31212123....", "....31111113....", "....31111113....", ".....311113.....", ".....311113.....", ".....333333.....", "................", "................", "................"] };
-export const DISH_COLORS = {"stirfry": ["#4f9d3f", "#8fd16a"], "tomato_egg": ["#e0393e", "#f6d34a"], "carrot_egg": ["#f28b2c", "#f6d34a"], "eggplant": ["#7b3fa0", "#c8553d"], "potato_salad": ["#f2e2a0", "#f6d34a"], "corn_grill": ["#f2b33d", "#8d5d32"], "cabbage_rice": ["#f4f1e8", "#9dd17a"], "sweetpotato_congee": ["#f4efe0", "#e8913a"], "radish_soup": ["#e9e4c8", "#ffffff"], "pumpkin_soup": ["#f2a03a", "#ffffff"], "fish_braised": ["#8a4a2a", "#c96a3a"], "bass_soup": ["#e8e4d0", "#d9b44a"], "eel_rice": ["#6b3a1e", "#f4f1e8"], "pudding": ["#f6d880", "#8d5d32"], "strawberry_milk": ["#f6b6c9", "#e0393e"], "watermelon_juice": ["#f05a5a", "#4f9d3f"], "pineapple_cake": ["#e8b45a", "#f6d34a"], "niangao": ["#c98a3a", "#e8b45a"], "tangyuan": ["#f4f1e8", "#f6b6c9"], "zongzi": ["#4f7d3a", "#8fb35a"], "mooncake": ["#c98a3a", "#8d5d32"], "candy": ["#e0393e", "#f6d34a"], "cake": ["#f6efe0", "#e0393e"], "caipu_egg": ["#f6d34a", "#c98a3a"], "kimchi_pot": ["#e05a3a", "#f6d880"], "cheese_potato": ["#f6d34a", "#e8913a"], "pancake": ["#e8b45a", "#d9344a"], "fries": ["#f2c94a", "#d9344a"], "corn_salad": ["#f6d34a", "#f6efc8"], "golden_pumpkin": ["#f2a03a", "#f6d34a"], "bbq": ["#8d4a2a", "#f2b33d"], "mango_ice": ["#f2b33d", "#f4f1e8"], "orange_juice": ["#f28b2c", "#f8b860"], "honey_potato": ["#e8913a", "#c87a1e"], "honey_cake": ["#e8b45a", "#8d5d32"], "saury_grill": ["#5a7ea8", "#e8913a"], "clam_soup": ["#f4efe0", "#d9b44a"], "squid_sanbei": ["#c87a3a", "#4f9d3f"], "hairtail_sweet": ["#e05a3a", "#f4f6f8"], "seafood_congee": ["#f4efe0", "#e0393e"], "karasumi": ["#e8913a", "#c8553d"], "tuna_sashimi": ["#d9344a", "#f6b6c9"]};
+export const DISH_COLORS = {"stirfry": ["#4f9d3f", "#8fd16a"], "tomato_egg": ["#e0393e", "#f6d34a"], "carrot_egg": ["#f28b2c", "#f6d34a"], "eggplant": ["#7b3fa0", "#c8553d"], "potato_salad": ["#f2e2a0", "#f6d34a"], "corn_grill": ["#f2b33d", "#8d5d32"], "cabbage_rice": ["#f4f1e8", "#9dd17a"], "sweetpotato_congee": ["#f4efe0", "#e8913a"], "radish_soup": ["#e9e4c8", "#ffffff"], "pumpkin_soup": ["#f2a03a", "#ffffff"], "fish_braised": ["#8a4a2a", "#c96a3a"], "bass_soup": ["#e8e4d0", "#d9b44a"], "eel_rice": ["#6b3a1e", "#f4f1e8"], "pudding": ["#f6d880", "#8d5d32"], "strawberry_milk": ["#f6b6c9", "#e0393e"], "watermelon_juice": ["#f05a5a", "#4f9d3f"], "pineapple_cake": ["#e8b45a", "#f6d34a"], "niangao": ["#c98a3a", "#e8b45a"], "tangyuan": ["#f4f1e8", "#f6b6c9"], "zongzi": ["#4f7d3a", "#8fb35a"], "mooncake": ["#c98a3a", "#8d5d32"], "candy": ["#e0393e", "#f6d34a"], "cake": ["#f6efe0", "#e0393e"], "caipu_egg": ["#f6d34a", "#c98a3a"], "kimchi_pot": ["#e05a3a", "#f6d880"], "cheese_potato": ["#f6d34a", "#e8913a"], "pancake": ["#e8b45a", "#d9344a"], "fries": ["#f2c94a", "#d9344a"], "corn_salad": ["#f6d34a", "#f6efc8"], "golden_pumpkin": ["#f2a03a", "#f6d34a"], "bbq": ["#8d4a2a", "#f2b33d"], "mango_ice": ["#f2b33d", "#f4f1e8"], "orange_juice": ["#f28b2c", "#f8b860"], "honey_potato": ["#e8913a", "#c87a1e"], "honey_cake": ["#e8b45a", "#8d5d32"], "saury_grill": ["#5a7ea8", "#e8913a"], "clam_soup": ["#f4efe0", "#d9b44a"], "squid_sanbei": ["#c87a3a", "#4f9d3f"], "hairtail_sweet": ["#e05a3a", "#f4f6f8"], "seafood_congee": ["#f4efe0", "#e0393e"], "karasumi": ["#e8913a", "#c8553d"], "tuna_sashimi": ["#d9344a", "#f6b6c9"], "bamboo_soup": ["#f4efe0", "#e8d29a"], "fern_stirfry": ["#2e7a2e", "#5fbf5f"], "shiitake_egg": ["#f6d880", "#7a4e2d"], "chestnut_roast": ["#7a4e2d", "#c98a3a"], "woodear_drink": ["#5a4038", "#d9b98a"], "lingzhi_tea": ["#8a3a24", "#c8553d"]};
 const DISH_KIND = { plate: ['#f4f1ea', '#c9c5bf'], bowl: ['#f4f1ea', '#5a8fc8'], cup: ['#d9eef6', '#e0393e'] };
 export const dishSprite = (id, shape = 'plate') => shaped('dish_' + id, DISH_SHAPES[shape] || DISH_SHAPES.plate,
   [...(DISH_COLORS[id] || ['#c8553d', '#f6d34a']), ...(DISH_KIND[shape] || DISH_KIND.plate)]);
@@ -1571,6 +1571,7 @@ export const GOOD_ART = {
   jam_strawberry: ['jar', '#d9344a', '#f6b6c9'], jam_pineapple: ['jar', '#f2b33d', '#f6d880'], ketchup: ['bottle', '#d9344a', '#ffffff'],
   pickled_radish: ['jar', '#c98a3a', '#e8c28a'], kimchi: ['jar', '#e05a3a', '#f6a07a'], salted_greens: ['jar', '#6b8f3a', '#a8c26a'],
   salted_egg: ['jar', '#e8e0c8', '#f2b33d'],
+  dried_shiitake: ['jar', '#7a4e2d', '#c98a5a'], dried_woodear: ['jar', '#3a2a24', '#7a5a4a'], dried_shoot: ['jar', '#c9a96a', '#f2d6a0'],
 };
 export const goodSprite = (id) => building('good_' + id, 16, 16, (r) => {
   const [shape, main, light] = GOOD_ART[id] || ['jar', '#c8553d', '#f6d34a'];
@@ -1611,6 +1612,11 @@ export const machineSprite = (kind, busy = false, frame = 0) => building(`machin
     r('#7a3e14', 1, 7, 1, 2); r('#7a3e14', 14, 7, 1, 2);
     r(busy ? '#d9344a' : '#a85a1e', 3, 5, 10, 1);
     if (busy) { r('#ffffff', 6, frame ? 1 : 2, 1, 2); r('#ffffff', 9, frame ? 2 : 1, 1, 2); }
+  } else if (kind === 'dryer') {                                        // 曬架：竹子架子上曬著香菇、筍片
+    r('#8d6a3a', 2, 3, 1, 13); r('#8d6a3a', 13, 3, 1, 13); r('#c9a96a', 1, 4, 14, 1); r('#c9a96a', 1, 9, 14, 1);
+    r('#b8925f', 3, 5, 10, 3); r('#b8925f', 3, 10, 10, 3);
+    if (busy) { for (const x of [4, 7, 10]) { r('#7a4e2d', x, 5, 2, 2); r('#e8d29a', x, 10, 2, 2); } }
+    else { r('#9a8a6a', 3, 6, 10, 1); r('#9a8a6a', 3, 11, 10, 1); }
   } else {                                                              // 醃漬罈：咖啡色的陶甕，蓋子綁著紅布
     r('#5e3b20', 4, 15, 8, 1);
     r('#7a4e2d', 4, 5, 8, 10); r('#7a4e2d', 3, 7, 10, 6); r('#9a6a3e', 5, 7, 1, 6);
@@ -1815,6 +1821,42 @@ const FORAGE_ART = {
   crab: (r) => { r('#e0393e', 4, 7, 8, 5); r('#a8252b', 4, 11, 8, 1); r('#e0393e', 2, 5, 2, 2); r('#e0393e', 12, 5, 2, 2); r('#2b2421', 6, 7, 1, 1); r('#2b2421', 9, 7, 1, 1);
     for (const x of [3, 5, 10, 12]) r('#a8252b', x, 12, 1, 2); },
   oyster: (r) => { r('#8a8680', 3, 6, 10, 7); r('#a4a09a', 4, 7, 8, 2); r('#e8e4dc', 6, 9, 4, 2); r('#5e5a54', 3, 12, 10, 1); },
+  bamboo_shoot: (r) => {                                                 // 竹筍：一層一層的筍殼，從土裡冒出來
+    r('#7a5a32', 2, 13, 12, 2); r('#9a7444', 3, 12, 10, 1);
+    r('#e2c48a', 3, 10, 10, 3); r('#d1ad6e', 4, 7, 8, 3); r('#e2c48a', 5, 5, 6, 2); r('#d1ad6e', 6, 3, 4, 2); r('#c2a05a', 7, 1, 2, 2);
+    r('#a8743f', 3, 10, 4, 1); r('#a8743f', 4, 7, 3, 1); r('#a8743f', 5, 5, 2, 1); r('#a8743f', 6, 3, 2, 1);
+    r('#8a9a3a', 8, 0, 1, 2); r('#f4e4b8', 10, 8, 1, 4); r('#f4e4b8', 9, 5, 1, 2); },
+  fern: (r) => {                                                         // 山蘇：寬寬亮亮的葉子圍成一圈
+    for (const [c, k] of [['#3f8a2f', 0], ['#56a83f', 1]]) {
+      const L = k ? [[5, 9, 3, 3], [4, 6, 3, 3], [4, 3, 2, 3], [5, 1, 1, 2]] : [[2, 9, 4, 3], [1, 6, 3, 3], [0, 4, 2, 2]];
+      for (const [x, y, w, h] of L) { r(c, x, y, w, h); r(c, 16 - x - w, y, w, h); }
+    }
+    r('#6cc04a', 7, 2, 2, 10); r('#2e6a24', 7, 4, 1, 8); r('#3a7a2c', 5, 4, 1, 6); r('#3a7a2c', 10, 4, 1, 6);
+    r('#2e6a24', 2, 8, 1, 3); r('#2e6a24', 13, 8, 1, 3); r('#5e3b20', 5, 12, 6, 2); r('#7a5a32', 4, 14, 8, 1); },
+  raspberry: (r) => { r('#3f9a3f', 4, 3, 8, 2); for (const [x, y] of [[5, 6], [8, 6], [6, 9], [9, 9], [7, 12]]) { r('#d9344a', x, y, 3, 3); r('#f6b6c9', x, y, 1, 1); } },
+  wood_ear: (r) => {                                                     // 木耳：長在倒下的木頭上，皺皺的深咖啡色
+    r('#8d6a3a', 1, 9, 14, 5); r('#a8845a', 1, 9, 14, 1); r('#6b4a2a', 1, 13, 14, 1); r('#7a5a32', 6, 11, 5, 1);
+    r('#d9b98a', 0, 9, 2, 5); r('#b8925f', 0, 10, 1, 3); r('#e8d2a8', 1, 11, 1, 1);
+    r('#5a3428', 3, 5, 5, 5); r('#5a3428', 4, 4, 3, 1); r('#8a5a48', 4, 5, 2, 2); r('#3a2018', 4, 8, 3, 1); r('#3a2018', 7, 6, 1, 3);
+    r('#5a3428', 9, 6, 5, 4); r('#5a3428', 10, 5, 3, 1); r('#8a5a48', 10, 6, 2, 1); r('#3a2018', 10, 8, 3, 1); },
+  shiitake: (r) => { r('#7a4e2d', 2, 4, 12, 5); r('#a8743f', 4, 3, 8, 2); r('#f4efe0', 4, 5, 2, 1); r('#f4efe0', 9, 6, 2, 1); r('#e8dcc0', 6, 9, 4, 5); r('#c9b48a', 6, 13, 4, 1); },
+  chestnut: (r) => {                                                     // 栗子：刺刺的綠殼裂開，掉出兩顆亮亮的栗子
+    r('#5f8f2f', 1, 3, 7, 5); r('#7ab03f', 2, 4, 5, 2);
+    for (const [x, y] of [[0, 3], [2, 2], [4, 1], [6, 2], [8, 4], [0, 6], [8, 7]]) r('#a8d060', x, y, 1, 1);
+    r('#5a3418', 10, 4, 2, 1); r('#7a4422', 9, 5, 4, 1); r('#7a4422', 8, 6, 6, 5); r('#e8d29a', 8, 11, 6, 2); r('#b07a48', 9, 6, 1, 3); r('#e0b080', 9, 6, 1, 1);
+    r('#5a3418', 4, 7, 2, 1); r('#7a4422', 3, 8, 4, 1); r('#7a4422', 2, 9, 6, 3); r('#e8d29a', 2, 12, 6, 2); r('#b07a48', 3, 9, 1, 2); r('#e0b080', 3, 9, 1, 1); },
+  winter_shoot: (r) => {                                                // 冬筍：矮矮胖胖、還埋在土裡，筍殼是深咖啡色
+    r('#6b4a2a', 1, 12, 14, 3); r('#8d6a3a', 2, 11, 12, 1);
+    r('#9a6a3a', 3, 8, 10, 4); r('#7a4e2d', 4, 6, 8, 2); r('#9a6a3a', 5, 4, 6, 2); r('#7a4e2d', 6, 3, 4, 1); r('#5e3b20', 7, 2, 2, 1);
+    r('#5e3b20', 3, 8, 4, 1); r('#5e3b20', 5, 4, 2, 1); r('#c9a96a', 10, 7, 1, 4); r('#c9a96a', 9, 4, 1, 2); r('#6b7a3a', 8, 1, 1, 1); },
+  lingzhi: (r) => {                                                      // 靈芝：亮亮的紅褐色、扇子一樣的菌傘，邊緣金黃色
+    r('#5e3b20', 7, 9, 2, 4); r('#6b4a2a', 4, 13, 8, 2); r('#8d6a3a', 5, 13, 6, 1);
+    r('#f2c84a', 1, 4, 14, 4); r('#f2c84a', 3, 3, 10, 1); r('#f2c84a', 3, 8, 10, 1);
+    r('#7a2a18', 2, 4, 12, 4); r('#7a2a18', 4, 3, 8, 1); r('#a8402a', 4, 4, 8, 2); r('#c8603d', 6, 4, 4, 1); r('#f6e8b0', 6, 4, 2, 1);
+    r('#f2c84a', 9, 10, 6, 2); r('#7a2a18', 10, 10, 4, 1); r('#a8402a', 11, 10, 2, 1); },
+  dandelion: (r) => { r('#3f9a3f', 7, 7, 2, 8); r('#4f9d3f', 4, 12, 3, 2); r('#4f9d3f', 9, 11, 3, 2); r('#f6d34a', 5, 3, 6, 5); r('#f2b33d', 7, 4, 2, 3); },
+  ginger_lily: (r) => { r('#3f9a3f', 7, 6, 2, 9); r('#4f9d3f', 3, 9, 4, 2); r('#f4f1e8', 4, 2, 4, 4); r('#f4f1e8', 8, 3, 4, 4); r('#f6efc8', 6, 4, 4, 3); r('#f6d34a', 7, 5, 1, 1); },
+  kumquat: (r) => { r('#3f9a3f', 6, 3, 4, 2); for (const [x, y] of [[4, 6], [9, 6], [6, 10]]) { r('#f28b2c', x, y, 4, 4); r('#f8b860', x + 1, y + 1, 1, 1); } },
 };
 export const forageSprite = (id) => building('forage_' + id, 16, 16, (r) => (FORAGE_ART[id] || FORAGE_ART.shell)(r));
 

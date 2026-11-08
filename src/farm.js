@@ -12,7 +12,7 @@ const DAY = 24 * HOUR;
 const TW = 8 * HOUR; // 台灣時間 UTC+8
 
 // 地形：T 樹、. 草地、= 小路、F 田、f 柵欄、H 房子、S 商店、B 出貨箱、W 池塘、A 動物小屋、E 往小鎮的出口、
-// J 溫室（蓋好之後點它走進去）、M 加工機的位置（攤位右邊一排四台）、
+// J 溫室（蓋好之後點它走進去）、M 加工機的位置（攤位右邊一排五台）、
 // Y 種果樹的位置（最下面一排）、Z 放蜂箱的位置（左下角）
 // 動物小屋下面用柵欄圍了一塊草地給雞和牛散步，左邊 (22,13) 是門；左下角的小路走出去是小鎮，
 // 動物小屋右邊 (29,7) 走出去是後山
@@ -21,7 +21,7 @@ export const FARM_MAP = [
   'TT......T.JJJJJ..............T',
   'T..HHHH...JJJJJ.SS....T......T',
   'T..HHHH...JJJJJ.SS......WWW..T',
-  'T..HHHH..B........MMMM..WWWW.T',
+  'T..HHHH..B........MMMMM.WWWW.T',
   'T....=..................WWW..T',
   'T....=================.......T',
   'T....=...............=.AAAA..E',
@@ -657,6 +657,9 @@ export const GOODS = {
   pickled_radish: { name: '菜脯', sell: 220 },
   kimchi: { name: '台式泡菜', sell: 420 },
   salted_greens: { name: '鹹菜', sell: 120 },
+  dried_shiitake: { name: '乾香菇', sell: 220 },
+  dried_woodear: { name: '乾木耳', sell: 160 },
+  dried_shoot: { name: '筍乾', sell: 200 },
   salted_egg: { name: '鹹鴨蛋', sell: 220 },
 };
 // 加工機：在小鎮的雜貨店買（錢＋後山挖的礦石），放在牧場攤位右邊。一次最多放 MACHINE_BATCH 個同一種東西，
@@ -669,9 +672,12 @@ export const MACHINES = {
     makes: { 'crop:strawberry': 'jam_strawberry', 'crop:pineapple': 'jam_pineapple', 'crop:tomato': 'ketchup' } },
   pickle: { name: '醃漬罈', price: 1000, need: { 'ore:stone': 10 }, hours: 12,
     makes: { 'crop:radish': 'pickled_radish', 'crop:cabbage': 'kimchi', 'crop:bokchoy': 'salted_greens', 'prod:duck_egg': 'salted_egg' } },
+  // 曬架：把山上採的香菇、木耳、竹筍曬乾
+  dryer: { name: '曬架', price: 1200, need: { 'ore:stone': 15, 'ore:copper': 2 }, hours: 8,
+    makes: { 'forage:shiitake': 'dried_shiitake', 'forage:wood_ear': 'dried_woodear', 'forage:bamboo_shoot': 'dried_shoot', 'forage:winter_shoot': 'dried_shoot' } },
 };
 // 加工機在牧場上的位置（地圖上的 M）
-export const MACHINE_SPOTS = { mayo: { x: 18, y: 4 }, cheese: { x: 19, y: 4 }, jam: { x: 20, y: 4 }, pickle: { x: 21, y: 4 } };
+export const MACHINE_SPOTS = { mayo: { x: 18, y: 4 }, cheese: { x: 19, y: 4 }, jam: { x: 20, y: 4 }, pickle: { x: 21, y: 4 }, dryer: { x: 22, y: 4 } };
 export const machineAt = (x, y) => Object.keys(MACHINE_SPOTS).find((id) => MACHINE_SPOTS[id].x === x && MACHINE_SPOTS[id].y === y) || null;
 // 放進去的東西什麼時候做好（scale 一樣只給本機測試）
 export const machineReadyAt = (m, scale = 1) => (m.started_at || 0) + (MACHINES[m.kind].hours * HOUR) / scale;
@@ -747,6 +753,13 @@ export const DISHES = {
   seafood_congee: { name: '海鮮粥', need: { 'forage:crab': 1, 'forage:clam': 2, egg: 1 }, energy: 45, sell: 520, shape: 'bowl' },
   karasumi: { name: '烏魚子', need: { 'fish:mullet': 2 }, energy: 30, sell: 900, shape: 'plate' },
   tuna_sashimi: { name: '黑鮪魚生魚片', need: { 'fish:tuna': 1 }, energy: 60, sell: 3200, shape: 'plate' },
+  // 山上採的：竹筍、山蘇、香菇、栗子、木耳、靈芝
+  bamboo_soup: { name: '竹筍湯', need: { 'forage:bamboo_shoot': 2 }, energy: 25, sell: 220, shape: 'bowl' },
+  fern_stirfry: { name: '炒山蘇', need: { 'forage:fern': 2 }, energy: 20, sell: 180, shape: 'plate' },
+  shiitake_egg: { name: '香菇蒸蛋', need: { 'forage:shiitake': 1, egg: 1 }, energy: 30, sell: 260, shape: 'bowl' },
+  chestnut_roast: { name: '糖炒栗子', need: { 'forage:chestnut': 3 }, energy: 25, sell: 260, shape: 'plate' },
+  woodear_drink: { name: '木耳露', need: { 'forage:wood_ear': 2, honey: 1 }, energy: 25, sell: 420, shape: 'cup' },
+  lingzhi_tea: { name: '靈芝茶', need: { 'forage:lingzhi': 1 }, energy: 60, sell: 1500, shape: 'cup' },
   // 節慶的食物：不能自己煮，節日或家人生日時收到（吃、賣、送人都可以）
   niangao: { name: '年糕', need: null, festival: true, energy: 30, sell: 120, shape: 'plate' },
   tangyuan: { name: '湯圓', need: null, festival: true, energy: 25, sell: 100, shape: 'bowl' },
@@ -885,7 +898,7 @@ export const ACHIEVEMENTS = [
   { id: 'requests10', name: '熱心助人', desc: '完成 10 個委託', reward: 800, test: (s) => s.requests >= 10 },
   { id: 'greenhouse', name: '四季如春', desc: '蓋好溫室', reward: 500, test: (s) => !!s.gh },
   { id: 'house3', name: '溫暖的家', desc: '房子擴建到二樓', reward: 1000, test: (s) => s.house >= 3 },
-  { id: 'machines', name: '加工專家', desc: '四台加工機都買齊', reward: 1000, test: (s) => s.machines >= Object.keys(MACHINES).length },
+  { id: 'machines', name: '加工專家', desc: '加工機全部買齊', reward: 1000, test: (s) => s.machines >= Object.keys(MACHINES).length },
   { id: 'orchard', name: '果園主人', desc: '同時種 5 棵果樹', reward: 800, test: (s) => (s.trees || 0) >= 5 },
   { id: 'honey', name: '甜蜜蜜', desc: '收到第一罐蜂蜜', reward: 300, test: (s) => !!s.honey },
   { id: 'goldfish3', name: '撈金魚高手', desc: '在夜市一次撈到 3 隻金魚', reward: 300, test: (s) => (s.goldfish3 || 0) >= 1 },
@@ -896,11 +909,13 @@ export const ACHIEVEMENTS = [
   { id: 'gems', name: '寶石收藏家', desc: '挖到紅寶石、藍寶石和鑽石', reward: 1500, test: (s) => (s.gems || 0) >= 3 },
   { id: 'seaFish5', name: '海釣新手', desc: '釣到 5 種海魚', reward: 500, test: (s) => (s.seaFishKinds || 0) >= 5 },
   { id: 'tuna', name: '黑鮪魚', desc: '在防波堤釣到黑鮪魚', reward: 2000, test: (s) => !!s.tuna },
-  { id: 'beachcomber', name: '海邊撿寶', desc: '撿過 6 種海邊的東西', reward: 300, test: (s) => (s.forageKinds || 0) >= 6 },
+  { id: 'beachcomber', name: '海邊撿寶', desc: '撿過 6 種海邊的東西', reward: 300, test: (s) => (s.beachKinds || 0) >= 6 },
   { id: 'restore1', name: '小鎮的好幫手', desc: '修好小鎮的第一個地方', reward: 500, test: (s) => (s.projects || 0) >= 1 },
   { id: 'restoreAll', name: '小鎮重生', desc: '小鎮修復計畫的四個地方都修好', reward: 3000, test: (s) => (s.projects || 0) >= 4 },
   { id: 'deco5', name: '佈置牧場', desc: '在牧場擺 5 個裝飾', reward: 300, test: (s) => (s.decoFarm || 0) >= 5 },
   { id: 'cozyHome', name: '溫暖的小窩', desc: '在屋子裡擺 5 件家具', reward: 300, test: (s) => (s.decoHome || 0) >= 5 },
+  { id: 'mushrooms', name: '菇菇採集家', desc: '採到木耳、香菇和靈芝', reward: 800, test: (s) => (s.mushrooms || 0) >= 3 },
+  { id: 'forageAll', name: '採集達人', desc: '採集圖鑑全部撿過', reward: 2000, test: (s) => (s.forageKinds || 0) >= Object.keys(FORAGE).length },
   { id: 'stories', name: '說故事的人', desc: '聽完所有村民的故事', reward: 2000, test: (s) => s.stories >= Object.keys(STORIES).length * STORY_HEARTS.length },
 ];
 export const achievementsMet = (stats) => ACHIEVEMENTS.filter((a) => a.test(stats)).map((a) => a.id);
@@ -1185,10 +1200,24 @@ export const FORAGE = {
   clam: { name: '蛤蜊', sell: 40, where: 'tide', weight: 35 },
   crab: { name: '螃蟹', sell: 120, where: 'tide', weight: 15 },
   oyster: { name: '野生牡蠣', sell: 80, where: 'tide', weight: 12 },
+  // 野外採集：後山（hill）、小鎮（town）的草地上，看季節長出來
+  bamboo_shoot: { name: '竹筍', sell: 60, where: 'hill', seasons: ['spring', 'summer'], weight: 30 },
+  fern: { name: '山蘇', sell: 50, where: 'hill', seasons: ['spring', 'summer'], weight: 25 },
+  raspberry: { name: '野莓', sell: 45, where: 'hill', seasons: ['summer'], weight: 25 },
+  wood_ear: { name: '木耳', sell: 55, where: 'hill', seasons: ['summer', 'autumn'], weight: 25, mushroom: true },
+  shiitake: { name: '香菇', sell: 80, where: 'hill', seasons: ['autumn', 'winter'], weight: 30, mushroom: true },
+  chestnut: { name: '栗子', sell: 65, where: 'hill', seasons: ['autumn'], weight: 25 },
+  winter_shoot: { name: '冬筍', sell: 90, where: 'hill', seasons: ['winter'], weight: 25 },
+  lingzhi: { name: '靈芝', sell: 600, where: 'hill', seasons: ['spring', 'summer', 'autumn', 'winter'], weight: 2, mushroom: true },
+  dandelion: { name: '蒲公英', sell: 20, where: 'town', seasons: ['spring'], weight: 30 },
+  ginger_lily: { name: '野薑花', sell: 70, where: 'town', seasons: ['summer', 'autumn'], weight: 25 },
+  kumquat: { name: '金桔', sell: 40, where: 'town', seasons: ['winter'], weight: 25 },
 };
 export const BEACH_FINDS = { sand: 8, tide: 6 };
+export const LAND_FINDS = { hill: 8, town: 4 };
 // 海邊今天哪裡有東西可以撿（全家看到的一樣，隔天換一批）
-export function forageOf(farmId, day, area) {
+export function forageOf(farmId, day, area, season = 'spring') {
+  if (area === 'hill' || area === 'town') return landForageOf(farmId, day, area, season);
   if (area !== 'beach') return [];
   const rnd = seededRandom(`${farmId}|${day}|forage|${area}`);
   const out = [];
@@ -1339,4 +1368,24 @@ export function decoCheck(area, kind, x, y, placed) {
     if (near(before) && !near(after)) return '擺在這裡會擋住旁邊的東西';
   }
   return null;
+}
+// 後山、小鎮的野外採集：每天在草地上冒出幾個這一季的東西（小鎮南邊夜市那一帶不放）
+function landForageOf(farmId, day, area, season) {
+  const map = MAPS[area];
+  const kinds = Object.entries(FORAGE).filter(([, f]) => f.where === area && f.seasons.includes(season)).map(([id, f]) => ({ id, w: f.weight }));
+  if (!kinds.length) return [];
+  const rnd = seededRandom(`${farmId}|${day}|forage|${area}`);
+  const spots = [];
+  map.forEach((row, y) => [...row].forEach((c, x) => {
+    if (c !== '.' && c !== ',') return;
+    if (area === 'town' && y >= 15) return;
+    if (area === 'hill' && x >= QUARRY.x0 - 1 && x <= QUARRY.x1 + 1 && y >= QUARRY.y0 && y <= QUARRY.y1 + 1) return;
+    spots.push({ x, y });
+  }));
+  const out = [];
+  for (let n = 0; n < LAND_FINDS[area] && spots.length; n++) {
+    const p = spots.splice(Math.floor(rnd() * spots.length), 1)[0];
+    out.push({ ...p, item: `forage:${pickWeighted(kinds, rnd())}`, tidal: false });
+  }
+  return out;
 }

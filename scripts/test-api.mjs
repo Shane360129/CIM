@@ -352,9 +352,9 @@ if (fs0.villagersOut) {
 
 // 料理
 // 村民的故事、成就、週報
-check('有村民的故事、35 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 35
+check('有村民的故事、37 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 37
   && JSON.stringify(fs0.achievements) === '{}' && /^\d{4}-\d{2}-\d{2}$/.test(fs0.thisWeek?.week || ''));
-check('有 35 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 35 && !!fs0.ingredientGroups?.egg);
+check('有 41 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 41 && !!fs0.ingredientGroups?.egg);
 check('沒有這道菜', (await farmDo(groupId, { action: 'cook', dish: 'steak' }, TA)).status === 400
   && (await farmDo(groupId, { action: 'cook', dish: 'constructor' }, TA)).status === 400);
 r = await farmDo(groupId, { action: 'cook', dish: 'pumpkin_soup' }, TA);
@@ -425,7 +425,7 @@ for (const e of evs.filter((x) => x.note === '家族牧場加的節慶')) await 
 // 加工機、溫室、房子擴建
 check('一開始：沒有加工機、溫室還沒蓋、房子原本的樣子（體力上限 60）、有溫室的地圖',
   JSON.stringify(fs0.machines) === '{}' && fs0.ghBuilt === false && fs0.houseLevel === 1 && fs0.energyMax === 60
-  && fs0.greenhouse?.length === 10 && Object.keys(fs0.machineKinds || {}).length === 4 && Object.keys(fs0.builds || {}).length === 3);
+  && fs0.greenhouse?.length === 10 && Object.keys(fs0.machineKinds || {}).length === 5 && Object.keys(fs0.builds || {}).length === 3);
 check('溫室還沒蓋，不能在溫室的田翻土', /溫室還沒蓋好/.test((await farmDo(groupId, { action: 'till', x: 2, y: 2, map: 'gh' }, TA)).data.error || ''));
 check('說在牧場卻點溫室的座標：不能耕作', /不能耕作/.test((await farmDo(groupId, { action: 'till', x: 2, y: 2, map: 'farm' }, TA)).data.error || ''));
 check('還沒買加工機不能放東西', /還沒有/.test((await farmDo(groupId, { action: 'machine_put', machine: 'mayo', item: 'prod:egg', qty: 1 }, TA)).data.error || ''));
@@ -548,7 +548,7 @@ if (fs0.weather.today !== 'typhoon') {
 }
 // 海邊
 check('牧場狀態有海邊、潮汐、今天撿得到的東西', fs0.beach?.length === 20 && Array.isArray(fs0.tide?.windows) && fs0.tide.windows.length >= 3
-  && (fs0.forage?.beach || []).length === 14 && Object.keys(fs0.forageKinds || {}).length === 7);
+  && (fs0.forage?.beach || []).length === 14 && Object.keys(fs0.forageKinds || {}).length === 18);
 if (fs0.weather.today !== 'typhoon') {
   // 前面挖礦用了不少體力：誰還有體力就誰釣
   const fishAt = async (body) => {
@@ -603,6 +603,19 @@ if (r.status === 200) {
   check('裝飾：收過的不能再收、亂填的不行', (await farmDo(groupId, { action: 'pickup_deco', id: dk.id }, TA)).status === 400
     && (await farmDo(groupId, { action: 'pickup_deco', id: '1 OR 1=1' }, TA)).status === 400);
 } else check('裝飾：錢不夠就買不到', /錢不夠/.test(r.data.error || ''));
+// 野外採集：後山、小鎮的草地上
+check('今天後山有 8 個、小鎮有 4 個這一季的東西可以撿', (fs0.forage?.hill || []).length === 8 && (fs0.forage?.town || []).length === 4
+  && [...fs0.forage.hill, ...fs0.forage.town].every((f) => fs0.forageKinds[f.item.slice(7)]?.seasons.includes(fs0.season)));
+if (fs0.weather.today !== 'typhoon') {
+  const hf = fs0.forage.hill[0];
+  r = await farmDo(groupId, { action: 'forage', area: 'hill', x: hf.x, y: hf.y }, TB);
+  check(`在後山撿到${hf.item}`, r.status === 200 && r.data.items[hf.item] >= 1 && r.data.forage.hill.length === 7 && r.data.dex.includes(hf.item));
+}
+const tf = fs0.forage.town[0];
+r = await farmDo(groupId, { action: 'forage', area: 'town', x: tf.x, y: tf.y }, TB);
+check(`在小鎮撿到${tf.item}`, r.status === 200 && r.data.items[tf.item] >= 1 && r.data.forage.town.length === 3);
+check('別的地方（牧場、洞窟）沒有東西可以撿', (await farmDo(groupId, { action: 'forage', area: 'farm', x: 12, y: 5 }, TB)).status === 400
+  && (await farmDo(groupId, { action: 'forage', area: 'cave', x: 3, y: 3 }, TB)).status === 400);
 check('動物選美：亂填動物被擋、別的牧場的動物不行', (await farmDo(groupId, { action: 'beauty_enter', animalId: '__proto__' }, TA)).status === 400
   && (await farmDo(groupId, { action: 'beauty_enter', animalId: 99999 }, TA)).status === 400);
 r = await farmDo(groupId, { action: 'beauty_enter', animalId: hen.id }, TA);
