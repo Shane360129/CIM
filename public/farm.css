@@ -143,3 +143,8 @@ canvas#world { position: fixed; inset: 0; width: 100%; height: 100%; display: bl
 .ring-drop { position: absolute; top: 34px; width: 24px; height: 10px; transform: translateX(-50%); border: 3px solid #ffe08a; border-radius: 50%; box-sizing: border-box; opacity: .9; animation: ring-fall .6s forwards; }
 .ring-drop.hit { border-color: #7ee06a; }
 @keyframes ring-fall { to { top: 52px; opacity: 0; } }
+
+/* 擺裝飾：畫面上方的提示列 */
+.place-banner { position: fixed; left: 50%; top: 88px; transform: translateX(-50%); z-index: 30; display: flex; gap: 10px; align-items: center;
+  padding: 8px 10px 8px 14px; border-radius: 14px; background: rgba(43,36,33,.88); color: #fff8e6; font-weight: 600; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+.place-banner .btn { padding: 4px 12px; }

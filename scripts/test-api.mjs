@@ -352,7 +352,7 @@ if (fs0.villagersOut) {
 
 // 料理
 // 村民的故事、成就、週報
-check('有村民的故事、33 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 33
+check('有村民的故事、35 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 35
   && JSON.stringify(fs0.achievements) === '{}' && /^\d{4}-\d{2}-\d{2}$/.test(fs0.thisWeek?.week || ''));
 check('有 35 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 35 && !!fs0.ingredientGroups?.egg);
 check('沒有這道菜', (await farmDo(groupId, { action: 'cook', dish: 'steak' }, TA)).status === 400
@@ -583,6 +583,26 @@ check('修復計畫：亂填清單、清單上沒有的東西被擋', (await far
 check('修復計畫：倉庫沒有就不能交', /倉庫裡沒有/.test((await farmDo(groupId, { action: 'donate', bundle: 'fruits', item: 'fruit:mango' }, TA)).data.error || ''));
 check('還沒修好：不能拜拜、不能泡溫泉', /還沒修好/.test((await farmDo(groupId, { action: 'pray' }, TA)).data.error || '')
   && /還沒修好/.test((await farmDo(groupId, { action: 'onsen' }, TA)).data.error || ''));
+// 裝飾與家具
+check('牧場狀態有屋子裡的地圖、20 種裝飾家具、還沒擺任何東西', fs0.home?.length === 8 && Object.keys(fs0.decoKinds || {}).length === 20 && JSON.stringify(fs0.decos) === '[]');
+check('裝飾：亂買、一次買太多被擋', (await farmDo(groupId, { action: 'buy_deco', kind: '__proto__' }, TA)).status === 400
+  && (await farmDo(groupId, { action: 'buy_deco', kind: 'bench', qty: 99 }, TA)).status === 400);
+check('裝飾：倉庫沒有不能擺', /倉庫裡沒有/.test((await farmDo(groupId, { action: 'place_deco', kind: 'bench', area: 'farm', x: 12, y: 5 }, TA)).data.error || ''));
+r = await farmDo(groupId, { action: 'buy_deco', kind: 'bench' }, TA);
+if (r.status === 200) {
+  money -= fs0.decoKinds.bench.price;
+  check(`裝飾：買一張長椅 ${fs0.decoKinds.bench.price} 元`, r.data.items['deco:bench'] === 1 && r.data.money === money);
+  check('裝飾：長椅不能擺在屋子裡、不能擺在田裡', /草地/.test((await farmDo(groupId, { action: 'place_deco', kind: 'bench', area: 'home', x: 3, y: 3 }, TA)).data.error || '')
+    && (await farmDo(groupId, { action: 'place_deco', kind: 'bench', area: 'farm', x: 4, y: 9 }, TA)).status === 400);
+  r = await farmDo(groupId, { action: 'place_deco', kind: 'bench', area: 'farm', x: 12, y: 5 }, TB);
+  const dk = r.data.decos?.[0];
+  check('裝飾：朋友B 把長椅擺在牧場的草地上', r.status === 200 && dk?.kind === 'bench' && dk.x === 12 && dk.y === 5 && !r.data.items['deco:bench']);
+  check('裝飾：朋友A 打開牧場也看到', (await farmGet(groupId, TA)).data.decos.some((d) => d.id === dk.id));
+  r = await farmDo(groupId, { action: 'pickup_deco', id: dk.id }, TA);
+  check('裝飾：收起來放回倉庫', r.status === 200 && r.data.items['deco:bench'] === 1 && r.data.decos.length === 0);
+  check('裝飾：收過的不能再收、亂填的不行', (await farmDo(groupId, { action: 'pickup_deco', id: dk.id }, TA)).status === 400
+    && (await farmDo(groupId, { action: 'pickup_deco', id: '1 OR 1=1' }, TA)).status === 400);
+} else check('裝飾：錢不夠就買不到', /錢不夠/.test(r.data.error || ''));
 check('動物選美：亂填動物被擋、別的牧場的動物不行', (await farmDo(groupId, { action: 'beauty_enter', animalId: '__proto__' }, TA)).status === 400
   && (await farmDo(groupId, { action: 'beauty_enter', animalId: 99999 }, TA)).status === 400);
 r = await farmDo(groupId, { action: 'beauty_enter', animalId: hen.id }, TA);
@@ -823,6 +843,7 @@ check('備份包含果樹和蜂箱', Array.isArray(r.data.farmTrees) && Array.is
 check('備份包含動物選美', (r.data.farmBeauty || []).some((b) => b.animal_name === '小花'));
 check('備份包含洞窟到過第幾層', Array.isArray(r.data.farmCave));
 check('備份包含小鎮修復計畫', Array.isArray(r.data.farmBundles) && Array.isArray(r.data.farmProjects));
+check('備份包含裝飾', Array.isArray(r.data.farmDecos));
 check('備份包含成就和累計', (r.data.farmAchievements || []).some((a) => a.id === 'pet') && Array.isArray(r.data.farmStats));
 
 console.log('\n--- 速度與備份上限（防止效能退步）---');

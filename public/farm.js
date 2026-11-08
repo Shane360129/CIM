@@ -4,7 +4,7 @@
 import {
   sprite, cropSprite, houseSprite, shopSprite, barnSprite, storeSprite, eaterySprite, homeSprite, fountainSprite, SEASON_GROUND,
   greenhouseSprite, machineSprite, machineSpotSprite, ghTileSprite, fruitTreeSprite, treeSpotSprite, hiveSprite, hiveSpotSprite,
-  stallSprite, caveMouthSprite, caveTileSprite, caveLadderSprite, chestSprite, beachTileSprite, forageSprite, projectSprite,
+  stallSprite, caveMouthSprite, caveTileSprite, caveLadderSprite, chestSprite, beachTileSprite, forageSprite, projectSprite, decoSprite, homeTileSprite,
 } from '/farm-sprites.js';
 
 const T = 16;            // 一格 16 像素
@@ -54,6 +54,7 @@ const S = {
   cave: null, caveInfo: { best: 0, stops: [1], floors: 20 },
   tide: { override: null, windows: [] }, lowTide: false, forage: {}, forageKinds: {},
   projects: { list: {}, done: {}, given: {}, prayed: false, onsen: false },
+  decos: [], decoKinds: {}, placing: null,
   tool: 'hoe', seed: 'bokchoy', busy: false,
   me: { x: 5, y: 5, d: 'd', step: null, path: [], pending: null, anim: 0 },
   others: new Map(), floats: [], keys: [], view: 3, cam: { x: 0, y: 0 },
@@ -90,7 +91,10 @@ const stallOn = (x, y) => S.marketOn && Object.keys(S.market.stalls)
   .find((id) => { const st = S.market.stalls[id]; return y === st.y && x >= st.x && x < st.x + (st.w || 2); });
 const stallAt = (x, y) => S.area === 'town' && stallOn(x, y);
 // 後山的石頭擋路，挖掉才過得去
-const walkable = (x, y) => { const c = terrain(x, y); return (WALK.has(c) || (c === 'd' && S.lowTide)) && !rockAt(x, y) && !stallAt(x, y); };
+// 擺出去的裝飾、家具（地毯可以踩過去）
+const decoAt = (x, y) => S.decos.find((d) => d.area === S.area && d.x === x && d.y === y);
+const decoBlocks = (x, y) => { const d = decoAt(x, y); return !!d && !(S.decoKinds[d.kind] || {}).flat; };
+const walkable = (x, y) => { const c = terrain(x, y); return (WALK.has(c) || (c === 'd' && S.lowTide)) && !rockAt(x, y) && !stallAt(x, y) && !decoBlocks(x, y); };
 // 潮汐：伺服器給接下來兩天的退潮時段，這裡照時間算現在是不是退潮
 function lowTideNow() {
   if (S.tide.override) return S.tide.override === 'low';
@@ -119,6 +123,7 @@ function itemInfo(item) {
   if (kind === 'dish' && S.dishes[id]) return { name: S.dishes[id].name, icon: `dish_${id}@${S.dishes[id].shape}`, sell: S.dishes[id].sell, dish: id };
   if (kind === 'good' && S.goods[id]) return { name: S.goods[id].name, icon: 'good_' + id, sell: S.goods[id].sell, good: id };
   if (kind === 'fruit' && S.fruits[id]) return { name: S.fruits[id].name, icon: 'fruit_' + id, sell: S.fruits[id].sell };
+  if (kind === 'deco' && S.decoKinds[id]) return { name: S.decoKinds[id].name, icon: 'deco_' + id, sell: 0, deco: id };
   if (kind === 'forage' && S.forageKinds[id]) return { name: S.forageKinds[id].name, icon: 'forage_' + id, sell: S.forageKinds[id].sell };
   if (kind === 'sapling' && S.treeKinds[id]) return { name: `${S.treeKinds[id].name}苗`, icon: `tree_${id}_0`, sell: 0, sapling: id };
   return null;
@@ -169,7 +174,9 @@ function applyTown(t) {
 
 function applyState(st) {
   // 兩張地圖：牧場和小鎮；重新同步時留在原本那一張
-  S.maps = { farm: st.map, town: st.town || st.map, hill: st.hill || st.map, gh: st.greenhouse || st.map, beach: st.beach || st.map, cave: S.cave ? S.cave.map : st.map };
+  S.maps = { farm: st.map, town: st.town || st.map, hill: st.hill || st.map, gh: st.greenhouse || st.map, beach: st.beach || st.map,
+    home: st.home || st.map, cave: S.cave ? S.cave.map : st.map };
+  S.decos = st.decos || []; S.decoKinds = st.decoKinds || {};
   if (st.tide) { S.tide = st.tide; S.lowTide = lowTideNow(); }
   S.forage = st.forage || {}; S.forageKinds = st.forageKinds || {};
   if (st.projects) S.projects = st.projects;
@@ -400,11 +407,13 @@ function openBag() {
       : c.crop ? (inSeason(c.crop) ? '用「種子」工具種在翻好的土上' : `${seasonsText(S.crops[c.crop].seasons)}才能種${S.ghBuilt ? '，溫室裡現在就能種' : '，先收著'}`)
       : c.dish ? `吃了體力 +${S.dishes[c.dish].energy}，或出貨賣 ${c.sell} 元`
       : c.good ? `加工品・出貨賣 ${c.sell} 元，也能送人、拿來做菜`
+      : c.deco ? (S.decoKinds[c.deco].where === 'home' ? '家具：到屋子裡擺（從廚房走進去）' : '裝飾：擺在牧場的草地上')
       : `可以拿去出貨箱賣 ${c.sell} 元`;
     return el('div', { class: 'row' }, icon(c.icon),
       el('div', { class: 'grow' }, el('div', { class: 'name', text: c.name }), el('div', { class: 'meta', text: meta })),
       el('b', { text: '×' + qty }),
-      c.dish ? el('button', { class: 'btn', type: 'button', text: '吃', disabled: S.energy >= S.energyMax, onclick: () => eatDish(c.dish, openBag) }) : null);
+      c.dish ? el('button', { class: 'btn', type: 'button', text: '吃', disabled: S.energy >= S.energyMax, onclick: () => eatDish(c.dish, openBag) }) : null,
+      c.deco ? el('button', { class: 'btn', type: 'button', text: '擺出去', onclick: () => startPlacing(c.deco) }) : null);
   });
   openModal(el('h2', { text: '🎒 全家的倉庫' }), el('p', { class: 'sub', text: '種子和收成大家共用' }),
     ...(rows.filter(Boolean).length ? rows : [el('div', { class: 'empty', text: '倉庫是空的' })]),
@@ -687,7 +696,7 @@ function goArea(to) {
   S.fishing = null;
   closeModal();
   sendPos(false);
-  toast({ town: '🏘️ 來到小鎮了', farm: '🌾 回到牧場了', hill: '⛰️ 來到後山了', gh: '🌱 進到溫室了', beach: '🌊 來到海邊了' }[to]);
+  toast({ town: '🏘️ 來到小鎮了', farm: '🌾 回到牧場了', hill: '⛰️ 來到後山了', gh: '🌱 進到溫室了', beach: '🌊 來到海邊了', home: '🏠 進到屋子裡了' }[to]);
 }
 
 /* ---------- 釣魚、挖礦 ---------- */
@@ -771,7 +780,8 @@ function openKitchen() {
         el('button', { class: 'btn', type: 'button', text: '吃', disabled: S.energy >= S.energyMax, onclick: () => eatDish(c.dish, openKitchen) }));
     })] : []),
     el('h2', { class: 'section', text: '食譜' }), ...rows,
-    el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
+    el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '🛋️ 進屋裡', onclick: () => goArea('home') }),
+      el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
 }
 async function eatDish(id, after) {
   try { await doAct({ action: 'eat_dish', dish: id }); toast(`好吃！體力 ${S.energy}/${S.energyMax}`); if (after) after(); } catch {}
@@ -1113,6 +1123,7 @@ function openStore() {
     el('h2', { class: 'section', text: '🏗️ 建築' }), ...Object.keys(S.builds).map(buildRow),
     el('h2', { class: 'section', text: '⚙️ 加工機' }), ...Object.keys(S.machineKinds).map(machineRow),
     el('div', { class: 'actions' },
+      el('button', { class: 'btn', type: 'button', text: '🪑 裝飾與家具', onclick: openDecoShop }),
       el('button', { class: 'btn', type: 'button', text: '買種子、飼料', onclick: openShop }),
       el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
 }
@@ -1228,6 +1239,7 @@ async function doAct(body) {
     if (r.cave) applyCave(r.cave);
     if (r.forage) S.forage = r.forage;
     if (r.projects) S.projects = r.projects;
+    if (r.decos) S.decos = r.decos;
     if (r.caveBest != null) S.caveInfo.best = r.caveBest;
     for (const a of r.newAchievements || []) setTimeout(() => toast(`🏆 達成成就「${a.name}」！全家拿到 ${a.reward} 元`), 900);
     if (r.build) applyBuild(r.build);
@@ -1274,6 +1286,7 @@ function useOn(x, y) {
   if (ch === 'Y') return useTree(S.treeSpots.findIndex((p) => p.x === x && p.y === y));
   if (ch === 'Z') return useHive(S.hiveSpots.findIndex((p) => p.x === x && p.y === y));
   if (forageAt(x, y)) return pickForage(x, y);
+  if (decoAt(x, y)) return openDeco(decoAt(x, y));
   if (ch === 'W' || (ch === 'd' && !S.lowTide)) return startFishing(x, y);
   if (rockAt(x, y)) return mineRock(x, y);
   if (ch === 'G') return openStore();
@@ -1592,6 +1605,63 @@ function playRing() {
     el('p', { class: 'sub', text: '箭頭對到瓶子的時候按「丟！」' }),
     el('div', { class: 'ring-track' }, arrow, ...bottles), info,
     el('div', { class: 'actions' }, el('button', { class: 'btn primary big-btn', type: 'button', text: '⭕ 丟！', onclick: () => g.tap() })));
+}
+
+/* ---------- 裝飾與家具 ---------- */
+
+// 傍晚到清晨：路燈、石燈籠會亮
+const isEvening = (t) => { const h = new Date(t + 8 * 3600000).getUTCHours(); return h >= 17 || h < 6; };
+
+function openDecoShop() {
+  const row = ([id, d]) => el('div', { class: 'row' }, icon('deco_' + id),
+    el('div', { class: 'grow' }, el('div', { class: 'name', text: d.name }),
+      el('div', { class: 'meta', text: `${d.price} 元・倉庫有 ${S.items['deco:' + id] || 0} 個・擺出去 ${S.decos.filter((x) => x.kind === id).length} 個` })),
+    el('button', {
+      class: 'btn primary', type: 'button', text: '買', disabled: d.price > S.money,
+      onclick: async () => { try { await doAct({ action: 'buy_deco', kind: id }); toast(`買了${d.name}！到倉庫按「擺出去」`); openDecoShop(); } catch {} },
+    }));
+  const list = Object.entries(S.decoKinds);
+  openModal(el('h2', { text: '🪑 裝飾與家具' }),
+    el('p', { class: 'sub', text: `錢包 ${S.money.toLocaleString()} 元。買了放在倉庫，按「擺出去」再點一塊地方就擺好了；點擺好的東西可以收起來。` }),
+    el('h2', { class: 'section', text: '🌷 牧場的裝飾（擺在草地上）' }), ...list.filter(([, d]) => d.where === 'farm').map(row),
+    el('h2', { class: 'section', text: '🛋️ 屋子裡的家具（從廚房走進去）' }), ...list.filter(([, d]) => d.where === 'home').map(row),
+    el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '回雜貨店', onclick: openStore })));
+}
+function startPlacing(kind) {
+  const D = S.decoKinds[kind];
+  if (D.where !== S.area) return toast(D.where === 'home' ? '家具要到屋子裡擺：點房子（廚房）→「進屋裡」' : '裝飾要回牧場擺在草地上');
+  S.placing = { kind };
+  closeModal();
+  let bar = document.getElementById('place-banner');
+  if (!bar) {
+    bar = el('div', { id: 'place-banner', class: 'place-banner' });
+    document.body.append(bar);
+  }
+  bar.textContent = '';
+  bar.append(el('span', { text: `🪑 點一塊${D.where === 'home' ? '地板' : '草地'}擺「${D.name}」` }),
+    el('button', { class: 'btn', type: 'button', text: '取消', onclick: stopPlacing }));
+}
+function stopPlacing() {
+  S.placing = null;
+  const bar = document.getElementById('place-banner');
+  if (bar) bar.remove();
+}
+async function placeDeco(x, y) {
+  const kind = S.placing.kind;
+  if (Math.round(S.me.x) === x && Math.round(S.me.y) === y) return toast('自己站的地方不能擺，往旁邊走一步再擺');
+  try { await doAct({ action: 'place_deco', kind, area: S.area, x, y }); } catch { return; }
+  toast(`擺好${S.decoKinds[kind].name}了！`);
+  stopPlacing();
+}
+function openDeco(d) {
+  const D = S.decoKinds[d.kind] || { name: d.kind };
+  openModal(el('div', { class: 'talk-head' }, icon('deco_' + d.kind),
+    el('div', { class: 'grow' }, el('h2', { text: D.name }), el('div', { class: 'sub', text: '收起來會放回倉庫，可以再擺到別的地方' }))),
+  el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '好', onclick: closeModal }),
+    el('button', {
+      class: 'btn primary', type: 'button', text: '收起來',
+      onclick: async () => { try { await doAct({ action: 'pickup_deco', id: d.id }); toast(`${D.name}收進倉庫了`); closeModal(); } catch {} },
+    })));
 }
 
 /* ---------- 小鎮修復計畫 ---------- */
@@ -1931,6 +2001,7 @@ const DIRS = { u: [0, -1], d: [0, 1], l: [-1, 0], r: [1, 0] };
 const dirTo = (fx, fy, tx, ty) => (tx > fx ? 'r' : tx < fx ? 'l' : ty > fy ? 'd' : 'u');
 
 function tapTile(tx, ty, fx = tx + 0.5, fy = ty + 0.5) {
+  if (S.placing) return placeDeco(tx, ty);
   const me = S.me;
   const cx = Math.round(me.x), cy = Math.round(me.y);
   const ch = terrain(tx, ty);
@@ -1979,6 +2050,16 @@ function tapTile(tx, ty, fx = tx + 0.5, fy = ty + 0.5) {
     if (!path) return toast('走不過去');
     me.path = path;
     me.pending = { stall, x: st.x, y: st.y };
+    if (!path.length && !me.step) arrive();
+    return;
+  }
+  // 擺好的裝飾、家具：走到旁邊看看（可以收起來）
+  const dk = decoAt(tx, ty);
+  if (dk) {
+    const path = findPath(cx, cy, (x, y) => Math.abs(x - tx) + Math.abs(y - ty) <= 1);
+    if (!path) return toast('走不過去');
+    me.path = path;
+    me.pending = { x: tx, y: ty, deco: dk.id };
     if (!path.length && !me.step) arrive();
     return;
   }
@@ -2058,6 +2139,7 @@ function arrive() {
     return patPet(p.pet);
   }
   if (p.rock) { me.d = dirTo(me.x, me.y, p.x, p.y); return mineRock(p.x, p.y); }
+  if (p.deco) { const d = S.decos.find((x) => x.id === p.deco); return d ? openDeco(d) : null; }
   if (p.forage) { if (p.x !== me.x || p.y !== me.y) me.d = dirTo(me.x, me.y, p.x, p.y); return pickForage(p.x, p.y); }
   if (p.stall) {
     for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
@@ -2191,6 +2273,7 @@ function connectWs() {
       if (ev.cave && S.cave && ev.cave.floor === S.cave.floor) applyCave(ev.cave);
       if (ev.forage) S.forage = ev.forage;
       if (ev.projects) S.projects = { ...S.projects, ...ev.projects }; // 家人交了東西、修好了地方
+      if (ev.decos) S.decos = ev.decos;
       if (ev.caveBest != null) S.caveInfo.best = ev.caveBest;
       if (ev.by !== S.meId) for (const a of ev.newAchievements || []) toast(`🏆 達成成就「${a.name}」！全家拿到 ${a.reward} 元`);
       if (ev.build) {
@@ -2234,6 +2317,7 @@ function resize() {
 
 function baseSprite(x, y, ch) {
   if (S.area === 'cave') return caveTileSprite(ch === 'X' ? 'X' : '.', (x * 7 + y * 13) % 3);
+  if (S.area === 'home') return homeTileSprite(ch === 'X' || ch === 'E' ? ch : '.', (x * 7 + y * 13) % 3);
   if (S.area === 'beach') {
     const v = (x * 7 + y * 13) % 3, fr = Math.floor(Date.now() / 700) % 2;
     if (ch === 's' || ch === 'P' || ch === 'k') return beachTileSprite(ch, v);
@@ -2412,6 +2496,8 @@ function draw() {
       }
     }
   }
+  // 地毯平平的，畫在地上
+  for (const d of S.decos) if (d.area === S.area && (S.decoKinds[d.kind] || {}).flat) g.drawImage(decoSprite(d.kind), d.x * T, d.y * T);
   // 海邊撿得到的東西
   if (S.area === 'beach') for (const f of S.forage.beach || []) {
     if (f.tidal && !S.lowTide) continue;
@@ -2484,10 +2570,14 @@ function draw() {
   }
   // 夜市的攤位也一起排前後：站在攤位後面的人會被遮雨棚擋住
   const stalls = S.area === 'town' && S.marketOn ? Object.entries(S.market.stalls).map(([id, st]) => ({ id, ...st })) : [];
-  const sprites = [...people.map((p) => ({ p, y: p.y })), ...beasts.map((b) => ({ b, y: b.y })), ...stalls.map((st) => ({ st, y: st.y }))]
-    .sort((u, v) => u.y - v.y);
+  const decosHere = S.decos.filter((d) => d.area === S.area && !(S.decoKinds[d.kind] || {}).flat);
+  const sprites = [...people.map((p) => ({ p, y: p.y })), ...beasts.map((b) => ({ b, y: b.y })), ...stalls.map((st) => ({ st, y: st.y })),
+    ...decosHere.map((d) => ({ d, y: d.y - 0.01 }))].sort((u, v) => u.y - v.y);
+  const spin = Math.floor(Date.now() / 300) % 2;
   for (const it of sprites) {
-    if (it.st) {
+    if (it.d) {
+      g.drawImage(decoSprite(it.d.kind, it.d.kind === 'windmill' ? spin : 0), it.d.x * T, it.d.y * T);
+    } else if (it.st) {
       g.drawImage(stallSprite(it.st.id), it.st.x * T, it.st.y * T - 12);
     } else if (it.p) {
       const p = it.p;
@@ -2504,11 +2594,13 @@ function draw() {
   }
 
   // 攤位之間拉一條電線，掛著紅黃綠的小燈泡（晚上會亮）
-  const bulbs = stalls.length ? marketBulbs() : [];
-  if (bulbs.length) {
+  const bulbs = [...(stalls.length ? marketBulbs() : []),
+    ...decosHere.filter((d) => (S.decoKinds[d.kind] || {}).light && (S.area === 'home' || isEvening(now))).map((d) => ({ x: d.x * T + 7, y: d.y * T + 3, c: '#ffd884' }))];
+  if (stalls.length) {
+    const mb = marketBulbs();
     g.fillStyle = '#2b2421';
-    for (const b of bulbs) g.fillRect(b.x - 2, b.y - 2, 5, 1);
-    for (const b of bulbs) { g.fillStyle = b.c; g.fillRect(b.x, b.y, 2, 2); }
+    for (const b of mb) g.fillRect(b.x - 2, b.y - 2, 5, 1);
+    for (const b of mb) { g.fillStyle = b.c; g.fillRect(b.x, b.y, 2, 2); }
   }
 
   // 文字（名字、飄字）用螢幕座標畫，字才清楚
@@ -2643,7 +2735,7 @@ function draw() {
   if (hour >= 17 && hour < 19) tint = `rgba(255,140,60,${0.08 + (hour - 17) * 0.05})`;
   else if (hour >= 19 || hour < 5) tint = 'rgba(20,30,80,0.32)';
   else if (hour >= 5 && hour < 6) tint = 'rgba(255,170,120,0.12)';
-  if (tint && S.area !== 'cave') { g.fillStyle = tint; g.fillRect(0, 0, vw, vh); }
+  if (tint && S.area !== 'cave' && S.area !== 'home') { g.fillStyle = tint; g.fillRect(0, 0, vw, vh); }
   // 夜市的燈泡在暗暗的天色裡發光
   if (bulbs.length) {
     g.globalCompositeOperation = 'lighter';
@@ -2655,7 +2747,7 @@ function draw() {
     }
     g.globalCompositeOperation = 'source-over';
   }
-  if (S.area !== 'cave') { drawWeather(vw, vh); drawFireworks(vw, vh, now); }
+  if (S.area !== 'cave' && S.area !== 'home') { drawWeather(vw, vh); drawFireworks(vw, vh, now); }
 }
 
 let last = performance.now();
@@ -2671,7 +2763,7 @@ function frame(t) {
 
 const KEYMAP = { ArrowUp: 'u', ArrowDown: 'd', ArrowLeft: 'l', ArrowRight: 'r', w: 'u', s: 'd', a: 'l', d: 'r', W: 'u', S: 'd', A: 'l', D: 'r' };
 addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { S.game = null; return closeModal(); }
+  if (e.key === 'Escape') { S.game = null; if (S.placing) stopPlacing(); return closeModal(); }
   if (S.game && (S.game.kind === 'boat' || S.game.kind === 'ring') && e.key === ' ') { e.preventDefault(); return S.game.tap(); }
   if (document.querySelector('.modal')) return;
   const dir = KEYMAP[e.key];

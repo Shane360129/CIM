@@ -24,8 +24,9 @@ import {
   CAVE_FLOORS, CAVE_STOPS, CAVE_ROCKS, CAVE_UP, CAVE_ARRIVE, CAVE_LAYOUTS, CAVE_CHEST_SPOTS, CAVE_ORES, caveFloor, caveTier, CHEST_LOOT, chestLoot, CAVE_TREASURE, isAreaKey,
   BEACH_MAP, TIDE_HOURS, tideLevel, isLowTide, lowTideWindows, FORAGE, BEACH_FINDS, forageOf, fishSpot,
   PROJECTS, bundleOf, PROJECT_DONE_REWARD, shipPrice, COOP_BONUS, PRAYERS, prayerOf,
+  HOME_MAP, DECOS, DECO_MAX, decoCheck,
 } from '../src/farm.js';
-import { forageSprite, projectSprite } from '../public/farm-sprites.js';
+import { forageSprite, projectSprite, decoSprite, homeTileSprite } from '../public/farm-sprites.js';
 import { SPRITES, PALETTE, FISH_SHAPE, BOOT_SHAPE, ROCK_SHAPE, FISH_COLORS, ORE_COLORS, DISH_SHAPES, DISH_COLORS, GOOD_ART, FRUIT_COLORS, honeySprite, fruitTreeSprite } from '../public/farm-sprites.js';
 
 let pass = 0, fail = 0;
@@ -412,7 +413,7 @@ check('感情很好但還沒聽過：從第一段開始說', storyDue(100, 0), 0
 const zero = { harvest: 0, shipped: 0, requests: 0, babies: 0, animals: 0, pets: 0, machines: 0, fishKinds: 0, dishKinds: 0, goodKinds: 0, amethyst: false, maxHearts: 0, minHearts: 0, stories: 0, gh: 0, house: 1 };
 check('什麼都還沒做：沒有成就', achievementsMet(zero), []);
 check('收成一次、領養寵物：兩個成就', achievementsMet({ ...zero, harvest: 1, pets: 1 }), ['harvest1', 'pet']);
-const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: 4, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: 7, projects: 4 };
+const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: 4, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: 7, projects: 4, decoFarm: 5, decoHome: 5 };
 check('全部做完：每個成就都達成', achievementsMet(full).length, ACHIEVEMENTS.length);
 check('成就的編號不重複、都有名字說明和獎金', new Set(ACHIEVEMENTS.map((a) => a.id)).size === ACHIEVEMENTS.length && ACHIEVEMENTS.every((a) => a.name && a.desc && a.reward > 0), true);
 check('「聽完所有故事」要 18 段', [achievementsMet({ ...full, stories: 17 }).includes('stories'), achievementsMet(full).includes('stories')], [false, true]);
@@ -638,6 +639,35 @@ const wOf = (cs, id) => (cs.find((c) => c.id === id) || {}).w;
 check('好釣竿：稀有的魚機會加倍、破鞋子不會', [wOf(fishChoices('deep', 'summer', true, false, true), 'tuna'), wOf(fishChoices('deep', 'summer', true, false), 'tuna'),
   wOf(fishChoices('sea', 'summer', true, false, true), 'junk'), wOf(fishChoices('sea', 'summer', true, false, true), 'mackerel')], [2, 1, FISH.junk.weight, FISH.mackerel.weight]);
 check('兩個修復成就、四棟都有圖', [achievementsMet({ ...zero, projects: 1 }), achievementsMet({ ...zero, projects: 4 }), typeof projectSprite === 'function', PROJECT_DONE_REWARD], [['restore1'], ['restore1', 'restoreAll'], true, 10000]);
+
+
+console.log('\n--- 裝飾與家具 ---');
+check('屋子裡 12×8、四周是牆、門通回牧場、進門站的地方是地板', [HOME_MAP.length, HOME_MAP.every((r) => r.length === 12), HOME_MAP[7][5], EXITS.home[0].to,
+  HOME_MAP[ARRIVE['farm>home'].y][ARRIVE['farm>home'].x], isWalkable(ARRIVE['home>farm'].x, ARRIVE['home>farm'].y, 'farm')], [8, true, 'E', 'farm', '.', true]);
+check('10 種牧場裝飾、10 種家具，都有名字和價錢', [Object.values(DECOS).filter((d) => d.where === 'farm').length, Object.values(DECOS).filter((d) => d.where === 'home').length,
+  Object.values(DECOS).every((d) => d.name && d.price > 0)], [10, 10, true]);
+check('裝飾不能出貨（不是拿來賺錢的）', Object.keys(DECOS).every((k) => itemPrice('deco:' + k) === 0), true);
+check('擺在草地上可以', decoCheck('farm', 'bench', 12, 5, []), null);
+check('擺錯地方、擺在田裡路上、亂填座標都不行', [decoCheck('farm', 'sofa', 12, 5, []), decoCheck('home', 'bench', 3, 3, []), decoCheck('farm', 'bench', 4, 9, []),
+  decoCheck('farm', 'bench', 5, 6, []), decoCheck('farm', 'bench', 'a', 1, []), decoCheck('farm', '__proto__', 12, 5, [])].every((x) => typeof x === 'string'), true);
+check('動物小屋柵欄裡、池塘邊、寵物玩的地方不能擺', [decoCheck('farm', 'bench', 24, 12, []), decoCheck('farm', 'bench', 23, 5, []), decoCheck('farm', 'bench', 6, 5, [])]
+  .every((x) => /動物|寵物/.test(x || '')), true);
+check('同一格不能擺兩個', decoCheck('farm', 'lamp', 12, 5, [{ kind: 'bench', x: 12, y: 5 }]), '這裡已經擺了東西');
+check('最多擺 20 件家具', /最多/.test(decoCheck('home', 'plant', 9, 5, Array.from({ length: 20 }, (_, i) => ({ kind: 'rug', x: 1 + (i % 10), y: 1 + Math.floor(i / 10) }))) || ''), true);
+// 屋子裡第 3 排從左擺到右，最後一個會把屋子隔成兩半
+const row3 = Array.from({ length: 9 }, (_, i) => ({ kind: 'plant', x: 1 + i, y: 3 }));
+check('會把路擋住的地方不能擺；地毯是平的可以', [decoCheck('home', 'sofa', 10, 3, row3), decoCheck('home', 'rug', 10, 3, row3)], ['擺在這裡會把路擋住', null]);
+check('門口不能擋住', decoCheck('home', 'plant', ARRIVE['farm>home'].x, ARRIVE['farm>home'].y, []), '門口不能擋住');
+check('牧場裡擋住出貨箱旁邊唯一的空位也不行', (() => {
+  // 出貨箱 B 在 (9,4)：把它旁邊的空地擺滿，最後一格要被擋下來
+  const around = [[8, 4], [10, 4], [9, 5], [9, 3]].filter(([x, y]) => FARM_MAP[y][x] === '.');
+  const placed = around.slice(0, -1).map(([x, y]) => ({ kind: 'flowerbed', x, y }));
+  const [lx, ly] = around[around.length - 1];
+  return /擋/.test(decoCheck('farm', 'flowerbed', lx, ly, placed) || '');
+})(), true);
+check('每種裝飾都有圖', Object.keys(DECOS).every(() => typeof decoSprite === 'function') && typeof homeTileSprite === 'function', true);
+check('兩個佈置成就', [achievementsMet({ ...zero, decoFarm: 5 }), achievementsMet({ ...zero, decoHome: 5 }), achievementsMet({ ...zero, decoFarm: 4, decoHome: 4 })], [['deco5'], ['cozyHome'], []]);
+check('即時位置可以是屋子裡', isAreaKey('home'), true);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

@@ -23,6 +23,7 @@ import {
   CAVE_FLOORS, CAVE_STOPS, CAVE_UP, CAVE_ARRIVE, CAVE_LAYOUTS, caveFloor, caveTier, chestLoot, CAVE_TREASURE, isAreaKey,
   BEACH_MAP, FORAGE, forageOf, isLowTide, lowTideWindows,
   PROJECTS, bundleOf, PROJECT_DONE_REWARD, shipPrice, ONSEN_PRICE, PRAY_ENERGY, prayerOf, ingredientItems, ingredientName,
+  HOME_MAP, DECOS, decoCheck,
 } from './farm.js';
 const ANIMAL_EMOJI = { chicken: '🐔', duck: '🦆', cow: '🐄', sheep: '🐑' };
 
@@ -509,6 +510,19 @@ CREATE TABLE IF NOT EXISTS farm_daily (
 );
 `;
 
+// 裝飾與家具：擺在牧場、屋子裡的東西（還沒擺的放在倉庫，item 是 deco:種類）
+const SCHEMA_V22 = `
+CREATE TABLE IF NOT EXISTS farm_decos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  conversation_id INTEGER NOT NULL,
+  area TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  x INTEGER NOT NULL,
+  y INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_farm_decos ON farm_decos (conversation_id, area);
+`;
+
 // 訊息中的網址：http(s):// 或 www. 開頭，遇到空白、引號或中文標點即結束
 // （與前端 public/app.js 的 URL_RE / trimUrlTail 保持一致）
 const URL_RE = /(?:https?:\/\/|www\.)[^\s<>"'`\u3000、，。！？：；（）「」『』【】《》〈〉…]+/i;
@@ -789,6 +803,10 @@ export class ChatServer {
       if (v < 21) {
         this.sql.exec(SCHEMA_V21);
         this.setSetting('schema_version', '21');
+      }
+      if (v < 22) {
+        this.sql.exec(SCHEMA_V22);
+        this.setSetting('schema_version', '22');
       }
     });
     // 心跳不喚醒 DO：客戶端送 "ping"，執行環境自動回 "pong"
@@ -1921,7 +1939,7 @@ export class ChatServer {
     if (remaining.length === 0) {
       this.sql.exec(`DELETE FROM messages WHERE conversation_id = ?`, conversationId);
       this.sql.exec(`DELETE FROM conversations WHERE id = ?`, conversationId);
-      for (const t of ['farms', 'farm_tiles', 'farm_items', 'farm_players', 'farm_animals', 'farm_friends', 'farm_mined', 'farm_dex', 'farm_machines', 'farm_pets', 'farm_stats', 'farm_weekly', 'farm_achievements', 'farm_festival_play', 'farm_trees', 'farm_hives', 'farm_market_play', 'farm_beauty', 'farm_cave_mined', 'farm_cave_chests', 'farm_foraged', 'farm_bundles', 'farm_projects', 'farm_daily'])
+      for (const t of ['farms', 'farm_tiles', 'farm_items', 'farm_players', 'farm_animals', 'farm_friends', 'farm_mined', 'farm_dex', 'farm_machines', 'farm_pets', 'farm_stats', 'farm_weekly', 'farm_achievements', 'farm_festival_play', 'farm_trees', 'farm_hives', 'farm_market_play', 'farm_beauty', 'farm_cave_mined', 'farm_cave_chests', 'farm_foraged', 'farm_bundles', 'farm_projects', 'farm_daily', 'farm_decos'])
         this.sql.exec(`DELETE FROM ${t} WHERE conversation_id = ?`, conversationId);
     } else {
       this.addSystemMessage(conversationId, `${me.display_name} 離開了群組`);
@@ -2034,6 +2052,7 @@ export class ChatServer {
         farmCave: this.sql.exec(`SELECT conversation_id, cave_best FROM farms WHERE cave_best > 0`).toArray(),
         farmBundles: this.sql.exec(`SELECT * FROM farm_bundles`).toArray(),
         farmProjects: this.sql.exec(`SELECT * FROM farm_projects`).toArray(),
+        farmDecos: this.sql.exec(`SELECT * FROM farm_decos`).toArray(),
         messageCount: this.sql.exec(`SELECT COUNT(*) AS c FROM messages`).one().c,
       });
     }
@@ -2612,6 +2631,10 @@ export class ChatServer {
     this.sql.exec(`DELETE FROM farm_daily WHERE conversation_id = ? AND day <> ?`, conversationId, today);
     this.sql.exec(`INSERT INTO farm_daily (conversation_id, day, user_id, kind) VALUES (?, ?, ?, ?)`, conversationId, today, me.id, kind);
   }
+  // 擺出去的裝飾和家具
+  farmDecosPub(conversationId) {
+    return this.sql.exec(`SELECT id, area, kind, x, y FROM farm_decos WHERE conversation_id = ? ORDER BY id`, conversationId).toArray();
+  }
   // 海邊今天還剩哪些東西可以撿
   farmForagePub(conversationId, today) {
     const out = {};
@@ -2781,6 +2804,8 @@ export class ChatServer {
       seaFishKinds: dex.filter((i) => i.startsWith('fish:') && FISH[i.slice(5)]?.sea).length, tuna: dex.includes('fish:tuna'),
       forageKinds: dex.filter((i) => i.startsWith('forage:')).length,
       projects: one(`SELECT COUNT(*) AS n FROM farm_projects WHERE conversation_id = ?`, conversationId),
+      decoFarm: one(`SELECT COUNT(*) AS n FROM farm_decos WHERE conversation_id = ? AND area = 'farm'`, conversationId),
+      decoHome: one(`SELECT COUNT(*) AS n FROM farm_decos WHERE conversation_id = ? AND area = 'home'`, conversationId),
     };
   }
   // 新達成的成就：記下來、發獎金、在聊天室說一聲
@@ -3168,6 +3193,7 @@ export class ChatServer {
       cave: { best: farm.cave_best || 0, stops: CAVE_STOPS, floors: CAVE_FLOORS },
       tide: this.farmTidePub(now), forage: this.farmForagePub(conversationId, today), forageKinds: FORAGE,
       projects: this.farmProjectsPub(conversationId, me, today),
+      home: HOME_MAP, decos: this.farmDecosPub(conversationId), decoKinds: DECOS,
       harvestContest: { count: this.sql.exec(`SELECT value FROM farm_stats WHERE conversation_id = ? AND key = 'season_harvest'`, conversationId).toArray()[0]?.value || 0, rivals: HARVEST_RIVALS },
       treeSpots: TREE_SPOTS, hiveSpots: HIVE_SPOTS, treeKinds: TREES, fruits: FRUITS, hive: HIVE,
       trees: this.farmTreesPub(conversationId, season, scale), hives: this.farmHivesPub(conversationId, scale, now),
@@ -3212,6 +3238,7 @@ export class ChatServer {
     let caveOut = null;
     let forageChanged = false;
     let projectsChanged = false;
+    let decosChanged = false;
     const weekAdd = { harvest: 0, shipped: 0 };
     const today = taiwanDay(now);
     // 田在牧場還是溫室：溫室要先蓋好；溫室的田雨淋不到
@@ -3689,6 +3716,35 @@ export class ChatServer {
       p.energy = energyMax;
       gained = { onsen: true };
       projectsChanged = true;
+    } else if (action === 'buy_deco') {
+      // 在雜貨店買裝飾、家具（先放倉庫，再拿出來擺）
+      const kind = String(body.kind || '');
+      const qty = body.qty === undefined ? 1 : Number(body.qty);
+      if (!Object.hasOwn(DECOS, kind)) throw new HttpError(400, '沒有這種裝飾');
+      if (!Number.isInteger(qty) || qty < 1 || qty > 10) throw new HttpError(400, '一次最多買 10 個');
+      this.farmSpend(conversationId, DECOS[kind].price * qty);
+      this.farmAddItem(conversationId, `deco:${kind}`, qty);
+      gained = { item: `deco:${kind}`, qty };
+    } else if (action === 'place_deco') {
+      const kind = String(body.kind || ''), area = String(body.area || '');
+      if (!Object.hasOwn(DECOS, kind) || (area !== 'farm' && area !== 'home')) throw new HttpError(400, '沒有這種裝飾');
+      if (!(this.farmItems(conversationId)[`deco:${kind}`] > 0)) throw new HttpError(400, `倉庫裡沒有${DECOS[kind].name}，先去雜貨店買`);
+      const x = Number(body.x), y = Number(body.y);
+      const placed = this.sql.exec(`SELECT kind, x, y FROM farm_decos WHERE conversation_id = ? AND area = ?`, conversationId, area).toArray();
+      const why = decoCheck(area, kind, x, y, placed);
+      if (why) throw new HttpError(400, why);
+      this.farmAddItem(conversationId, `deco:${kind}`, -1);
+      this.sql.exec(`INSERT INTO farm_decos (conversation_id, area, kind, x, y) VALUES (?, ?, ?, ?, ?)`, conversationId, area, kind, x, y);
+      gained = { placed: { kind, area, x, y } };
+      decosChanged = true;
+    } else if (action === 'pickup_deco') {
+      const id = Number(body.id);
+      const d = Number.isInteger(id) && this.sql.exec(`SELECT * FROM farm_decos WHERE id = ? AND conversation_id = ?`, id, conversationId).toArray()[0];
+      if (!d) throw new HttpError(400, '這裡沒有擺東西');
+      this.sql.exec(`DELETE FROM farm_decos WHERE id = ?`, id);
+      this.farmAddItem(conversationId, `deco:${d.kind}`, 1);
+      gained = { item: `deco:${d.kind}`, qty: 1 };
+      decosChanged = true;
     } else if (action === 'beauty_enter') {
       // 動物選美：這週報名一隻（評審前可以換），寶寶不能參加
       const animalId = Number(body.animalId);
@@ -3943,16 +3999,17 @@ export class ChatServer {
     // 這一季全家收成幾次（豐收比賽用）：有收成才送
     const forage = forageChanged ? this.farmForagePub(conversationId, today) : undefined;
     const projects = projectsChanged ? this.farmProjectsPub(conversationId, me, today) : undefined;
+    const decos = decosChanged ? this.farmDecosPub(conversationId) : undefined;
     const caveBest = caveOut ? this.sql.exec(`SELECT cave_best FROM farms WHERE conversation_id = ?`, conversationId).one().cave_best : undefined;
     const seasonHarvest = weekAdd.harvest ? this.sql.exec(`SELECT value FROM farm_stats WHERE conversation_id = ? AND key = 'season_harvest'`, conversationId).one().value : undefined;
     // 同一座牧場的其他人：田地、錢、倉庫、動物、小鎮的感情、加工機、建築即時同步（體力是個人的，不廣播）
     this.sendToFarm(conversationId, {
       type: 'farm-update', by: me.id, action, tiles, money, items, animals, town, rocks, dex, machines, build, pets,
       achievements, newAchievements, trees, hives, beauty, seasonHarvest, cave: caveOut || undefined, caveBest, forage,
-      projects: projects ? { done: projects.done, given: projects.given } : undefined, now,
+      projects: projects ? { done: projects.done, given: projects.given } : undefined, decos, now,
     });
     return json({ ok: true, energy: p.energy, energyMax: energyMaxOf(farm.house_level), tile: tileOut, tiles, money, items,
-      animals, town, rocks, dex, machines, build, pets, achievements, newAchievements, trees, hives, market, beauty, seasonHarvest, cave: caveOut || undefined, caveBest, forage, projects, gained, now });
+      animals, town, rocks, dex, machines, build, pets, achievements, newAchievements, trees, hives, market, beauty, seasonHarvest, cave: caveOut || undefined, caveBest, forage, projects, decos, gained, now });
   }
 
   farmSpend(conversationId, cost) {

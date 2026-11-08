@@ -129,8 +129,19 @@ export const BEACH_MAP = [
   'T..........ssssssdddWWWWWWWWWW',
   'TTTTTTTTTTkksssssddddWWWWWWWWW',
 ];
-export const MAPS = { farm: FARM_MAP, town: TOWN_MAP, hill: HILL_MAP, gh: GH_MAP, beach: BEACH_MAP };
-export const AREAS = ['farm', 'town', 'hill', 'gh', 'beach'];
+// 屋子裡（從廚房走進去）：X 是牆、E 是門
+export const HOME_MAP = [
+  'XXXXXXXXXXXX',
+  'X..........X',
+  'X..........X',
+  'X..........X',
+  'X..........X',
+  'X..........X',
+  'X..........X',
+  'XXXXXEXXXXXX',
+];
+export const MAPS = { farm: FARM_MAP, town: TOWN_MAP, hill: HILL_MAP, gh: GH_MAP, beach: BEACH_MAP, home: HOME_MAP };
+export const AREAS = ['farm', 'town', 'hill', 'gh', 'beach', 'home'];
 // 即時位置的「在哪裡」：四張地圖，或洞窟的某一層（cave1～cave20）
 export const isAreaKey = (a) => AREAS.includes(a) || /^cave([1-9]|1[0-9]|20)$/.test(String(a));
 // 走到 E 就換地圖。EXITS：每張地圖的出口通到哪；ARRIVE['從>到']：換過去之後站在哪
@@ -138,6 +149,7 @@ export const EXITS = {
   farm: [{ x: 5, y: 19, to: 'town' }, { x: 29, y: 7, to: 'hill' }],
   town: [{ x: 5, y: 0, to: 'farm' }, { x: 29, y: 9, to: 'beach' }],
   beach: [{ x: 0, y: 9, to: 'town' }],
+  home: [{ x: 5, y: 7, to: 'farm' }],
   hill: [{ x: 0, y: 11, to: 'farm' }],
   gh: [{ x: 7, y: 9, to: 'farm' }],
 };
@@ -148,6 +160,7 @@ export const ARRIVE = {
   'farm>gh': { x: 7, y: 8 }, 'gh>farm': { x: 12, y: 4 },
   'cave>hill': { x: 26, y: 10 },
   'town>beach': { x: 1, y: 9 }, 'beach>town': { x: 28, y: 9 },
+  'farm>home': { x: 5, y: 6 }, 'home>farm': { x: 5, y: 5 },
 };
 const WALKABLE = new Set(['.', '=', 'F', 'p', ',', 'E', 'q', 's', 'P']);
 
@@ -886,6 +899,8 @@ export const ACHIEVEMENTS = [
   { id: 'beachcomber', name: '海邊撿寶', desc: '撿過 6 種海邊的東西', reward: 300, test: (s) => (s.forageKinds || 0) >= 6 },
   { id: 'restore1', name: '小鎮的好幫手', desc: '修好小鎮的第一個地方', reward: 500, test: (s) => (s.projects || 0) >= 1 },
   { id: 'restoreAll', name: '小鎮重生', desc: '小鎮修復計畫的四個地方都修好', reward: 3000, test: (s) => (s.projects || 0) >= 4 },
+  { id: 'deco5', name: '佈置牧場', desc: '在牧場擺 5 個裝飾', reward: 300, test: (s) => (s.decoFarm || 0) >= 5 },
+  { id: 'cozyHome', name: '溫暖的小窩', desc: '在屋子裡擺 5 件家具', reward: 300, test: (s) => (s.decoHome || 0) >= 5 },
   { id: 'stories', name: '說故事的人', desc: '聽完所有村民的故事', reward: 2000, test: (s) => s.stories >= Object.keys(STORIES).length * STORY_HEARTS.length },
 ];
 export const achievementsMet = (stats) => ACHIEVEMENTS.filter((a) => a.test(stats)).map((a) => a.id);
@@ -1253,4 +1268,75 @@ export function prayerOf(farmId, day, userId, season) {
   if (!p.gift) return { ...p, giftItem: null };
   const ids = Object.keys(CROPS).filter((c) => inSeason(c, season));
   return { ...p, giftItem: { item: `seed:${ids[Math.floor(rnd() * ids.length)]}`, qty: 3 } };
+}
+
+// ---------------- 裝飾與家具 ----------------
+// 在雜貨店買裝飾和家具，擺在牧場的草地上、或屋子裡。擺好的東西全家看到的一樣，可以收起來再擺
+export const DECOS = {
+  // 牧場的裝飾
+  flowerbed: { name: '花圃', price: 200, where: 'farm' },
+  bench: { name: '長椅', price: 300, where: 'farm' },
+  lamp: { name: '路燈', price: 400, where: 'farm', light: true },
+  scarecrow: { name: '稻草人', price: 250, where: 'farm' },
+  windmill: { name: '小風車', price: 800, where: 'farm' },
+  swing: { name: '鞦韆', price: 600, where: 'farm' },
+  stone_lantern: { name: '石燈籠', price: 500, where: 'farm', light: true },
+  mailbox: { name: '信箱', price: 200, where: 'farm' },
+  birdhouse: { name: '鳥屋', price: 300, where: 'farm' },
+  umbrella: { name: '遮陽傘', price: 350, where: 'farm' },
+  // 屋子裡的家具
+  bed: { name: '床', price: 600, where: 'home' },
+  sofa: { name: '沙發', price: 500, where: 'home' },
+  tv: { name: '電視', price: 800, where: 'home' },
+  table: { name: '餐桌', price: 400, where: 'home' },
+  teatable: { name: '泡茶桌', price: 500, where: 'home' },
+  bookshelf: { name: '書櫃', price: 450, where: 'home' },
+  plant: { name: '盆栽', price: 150, where: 'home' },
+  rug: { name: '地毯', price: 300, where: 'home', flat: true },   // 地毯可以踩過去
+  floor_lamp: { name: '落地燈', price: 250, where: 'home', light: true },
+  photo: { name: '全家福相框', price: 200, where: 'home' },
+};
+export const DECO_MAX = { farm: 40, home: 20 };
+// 不能擺的地方：動物小屋的柵欄裡、鴨子游泳的池塘邊、寵物玩的地方、出生點、屋子門口
+const inZone = (z, x, y) => x >= z.x0 && x <= z.x1 && y >= z.y0 && y <= z.y1;
+const DECO_WALK = new Set(['.', '=', 'F', 'p', ',', 'E', 'q', 's', 'P']);
+// 從出生點（屋裡從門口）走得到的格子；decos 擋路（地毯除外）
+function decoReach(area, blocked) {
+  const map = MAPS[area], start = area === 'home' ? ARRIVE['farm>home'] : FARM_SPAWN;
+  const ok = (x, y) => DECO_WALK.has((map[y] || '')[x]) && !blocked.has(`${x},${y}`);
+  const seen = new Set([`${start.x},${start.y}`]), q = [[start.x, start.y]];
+  while (q.length) {
+    const [x, y] = q.shift();
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const k = `${x + dx},${y + dy}`;
+      if (!seen.has(k) && ok(x + dx, y + dy)) { seen.add(k); q.push([x + dx, y + dy]); }
+    }
+  }
+  return seen;
+}
+// 這一格能不能擺這個裝飾（不行的話回傳原因）。placed：這張地圖上已經擺的 [{x, y, kind}]
+export function decoCheck(area, kind, x, y, placed) {
+  const D = DECOS[kind];
+  if (!D) return '沒有這種裝飾';
+  if (D.where !== area) return D.where === 'home' ? '家具要擺在屋子裡' : '這個要擺在牧場的草地上';
+  const map = MAPS[area];
+  if (!Number.isInteger(x) || !Number.isInteger(y) || (map[y] || '')[x] !== '.') return area === 'home' ? '只能擺在屋裡的地板上' : '只能擺在草地上';
+  if (placed.some((d) => d.x === x && d.y === y)) return '這裡已經擺了東西';
+  if (placed.length >= DECO_MAX[area]) return `最多擺 ${DECO_MAX[area]} 個`;
+  if (area === 'farm' && ([PEN, POND_ZONE, PET_ZONE].some((z) => inZone(z, x, y)) || (x === FARM_SPAWN.x && y === FARM_SPAWN.y)))
+    return '這裡是動物、寵物活動的地方，換個地方擺吧';
+  if (area === 'home' && x === ARRIVE['farm>home'].x && y === ARRIVE['farm>home'].y) return '門口不能擋住';
+  if (D.flat) return null;
+  // 擺了之後不能把路擋住：原本走得到的地方都還要走得到、建築和田旁邊也都還有地方站
+  const blocked = new Set(placed.filter((d) => !DECOS[d.kind]?.flat).map((d) => `${d.x},${d.y}`));
+  const before = decoReach(area, blocked);
+  blocked.add(`${x},${y}`);
+  const after = decoReach(area, blocked);
+  if (after.size !== before.size - 1) return '擺在這裡會把路擋住';
+  for (let yy = 0; yy < map.length; yy++) for (let xx = 0; xx < map[yy].length; xx++) {
+    if (!'BSHAJMYZW'.includes(map[yy][xx])) continue;
+    const near = (s) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => s.has(`${xx + dx},${yy + dy}`));
+    if (near(before) && !near(after)) return '擺在這裡會擋住旁邊的東西';
+  }
+  return null;
 }
