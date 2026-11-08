@@ -352,9 +352,9 @@ if (fs0.villagersOut) {
 
 // 料理
 // 村民的故事、成就、週報
-check('有村民的故事、20 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 20
+check('有村民的故事、22 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 22
   && JSON.stringify(fs0.achievements) === '{}' && /^\d{4}-\d{2}-\d{2}$/.test(fs0.thisWeek?.week || ''));
-check('有 24 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 24 && !!fs0.ingredientGroups?.egg);
+check('有 28 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 28 && !!fs0.ingredientGroups?.egg);
 check('沒有這道菜', (await farmDo(groupId, { action: 'cook', dish: 'steak' }, TA)).status === 400
   && (await farmDo(groupId, { action: 'cook', dish: 'constructor' }, TA)).status === 400);
 r = await farmDo(groupId, { action: 'cook', dish: 'pumpkin_soup' }, TA);
@@ -471,6 +471,16 @@ r = await farmGet(groupId, TA);
 check('領養寵物達成成就「毛小孩」（全家看得到是誰、什麼時候）', !!r.data.achievements.pet?.at && r.data.achievements.pet.by === '朋友A'
   && (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('達成成就「毛小孩」')));
 check('同一個成就只會達成一次', (await listIn(groupId, TA)).filter((m) => m.content.includes('達成成就「毛小孩」')).length === 1);
+
+// 果樹、蜂箱
+check('有 10 個種果樹的位置、3 個放蜂箱的位置、5 種果樹', fs0.treeSpots?.length === 10 && fs0.hiveSpots?.length === 3
+  && Object.keys(fs0.treeKinds || {}).length === 5 && JSON.stringify(fs0.trees) === '[]' && JSON.stringify(fs0.hives) === '[]');
+check('沒有樹苗不能種、位置亂填被擋', /沒有芭樂樹苗/.test((await farmDo(groupId, { action: 'plant_tree', spot: 0, tree: 'guava' }, TA)).data.error || '')
+  && (await farmDo(groupId, { action: 'plant_tree', spot: 99, tree: 'guava' }, TA)).status === 400
+  && (await farmDo(groupId, { action: 'plant_tree', spot: 0, tree: '__proto__' }, TA)).status === 400);
+check('空的位置不能摘、沒有蜂箱不能收', /沒有果樹/.test((await farmDo(groupId, { action: 'pick', spot: 0 }, TA)).data.error || '')
+  && /沒有蜂箱/.test((await farmDo(groupId, { action: 'collect_honey', spot: 0 }, TA)).data.error || ''));
+check('樹苗不能出貨、不能送人（賣不了錢）', (await farmDo(groupId, { action: 'ship', item: 'sapling:guava', qty: 1 }, TA)).status === 400);
 
 const farmMs = await medianMs(() => farmGet(groupId, TA));
 check(`打開牧場在 150ms 內（實測 ${farmMs.toFixed(0)}ms）`, farmMs < 150);
@@ -621,6 +631,34 @@ if (fs0.scale >= 3600) {
     check('（加速模式）擴建二樓：體力上限 100', r.status === 200 && r.data.build.houseLevel === 3 && r.data.energyMax === 100 && r.data.money === money);
     check('（加速模式）已經擴建過的不能再蓋', /已經擴建/.test((await farmDo(groupId, { action: 'build', what: 'house2' }, TA)).data.error || ''));
     check('（加速模式）聊天室說擴建了房子', (await listIn(groupId, TA)).filter((m) => m.type === 'system' && m.content.includes('把房子擴建成')).length === 2);
+    // 果樹、蜂箱（本機測試用 FARM_FAST_TREES=2：果樹 2 小時長大、再結果，蜂箱 2 小時有蜜）
+    if (fs0.trees && (await farmGet(groupId, TA)).data.trees !== undefined) {
+      r = await farmDo(groupId, { action: 'buy_sapling', tree: 'guava', qty: 1 }, TA);
+      money -= fs0.treeKinds.guava.price;
+      check('（加速模式）買一棵芭樂樹苗', r.status === 200 && r.data.items['sapling:guava'] === 1 && r.data.money === money);
+      r = await farmDo(groupId, { action: 'buy_sapling', tree: 'longan', qty: 1 }, TA);
+      money -= fs0.treeKinds.longan.price;
+      await farmDo(groupId, { action: 'plant_tree', spot: 0, tree: 'guava' }, TA);
+      r = await farmDo(groupId, { action: 'plant_tree', spot: 1, tree: 'longan' }, TB);
+      check('（加速模式）種下芭樂樹和龍眼樹，樹苗用掉了', r.status === 200 && r.data.trees.length === 2 && !r.data.items['sapling:guava'] && !r.data.items['sapling:longan']);
+      check('（加速模式）同一個位置不能種兩棵、還沒長大不能摘', /已經種了/.test((await farmDo(groupId, { action: 'plant_tree', spot: 0, tree: 'guava' }, TA)).data.error || '')
+        && /還沒長大/.test((await farmDo(groupId, { action: 'pick', spot: 0 }, TA)).data.error || ''));
+      r = await farmDo(groupId, { action: 'buy_hive' }, TA);
+      money -= fs0.hive.price;
+      check('（加速模式）買一個蜂箱，放在第一個空位', r.status === 200 && r.data.hives.length === 1 && r.data.hives[0].spot === 0 && r.data.money === money);
+      await new Promise((ok) => setTimeout(ok, 2600));
+      r = await farmDo(groupId, { action: 'pick', spot: 0 }, TB);
+      check('（加速模式）芭樂樹長大了，摘到 2 個芭樂，第一次進圖鑑', r.status === 200 && r.data.items['fruit:guava'] === 2 && r.data.gained.first === true && r.data.dex.includes('fruit:guava'));
+      check('（加速模式）聊天室說摘到第一批芭樂', (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('摘到了第一批芭樂')));
+      check('（加速模式）剛摘過不能馬上再摘', /摘過了/.test((await farmDo(groupId, { action: 'pick', spot: 0 }, TA)).data.error || ''));
+      if (fs0.season !== 'winter') {
+        r = await farmDo(groupId, { action: 'collect_honey', spot: 0 }, TA);
+        check('（加速模式）龍眼樹長大了，蜂箱收到龍眼蜜', r.status === 200 && r.data.items['prod:honey_l'] === 1 && r.data.gained.item === 'prod:honey_l');
+        check('（加速模式）剛收完要再等', /還沒好/.test((await farmDo(groupId, { action: 'collect_honey', spot: 0 }, TA)).data.error || ''));
+      }
+      r = await farmDo(groupId, { action: 'remove_tree', spot: 1 }, TA);
+      check('（加速模式）可以把樹移走', r.status === 200 && r.data.trees.length === 1);
+    }
     // 動物寶寶（本機測試用 FARM_START_LOVE=duck:20：買來的鴨子就是滿愛心）
     r = await farmDo(groupId, { action: 'buy_animal', kind: 'duck', name: '阿呱' }, TA);
     money -= fs0.animalKinds.duck.price;
@@ -656,6 +694,7 @@ check('備份包含牧場的動物', (r.data.farmAnimals || []).some((a) => a.na
 check('備份包含跟村民的感情', Array.isArray(r.data.farmFriends));
 check('備份包含圖鑑', (r.data.farmDex || []).length >= 2);
 check('備份包含加工機', Array.isArray(r.data.farmMachines));
+check('備份包含果樹和蜂箱', Array.isArray(r.data.farmTrees) && Array.isArray(r.data.farmHives));
 check('備份包含成就和累計', (r.data.farmAchievements || []).some((a) => a.id === 'pet') && Array.isArray(r.data.farmStats));
 
 console.log('\n--- 速度與備份上限（防止效能退步）---');

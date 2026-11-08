@@ -17,6 +17,7 @@ import {
   POND_ZONE, BABY_DAYS, isBaby, canHaveBaby, babyName, PETS, PET_ZONE, petFind,
   STORIES, STORY_HEARTS, storyDue, ACHIEVEMENTS, achievementsMet, weekStart, weeklyReportText,
   isWetWeather, FESTIVAL_ACTIVITIES, RIDDLES, riddlesFor, activityResult, BOAT_BEATS, BBQ_STICKS,
+  TREE_SPOTS, HIVE_SPOTS, TREES, FRUITS, HIVE, treeMatureAt, treeReadyAt, hiveReadyAt,
 } from './farm.js';
 const ANIMAL_EMOJI = { chicken: '🐔', duck: '🦆', cow: '🐄', sheep: '🐑' };
 
@@ -404,6 +405,25 @@ CREATE TABLE IF NOT EXISTS farm_festival_play (
 );
 `;
 
+// 果樹（種在第幾個位置、什麼時候種、上次什麼時候摘）、蜂箱（放在第幾個位置、上次什麼時候收）
+const SCHEMA_V17 = `
+CREATE TABLE IF NOT EXISTS farm_trees (
+  conversation_id INTEGER NOT NULL,
+  spot INTEGER NOT NULL,
+  kind TEXT NOT NULL,
+  planted_at INTEGER NOT NULL,
+  picked_at INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (conversation_id, spot)
+);
+CREATE TABLE IF NOT EXISTS farm_hives (
+  conversation_id INTEGER NOT NULL,
+  spot INTEGER NOT NULL,
+  placed_at INTEGER NOT NULL,
+  collected_at INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (conversation_id, spot)
+);
+`;
+
 // 訊息中的網址：http(s):// 或 www. 開頭，遇到空白、引號或中文標點即結束
 // （與前端 public/app.js 的 URL_RE / trimUrlTail 保持一致）
 const URL_RE = /(?:https?:\/\/|www\.)[^\s<>"'`\u3000、，。！？：；（）「」『』【】《》〈〉…]+/i;
@@ -664,6 +684,10 @@ export class ChatServer {
       if (v < 16) {
         this.sql.exec(SCHEMA_V16);
         this.setSetting('schema_version', '16');
+      }
+      if (v < 17) {
+        this.sql.exec(SCHEMA_V17);
+        this.setSetting('schema_version', '17');
       }
     });
     // 心跳不喚醒 DO：客戶端送 "ping"，執行環境自動回 "pong"
@@ -1796,7 +1820,7 @@ export class ChatServer {
     if (remaining.length === 0) {
       this.sql.exec(`DELETE FROM messages WHERE conversation_id = ?`, conversationId);
       this.sql.exec(`DELETE FROM conversations WHERE id = ?`, conversationId);
-      for (const t of ['farms', 'farm_tiles', 'farm_items', 'farm_players', 'farm_animals', 'farm_friends', 'farm_mined', 'farm_dex', 'farm_machines', 'farm_pets', 'farm_stats', 'farm_weekly', 'farm_achievements', 'farm_festival_play'])
+      for (const t of ['farms', 'farm_tiles', 'farm_items', 'farm_players', 'farm_animals', 'farm_friends', 'farm_mined', 'farm_dex', 'farm_machines', 'farm_pets', 'farm_stats', 'farm_weekly', 'farm_achievements', 'farm_festival_play', 'farm_trees', 'farm_hives'])
         this.sql.exec(`DELETE FROM ${t} WHERE conversation_id = ?`, conversationId);
     } else {
       this.addSystemMessage(conversationId, `${me.display_name} 離開了群組`);
@@ -1903,6 +1927,8 @@ export class ChatServer {
         farmPets: this.sql.exec(`SELECT * FROM farm_pets`).toArray(),
         farmStats: this.sql.exec(`SELECT * FROM farm_stats`).toArray(),
         farmAchievements: this.sql.exec(`SELECT * FROM farm_achievements`).toArray(),
+        farmTrees: this.sql.exec(`SELECT * FROM farm_trees`).toArray(),
+        farmHives: this.sql.exec(`SELECT * FROM farm_hives`).toArray(),
         messageCount: this.sql.exec(`SELECT COUNT(*) AS c FROM messages`).one().c,
       });
     }
@@ -2445,6 +2471,11 @@ export class ChatServer {
     const o = this.env && this.env.FARM_WEEK;
     return weekStart(typeof o === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(o) ? o : today);
   }
+  // FARM_FAST_TREES 也只給本機測試用：果樹幾個（遊戲）小時就長大、再結果，蜂箱幾小時就有蜜
+  farmFastTrees() {
+    const n = Number(this.env && this.env.FARM_FAST_TREES);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }
   // FARM_VILLAGERS=out／home 也只給本機測試用：不管幾點，村民都在外面／都在家
   farmVillagersOut(now) {
     const o = this.env && this.env.FARM_VILLAGERS;
@@ -2586,6 +2617,8 @@ export class ChatServer {
       goodKinds: dex.filter((i) => i.startsWith('good:')).length, amethyst: dex.includes('ore:amethyst'),
       maxHearts: Math.max(...pts.map((f) => friendHearts(f.points))), minHearts: Math.min(...pts.map((f) => friendHearts(f.points))),
       stories: pts.reduce((n, f) => n + (f.story_level || 0), 0), gh: farm.gh_built, house: farm.house_level,
+      trees: one(`SELECT COUNT(*) AS n FROM farm_trees WHERE conversation_id = ?`, conversationId),
+      honey: dex.includes('prod:honey') || dex.includes('prod:honey_l'),
     };
   }
   // 新達成的成就：記下來、發獎金、在聊天室說一聲
@@ -2635,6 +2668,26 @@ export class ChatServer {
       festival: fest, ...A, played: !!played, beats: BOAT_BEATS, sticks: BBQ_STICKS,
       riddles: A.kind === 'riddle' ? riddlesFor(today, me.id).map((i) => ({ q: RIDDLES[i].q, c: RIDDLES[i].c })) : undefined,
     };
+  }
+  // 果樹：每個位置種了什麼、長大了沒、下次什麼時候可以摘（不是它的季節＝0）
+  farmTreesPub(conversationId, season, scale) {
+    const fast = this.farmFastTrees();
+    return this.sql.exec(`SELECT * FROM farm_trees WHERE conversation_id = ?`, conversationId).toArray()
+      .filter((t) => Object.hasOwn(TREES, t.kind) && TREE_SPOTS[t.spot])
+      .map((t) => ({ spot: t.spot, kind: t.kind, plantedAt: t.planted_at, matureAt: treeMatureAt(t, scale, fast), readyAt: treeReadyAt(t, season, scale, fast) }));
+  }
+  // 蜂箱：下次什麼時候有蜜、會是哪一種（有長大的龍眼樹＝龍眼蜜）
+  farmHivesPub(conversationId, scale, now) {
+    const fast = this.farmFastTrees();
+    const kind = this.farmHoneyKind(conversationId, scale, now);
+    return this.sql.exec(`SELECT * FROM farm_hives WHERE conversation_id = ?`, conversationId).toArray()
+      .filter((h) => HIVE_SPOTS[h.spot]).map((h) => ({ spot: h.spot, readyAt: hiveReadyAt(h, scale, fast), honey: kind }));
+  }
+  farmHoneyKind(conversationId, scale, now) {
+    const fast = this.farmFastTrees();
+    const longan = this.sql.exec(`SELECT * FROM farm_trees WHERE conversation_id = ? AND kind = 'longan'`, conversationId).toArray()
+      .some((t) => now >= treeMatureAt(t, scale, fast));
+    return longan ? 'honey_l' : 'honey';
   }
   farmBuildPub(farm) {
     return { ghBuilt: !!farm.gh_built, houseLevel: farm.house_level, energyMax: energyMaxOf(farm.house_level) };
@@ -2742,6 +2795,10 @@ export class ChatServer {
       this.addSystemMessage(conversationId, `🍳 ${me.display_name} 第一次做了${itemName(item)}！今天晚餐要不要也吃這個？`);
     } else if (item.startsWith('good:')) {
       this.addSystemMessage(conversationId, `🫙 ${me.display_name} 第一次做出了${itemName(item)}！`);
+    } else if (item.startsWith('fruit:')) {
+      this.addSystemMessage(conversationId, `🌳 ${me.display_name} 摘到了第一批${itemName(item)}！`);
+    } else if (item.startsWith('prod:honey')) {
+      this.addSystemMessage(conversationId, `🍯 ${me.display_name} 收到了第一罐${itemName(item)}！`);
     } else if (item !== 'fish:junk' && item !== 'ore:stone') {
       const fish = item.startsWith('fish:');
       this.addSystemMessage(conversationId, `${fish ? '🎣' : '⛏️'} ${me.display_name} 第一次${fish ? '釣到' : '挖到'}了${itemName(item)}！`);
@@ -2869,6 +2926,8 @@ export class ChatServer {
       machines: this.farmMachinesPub(conversationId, scale), ...this.farmBuildPub(farm),
       pond: POND_ZONE, petKinds: PETS, petZone: PET_ZONE, pets: this.farmPetsPub(conversationId, today),
       activity: this.farmActivityPub(conversationId, me, fest, today),
+      treeSpots: TREE_SPOTS, hiveSpots: HIVE_SPOTS, treeKinds: TREES, fruits: FRUITS, hive: HIVE,
+      trees: this.farmTreesPub(conversationId, season, scale), hives: this.farmHivesPub(conversationId, scale, now),
       stories: STORIES, storyHearts: STORY_HEARTS, achievementList: ACHIEVEMENTS.map(({ id, name, desc, reward }) => ({ id, name, desc, reward })),
       achievements: this.farmAchievementsGot(conversationId), thisWeek: this.farmWeekSummary(conversationId, week),
       nextFestival: nextFestival(today), todayEvents, birthdays: bdays,
@@ -2904,6 +2963,7 @@ export class ChatServer {
     let machinesChanged = false;
     let buildChanged = false;
     let petsChanged = false;
+    let treesChanged = false;
     const weekAdd = { harvest: 0, shipped: 0 };
     const today = taiwanDay(now);
     // 田在牧場還是溫室：溫室要先蓋好；溫室的田雨淋不到
@@ -3144,6 +3204,75 @@ export class ChatServer {
       this.addSystemMessage(conversationId, `🎁 ${me.display_name} 領了${FESTIVALS[fest].name}的禮物：${this.farmGiftText(g)}`);
       gained = { festival: fest, ...g };
       townChanged = true;
+    } else if (action === 'buy_sapling' || action === 'buy_hive') {
+      // 攤位賣果樹苗（一年四季都買得到）和蜂箱（買了自動放在左下角的空位）
+      if (action === 'buy_sapling') {
+        const kind = String(body.tree || '');
+        const qty = Number(body.qty || 1);
+        if (!Object.hasOwn(TREES, kind)) throw new HttpError(400, '沒有這種果樹');
+        if (!Number.isInteger(qty) || qty < 1 || qty > TREE_SPOTS.length) throw new HttpError(400, '數量不正確');
+        this.farmSpend(conversationId, TREES[kind].price * qty);
+        this.farmAddItem(conversationId, `sapling:${kind}`, qty);
+        gained = { item: `sapling:${kind}`, qty };
+      } else {
+        const used = new Set(this.sql.exec(`SELECT spot FROM farm_hives WHERE conversation_id = ?`, conversationId).toArray().map((r) => r.spot));
+        const spot = HIVE_SPOTS.findIndex((_, i) => !used.has(i));
+        if (spot < 0) throw new HttpError(400, `蜂箱最多 ${HIVE.max} 個`);
+        this.farmSpend(conversationId, HIVE.price);
+        this.sql.exec(`INSERT INTO farm_hives (conversation_id, spot, placed_at) VALUES (?, ?, ?)`, conversationId, spot, now);
+        this.addSystemMessage(conversationId, `🐝 ${me.display_name} 在牧場左下角放了一個蜂箱，${HIVE.days} 天後就有蜂蜜了`);
+        gained = { hive: spot };
+      }
+      treesChanged = true;
+    } else if (['plant_tree', 'pick', 'remove_tree', 'collect_honey'].includes(action)) {
+      const spot = Number(body.spot);
+      const fast = this.farmFastTrees();
+      if (action === 'collect_honey') {
+        const h = Number.isInteger(spot) && this.sql.exec(`SELECT * FROM farm_hives WHERE conversation_id = ? AND spot = ?`, conversationId, spot).toArray()[0];
+        if (!h) throw new HttpError(400, '這裡沒有蜂箱');
+        if (season === 'winter') throw new HttpError(400, '冬天蜜蜂在休息，春天再來收');
+        if (now < hiveReadyAt(h, scale, fast)) throw new HttpError(400, '蜂蜜還沒好，再等幾天');
+        const item = `prod:${this.farmHoneyKind(conversationId, scale, now)}`;
+        this.farmAddItem(conversationId, item, 1);
+        this.sql.exec(`UPDATE farm_hives SET collected_at = ? WHERE conversation_id = ? AND spot = ?`, now, conversationId, spot);
+        gained = { item, qty: 1, first: this.farmDexAdd(conversationId, item, me, now) };
+        dexChanged = true;
+      } else {
+        if (!Number.isInteger(spot) || !TREE_SPOTS[spot]) throw new HttpError(400, '這裡不能種果樹');
+        const t = this.sql.exec(`SELECT * FROM farm_trees WHERE conversation_id = ? AND spot = ?`, conversationId, spot).toArray()[0];
+        if (action === 'plant_tree') {
+          const kind = String(body.tree || '');
+          if (!Object.hasOwn(TREES, kind)) throw new HttpError(400, '沒有這種果樹');
+          if (t) throw new HttpError(400, '這裡已經種了果樹');
+          if ((this.farmItems(conversationId)[`sapling:${kind}`] || 0) < 1) throw new HttpError(400, `沒有${TREES[kind].name}苗，去攤位買`);
+          spend(ENERGY_COST.plant);
+          this.farmAddItem(conversationId, `sapling:${kind}`, -1);
+          this.sql.exec(`INSERT INTO farm_trees (conversation_id, spot, kind, planted_at) VALUES (?, ?, ?, ?)`, conversationId, spot, kind, now);
+          this.addSystemMessage(conversationId, `🌱 ${me.display_name} 種了一棵${TREES[kind].name}，${TREES[kind].days} 天後長大`);
+          gained = { tree: kind };
+        } else if (action === 'remove_tree') {
+          if (!t) throw new HttpError(400, '這裡沒有果樹');
+          spend(ENERGY_COST.dig);
+          this.sql.exec(`DELETE FROM farm_trees WHERE conversation_id = ? AND spot = ?`, conversationId, spot);
+          gained = { removed: t.kind };
+        } else {
+          if (!t) throw new HttpError(400, '這裡沒有果樹');
+          const T = TREES[t.kind];
+          if (now < treeMatureAt(t, scale, fast)) throw new HttpError(400, `${T.name}還沒長大`);
+          const ready = treeReadyAt(t, season, scale, fast);
+          if (!ready) throw new HttpError(400, `${T.name}要${seasonsText(T.seasons)}天才會結果`);
+          if (now < ready) throw new HttpError(400, `今天已經摘過了，明天再來`);
+          spend(ENERGY_COST.harvest);
+          const item = `fruit:${T.fruit}`;
+          this.farmAddItem(conversationId, item, T.yield);
+          this.sql.exec(`UPDATE farm_trees SET picked_at = ? WHERE conversation_id = ? AND spot = ?`, now, conversationId, spot);
+          this.farmStat(conversationId, 'harvest', 1);
+          weekAdd.harvest = 1;
+          gained = { item, qty: T.yield, first: this.farmDexAdd(conversationId, item, me, now) };
+          dexChanged = true;
+        }
+      }
+      treesChanged = true;
     } else if (action === 'festival_play') {
       // 節慶活動：每人每個節日一次，結果由伺服器算（小遊戲的分數由前端送來，夾在合理範圍）
       const fest = this.farmFestival(today);
@@ -3376,13 +3505,15 @@ export class ChatServer {
     const build = buildChanged ? this.farmBuildPub(farm) : undefined;
     const pets = petsChanged ? this.farmPetsPub(conversationId, today) : undefined;
     const achievements = newAchievements.length ? this.farmAchievementsGot(conversationId) : undefined;
+    const trees = treesChanged ? this.farmTreesPub(conversationId, season, scale) : undefined;
+    const hives = treesChanged ? this.farmHivesPub(conversationId, scale, now) : undefined;
     // 同一座牧場的其他人：田地、錢、倉庫、動物、小鎮的感情、加工機、建築即時同步（體力是個人的，不廣播）
     this.sendToFarm(conversationId, {
       type: 'farm-update', by: me.id, action, tiles, money, items, animals, town, rocks, dex, machines, build, pets,
-      achievements, newAchievements, now,
+      achievements, newAchievements, trees, hives, now,
     });
     return json({ ok: true, energy: p.energy, energyMax: energyMaxOf(farm.house_level), tile: tileOut, tiles, money, items,
-      animals, town, rocks, dex, machines, build, pets, achievements, newAchievements, gained, now });
+      animals, town, rocks, dex, machines, build, pets, achievements, newAchievements, trees, hives, gained, now });
   }
 
   farmSpend(conversationId, cost) {

@@ -17,9 +17,10 @@ import {
   GH_MAP, fieldArea, GOODS, MACHINES, MACHINE_SPOTS, MACHINE_BATCH, machineAt, machineReadyAt, BUILDS, HOUSE_ENERGY, energyMaxOf,
   POND_ZONE, BABY_DAYS, BABY_EVERY_DAYS, isBaby, canHaveBaby, babyName, PETS, PET_ZONE, petFind, LOVE_MAX,
   STORIES, STORY_HEARTS, storyDue, ACHIEVEMENTS, achievementsMet, weekStart, weekEnd, weeklyReportText,
+  TREE_SPOTS, HIVE_SPOTS, TREES, FRUITS, HIVE, treeMatureAt, treeReadyAt, hiveReadyAt,
   WEATHERS, realRain, FESTIVAL_ACTIVITIES, RIDDLES, FORTUNES, XMAS_GIFTS, riddlesFor, fortuneOf, xmasGiftOf, activityResult, BOAT_BEATS, BBQ_STICKS,
 } from '../src/farm.js';
-import { SPRITES, PALETTE, FISH_SHAPE, BOOT_SHAPE, ROCK_SHAPE, FISH_COLORS, ORE_COLORS, DISH_SHAPES, DISH_COLORS, GOOD_ART } from '../public/farm-sprites.js';
+import { SPRITES, PALETTE, FISH_SHAPE, BOOT_SHAPE, ROCK_SHAPE, FISH_COLORS, ORE_COLORS, DISH_SHAPES, DISH_COLORS, GOOD_ART, FRUIT_COLORS, honeySprite, fruitTreeSprite } from '../public/farm-sprites.js';
 
 let pass = 0, fail = 0;
 const check = (label, got, want) => {
@@ -138,7 +139,8 @@ check('長大中、可收成兩張圖都有，而且是 16×16、顏色都有定
 check('所有圖都是 16×16、顏色都有定義', Object.entries(SPRITES).filter(([, g]) => !goodGrid(g)).map(([n]) => n), []);
 check('小鎮的石板、花圃、告示板、採石場的地都有圖', ['plaza', 'flowers', 'board', 'gravel'].filter((n) => !goodGrid(SPRITES[n])), []);
 check('動物（兩張走路圖）、雞蛋牛奶、飼料都有圖',
-  [...Object.keys(ANIMALS).flatMap((k) => [k + '_0', k + '_1']), ...Object.keys(PRODUCTS), 'feed'].filter((n) => !goodGrid(SPRITES[n])), []);
+  [...Object.keys(ANIMALS).flatMap((k) => [k + '_0', k + '_1']), ...Object.keys(PRODUCTS).filter((p) => !p.startsWith('honey')), 'feed'].filter((n) => !goodGrid(SPRITES[n])), []);
+check('蜂蜜罐用程式畫', typeof honeySprite === 'function' && typeof fruitTreeSprite === 'function', true);
 
 console.log('\n--- 換季與換日 ---');
 const tw = (y, m, d, h = 0) => Date.UTC(y, m - 1, d, h) - 8 * H; // 台灣時間
@@ -295,7 +297,7 @@ check('3×3 範圍不重複', new Set(area3x3(5, 5).map((c) => c.x + ',' + c.y))
 
 console.log('\n--- 料理 ---');
 const dishes = Object.entries(DISHES).filter(([, d]) => d.need);
-check('有 24 道自己煮得出來的菜（7 道用加工品）', [dishes.length, dishes.filter(([, d]) => Object.keys(d.need).some((k) => k.startsWith('good:') || k === 'mayo' || k === 'cheese')).length], [24, 7]);
+check('有 28 道自己煮得出來的菜（7 道用加工品）', [dishes.length, dishes.filter(([, d]) => Object.keys(d.need).some((k) => k.startsWith('good:') || k === 'mayo' || k === 'cheese')).length], [28, 7]);
 check('每道菜的材料都是真的東西（或雞蛋、牛奶這種組）', dishes.filter(([, d]) => !Object.keys(d.need).every((k) => INGREDIENT_GROUPS[k] || itemPrice(k) > 0)).map(([id]) => id), []);
 check('煮成菜比直接賣材料值錢', dishes.filter(([, d]) => d.sell <= Object.entries(d.need).reduce((n, [k, q]) => n + itemPrice(ingredientItems(k)[0]) * q, 0)).map(([id]) => id), []);
 check('每道菜都能補體力（不超過一整天的量）', dishes.every(([, d]) => d.energy > 0 && d.energy <= ENERGY_MAX), true);
@@ -403,7 +405,7 @@ check('感情很好但還沒聽過：從第一段開始說', storyDue(100, 0), 0
 const zero = { harvest: 0, shipped: 0, requests: 0, babies: 0, animals: 0, pets: 0, machines: 0, fishKinds: 0, dishKinds: 0, goodKinds: 0, amethyst: false, maxHearts: 0, minHearts: 0, stories: 0, gh: 0, house: 1 };
 check('什麼都還沒做：沒有成就', achievementsMet(zero), []);
 check('收成一次、領養寵物：兩個成就', achievementsMet({ ...zero, harvest: 1, pets: 1 }), ['harvest1', 'pet']);
-const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: 4, fishKinds: 9, dishKinds: 24, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3 };
+const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: 4, fishKinds: 9, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true };
 check('全部做完：每個成就都達成', achievementsMet(full).length, ACHIEVEMENTS.length);
 check('成就的編號不重複、都有名字說明和獎金', new Set(ACHIEVEMENTS.map((a) => a.id)).size === ACHIEVEMENTS.length && ACHIEVEMENTS.every((a) => a.name && a.desc && a.reward > 0), true);
 check('「聽完所有故事」要 18 段', [achievementsMet({ ...full, stories: 17 }).includes('stories'), achievementsMet(full).includes('stories')], [false, true]);
@@ -435,6 +437,28 @@ check('中秋烤肉：分數夾在 0～6、烤好幾串帶回幾串', [activityR
 check('抽籤：同一個人同一天抽到的一樣、紅包大於 0', JSON.stringify(fortuneOf(3, '2027-02-06', 7)) === JSON.stringify(fortuneOf(3, '2027-02-06', 7)) && FORTUNES.every((f) => f.money > 0 && f.level && f.text), true);
 check('聖誕禮物都是真的東西', XMAS_GIFTS.every(([i, q]) => q > 0 && (i === 'feed' || itemPrice(i) > 0)) && !!xmasGiftOf(3, '2026-12-25', 7), true);
 check('烤肉串是節慶食物、有圖', [DISHES.bbq.festival, !!DISH_COLORS.bbq], [true, true]);
+
+
+console.log('\n--- 果樹、蜂箱 ---');
+check('牧場最下面一排有 10 個種果樹的位置、左下角 3 個放蜂箱的位置，都走得到旁邊',
+  [cells.filter((p) => p.c === 'Y').length, cells.filter((p) => p.c === 'Z').length,
+    [...TREE_SPOTS, ...HIVE_SPOTS].every((p) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => seen.has(`${p.x + dx},${p.y + dy}`)))],
+  [TREE_SPOTS.length, HIVE_SPOTS.length, true]);
+check('位置清單跟地圖上的 Y、Z 一樣', TREE_SPOTS.every((p) => terrainAt(p.x, p.y) === 'Y') && HIVE_SPOTS.every((p) => terrainAt(p.x, p.y) === 'Z'), true);
+check('五種果樹，每種的水果都存在、季節都對、價錢天數產量都大於 0', Object.values(TREES).every((t) => FRUITS[t.fruit] && t.seasons.every((x) => SEASONS.includes(x))
+  && t.price > 0 && t.days > 0 && t.yield > 0) && Object.keys(TREES).length === 5, true);
+check('芭樂一年四季都有、芒果荔枝在夏天', [TREES.guava.seasons.length, TREES.mango.seasons, TREES.lychee.seasons], [4, ['summer'], ['summer']]);
+const tree = { kind: 'guava', planted_at: t0, picked_at: 0 };
+check('還沒長大：下次可以摘＝長大的那天', treeReadyAt(tree, 'autumn'), t0 + TREES.guava.days * 24 * H);
+check('摘過了：一天後才能再摘', treeReadyAt({ ...tree, picked_at: t0 + 10 * 24 * H }, 'autumn'), t0 + 11 * 24 * H);
+check('不是它的季節：不會結果（0）', treeReadyAt({ kind: 'mango', planted_at: t0, picked_at: 0 }, 'winter'), 0);
+check('時間倍率、本機快速模式也算進去', [treeMatureAt(tree, 3600) - t0, treeMatureAt(tree, 3600, 2) - t0, treeReadyAt({ ...tree, picked_at: t0 + 5000 }, 'autumn', 3600, 2) - t0],
+  [TREES.guava.days * 24 * 1000, 2000, 7000]);
+check('蜂箱：放好 3 天後有蜜、收完再等 3 天', [hiveReadyAt({ placed_at: t0, collected_at: 0 }) - t0, hiveReadyAt({ placed_at: t0, collected_at: t0 + H }) - t0], [HIVE.days * 24 * H, HIVE.days * 24 * H + H]);
+check('水果、蜂蜜能賣能送', [itemPrice('fruit:mango'), itemPrice('prod:honey_l') > itemPrice('prod:honey'), itemPrice('fruit:__proto__')], [140, true, 0]);
+check('蜂蜜是一組（百花蜜、龍眼蜜都能做菜，先用百花蜜）', cookTakes({ 'crop:sweetpotato': 2, 'prod:honey_l': 1 }, 'honey_potato'), { 'crop:sweetpotato': 2, 'prod:honey_l': 1 });
+check('每種水果都有圖', Object.keys(FRUITS).every((id) => FRUIT_COLORS[id]), true);
+check('果園主人、甜蜜蜜兩個成就', [achievementsMet({ ...zero, trees: 5 }), achievementsMet({ ...zero, honey: true })], [['orchard'], ['honey']]);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

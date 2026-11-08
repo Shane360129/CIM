@@ -1339,6 +1339,9 @@ export function sprite(name, shirt = '#d9544d', flip = false, season = '') {
   if (name.startsWith('ore_')) return oreSprite(name.slice(4));
   if (name.startsWith('dish_')) { const [id, shape] = name.slice(5).split('@'); return dishSprite(id, shape); }
   if (name.startsWith('good_')) return goodSprite(name.slice(5));
+  if (name.startsWith('fruit_')) return fruitSprite(name.slice(6));
+  if (name.startsWith('tree_')) { const [, kind, stage, ripe] = name.split('_'); return fruitTreeSprite(kind, Number(stage), ripe === 'r'); }
+  if (name === 'honey' || name === 'honey_l') return honeySprite(name);
   const key = name + '|' + shirt + '|' + (flip ? 1 : 0) + '|' + season;
   if (cache.has(key)) return cache.get(key);
   const rows = SPRITES[name];
@@ -1396,7 +1399,7 @@ function shaped(key, shape, colors) {
 }
 // 料理：盤子（3 盤子、4 陰影）、碗（4 是碗上的藍色花紋）、杯子（4 是吸管），1、2 是菜的顏色
 export const DISH_SHAPES = { plate: ["................", "................", "................", "................", "................", "......1121......", "....11211211....", "...1121112111...", "..112111121112..", ".33333333333333.", ".43333333333334.", "..444444444444..", "................", "................", "................", "................"], bowl: ["................", "................", "................", "................", "....11211211....", "..112111121111..", ".33333333333333.", ".34444444444443.", "..333333333333..", "...3333333333...", "....33333333....", ".....444444.....", "................", "................", "................", "................"], cup: ["................", "..........4.....", ".........4......", "....33334333....", "....31141113....", "....31411113....", "....31111113....", "....31212123....", "....31111113....", "....31111113....", ".....311113.....", ".....311113.....", ".....333333.....", "................", "................", "................"] };
-export const DISH_COLORS = {"stirfry": ["#4f9d3f", "#8fd16a"], "tomato_egg": ["#e0393e", "#f6d34a"], "carrot_egg": ["#f28b2c", "#f6d34a"], "eggplant": ["#7b3fa0", "#c8553d"], "potato_salad": ["#f2e2a0", "#f6d34a"], "corn_grill": ["#f2b33d", "#8d5d32"], "cabbage_rice": ["#f4f1e8", "#9dd17a"], "sweetpotato_congee": ["#f4efe0", "#e8913a"], "radish_soup": ["#e9e4c8", "#ffffff"], "pumpkin_soup": ["#f2a03a", "#ffffff"], "fish_braised": ["#8a4a2a", "#c96a3a"], "bass_soup": ["#e8e4d0", "#d9b44a"], "eel_rice": ["#6b3a1e", "#f4f1e8"], "pudding": ["#f6d880", "#8d5d32"], "strawberry_milk": ["#f6b6c9", "#e0393e"], "watermelon_juice": ["#f05a5a", "#4f9d3f"], "pineapple_cake": ["#e8b45a", "#f6d34a"], "niangao": ["#c98a3a", "#e8b45a"], "tangyuan": ["#f4f1e8", "#f6b6c9"], "zongzi": ["#4f7d3a", "#8fb35a"], "mooncake": ["#c98a3a", "#8d5d32"], "candy": ["#e0393e", "#f6d34a"], "cake": ["#f6efe0", "#e0393e"], "caipu_egg": ["#f6d34a", "#c98a3a"], "kimchi_pot": ["#e05a3a", "#f6d880"], "cheese_potato": ["#f6d34a", "#e8913a"], "pancake": ["#e8b45a", "#d9344a"], "fries": ["#f2c94a", "#d9344a"], "corn_salad": ["#f6d34a", "#f6efc8"], "golden_pumpkin": ["#f2a03a", "#f6d34a"], "bbq": ["#8d4a2a", "#f2b33d"]};
+export const DISH_COLORS = {"stirfry": ["#4f9d3f", "#8fd16a"], "tomato_egg": ["#e0393e", "#f6d34a"], "carrot_egg": ["#f28b2c", "#f6d34a"], "eggplant": ["#7b3fa0", "#c8553d"], "potato_salad": ["#f2e2a0", "#f6d34a"], "corn_grill": ["#f2b33d", "#8d5d32"], "cabbage_rice": ["#f4f1e8", "#9dd17a"], "sweetpotato_congee": ["#f4efe0", "#e8913a"], "radish_soup": ["#e9e4c8", "#ffffff"], "pumpkin_soup": ["#f2a03a", "#ffffff"], "fish_braised": ["#8a4a2a", "#c96a3a"], "bass_soup": ["#e8e4d0", "#d9b44a"], "eel_rice": ["#6b3a1e", "#f4f1e8"], "pudding": ["#f6d880", "#8d5d32"], "strawberry_milk": ["#f6b6c9", "#e0393e"], "watermelon_juice": ["#f05a5a", "#4f9d3f"], "pineapple_cake": ["#e8b45a", "#f6d34a"], "niangao": ["#c98a3a", "#e8b45a"], "tangyuan": ["#f4f1e8", "#f6b6c9"], "zongzi": ["#4f7d3a", "#8fb35a"], "mooncake": ["#c98a3a", "#8d5d32"], "candy": ["#e0393e", "#f6d34a"], "cake": ["#f6efe0", "#e0393e"], "caipu_egg": ["#f6d34a", "#c98a3a"], "kimchi_pot": ["#e05a3a", "#f6d880"], "cheese_potato": ["#f6d34a", "#e8913a"], "pancake": ["#e8b45a", "#d9344a"], "fries": ["#f2c94a", "#d9344a"], "corn_salad": ["#f6d34a", "#f6efc8"], "golden_pumpkin": ["#f2a03a", "#f6d34a"], "bbq": ["#8d4a2a", "#f2b33d"], "mango_ice": ["#f2b33d", "#f4f1e8"], "orange_juice": ["#f28b2c", "#f8b860"], "honey_potato": ["#e8913a", "#c87a1e"], "honey_cake": ["#e8b45a", "#8d5d32"]};
 const DISH_KIND = { plate: ['#f4f1ea', '#c9c5bf'], bowl: ['#f4f1ea', '#5a8fc8'], cup: ['#d9eef6', '#e0393e'] };
 export const dishSprite = (id, shape = 'plate') => shaped('dish_' + id, DISH_SHAPES[shape] || DISH_SHAPES.plate,
   [...(DISH_COLORS[id] || ['#c8553d', '#f6d34a']), ...(DISH_KIND[shape] || DISH_KIND.plate)]);
@@ -1636,4 +1639,52 @@ export const ghTileSprite = (ch) => building('gh_' + ch, 16, 16, (r) => {
     r('#b8a982', 0, 7, 16, 1); r('#b8a982', 0, 15, 16, 1); r('#b8a982', 7, 0, 1, 8); r('#b8a982', 15, 8, 1, 8);
     r('#d9cdb0', 2, 2, 2, 1); r('#d9cdb0', 10, 11, 2, 1);
   }
+});
+
+// ---------------- 果樹、蜂箱 ----------------
+// 水果的圖：圓圓的果子＋一片葉子。[果皮, 亮面, 陰影, 葉子]
+export const FRUIT_COLORS = {
+  guava: ['#9cc95a', '#cfe59a', '#5f8a2e', '#3f9a3f'], orange: ['#f28b2c', '#f8b860', '#c8651e', '#3f9a3f'],
+  mango: ['#f2b33d', '#f8d870', '#d9822b', '#3f9a3f'], lychee: ['#d9344a', '#ec6a78', '#a8252b', '#3f9a3f'],
+  longan: ['#c9a06a', '#e2c592', '#8d6a42', '#3f9a3f'],
+};
+const FRUIT_SHAPE = ["................", "................", "........44......", ".......444......", "......4.4.......", ".....11111......", "....1122111.....", "...112211111....", "...121111111....", "...111111113....", "...111111113....", "....1111133.....", ".....33333......", "................", "................", "................"];
+const CLUSTER_SHAPE = ["................", "........4.......", ".......44.......", "......4.4.......", ".....11.11......", "....1211121.....", "....1111111.....", "...11.11.111....", "...121112113....", "...111111113....", "....11.1133.....", ".....1113.......", "......33........", "................", "................", "................"];
+export const fruitSprite = (id) => shaped('fruit_' + id, id === 'lychee' || id === 'longan' ? CLUSTER_SHAPE : FRUIT_SHAPE, FRUIT_COLORS[id] || FRUIT_COLORS.guava);
+// 果樹：0 小樹苗、1 小樹、2 長大；ripe＝結滿了果子可以摘
+export const fruitTreeSprite = (kind, stage = 2, ripe = false) => building(`tree_${kind}_${stage}_${ripe ? 1 : 0}`, 16, 16, (r) => {
+  const fruit = kind === 'guava' ? '#eef5a8' : (FRUIT_COLORS[kind] || FRUIT_COLORS.guava)[0]; // 芭樂是綠的，畫淡一點才看得出來
+  if (stage <= 0) {                                   // 小樹苗：一根小枝＋兩片葉子，土堆
+    r('#8d6a42', 4, 13, 8, 2); r('#7a4e2d', 7, 8, 2, 5); r('#4f9d3f', 4, 6, 4, 3); r('#6cc25a', 8, 5, 4, 3);
+    return;
+  }
+  if (stage === 1) {                                  // 小樹
+    r('#7a4e2d', 7, 9, 2, 6); r('#5e3b20', 6, 14, 4, 1);
+    r('#3f8a3a', 4, 3, 8, 7); r('#4f9d3f', 3, 5, 10, 4); r('#6cc25a', 5, 4, 3, 2);
+    return;
+  }
+  r('#7a4e2d', 7, 10, 2, 6); r('#5e3b20', 5, 15, 6, 1);   // 樹幹
+  r('#2f7a33', 2, 2, 12, 9); r('#3f8a3a', 1, 4, 14, 6); r('#4f9d3f', 3, 1, 10, 3); r('#6cc25a', 4, 2, 4, 2); r('#2b6a2e', 3, 10, 10, 1);
+  if (ripe) for (const [x, y] of [[3, 5], [7, 3], [11, 4], [5, 8], [10, 8], [13, 7], [8, 6]]) { r(fruit, x, y, 2, 2); r('#ffffff', x, y, 1, 1); }
+});
+// 還沒種果樹的空位：一小塊土＋小木牌
+export const treeSpotSprite = () => building('tree_spot', 16, 16, (r) => {
+  r('#a77b4f', 3, 11, 10, 3); r('#8d6a42', 4, 13, 8, 1);
+  r('#8d5d32', 11, 5, 1, 7); r('#e8c28a', 9, 4, 5, 3); r('#4f9d3f', 10, 5, 1, 1); r('#4f9d3f', 12, 5, 1, 1);
+});
+// 蜂箱：白色木箱、黃色條紋，旁邊有蜜蜂；ready＝有蜂蜜可以收（上面滴著蜜）
+export const hiveSprite = (ready = false, frame = 0) => building(`hive_${ready ? 1 : 0}_${frame}`, 16, 16, (r) => {
+  r('#7a4e2d', 3, 14, 10, 2);
+  r('#f4f1e8', 3, 5, 10, 9); r('#d9cdb0', 3, 5, 10, 1); r('#f6d34a', 3, 8, 10, 1); r('#f6d34a', 3, 11, 10, 1);
+  r('#8d5d32', 2, 3, 12, 2); r('#5e3b20', 7, 12, 2, 1);
+  for (const [x, y] of frame ? [[1, 6], [13, 2], [14, 9]] : [[0, 8], [12, 1], [14, 11]]) { r('#f6d34a', x, y, 2, 1); r('#2b2421', x + 1, y, 1, 1); }
+  if (ready) { r('#e8a020', 6, 5, 4, 2); r('#e8a020', 7, 7, 2, 2); }
+});
+export const hiveSpotSprite = () => building('hive_spot', 16, 16, (r) => { r('#9c968b', 3, 12, 10, 3); r('#c9c5bf', 4, 12, 8, 1); });
+// 蜂蜜罐：百花蜜金黃色、龍眼蜜深一點
+export const honeySprite = (id) => building('honeyjar_' + id, 16, 16, (r) => {
+  const main = id === 'honey_l' ? '#c87a1e' : '#f2b33d';
+  r('#8d5d32', 4, 2, 8, 2); r('#c9dde6', 3, 4, 10, 10); r(main, 4, 6, 8, 7); r('#ffe08a', 5, 7, 1, 4);
+  r('#f4f1e8', 5, 8, 6, 2); r(main, 7, 8, 2, 1); r('#9fb6c0', 4, 14, 8, 1);
+  r(main, 3, 4, 2, 2); r(main, 4, 6, 1, 1);
 });

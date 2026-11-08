@@ -3,14 +3,14 @@
 // 作物成長在兩次同步之間由這裡用同一套公式往後推算，畫面才會即時長大。
 import {
   sprite, cropSprite, houseSprite, shopSprite, barnSprite, storeSprite, eaterySprite, homeSprite, fountainSprite, SEASON_GROUND,
-  greenhouseSprite, machineSprite, machineSpotSprite, ghTileSprite,
+  greenhouseSprite, machineSprite, machineSpotSprite, ghTileSprite, fruitTreeSprite, treeSpotSprite, hiveSprite, hiveSpotSprite,
 } from '/farm-sprites.js';
 
 const T = 16;            // 一格 16 像素
 const SPEED = 4.5;       // 每秒走幾格
 const WALK = new Set(['.', '=', 'F', 'p', ',', 'E']);
 // 點了會走過去互動的東西：田、出貨箱、攤位、房子、動物小屋、溫室、加工機；小鎮的雜貨店、小吃店、民宅、噴水池、告示板
-const TARGETS = 'FBSHAGRQONWJM';
+const TARGETS = 'FBSHAGRQONWJMYZ';
 const EXIT_LABEL = { town: '🏘️ 往小鎮', farm: '🌾 回牧場', hill: '⛰️ 往後山' };
 const SEASON = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
 const SEASON_ORDER = ['spring', 'summer', 'autumn', 'winter'];
@@ -46,6 +46,7 @@ const S = {
   machines: {}, machineKinds: {}, machineSpots: {}, machineBatch: 5, goods: {}, builds: {}, ghBuilt: false, houseLevel: 1,
   pondTiles: [], pets: {}, petKinds: {}, petZoneTiles: [], petPos: {}, trails: new Map(),
   stories: {}, storyHearts: [2, 5, 8], achievementList: [], achievements: {}, thisWeek: null, activity: null, game: null,
+  trees: [], hives: [], treeKinds: {}, fruits: {}, treeSpots: [], hiveSpots: [], hive: { price: 1500, max: 3, days: 3 },
   tool: 'hoe', seed: 'bokchoy', busy: false,
   me: { x: 5, y: 5, d: 'd', step: null, path: [], pending: null, anim: 0 },
   others: new Map(), floats: [], keys: [], view: 3, cam: { x: 0, y: 0 },
@@ -86,6 +87,8 @@ function itemInfo(item) {
   if (kind === 'ore' && S.oreData[id]) return { name: S.oreData[id].name, icon: 'ore_' + id, sell: S.oreData[id].sell };
   if (kind === 'dish' && S.dishes[id]) return { name: S.dishes[id].name, icon: `dish_${id}@${S.dishes[id].shape}`, sell: S.dishes[id].sell, dish: id };
   if (kind === 'good' && S.goods[id]) return { name: S.goods[id].name, icon: 'good_' + id, sell: S.goods[id].sell, good: id };
+  if (kind === 'fruit' && S.fruits[id]) return { name: S.fruits[id].name, icon: 'fruit_' + id, sell: S.fruits[id].sell };
+  if (kind === 'sapling' && S.treeKinds[id]) return { name: `${S.treeKinds[id].name}苗`, icon: `tree_${id}_0`, sell: 0, sapling: id };
   return null;
 }
 // 料理的材料：egg／milk 普通的、高級的都算
@@ -148,6 +151,8 @@ function applyState(st) {
   S.stories = st.stories || {}; S.storyHearts = st.storyHearts || [2, 5, 8];
   S.achievementList = st.achievementList || []; S.achievements = st.achievements || {}; S.thisWeek = st.thisWeek || null;
   S.activity = st.activity || null;
+  S.trees = st.trees || []; S.hives = st.hives || []; S.treeKinds = st.treeKinds || {}; S.fruits = st.fruits || {};
+  S.treeSpots = st.treeSpots || []; S.hiveSpots = st.hiveSpots || []; if (st.hive) S.hive = st.hive;
   // 鴨子游泳的範圍：池塘邊的水和旁邊的草地；寵物沒人帶時在家門口玩
   const tilesIn = (z, ok) => {
     const out = [];
@@ -297,9 +302,27 @@ function openShop() {
   });
   const next = SEASON_ORDER[(SEASON_ORDER.indexOf(S.season) + 1) % 4];
   const coming = Object.entries(S.crops).filter(([id, c]) => !inSeason(id) && c.seasons.includes(next)).map(([, c]) => c.name);
+  // 果樹苗（一年四季都有賣）、蜂箱
+  const treeRows = Object.entries(S.treeKinds).map(([id, t]) => el('div', { class: 'row' }, icon(`tree_${id}_2_r`),
+    el('div', { class: 'grow' }, el('div', { class: 'name', text: `${t.name}苗` }),
+      el('div', { class: 'meta', text: `${t.price} 元・${t.days} 天長大，之後${t.seasons.length === 4 ? '一年四季' : seasonsText(t.seasons)}每天可以摘 ${t.yield} 個${S.fruits[t.fruit].name}（${S.fruits[t.fruit].sell} 元）・倉庫有 ${S.items['sapling:' + id] || 0} 棵` })),
+    el('button', {
+      class: 'btn primary', type: 'button', text: `買 ${t.price}`, disabled: t.price > S.money,
+      onclick: async () => { try { await doAct({ action: 'buy_sapling', tree: id, qty: 1 }); toast(`買了${t.name}苗，到牧場最下面一排種下去`); openShop(); } catch {} },
+    })));
+  const hiveFull = S.hives.length >= S.hive.max;
+  const hiveRow = el('div', { class: 'row' }, icon('honey'),
+    el('div', { class: 'grow' }, el('div', { class: 'name', text: `蜂箱（${S.hives.length}/${S.hive.max}）` }),
+      el('div', { class: 'meta', text: `${S.hive.price} 元・放在牧場左下角，每 ${S.hive.days} 天收一罐蜂蜜（冬天休息）；有長大的龍眼樹會變成龍眼蜜` })),
+    el('button', {
+      class: 'btn primary', type: 'button', text: hiveFull ? '滿了' : `買 ${S.hive.price}`, disabled: hiveFull || S.hive.price > S.money,
+      onclick: async () => { try { await doAct({ action: 'buy_hive' }); toast('蜂箱放好了 🐝'); openShop(); } catch {} },
+    }));
   openModal(el('h2', { text: `🏪 種子店・${SEASON[S.season]}天` }),
     el('p', { class: 'sub', text: `全家共用的錢包：${S.money.toLocaleString()} 元。作物都要土是濕的才會長。` }),
     ...rows, feedRow(),
+    el('h2', { class: 'section', text: '🌳 果樹苗' }), ...treeRows,
+    el('h2', { class: 'section', text: '🐝 蜂箱' }), hiveRow,
     coming.length && !S.ghBuilt ? el('p', { class: 'note', text: `${SEASON[next]}天會上架：${coming.join('、')}（蓋了溫室就什麼季節的種子都買得到）` }) : null,
     el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
 }
@@ -333,6 +356,7 @@ function openBag() {
     const c = itemInfo(item);
     if (!c) return null;
     const meta = item === 'feed' ? '去動物小屋餵動物，一隻吃一包'
+      : c.sapling ? '點牧場最下面一排的空位種下去'
       : c.crop ? (inSeason(c.crop) ? '用「種子」工具種在翻好的土上' : `${seasonsText(S.crops[c.crop].seasons)}才能種${S.ghBuilt ? '，溫室裡現在就能種' : '，先收著'}`)
       : c.dish ? `吃了體力 +${S.dishes[c.dish].energy}，或出貨賣 ${c.sell} 元`
       : c.good ? `加工品・出貨賣 ${c.sell} 元，也能送人、拿來做菜`
@@ -726,6 +750,14 @@ function openDex() {
     el('p', { class: 'sub', text: `魚 ${nf}/${Object.keys(S.fishData).length}・礦石 ${no}/${Object.keys(S.oreData).length}・料理 ${recipeIds().filter((id) => have.has('dish:' + id)).length}/${recipeIds().length}・加工品 ${Object.keys(S.goods).filter((id) => have.has('good:' + id)).length}/${Object.keys(S.goods).length}。第一次拿到會在聊天室說一聲。` }),
     el('h2', { class: 'section', text: '🎣 魚' }), ...section('fish', S.fishData),
     el('h2', { class: 'section', text: '⛏️ 礦石' }), ...section('ore', S.oreData),
+    el('h2', { class: 'section', text: `🌳 水果 ${Object.keys(S.fruits).filter((id) => have.has('fruit:' + id)).length}/${Object.keys(S.fruits).length}` }),
+    ...Object.entries(S.fruits).map(([id, d]) => {
+      const got = have.has('fruit:' + id);
+      const tree = Object.values(S.treeKinds).find((t) => t.fruit === id);
+      return el('div', { class: 'row' + (got ? '' : ' off') }, got ? icon('fruit_' + id) : el('span', { class: 'big', text: '❔' }),
+        el('div', { class: 'grow' }, el('div', { class: 'name', text: got ? d.name : '？？？' }),
+          el('div', { class: 'meta', text: got ? `賣 ${d.sell} 元` : `種一棵${tree ? tree.name : '果樹'}看看` })));
+    }),
     el('h2', { class: 'section', text: `🫙 加工品 ${Object.keys(S.goods).filter((id) => have.has('good:' + id)).length}/${Object.keys(S.goods).length}` }),
     ...Object.entries(S.goods).map(([id, d]) => {
       const got = have.has('good:' + id);
@@ -1126,6 +1158,8 @@ async function doAct(body) {
     if (r.rocks) S.rocks = r.rocks;
     if (r.dex) S.dex = r.dex;
     if (r.machines) S.machines = r.machines;
+    if (r.trees) S.trees = r.trees;
+    if (r.hives) S.hives = r.hives;
     if (r.pets) S.pets = r.pets;
     if (r.achievements) S.achievements = r.achievements;
     for (const a of r.newAchievements || []) setTimeout(() => toast(`🏆 達成成就「${a.name}」！全家拿到 ${a.reward} 元`), 900);
@@ -1161,6 +1195,8 @@ function useOn(x, y) {
   if (ch === 'A') return openBarn();
   if (ch === 'J') return S.ghBuilt ? goArea('gh') : openGreenhouseLot();
   if (ch === 'M') return useMachine(machineAt(x, y));
+  if (ch === 'Y') return useTree(S.treeSpots.findIndex((p) => p.x === x && p.y === y));
+  if (ch === 'Z') return useHive(S.hiveSpots.findIndex((p) => p.x === x && p.y === y));
   if (ch === 'W') return startFishing(x, y);
   if (rockAt(x, y)) return mineRock(x, y);
   if (ch === 'G') return openStore();
@@ -1326,6 +1362,67 @@ function openActivity() {
     el('div', { class: 'bbq-grill' }, ...btns), info);
 }
 
+/* ---------- 果樹、蜂箱 ---------- */
+
+const treeAt = (spot) => S.trees.find((t) => t.spot === spot);
+const treeRipe = (t, now = serverNow()) => !!t && !!t.readyAt && now >= t.readyAt;
+// 0 小樹苗（前半段）、1 小樹（後半段）、2 長大了
+const treeStage = (t, now) => (now >= t.matureAt ? 2 : now - t.plantedAt < (t.matureAt - t.plantedAt) / 2 ? 0 : 1);
+const hiveAt = (spot) => S.hives.find((h) => h.spot === spot);
+const hiveReady = (h, now = serverNow()) => !!h && S.season !== 'winter' && now >= h.readyAt;
+async function useTree(spot) {
+  if (spot < 0) return;
+  const t = treeAt(spot);
+  if (!t) return openPlantTree(spot);
+  if (treeRipe(t)) {
+    try {
+      const r = await doAct({ action: 'pick', spot });
+      const p = S.treeSpots[spot], f = itemInfo(r.gained.item);
+      floatAt(p.x, p.y, `+${r.gained.qty} ${f ? f.name : ''}`, '#fff3b0');
+      if (r.gained.first) toast(`第一次摘到${f.name}！`);
+    } catch {}
+    return;
+  }
+  openTreeInfo(spot);
+}
+function openPlantTree(spot) {
+  const have = Object.keys(S.treeKinds).filter((id) => S.items['sapling:' + id]);
+  openModal(el('h2', { text: '🌳 種一棵果樹' }),
+    el('p', { class: 'sub', text: have.length ? '種下去之後不用澆水，幾天後長大，季節到了每天都能摘。' : '倉庫裡沒有果樹苗，到攤位買（一年四季都有賣）。' }),
+    ...have.map((id) => { const t = S.treeKinds[id]; return el('div', { class: 'row' }, icon(`tree_${id}_0`),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: `${t.name}苗 ×${S.items['sapling:' + id]}` }),
+        el('div', { class: 'meta', text: `${t.days} 天長大・${t.seasons.length === 4 ? '一年四季' : seasonsText(t.seasons)}結果` })),
+      el('button', { class: 'btn primary', type: 'button', text: '種這棵', onclick: async () => { try { await doAct({ action: 'plant_tree', spot, tree: id }); toast(`種好了！${t.days} 天後長大`); closeModal(); } catch {} } })); }),
+    el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
+}
+function openTreeInfo(spot) {
+  const t = treeAt(spot), T = S.treeKinds[t.kind], now = serverNow();
+  const status = now < t.matureAt ? `還在長大，大約 ${fmtLeft(t.matureAt - now)}後長大`
+    : !t.readyAt ? `現在不是它的季節，${seasonsText(T.seasons)}才會結果`
+      : `今天摘過了，${fmtClock(t.readyAt)} 之後可以再摘`;
+  openModal(el('h2', { text: `🌳 ${T.name}` }), el('p', { class: 'sub', text: status }),
+    el('div', { class: 'actions' },
+      el('button', { class: 'btn', type: 'button', text: '把樹移走', onclick: () => {
+        openModal(el('h2', { text: `確定要移走${T.name}嗎？` }), el('p', { class: 'sub', text: '移走就沒了，要重新買樹苗種。' }),
+          el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '不要', onclick: () => openTreeInfo(spot) }),
+            el('button', { class: 'btn primary', type: 'button', text: '移走', onclick: async () => { try { await doAct({ action: 'remove_tree', spot }); toast('樹移走了'); closeModal(); } catch {} } })));
+      } }),
+      el('button', { class: 'btn primary', type: 'button', text: '好', onclick: closeModal })));
+}
+async function useHive(spot) {
+  if (spot < 0) return;
+  const h = hiveAt(spot);
+  if (!h) return toast(`這裡可以放蜂箱，到攤位買（${S.hive.price} 元）`);
+  if (S.season === 'winter') return toast('冬天蜜蜂在休息，春天再來收 🐝');
+  if (!hiveReady(h)) return toast(`蜜蜂正在採蜜，大約 ${fmtLeft(h.readyAt - serverNow())}後有蜂蜜`);
+  try {
+    const r = await doAct({ action: 'collect_honey', spot });
+    const p = S.hiveSpots[spot], f = itemInfo(r.gained.item);
+    floatAt(p.x, p.y, `+1 ${f ? f.name : ''}`, '#fff3b0');
+    toast(r.gained.first ? `第一次收到${f.name}！🍯` : `收到一罐${f.name} 🍯`);
+  } catch {}
+}
+
 /* ---------- 加工機、溫室 ---------- */
 
 const machineReady = (m, now = serverNow()) => !!m && !!m.input && now >= m.readyAt;
@@ -1474,7 +1571,7 @@ function tapTile(tx, ty, fx = tx + 0.5, fy = ty + 0.5) {
   if (target) {
     // 走到旁邊（上下左右）再面向它動作。房子、攤位、動物小屋好幾格大，
     // 點到中間那格也算：走到這棟建築任何一格的旁邊就好
-    const parts = ch === 'F' || ch === 'B' || ch === 'M' ? new Set([key(tx, ty)]) : buildingTiles(tx, ty, ch); // 水也是：走到湖邊就好
+    const parts = 'FBMYZ'.includes(ch) ? new Set([key(tx, ty)]) : buildingTiles(tx, ty, ch); // 水也是：走到湖邊就好
     const adj = (x, y) => [[0, 1], [1, 0], [0, -1], [-1, 0]].some(([dx, dy]) => parts.has(key(x + dx, y + dy)));
     const path = findPath(cx, cy, adj);
     if (!path) return toast('走不過去');
@@ -1634,6 +1731,8 @@ function connectWs() {
       if (ev.rocks) S.rocks = ev.rocks;
       if (ev.dex) S.dex = ev.dex;
       if (ev.machines) S.machines = ev.machines;
+      if (ev.trees) S.trees = ev.trees;
+      if (ev.hives) S.hives = ev.hives;
       if (ev.pets) S.pets = ev.pets;
       if (ev.achievements) S.achievements = ev.achievements;
       if (ev.by !== S.meId) for (const a of ev.newAchievements || []) toast(`🏆 達成成就「${a.name}」！全家拿到 ${a.reward} 元`);
@@ -1796,7 +1895,13 @@ function draw() {
       else if (ch === 'f') g.drawImage(sprite('fence'), x * T, y * T);
       else if (ch === 'B') g.drawImage(sprite('bin'), x * T, y * T);
       else if (ch === 'N') g.drawImage(sprite('board'), x * T, y * T);
-      else if (ch === 'M') {
+      else if (ch === 'Y') {
+        const sp = S.treeSpots.findIndex((p) => p.x === x && p.y === y), t = treeAt(sp);
+        g.drawImage(t ? fruitTreeSprite(t.kind, treeStage(t, now), treeRipe(t, now)) : treeSpotSprite(), x * T, y * T);
+      } else if (ch === 'Z') {
+        const h = hiveAt(S.hiveSpots.findIndex((p) => p.x === x && p.y === y));
+        g.drawImage(h ? hiveSprite(hiveReady(h, now), blink) : hiveSpotSprite(), x * T, y * T);
+      } else if (ch === 'M') {
         const id = machineAt(x, y), m = id && S.machines[id];
         g.drawImage(m ? machineSprite(id, !!m.input && !machineReady(m, now), blink) : machineSpotSprite(), x * T, y * T);
       }
@@ -1938,6 +2043,17 @@ function draw() {
     g.fillRect(sx - w / 2, sy - 12 * dpr, w, 13 * dpr);
     g.fillStyle = ready ? '#2b2421' : '#fff';
     g.fillText(label, sx, sy - 2 * dpr);
+  }
+  // 果樹熟了、蜂箱有蜜：上面冒出小牌子
+  if (S.area === 'farm') {
+    const tag = (x, y, label) => {
+      const sx = (x + 0.5) * T * k - camX, sy = (y * T - 1) * k - camY;
+      const w = g.measureText(label).width + 6 * dpr;
+      g.fillStyle = 'rgba(255,250,235,.92)'; g.fillRect(sx - w / 2, sy - 12 * dpr, w, 13 * dpr);
+      g.fillStyle = '#2b2421'; g.fillText(label, sx, sy - 2 * dpr);
+    };
+    for (const t of S.trees) if (treeRipe(t, now)) { const p = S.treeSpots[t.spot]; tag(p.x, p.y, `✨ ${(S.fruits[S.treeKinds[t.kind].fruit] || {}).name || ''}`); }
+    for (const h of S.hives) if (hiveReady(h, now)) { const p = S.hiveSpots[h.spot]; tag(p.x, p.y, '🍯'); }
   }
   // 加工機：做好了冒出「✨ 美乃滋 ×3」，還在做的小小顯示 ⏳
   if (S.area === 'farm') {
