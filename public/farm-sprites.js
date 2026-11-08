@@ -1335,6 +1335,12 @@ const cache = new Map();
 
 // 把一張字串圖畫成 16×16 的小畫布（同一張圖、同一件衣服顏色、同一季只畫一次）
 export function sprite(name, shirt = '#d9544d', flip = false, season = '') {
+  if (/@q[123]$/.test(name)) return qualitySprite(name.slice(0, -3), Number(name.slice(-1)));
+  if (name.startsWith('fert_')) return fertSprite(name.slice(5));
+  if (name.startsWith('fertdots_')) return fertDotsSprite(name.slice(9));
+  if (name.startsWith('gear_')) return gearSprite(name.slice(5));
+  if (name === 'crow') return crowSprite();
+  if (name === 'spray') return spraySprite();
   if (name.startsWith('fish_')) return fishSprite(name.slice(5));
   if (name.startsWith('ore_')) return oreSprite(name.slice(4));
   if (name.startsWith('dish_')) { const [id, shape] = name.slice(5).split('@'); return dishSprite(id, shape); }
@@ -1940,3 +1946,67 @@ export const homeTileSprite = (ch, v = 0) => building(`home_${ch}_${v}`, 16, 16,
   r('#d9b98a', 0, 0, 16, 16); r('#c9a477', 0, 7, 16, 1); r('#c9a477', 0, 15, 16, 1);
   r('#c9a477', (v * 5 + 3) % 16, 0, 1, 7); r('#c9a477', (v * 7 + 10) % 16, 8, 1, 7);
 });
+
+// ---------------- 肥料、灑水器、稻草人、烏鴉、作物星級（第十九期） ----------------
+// 肥料袋：袋子顏色、標籤、深色；普通肥料畫一片葉子、速效肥料一道閃電、高級肥料一顆星
+const FERT_COLORS = { basic: ['#8d6a3a', '#f2d6a0', '#5e3b20', '#c9a96a'], speed: ['#3f8a2f', '#d6f5a8', '#2a5e22', '#7ed05a'], quality: ['#3a5a9a', '#f6e8b0', '#24386a', '#f2c84a'] };
+export const fertSprite = (id) => building('fert_' + id, 16, 16, (r) => {
+  const [bag, label, dark] = FERT_COLORS[id] || FERT_COLORS.basic;
+  r(dark, 5, 1, 6, 2); r(bag, 4, 3, 8, 1); r(bag, 3, 4, 10, 10); r(dark, 3, 13, 10, 1); r(dark, 12, 5, 1, 8); r(label, 5, 6, 6, 5);
+  if (id === 'speed') { r('#f2b33d', 8, 6, 2, 2); r('#f2b33d', 7, 8, 2, 1); r('#f2b33d', 6, 9, 2, 1); r('#f2b33d', 8, 9, 1, 2); }
+  else if (id === 'quality') { r('#f2b33d', 7, 6, 2, 5); r('#f2b33d', 5, 8, 6, 1); r('#f2b33d', 6, 9, 4, 1); }
+  else { r('#4f9d3f', 6, 7, 4, 2); r('#4f9d3f', 7, 9, 2, 1); r('#2e6a24', 8, 9, 1, 2); }
+});
+// 施過肥的土：撒了一點一點的肥料
+export const fertDotsSprite = (id) => building('fertdots_' + id, 16, 16, (r) => {
+  const c = (FERT_COLORS[id] || FERT_COLORS.basic)[3];
+  for (const [x, y] of [[2, 3], [7, 2], [12, 4], [4, 8], [10, 9], [2, 13], [8, 13], [13, 12]]) r(c, x, y, 1, 1);
+});
+// 灑水器（銅色、高級的是銀色加金色噴頭）、稻草人；frame 1 是灑水器噴水的樣子
+export const gearSprite = (id, frame = 0) => building(`gear_${id}_${frame}`, 16, 16, (r) => {
+  if (id === 'scarecrow') {
+    r('#8d6a3a', 7, 6, 2, 10); r('#8d6a3a', 1, 8, 14, 1);
+    r('#e8d29a', 1, 9, 2, 2); r('#e8d29a', 13, 9, 2, 2);
+    r('#d9544d', 4, 8, 8, 5); r('#b8433d', 4, 12, 8, 1); r('#f2d6a0', 7, 9, 2, 3);
+    r('#e8d29a', 5, 13, 2, 2); r('#e8d29a', 9, 13, 2, 2);
+    r('#f2d6a0', 6, 3, 4, 4); r('#3a2a24', 6, 4, 1, 1); r('#3a2a24', 9, 4, 1, 1); r('#3a2a24', 7, 6, 2, 1);
+    r('#c9a96a', 3, 2, 10, 1); r('#e2c48a', 5, 0, 6, 2); r('#d9544d', 5, 1, 6, 1);
+    return;
+  }
+  const [body, top] = id === 'sprinkler2' ? ['#c0c8d0', '#f2c84a'] : ['#c98a3a', '#8a5a28'];
+  r('#5e5a54', 4, 12, 8, 2); r('#7a766e', 5, 12, 6, 1);
+  r(body, 7, 6, 2, 6); r('#f4f1e8', 7, 7, 1, 3);
+  r(top, 5, 4, 6, 2); r(body, 6, 3, 4, 1); r('#3a3a3a', 7, 5, 2, 1);
+  if (id === 'sprinkler2') { r(top, 4, 5, 1, 1); r(top, 11, 5, 1, 1); }
+  if (frame) for (const [x, y] of [[3, 2], [12, 2], [1, 4], [14, 4], [5, 0], [10, 0], [2, 7], [13, 7]]) r('#8fd3f5', x, y, 1, 2);
+});
+// 灑水器澆水時，旁邊的田上冒出的小水珠
+export const spraySprite = () => building('spray', 16, 16, (r) => {
+  for (const [x, y] of [[3, 3], [11, 2], [7, 7], [2, 11], [13, 10], [8, 13]]) { r('#8fd3f5', x, y, 1, 2); r('#e0f4fc', x, y, 1, 1); }
+});
+// 烏鴉：黑色的鳥，黃嘴巴
+export const crowSprite = (frame = 0) => building('crow_' + frame, 16, 16, (r) => {
+  r('#1e1e24', 4, 7, 7, 5); r('#1e1e24', 9, 4, 4, 4); r('#1e1e24', 1, 8, 3, 2); r('#34343e', 5, 8, 4, 2);
+  r('#f2b33d', 13, 6, 2, 1); r('#f4f1e8', 11, 5, 1, 1);
+  r('#f2b33d', 6, 12, 1, 2); r('#f2b33d', 9, 12, 1, 2);
+  if (frame) { r('#1e1e24', 4, 4, 4, 3); r('#34343e', 5, 5, 2, 1); }
+});
+// 作物的星級：左下角一顆星（銅星、銀星、金星），先畫深色的影子比較看得清楚
+const STAR = ['...#...', '..###..', '#######', '.#####.', '..###..', '.##.##.', '.#...#.'];
+const STAR_COLORS = { 1: '#d08a3a', 2: '#dfe5ec', 3: '#f6c83a' };
+export function qualitySprite(base, q) {
+  const key = `q_${base}_${q}`;
+  if (cache.has(key)) return cache.get(key);
+  const c = document.createElement('canvas');
+  c.width = 16; c.height = 16;
+  const g = c.getContext('2d');
+  g.drawImage(sprite(base), 0, 0);
+  // 先在星星的四周描一圈深色的邊，放在白色的菜上面也看得清楚
+  g.fillStyle = '#2a1c10';
+  STAR.forEach((row, y) => [...row].forEach((ch, x) => {
+    if (ch === '#') for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) g.fillRect(x + 1 + dx, y + 8 + dy, 1, 1);
+  }));
+  STAR.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === '#') { g.fillStyle = STAR_COLORS[q] || STAR_COLORS[3]; g.fillRect(x + 1, y + 8, 1, 1); } }));
+  cache.set(key, c);
+  return c;
+}

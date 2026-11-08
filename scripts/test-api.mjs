@@ -182,6 +182,8 @@ console.log('\n--- 家族牧場 ---');
 const farmGet = (cid, tok) => j(`/api/farm/${cid}`, {}, tok);
 // 測試群的牧場錢包：成就獎金、村民謝禮的錢也要算進去（money 下面會再加上開墾的 500 元）
 let money = 0;
+// 收成可能有星級（crop:小白菜@2），算數量時把普通的、有星級的加起來
+const baseQty = (items, base) => Object.entries(items || {}).reduce((n, [k, v]) => n + (k.split('@')[0] === base ? v : 0), 0);
 const farmDo = async (cid, body, tok) => {
   const r = await j(`/api/farm/${cid}`, { method: 'POST', body }, tok);
   if (cid === groupId && r.status === 200) {
@@ -251,6 +253,21 @@ let tills = 0;
 for (const f of fields.slice(1, 31)) if ((await farmDo(groupId, { action: 'till', ...f }, TB)).status === 200) tills++;
 r = await farmDo(groupId, { action: 'till', ...fields[31] }, TB);
 check('體力 60 剛好翻 30 塊，第 31 塊說體力用完', tills === 30 && r.status === 400 && /體力/.test(r.data.error || ''), `${tills} 塊；${r.data.error}`);
+
+// 肥料、灑水器、稻草人（第十九期）：不花錢的部分
+check('攤位有三種肥料，雜貨店有灑水器、稻草人；田裡還沒擺東西、今天沒有烏鴉', Object.keys(fs0.ferts || {}).length === 3 && !!fs0.gearKinds?.sprinkler
+  && !!fs0.gearKinds?.scarecrow && fs0.gear?.length === 0 && Array.isArray(fs0.crows) && fs0.quality?.[3]?.mult === 2);
+check('沒有這種肥料買不到', (await farmDo(groupId, { action: 'buy', item: 'fert:magic', qty: 1 }, TA)).status === 400
+  && (await farmDo(groupId, { action: 'buy', item: 'fert:__proto__', qty: 1 }, TA)).status === 400);
+check('施肥：沒有肥料、亂填的肥料、沒翻的土都被擋', /沒有普通肥料/.test((await farmDo(groupId, { action: 'fertilize', fert: 'basic', ...fields[2] }, TA)).data.error || '')
+  && (await farmDo(groupId, { action: 'fertilize', fert: '__proto__', ...fields[2] }, TA)).status === 400
+  && (await farmDo(groupId, { action: 'fertilize', fert: 'basic', ...fields[60] }, TA)).status === 400
+  && (await farmDo(groupId, { action: 'fertilize', fert: 'basic', x: 5, y: 5 }, TA)).status === 400);
+if (!fs0.items['ore:copper']) check('灑水器要銅礦，沒有就買不到', /銅礦 0\/3/.test((await farmDo(groupId, { action: 'buy_gear', kind: 'sprinkler' }, TA)).data.error || ''));
+check('灑水器：沒有這種東西、倉庫沒有、這裡沒擺東西都被擋', (await farmDo(groupId, { action: 'buy_gear', kind: 'robot' }, TA)).status === 400
+  && (await farmDo(groupId, { action: 'buy_gear', kind: 'constructor' }, TA)).status === 400
+  && (await farmDo(groupId, { action: 'place_gear', kind: 'sprinkler', ...fields[2] }, TA)).status === 400
+  && (await farmDo(groupId, { action: 'pickup_gear', ...fields[2] }, TA)).status === 400);
 
 // 動物：在動物小屋買、取名字、每天摸摸和餵飯，過幾個小時收雞蛋
 check('一開始沒有動物，有雞和牛可以買', fs0.animals?.length === 0 && !!fs0.animalKinds?.chicken && !!fs0.animalKinds?.cow);
@@ -352,7 +369,7 @@ if (fs0.villagersOut) {
 
 // 料理
 // 村民的故事、成就、週報
-check('有村民的故事、37 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 37
+check('有村民的故事、39 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 39
   && JSON.stringify(fs0.achievements) === '{}' && /^\d{4}-\d{2}-\d{2}$/.test(fs0.thisWeek?.week || ''));
 check('有 41 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 41 && !!fs0.ingredientGroups?.egg);
 check('沒有這道菜', (await farmDo(groupId, { action: 'cook', dish: 'steak' }, TA)).status === 400
@@ -631,11 +648,14 @@ if (fs0.scale >= 3600) {
   // 本機加速模式（FARM_TIME_SCALE）才跑：小白菜 3 小時 → 3 秒
   await new Promise((ok) => setTimeout(ok, 3500));
   r = await farmDo(groupId, { action: 'harvest', ...f1 }, TA);
-  check('（加速模式）熟了可以收成，收進倉庫', r.status === 200 && r.data.items['crop:bokchoy'] === 1);
+  const got1 = r.data.gained?.item || '';
+  check(`（加速模式）熟了可以收成，收進倉庫（${got1}）`, r.status === 200 && baseQty(r.data.items, 'crop:bokchoy') === 1 && got1.split('@')[0] === 'crop:bokchoy'
+    && typeof r.data.gained.quality === 'number' && r.data.tile.fert === null);
   check('（加速模式）第一次收成達成成就，全家拿到 100 元', (r.data.newAchievements || []).some((a) => a.id === 'harvest1' && a.reward === 100));
-  r = await farmDo(groupId, { action: 'ship', item: 'crop:bokchoy', qty: 1 }, TB);
-  money += 45;
-  check(`（加速模式）出貨小白菜 +45 元 → ${money}`, r.status === 200 && r.data.money === money);
+  r = await farmDo(groupId, { action: 'ship', item: got1, qty: 1 }, TB);
+  const p1 = Math.round(45 * (fs0.quality[got1.split('@')[1]]?.mult || 1));
+  money += p1;
+  check(`（加速模式）出貨${got1.includes('@') ? '有星級的' : ''}小白菜 +${p1} 元 → ${money}`, r.status === 200 && r.data.money === money);
   await new Promise((ok) => setTimeout(ok, 800)); // 雞 4 小時＝4 秒，從餵飯到這裡大約 3.5 秒多
   r = await farmDo(groupId, { action: 'collect_all' }, TA);
   check('（加速模式）雞 4 小時後下蛋，全部收', r.status === 200 && r.data.items['prod:egg'] === 1 && r.data.gained.count === 1);
@@ -652,9 +672,11 @@ if (fs0.scale >= 3600) {
     }
     await new Promise((ok) => setTimeout(ok, 3300));
     for (const g of [g1, g2]) await farmDo(groupId, { action: 'harvest', ...g }, TA);
-    r = await farmDo(groupId, { action: 'gift', villager: 'ama', item: 'crop:bokchoy' }, TA);
-    check('（加速模式）送王阿嬤小白菜：她喜歡，感情 +5', r.status === 200 && r.data.gained.reaction === 'like' && r.data.town.friends.ama.points === 6);
-    check('（加速模式）一天只能送一次', (await farmDo(groupId, { action: 'gift', villager: 'ama', item: 'crop:bokchoy' }, TA)).status === 400);
+    const bok = Object.keys((await farmGet(groupId, TA)).data.items).find((k) => k.split('@')[0] === 'crop:bokchoy');
+    const bokQ = Number(bok.split('@')[1] || 0);
+    r = await farmDo(groupId, { action: 'gift', villager: 'ama', item: bok }, TA);
+    check(`（加速模式）送王阿嬤小白菜：她喜歡，感情 +${5 + bokQ}（有星級多加星數）`, r.status === 200 && r.data.gained.reaction === 'like' && r.data.town.friends.ama.points === 6 + bokQ);
+    check('（加速模式）一天只能送一次', (await farmDo(groupId, { action: 'gift', villager: 'ama', item: bok }, TA)).status === 400);
     // 村民的故事（本機測試用 FARM_START_FRIEND=lin:50：跟林老師一開始就有 5 顆愛心）
     if ((fs0.friends?.lin?.points || 0) >= 50) {
       r = await farmDo(groupId, { action: 'talk', villager: 'lin' }, TA);
@@ -674,10 +696,10 @@ if (fs0.scale >= 3600) {
     }
     await new Promise((ok) => setTimeout(ok, 3300));
     for (const g of [fields[42], fields[43]]) await farmDo(groupId, { action: 'harvest', ...g }, TA);
-    const bokBefore = (await farmGet(groupId, TA)).data.items['crop:bokchoy'] || 0;
+    const bokBefore = baseQty((await farmGet(groupId, TA)).data.items, 'crop:bokchoy');
     r = await farmDo(groupId, { action: 'cook', dish: 'stirfry' }, TA);
     check('（加速模式）兩顆小白菜煮成炒青菜，第一次煮進圖鑑', r.status === 200 && r.data.items['dish:stirfry'] === 1
-      && (r.data.items['crop:bokchoy'] || 0) === bokBefore - 2 && r.data.gained.first && r.data.dex.includes('dish:stirfry'));
+      && baseQty(r.data.items, 'crop:bokchoy') === bokBefore - 2 && r.data.gained.first && r.data.dex.includes('dish:stirfry'));
     check('（加速模式）聊天室：第一次做了炒青菜，問晚餐要不要吃', (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('第一次做了炒青菜')));
     r = await j(`/api/farm/${groupId}/dishes`, {}, TB);
     check('（加速模式）今天吃什麼看得到家族牧場煮過炒青菜', r.status === 200 && r.data.dishes.some((d) => d.name === '炒青菜' && d.by === '朋友A'));
@@ -706,12 +728,47 @@ if (fs0.scale >= 3600) {
   check(`（加速模式）${rc.name}剛收完不能馬上再收`, (await farmDo(groupId, { action: 'harvest', ...f1 }, TA)).status === 400);
   await new Promise((ok) => setTimeout(ok, rc.regrow * 1000 + 600));
   r = await farmDo(groupId, { action: 'harvest', ...f1 }, TA);
-  check(`（加速模式）再等 ${rc.regrow} 小時又能收，倉庫有 2 個`, r.status === 200 && r.data.items['crop:' + regrowCrop] === 2);
+  check(`（加速模式）再等 ${rc.regrow} 小時又能收，倉庫有 2 個`, r.status === 200 && baseQty(r.data.items, 'crop:' + regrowCrop) === 2);
   if ((fs0.items['ore:gold'] || 0) >= 100) {
     // 本機測試用 FARM_START_ITEMS 先放了礦石和大顆雞蛋：先賣金礦湊錢
     r = await farmDo(groupId, { action: 'ship', item: 'ore:gold', qty: 95 }, TA);
     money += 95 * fs0.ores.gold.sell;
     check(`（加速模式）賣 95 個金礦湊錢 → ${money}`, r.status === 200 && r.data.money === money, `實際 ${r.data.money}`);
+    // 肥料（第十九期）
+    r = await farmDo(groupId, { action: 'buy', item: 'fert:speed', qty: 2 }, TA);
+    money -= 2 * fs0.ferts.speed.price;
+    check(`（加速模式）買 2 包速效肥料 → ${money}`, r.status === 200 && r.data.items['fert:speed'] === 2 && r.data.money === money);
+    r = await farmDo(groupId, { action: 'fertilize', fert: 'speed', ...fields[3] }, TA);
+    check('（加速模式）施速效肥料：田上記著肥料、長得快 1.25 倍', r.status === 200 && r.data.tile.fert === 'speed' && r.data.tile.rate === 1.25 && r.data.items['fert:speed'] === 1);
+    check('（加速模式）同一格不能再施', /已經施了速效肥料/.test((await farmDo(groupId, { action: 'fertilize', fert: 'speed', ...fields[3] }, TA)).data.error || ''));
+    r = await farmGet(groupId, TB);
+    check('（加速模式）家人也看到施了肥料', r.data.tiles.some((t) => t.x === fields[3].x && t.y === fields[3].y && t.fert === 'speed' && t.rate === 1.25));
+    // 灑水器、稻草人（第十九期）：擺在翻好、還沒種東西的田中間
+    r = await farmDo(groupId, { action: 'buy_gear', kind: 'sprinkler' }, TA);
+    money -= fs0.gearKinds.sprinkler.price;
+    check(`（加速模式）用錢和銅礦買灑水器 → ${money}`, r.status === 200 && r.data.items['gear:sprinkler'] === 1 && r.data.money === money);
+    const spot = fields[5];
+    check('（加速模式）灑水器要擺在田裡、空的格子', (await farmDo(groupId, { action: 'place_gear', kind: 'sprinkler', x: 5, y: 5 }, TA)).status === 400
+      && /種了東西/.test((await farmDo(groupId, { action: 'place_gear', kind: 'sprinkler', ...f1 }, TA)).data.error || ''));
+    r = await farmDo(groupId, { action: 'place_gear', kind: 'sprinkler', ...spot, map: 'farm' }, TA);
+    const far = Date.now() + 7 * 86400000;
+    check('（加速模式）擺好灑水器：上下左右 3 格翻好的田馬上變濕、而且一直是濕的', r.status === 200 && r.data.gear.length === 1 && r.data.tiles.length === 3
+      && r.data.tiles.every((t) => Math.abs(t.x - spot.x) + Math.abs(t.y - spot.y) === 1 && t.wetUntil > far) && !r.data.items['gear:sprinkler']);
+    check('（加速模式）擺了灑水器的那格不能澆水、播種、施肥', /灑水器/.test((await farmDo(groupId, { action: 'water', ...spot }, TA)).data.error || '')
+      && /灑水器/.test((await farmDo(groupId, { action: 'plant', crop: 'bokchoy', ...spot }, TA)).data.error || '')
+      && /灑水器/.test((await farmDo(groupId, { action: 'fertilize', fert: 'speed', ...spot }, TA)).data.error || ''));
+    r = await farmGet(groupId, TB);
+    check('（加速模式）家人也看到灑水器，旁邊的田一直是濕的', r.data.gear.some((g) => g.x === spot.x && g.y === spot.y && g.kind === 'sprinkler')
+      && r.data.tiles.filter((t) => Math.abs(t.x - spot.x) + Math.abs(t.y - spot.y) === 1).every((t) => t.wetUntil > far));
+    r = await farmDo(groupId, { action: 'pickup_gear', ...spot }, TB);
+    check('（加速模式）收起灑水器：回到倉庫，被澆過的田今天還是濕的、但不會一直濕', r.status === 200 && r.data.items['gear:sprinkler'] === 1 && r.data.gear.length === 0
+      && r.data.tiles.length === 3 && r.data.tiles.every((t) => t.wetUntil > Date.now() && t.wetUntil < far));
+    r = await farmDo(groupId, { action: 'buy_gear', kind: 'scarecrow' }, TA);
+    money -= fs0.gearKinds.scarecrow.price;
+    r = await farmDo(groupId, { action: 'place_gear', kind: 'scarecrow', ...fields[7] }, TA);
+    check(`（加速模式）買稻草人擺在田裡 → ${money}`, r.status === 200 && r.data.money === money && r.data.gear.some((g) => g.kind === 'scarecrow' && g.x === fields[7].x));
+    check('（加速模式）同一格不能再擺', /已經擺了/.test((await farmDo(groupId, { action: 'place_gear', kind: 'sprinkler', ...fields[7] }, TA)).data.error || ''));
+    r = await farmGet(groupId, TA);
     let it = r.data.items;
     r = await farmDo(groupId, { action: 'buy_machine', machine: 'mayo' }, TA);
     money -= fs0.machineKinds.mayo.price;
@@ -758,7 +815,7 @@ if (fs0.scale >= 3600) {
     await farmDo(groupId, { action: 'water', x: 2, y: 2, map: 'gh' }, TA);
     await new Promise((ok) => setTimeout(ok, fs0.crops[off].hours * 1000 + 600));
     r = await farmDo(groupId, { action: 'harvest', x: 2, y: 2, map: 'gh' }, TB);
-    check(`（加速模式）${fs0.crops[off].hours} 小時後在溫室收成`, r.status === 200 && r.data.items['crop:' + off] >= 1);
+    check(`（加速模式）${fs0.crops[off].hours} 小時後在溫室收成`, r.status === 200 && baseQty(r.data.items, 'crop:' + off) >= 1);
     check('（加速模式）溫室的田大家都看得到（存在同一個牧場）', (await farmGet(groupId, TA)).data.tiles.some((t) => t.x === 2 && t.y === 2 && t.tilled));
     // 房子擴建
     const eB = (await farmGet(groupId, TB)).data.energy.now;

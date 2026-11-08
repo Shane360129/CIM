@@ -25,6 +25,8 @@ import {
   BEACH_MAP, TIDE_HOURS, tideLevel, isLowTide, lowTideWindows, FORAGE, BEACH_FINDS, forageOf, fishSpot,
   PROJECTS, bundleOf, PROJECT_DONE_REWARD, shipPrice, COOP_BONUS, PRAYERS, prayerOf,
   HOME_MAP, DECOS, DECO_MAX, decoCheck, LAND_FINDS,
+  FERTS, growRate, QUALITY, QUALITY_PCT, harvestQuality, baseItem, qualityOf, withQuality, itemName,
+  GEAR, GEAR_MAX, SCARE_R, isSprinkler, gearCovers, sprinkledSet, scaredAt, gearCheck, crowsOf, CROW_MIN, CROW_PCT, ALWAYS_WET,
 } from '../src/farm.js';
 import { forageSprite, projectSprite, decoSprite, homeTileSprite } from '../public/farm-sprites.js';
 import { SPRITES, PALETTE, FISH_SHAPE, BOOT_SHAPE, ROCK_SHAPE, FISH_COLORS, ORE_COLORS, DISH_SHAPES, DISH_COLORS, GOOD_ART, FRUIT_COLORS, honeySprite, fruitTreeSprite } from '../public/farm-sprites.js';
@@ -413,7 +415,7 @@ check('感情很好但還沒聽過：從第一段開始說', storyDue(100, 0), 0
 const zero = { harvest: 0, shipped: 0, requests: 0, babies: 0, animals: 0, pets: 0, machines: 0, fishKinds: 0, dishKinds: 0, goodKinds: 0, amethyst: false, maxHearts: 0, minHearts: 0, stories: 0, gh: 0, house: 1 };
 check('什麼都還沒做：沒有成就', achievementsMet(zero), []);
 check('收成一次、領養寵物：兩個成就', achievementsMet({ ...zero, harvest: 1, pets: 1 }), ['harvest1', 'pet']);
-const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: Object.keys(MACHINES).length, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: Object.keys(FORAGE).length, beachKinds: 7, mushrooms: 3, projects: 4, decoFarm: 5, decoHome: 5 };
+const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: Object.keys(MACHINES).length, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: Object.keys(FORAGE).length, beachKinds: 7, mushrooms: 3, projects: 4, decoFarm: 5, decoHome: 5, goldHarvest: 1, sprinklers: 4 };
 check('全部做完：每個成就都達成', achievementsMet(full).length, ACHIEVEMENTS.length);
 check('成就的編號不重複、都有名字說明和獎金', new Set(ACHIEVEMENTS.map((a) => a.id)).size === ACHIEVEMENTS.length && ACHIEVEMENTS.every((a) => a.name && a.desc && a.reward > 0), true);
 check('「聽完所有故事」要 18 段', [achievementsMet({ ...full, stories: 17 }).includes('stories'), achievementsMet(full).includes('stories')], [false, true]);
@@ -694,6 +696,66 @@ check('新的東西都有圖', ['bamboo_soup', 'fern_stirfry', 'shiitake_egg', '
   && ['dried_shiitake', 'dried_woodear', 'dried_shoot'].every((id) => GOOD_ART[id]), true);
 check('成就：菇菇採集家、採集達人；海邊撿寶只算海邊的', [achievementsMet({ ...zero, mushrooms: 3 }), achievementsMet({ ...zero, forageKinds: Object.keys(FORAGE).length }),
   achievementsMet({ ...zero, forageKinds: 6 }), achievementsMet({ ...zero, beachKinds: 6 })], [['mushrooms'], ['forageAll'], [], ['beachcomber']]);
+
+console.log('\n--- 灑水器、肥料與品質 ---');
+const HR = 3600000, T0 = Date.UTC(2026, 3, 1, 0);
+check('三種肥料：普通、速效、高級，都有價錢和說明', [Object.keys(FERTS), Object.values(FERTS).every((f) => f.price > 0 && f.desc)], [['basic', 'speed', 'quality'], true]);
+const tl = { crop: 'tomato', progress_ms: 0, tick_at: T0, watered_until: T0 + 24 * HR };
+check('速效肥料：一樣濕 4 小時，長 1.25 倍（5 小時份）；其他肥料不影響速度', [grownMs(tl, T0 + 4 * HR), grownMs({ ...tl, fert: 'speed' }, T0 + 4 * HR),
+  grownMs({ ...tl, fert: 'basic' }, T0 + 4 * HR), growRate({ fert: 'speed' }), growRate({ fert: 'nope' }), growRate(null)], [4 * HR, 5 * HR, 4 * HR, 1.25, 1, 1]);
+check('速效肥料：番茄 12 小時 → 9.6 小時就熟', [cropStage({ ...tl, fert: 'speed' }, T0 + 9.6 * HR), cropStage(tl, T0 + 9.6 * HR)], [3, 2]);
+check('星級：銅星 ×1.25、銀星 ×1.5、金星 ×2', [QUALITY[1].mult, QUALITY[2].mult, QUALITY[3].mult], [1.25, 1.5, 2]);
+check('有星級的作物價錢、名字（只有作物有星級）', [itemPrice('crop:pumpkin'), itemPrice('crop:pumpkin@1'), itemPrice('crop:pumpkin@2'), itemPrice('crop:pumpkin@3'),
+  itemName('crop:pumpkin@3'), itemName('crop:tomato@1'), itemPrice('fish:tuna@3'), itemPrice('crop:pumpkin@4'), itemPrice('crop:nope@1'), itemPrice('crop:pumpkin@')],
+  [360, 450, 540, 720, '金星南瓜', '銅星番茄', 0, 0, 0, 0]);
+check('名字：肥料、灑水器也認得', [itemName('fert:speed'), itemName('gear:sprinkler2'), itemName('gear:nope')], ['速效肥料', '高級灑水器', 'gear:nope']);
+check('星級的寫法：baseItem、qualityOf、withQuality', [baseItem('crop:corn@2'), qualityOf('crop:corn@2'), qualityOf('crop:corn'), withQuality('crop:corn', 3), withQuality('crop:corn', 0)],
+  ['crop:corn', 2, 0, 'crop:corn@3', 'crop:corn']);
+const qStat = (fert) => { const n = [0, 0, 0, 0]; for (let i = 0; i < 4000; i++) n[harvestQuality(7, 3 + (i % 9), 9 + (i % 5), T0 + i * 61000, fert)]++; return n.map((v) => v / 40); };
+const [qs0, qs1, qs2] = [qStat(null), qStat('basic'), qStat('quality')];
+check(`收成的星級機率：沒施肥 ${(100 - qs0[0]).toFixed(0)}%、普通肥料 ${(100 - qs1[0]).toFixed(0)}%、高級肥料 ${(100 - qs2[0]).toFixed(0)}% 有星級`,
+  [100 - qs0[0] > 10 && 100 - qs0[0] < 18, 100 - qs1[0] > 33 && 100 - qs1[0] < 45, 100 - qs2[0] > 63 && 100 - qs2[0] < 77, qs2[3] > 11 && qs2[3] < 19, qs0[3] < 2.5],
+  [true, true, true, true, true]);
+check('星級：同一格同一刻收成結果一樣；速效肥料不影響星級', [harvestQuality(5, 4, 9, T0, 'basic') === harvestQuality(5, 4, 9, T0, 'basic'),
+  [...Array(300)].every((_, i) => harvestQuality(5, 4, 9, T0 + i, 'speed') === harvestQuality(5, 4, 9, T0 + i, null))], [true, true]);
+check('有星級的作物也能煮菜、交清單（先用普通的、再用星級低的）', [ingredientItems('crop:tomato'), cookTakes({ 'crop:tomato@3': 1, 'prod:egg': 1 }, 'tomato_egg'),
+  cookTakes({ 'crop:bokchoy': 1, 'crop:bokchoy@2': 1, 'crop:bokchoy@1': 3 }, 'stirfry')],
+  [['crop:tomato', 'crop:tomato@1', 'crop:tomato@2', 'crop:tomato@3'], { 'crop:tomato@3': 1, 'prod:egg': 1 }, { 'crop:bokchoy': 1, 'crop:bokchoy@1': 1 }]);
+const likeItem = VILLAGERS.ama.likes.find((i) => i.startsWith('crop:'));
+check(`送禮：有星級的作物看作物本身，喜歡的多加星數（${itemName(likeItem)}）`, [giftPoints('ama', likeItem, '2026-01-02').points, giftPoints('ama', likeItem + '@3', '2026-01-02').points,
+  giftPoints('ama', likeItem + '@3', '2026-01-02').reaction], [5, 8, 'like']);
+check('出貨：星級作物在農會修好後也多一成', [shipPrice('crop:pumpkin@3', false), shipPrice('crop:pumpkin@3', true)], [720, 792]);
+
+check('灑水器、高級灑水器、稻草人：價錢、材料都是有的礦石', [Object.keys(GEAR), Object.values(GEAR).every((G) => G.price > 0 && G.desc && Object.keys(G.need).every((i) => ORES[i.slice(4)])),
+  isSprinkler('sprinkler'), isSprinkler('sprinkler2'), isSprinkler('scarecrow')], [['sprinkler', 'sprinkler2', 'scarecrow'], true, true, true, false]);
+const cv = (g) => gearCovers(g).map((c) => `${c.x},${c.y}`).sort().join(' ');
+check('灑水器在田中間：上下左右 4 格；高級的周圍 8 格；稻草人不澆水', [gearCovers({ kind: 'sprinkler', x: 10, y: 11 }).length, gearCovers({ kind: 'sprinkler2', x: 10, y: 11 }).length,
+  gearCovers({ kind: 'scarecrow', x: 10, y: 11 }).length], [4, 8, 0]);
+check('田的角落、溫室：只澆到同一塊田的格子', [cv({ kind: 'sprinkler', x: 4, y: 9 }), cv({ kind: 'sprinkler2', x: 4, y: 9 }), cv({ kind: 'sprinkler', x: 2, y: 2 }),
+  gearCovers({ kind: 'sprinkler2', x: 13, y: 6 }).every((c) => fieldArea(c.x, c.y) === 'gh')],
+  ['4,10 5,9', '4,10 5,10 5,9', '2,3 3,2', true]);
+const gl = [{ kind: 'sprinkler', x: 10, y: 11 }, { kind: 'sprinkler2', x: 12, y: 11 }, { kind: 'scarecrow', x: 6, y: 11 }];
+check('有灑水器澆的格子（重疊的算一次，稻草人不算）', [sprinkledSet(gl).size, sprinkledSet(gl).has('11,11'), sprinkledSet(gl).has('6,10')], [11, true, false]);
+check(`稻草人顧著周圍 ${SCARE_R * 2 + 1}×${SCARE_R * 2 + 1}`, [scaredAt(gl, 10, 15), scaredAt(gl, 2, 7), scaredAt(gl, 11, 11), scaredAt([], 6, 11)], [true, true, false, false]);
+check('擺灑水器：要在田裡、空的、沒擺東西、有上限', [gearCheck('sprinkler', 1, 1, [], null), gearCheck('sprinkler', 10, 11, gl, null), gearCheck('sprinkler', 9, 11, gl, { crop: 'tomato' }),
+  gearCheck('nope', 9, 11, gl, null), gearCheck('sprinkler', 9, 11, Array(GEAR_MAX).fill({ x: 0, y: 0 }), null), gearCheck('sprinkler', 9, 11, gl, { crop: null })],
+  ['要擺在田裡', '這裡已經擺了東西', '這格種了東西，換一格空的', '沒有這種東西', `田裡最多擺 ${GEAR_MAX} 個`, null]);
+check('灑水器澆的田一直是濕的：沒澆過水也照樣長、濕到很久以後', [grownMs({ ...tl, watered_until: 0 }, T0 + 6 * HR, 1, ALWAYS_WET), wetUntilOf(0, T0, ALWAYS_WET) > T0 + 30 * 24 * HR],
+  [6 * HR, true]);
+
+const field = []; for (let x = 4; x < 14; x++) field.push({ x, y: 10 });
+let crowDays = 0;
+for (let d = 0; d < 400; d++) if (crowsOf(5, taiwanDay(T0 + d * 24 * HR), field).length) crowDays++;
+check(`烏鴉：沒顧著的作物 ${CROW_MIN} 棵以上，大約 ${CROW_PCT}% 的日子會來（${(crowDays / 4).toFixed(0)}%）`, crowDays > 130 && crowDays < 190, true);
+const many = []; for (let x = 4; x < 18; x++) for (const y of [10, 11]) many.push({ x, y });
+const dayHit = [...Array(60)].map((_, d) => taiwanDay(T0 + d * 24 * HR)).find((d) => crowsOf(5, d, field).length);
+check('烏鴉：一次偷吃 1 棵（15 棵以上 2 棵），吃的是沒顧著的作物', [crowsOf(5, dayHit, field).length, crowsOf(5, dayHit, many).length,
+  crowsOf(5, dayHit, field).every((c) => field.includes(c))], [1, 2, true]);
+check('烏鴉：作物太少不來、同一天結果一樣；測試用的 on／off', [[...Array(100)].every((_, d) => !crowsOf(5, taiwanDay(T0 + d * 24 * HR), field.slice(0, CROW_MIN - 1)).length),
+  JSON.stringify(crowsOf(5, dayHit, field)) === JSON.stringify(crowsOf(5, dayHit, field)), crowsOf(5, dayHit, field.slice(0, 1), 'on').length, crowsOf(5, dayHit, field, 'off').length],
+  [true, true, 1, 0]);
+check('成就：金星農夫、自動灑水', [achievementsMet({ ...zero, goldHarvest: 1 }), achievementsMet({ ...zero, sprinklers: 4 }), achievementsMet({ ...zero, sprinklers: 3 })],
+  [['goldStar'], ['sprinklers'], []]);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

@@ -5,6 +5,7 @@ import {
   sprite, cropSprite, houseSprite, shopSprite, barnSprite, storeSprite, eaterySprite, homeSprite, fountainSprite, SEASON_GROUND,
   greenhouseSprite, machineSprite, machineSpotSprite, ghTileSprite, fruitTreeSprite, treeSpotSprite, hiveSprite, hiveSpotSprite,
   stallSprite, caveMouthSprite, caveTileSprite, caveLadderSprite, chestSprite, beachTileSprite, forageSprite, projectSprite, decoSprite, homeTileSprite,
+  gearSprite, crowSprite,
 } from '/farm-sprites.js';
 
 const T = 16;            // 一格 16 像素
@@ -47,6 +48,7 @@ const S = {
   exits: {}, fishData: {}, oreData: {}, rocks: [], dex: [], fishing: null, dishes: {}, ingGroups: {},
   festivals: {}, festival: null, festivalClaimed: false, nextFestival: null, todayEvents: [], birthdays: [],
   machines: {}, machineKinds: {}, machineSpots: {}, machineBatch: 5, goods: {}, builds: {}, ghBuilt: false, houseLevel: 1,
+  gear: [], gearKinds: {}, ferts: {}, quality: {}, crows: [],
   pondTiles: [], pets: {}, petKinds: {}, petZoneTiles: [], petPos: {}, trails: new Map(),
   stories: {}, storyHearts: [2, 5, 8], achievementList: [], achievements: {}, thisWeek: null, activity: null, game: null,
   trees: [], hives: [], treeKinds: {}, fruits: {}, treeSpots: [], hiveSpots: [], hive: { price: 1500, max: 3, days: 3 },
@@ -113,8 +115,16 @@ const cropMeta = (c) => `${c.hours} 小時成熟・賣 ${c.sell} 元` + (c.regro
 const PRODUCT_EMOJI = { egg: '🥚', egg_l: '🥚', milk: '🥛', milk_l: '🥛', duck_egg: '🥚', duck_egg_l: '🥚', wool: '🧶', wool_l: '🧶' };
 // 倉庫裡的東西：seed:作物、crop:作物、prod:雞蛋牛奶、feed 飼料
 function itemInfo(item) {
-  const [kind, id] = item.split(':');
+  const [full, q] = item.split('@');
+  const [kind, id] = full.split(':');
   if (item === 'feed') return { name: '飼料', icon: 'feed', sell: 0 };
+  // 有星級的作物：crop:番茄@3 是金星番茄，賣得比較貴
+  if (q) {
+    const Q = kind === 'crop' && S.crops[id] && S.quality[q];
+    return Q ? { name: Q.name + S.crops[id].name, icon: `${id}_3@q${q}`, sell: Math.round(S.crops[id].sell * Q.mult), quality: Number(q) } : null;
+  }
+  if (kind === 'fert' && S.ferts[id]) return { name: S.ferts[id].name, icon: 'fert_' + id, sell: 0, fert: id };
+  if (kind === 'gear' && S.gearKinds[id]) return { name: S.gearKinds[id].name, icon: 'gear_' + id, sell: 0, gear: id };
   if (kind === 'seed' && S.crops[id]) return { name: `${S.crops[id].name}種子`, icon: 'seed', sell: 0, crop: id };
   if (kind === 'crop' && S.crops[id]) return { name: S.crops[id].name, icon: id + '_3', sell: S.crops[id].sell };
   if (kind === 'prod' && S.products[id]) return { name: S.products[id].name, icon: id, sell: S.products[id].sell };
@@ -129,7 +139,9 @@ function itemInfo(item) {
   return null;
 }
 // 料理的材料：egg／milk 普通的、高級的都算
-const ingItems = (k) => (S.ingGroups[k] ? S.ingGroups[k].items : [k]);
+// 有星級的作物也能用（先用普通的、再用星級低的），跟伺服器一樣
+const ingItems = (k) => (S.ingGroups[k] ? S.ingGroups[k].items : [k])
+  .flatMap((i) => (i.startsWith('crop:') && !i.includes('@') ? [i, `${i}@1`, `${i}@2`, `${i}@3`] : [i]));
 const ingName = (k) => (S.ingGroups[k] ? S.ingGroups[k].name : (itemInfo(k) || { name: k }).name);
 const ingHave = (k) => ingItems(k).reduce((n, i) => n + (S.items[i] || 0), 0);
 const canCook = (id) => !!S.dishes[id].need && Object.entries(S.dishes[id].need).every(([k, q]) => ingHave(k) >= q);
@@ -225,7 +237,8 @@ function applyState(st) {
   S.members = new Map(st.members.map((m) => [m.id, m]));
   S.spawn = st.spawn;
   // 手上的種子不是這一季的，就換成這一季有的（優先選倉庫裡有的）；在溫室裡什麼種子都能種，不用換
-  if (!canPlantHere(S.seed)) {
+  S.gear = st.gear || []; S.gearKinds = st.gearKinds || {}; S.ferts = st.ferts || {}; S.quality = st.quality || {}; S.crows = st.crows || [];
+  if (!isFert(S.seed) && !canPlantHere(S.seed)) {
     const ids = Object.keys(S.crops).filter(inSeason);
     S.seed = ids.find((id) => S.items['seed:' + id]) || ids[0] || 'bokchoy';
   }
@@ -241,8 +254,15 @@ async function loadState() {
 function grown(t, now) {
   if (!t || !t.crop) return 0;
   const wetEnd = Math.min(now, t.wetUntil);
-  return Math.min(t.total, t.progress + Math.max(0, wetEnd - t.at) * S.scale);
+  return Math.min(t.total, t.progress + Math.max(0, wetEnd - t.at) * S.scale * (t.rate || 1)); // 速效肥料長得比較快
 }
+// 「種子」工具也可以拿肥料：S.seed 是 fert:種類
+const isFert = (seed) => String(seed).startsWith('fert:');
+// 擺在田裡的灑水器、稻草人（只在 F 上，牧場和溫室的座標不會重疊）
+const gearAt = (x, y) => (terrain(x, y) === 'F' ? S.gear.find((g) => g.x === x && g.y === y) : null);
+const GEAR_REACH = { cross: [[0, -1], [0, 1], [-1, 0], [1, 0]], square: [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]] };
+const gearCovers = (g) => (GEAR_REACH[(S.gearKinds[g.kind] || {}).range] || [])
+  .map(([dx, dy]) => ({ x: g.x + dx, y: g.y + dy })).filter((c) => terrain(c.x, c.y) === 'F');
 function stage(t, now) {
   if (!t || !t.crop) return -1;
   const g = grown(t, now);
@@ -283,7 +303,10 @@ function renderToolbar() {
   TOOLS.forEach((tool, i) => {
     let ico = tool.ico, name = tool.name, count = null;
     if ((tool.key === 'hoe' || tool.key === 'can') && S.tools[tool.key] >= 2) { name = '大' + name; count = '3×3'; }
-    if (tool.key === 'seed') {
+    if (tool.key === 'seed' && isFert(S.seed)) {
+      ico = '🧪'; name = S.ferts[S.seed.slice(5)] ? S.ferts[S.seed.slice(5)].name : '肥料';
+      count = S.items[S.seed] || 0;
+    } else if (tool.key === 'seed') {
       name = S.crops[S.seed] ? S.crops[S.seed].name : '種子';
       count = S.items['seed:' + S.seed] || 0;
     }
@@ -363,9 +386,29 @@ function openShop() {
       class: 'btn primary', type: 'button', text: hiveFull ? '滿了' : `買 ${S.hive.price}`, disabled: hiveFull || S.hive.price > S.money,
       onclick: async () => { try { await doAct({ action: 'buy_hive' }); toast('蜂箱放好了 🐝'); openShop(); } catch {} },
     }));
+  const fertRows = Object.entries(S.ferts).map(([id, f]) => {
+    let n = 1;
+    const qtyB = el('b', { text: '1' });
+    const buy = el('button', { class: 'btn primary', type: 'button', text: `買 ${f.price}` });
+    const sync = () => { qtyB.textContent = n; buy.textContent = `買 ${f.price * n}`; buy.disabled = f.price * n > S.money; };
+    buy.onclick = async () => {
+      try { await doAct({ action: 'buy', item: 'fert:' + id, qty: n }); toast(`買了 ${n} 包${f.name}，在「種子」工具裡選肥料，點翻好的土施肥`); sync(); } catch {}
+    };
+    sync();
+    return el('div', { class: 'row' }, icon('fert_' + id),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: f.name }),
+        el('div', { class: 'meta', text: `${f.price} 元・${f.desc}・倉庫有 ${S.items['fert:' + id] || 0} 包` })),
+      el('span', { class: 'qty' },
+        el('button', { type: 'button', text: '−', onclick: () => { n = Math.max(1, n - 1); sync(); } }), qtyB,
+        el('button', { type: 'button', text: '＋', onclick: () => { n = Math.min(99, n + 1); sync(); } })),
+      buy);
+  });
   openModal(el('h2', { text: `🏪 種子店・${SEASON[S.season]}天` }),
     el('p', { class: 'sub', text: `全家共用的錢包：${S.money.toLocaleString()} 元。作物都要土是濕的才會長。` }),
     ...rows, feedRow(),
+    el('h2', { class: 'section', text: '🧪 肥料' }),
+    el('p', { class: 'note', text: '施在翻好的土上，有效到收成為止（會再長的作物一直有效）。施了肥料，收成比較容易有銅星、銀星、金星，賣得更貴。' }),
+    ...fertRows,
     el('h2', { class: 'section', text: '🌳 果樹苗' }), ...treeRows,
     el('h2', { class: 'section', text: '🐝 蜂箱' }), hiveRow,
     coming.length && !S.ghBuilt ? el('p', { class: 'note', text: `${SEASON[next]}天會上架：${coming.join('、')}（蓋了溫室就什麼季節的種子都買得到）` }) : null,
@@ -403,6 +446,9 @@ function openBag() {
     const c = itemInfo(item);
     if (!c) return null;
     const meta = item === 'feed' ? '去動物小屋餵動物，一隻吃一包'
+      : c.fert ? `${S.ferts[c.fert].desc}：按兩下「種子」工具選肥料，點翻好的土施肥`
+      : c.gear ? `${S.gearKinds[c.gear].desc}：擺在牧場或溫室的田裡`
+      : c.quality ? `${S.quality[c.quality].name}的，一個賣 ${c.sell} 元（普通的 ${S.crops[item.split(':')[1].split('@')[0]].sell} 元），也能煮菜、送人`
       : c.sapling ? '點牧場最下面一排的空位種下去'
       : c.crop ? (inSeason(c.crop) ? '用「種子」工具種在翻好的土上' : `${seasonsText(S.crops[c.crop].seasons)}才能種${S.ghBuilt ? '，溫室裡現在就能種' : '，先收著'}`)
       : c.dish ? `吃了體力 +${S.dishes[c.dish].energy}，或出貨賣 ${c.sell} 元`
@@ -413,7 +459,8 @@ function openBag() {
       el('div', { class: 'grow' }, el('div', { class: 'name', text: c.name }), el('div', { class: 'meta', text: meta })),
       el('b', { text: '×' + qty }),
       c.dish ? el('button', { class: 'btn', type: 'button', text: '吃', disabled: S.energy >= S.energyMax, onclick: () => eatDish(c.dish, openBag) }) : null,
-      c.deco ? el('button', { class: 'btn', type: 'button', text: '擺出去', onclick: () => startPlacing(c.deco) }) : null);
+      c.deco ? el('button', { class: 'btn', type: 'button', text: '擺出去', onclick: () => startPlacing(c.deco) }) : null,
+      c.gear ? el('button', { class: 'btn', type: 'button', text: '擺到田裡', onclick: () => startPlacingGear(c.gear) }) : null);
   });
   openModal(el('h2', { text: '🎒 全家的倉庫' }), el('p', { class: 'sub', text: '種子和收成大家共用' }),
     ...(rows.filter(Boolean).length ? rows : [el('div', { class: 'empty', text: '倉庫是空的' })]),
@@ -1038,7 +1085,7 @@ function openBoard() {
   }
   if (q) {
     const c = itemInfo(q.item) || { name: q.item, icon: 'seed' };
-    const have = S.items[q.item] || 0;
+    const have = ingHave(q.item);
     rows.push(el('div', { class: 'row' }, icon(c.icon),
       el('div', { class: 'grow' }, el('div', { class: 'name', text: `${S.villagers[q.villager].name}：想要 ${c.name} ×${q.qty}` }),
         el('div', { class: 'meta', text: q.done ? '今天的委託完成了，明天再來看看！' : `報酬 ${q.reward} 元，還能增加感情・倉庫有 ${have} 個` })),
@@ -1106,6 +1153,17 @@ function openStore() {
         onclick: async () => { try { await doAct({ action: 'build', what: id }); toast(`${b.name}蓋好了！`); openStore(); } catch {} },
       }));
   };
+  const gearRow = (id) => {
+    const G = S.gearKinds[id];
+    const placed = S.gear.filter((g) => g.kind === id).length, have = S.items['gear:' + id] || 0;
+    return el('div', { class: 'row' }, icon('gear_' + id),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: G.name }),
+        el('div', { class: 'meta', text: `${G.desc}。要 ${G.price.toLocaleString()} 元${Object.keys(G.need).length ? '・' + needText(G.need) : ''}・田裡 ${placed} 個、倉庫 ${have} 個` })),
+      el('button', {
+        class: 'btn primary', type: 'button', text: '買', disabled: !enough(G.price, G.need),
+        onclick: async () => { try { await doAct({ action: 'buy_gear', kind: id }); toast(`買了${G.name}，在倉庫按「擺到田裡」`); openStore(); } catch {} },
+      }));
+  };
   const machineRow = (id) => {
     const m = S.machineKinds[id];
     const have = !!S.machines[id];
@@ -1123,6 +1181,7 @@ function openStore() {
     ...rows,
     el('h2', { class: 'section', text: '🏗️ 建築' }), ...Object.keys(S.builds).map(buildRow),
     el('h2', { class: 'section', text: '⚙️ 加工機' }), ...Object.keys(S.machineKinds).map(machineRow),
+    el('h2', { class: 'section', text: '🚿 灑水器、稻草人' }), ...Object.keys(S.gearKinds).map(gearRow),
     el('div', { class: 'actions' },
       el('button', { class: 'btn', type: 'button', text: '🪑 裝飾與家具', onclick: openDecoShop }),
       el('button', { class: 'btn', type: 'button', text: '買種子、飼料', onclick: openShop }),
@@ -1144,8 +1203,15 @@ function openSeedPicker() {
         onclick: () => { S.seed = id; S.tool = 'seed'; renderToolbar(); closeModal(); },
       }));
   });
+  const ferts = Object.entries(S.ferts).filter(([id]) => S.items['fert:' + id]).map(([id, f]) => el('div', { class: 'row' }, icon('fert_' + id),
+    el('div', { class: 'grow' }, el('div', { class: 'name', text: f.name }), el('div', { class: 'meta', text: `還有 ${S.items['fert:' + id]} 包・${f.desc}` })),
+    el('button', {
+      class: 'btn' + (S.seed === 'fert:' + id ? ' primary' : ''), type: 'button', text: S.seed === 'fert:' + id ? '使用中' : '用這個',
+      onclick: () => { S.seed = 'fert:' + id; S.tool = 'seed'; renderToolbar(); closeModal(); toast(`點翻好的土施${f.name}`); },
+    })));
   openModal(el('h2', { text: '🌱 要種什麼？' }), ...rows,
-    el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '去商店買種子', onclick: openShop })));
+    ferts.length ? el('h2', { class: 'section', text: '🧪 肥料' }) : null, ...ferts,
+    el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '去商店買種子、肥料', onclick: openShop })));
 }
 
 // 天氣預報與季節：點 HUD 上的時鐘打開
@@ -1214,7 +1280,7 @@ function confirmDig(t, x, y) {
 
 /* ---------- 動作 ---------- */
 
-const FIELD_ACTIONS = ['till', 'dig', 'plant', 'water', 'harvest'];
+const FIELD_ACTIONS = ['till', 'dig', 'plant', 'water', 'harvest', 'fertilize', 'place_gear', 'pickup_gear'];
 async function doAct(body) {
   if (S.busy) return;
   S.busy = true;
@@ -1241,6 +1307,8 @@ async function doAct(body) {
     if (r.forage) S.forage = r.forage;
     if (r.projects) S.projects = r.projects;
     if (r.decos) S.decos = r.decos;
+    if (r.gear) S.gear = r.gear;
+    if (r.crows) S.crows = r.crows;
     if (r.caveBest != null) S.caveInfo.best = r.caveBest;
     for (const a of r.newAchievements || []) setTimeout(() => toast(`🏆 達成成就「${a.name}」！全家拿到 ${a.reward} 元`), 900);
     if (r.build) applyBuild(r.build);
@@ -1296,9 +1364,15 @@ function useOn(x, y) {
   if (ch === 'O') return toast('噴水池裡有好多硬幣，許個願吧 ✨');
   if (ch === 'Q') { const who = HOMES[homeIndex(x, y)]; return toast(who ? `這是${S.villagers[who].name}的家` : '別人的家'); }
   if (ch !== 'F') return;
+  if (gearAt(x, y)) return openGear(gearAt(x, y));
   const t = S.tiles.get(key(x, y)) || { tilled: false, crop: null };
   const now = serverNow();
-  if (t.crop && stage(t, now) === 3) return doAct({ action: 'harvest', x, y }).catch(() => {});
+  if (t.crop && stage(t, now) === 3) {
+    return doAct({ action: 'harvest', x, y }).then((r) => {
+      const q = r && r.gained && r.gained.quality;
+      if (q >= 2) toast(`${q === 3 ? '🌟' : '⭐'} 收成了${itemInfo(r.gained.item).name}！賣 ${itemInfo(r.gained.item).sell} 元`);
+    }).catch(() => {});
+  }
   if (S.tool === 'hoe') {
     if (!t.tilled) return doAct({ action: 'till', x, y, ...(S.tools.hoe >= 2 ? { area: true } : {}) }).catch(() => {});
     if (t.crop) return confirmDig(t, x, y);
@@ -1315,6 +1389,13 @@ function useOn(x, y) {
     }
     return doAct({ action: 'water', x, y, ...(S.tools.can >= 2 ? { area: true } : {}) }).catch(() => {});
   }
+  if (S.tool === 'seed' && isFert(S.seed)) {
+    const F = S.ferts[S.seed.slice(5)];
+    if (!t.tilled) return toast('要先用鋤頭翻土');
+    if (t.fert) return toast(`這格已經施了${(S.ferts[t.fert] || F).name}，收成之後才能再施`);
+    if (!S.items[S.seed]) return toast(`沒有${F.name}了，去攤位買`);
+    return doAct({ action: 'fertilize', x, y, fert: S.seed.slice(5) }).then(() => renderToolbar()).catch(() => {});
+  }
   if (S.tool === 'seed') {
     if (!t.tilled) return toast('要先用鋤頭翻土');
     if (t.crop) return describe(t, now);
@@ -1324,14 +1405,51 @@ function useOn(x, y) {
     return doAct({ action: 'plant', x, y, crop: S.seed }).catch(() => {});
   }
   if (t.crop) return describe(t, now);
-  toast(t.tilled ? '翻好的土，可以播種' : '還沒翻土的田');
+  toast(t.tilled ? `翻好的土${t.fert ? `（施了${S.ferts[t.fert].name}）` : ''}，可以播種` : '還沒翻土的田');
 }
 
 function describe(t, now) {
   const c = S.crops[t.crop];
-  const left = (t.total - grown(t, now)) / S.scale;
-  if (!wet(t, now)) return toast(`${c.name}：土乾了，澆水才會繼續長（還差 ${fmtLeft(left)}）`);
-  toast(`${c.name}：再 ${fmtLeft(left)} 就能收成${c.regrow ? '（收完會再長）' : ''}`);
+  const left = (t.total - grown(t, now)) / S.scale / (t.rate || 1);
+  const fert = t.fert && S.ferts[t.fert] ? `・施了${S.ferts[t.fert].name}` : '';
+  if (!wet(t, now)) return toast(`${c.name}：土乾了，澆水才會繼續長（還差 ${fmtLeft(left)}${fert}）`);
+  toast(`${c.name}：再 ${fmtLeft(left)} 就能收成${c.regrow ? '（收完會再長）' : ''}${fert}`);
+}
+
+// 點擺在田裡的灑水器、稻草人：說明、收起來
+function openGear(g) {
+  const G = S.gearKinds[g.kind] || { name: g.kind, desc: '' };
+  const n = gearCovers(g).length;
+  openModal(el('div', { class: 'talk-head' }, icon('gear_' + g.kind),
+    el('div', { class: 'grow' }, el('h2', { text: G.name }),
+      el('div', { class: 'sub', text: G.range === 'scare' ? G.desc : `${G.desc}（這裡澆得到 ${n} 格），被澆到的田一直是濕的，不用自己澆` }))),
+  el('p', { class: 'note', text: '收起來會放回倉庫，可以再擺到別的地方' }),
+  el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '好', onclick: closeModal }),
+    el('button', {
+      class: 'btn', type: 'button', text: '收起來',
+      onclick: async () => { try { await doAct({ action: 'pickup_gear', x: g.x, y: g.y }); toast(`${G.name}收回倉庫了`); closeModal(); } catch {} },
+    })));
+}
+// 把灑水器、稻草人擺到田裡：跟擺裝飾一樣，先選、再點一格
+function startPlacingGear(kind) {
+  const G = S.gearKinds[kind];
+  if (S.area !== 'farm' && S.area !== 'gh') return toast(`${G.name}要擺在牧場或溫室的田裡`);
+  S.placing = { gear: kind };
+  closeModal();
+  let bar = document.getElementById('place-banner');
+  if (!bar) {
+    bar = el('div', { id: 'place-banner', class: 'place-banner' });
+    document.body.append(bar);
+  }
+  bar.textContent = '';
+  bar.append(el('span', { text: `🚿 點一格空的田擺「${G.name}」` }),
+    el('button', { class: 'btn', type: 'button', text: '取消', onclick: stopPlacing }));
+}
+async function placeGear(x, y) {
+  const kind = S.placing.gear;
+  try { await doAct({ action: 'place_gear', kind, x, y }); } catch { return; }
+  toast(`擺好${S.gearKinds[kind].name}了！`);
+  stopPlacing();
 }
 
 /* ---------- 節慶活動 ---------- */
@@ -2002,7 +2120,7 @@ const DIRS = { u: [0, -1], d: [0, 1], l: [-1, 0], r: [1, 0] };
 const dirTo = (fx, fy, tx, ty) => (tx > fx ? 'r' : tx < fx ? 'l' : ty > fy ? 'd' : 'u');
 
 function tapTile(tx, ty, fx = tx + 0.5, fy = ty + 0.5) {
-  if (S.placing) return placeDeco(tx, ty);
+  if (S.placing) return S.placing.gear ? placeGear(tx, ty) : placeDeco(tx, ty);
   const me = S.me;
   const cx = Math.round(me.x), cy = Math.round(me.y);
   const ch = terrain(tx, ty);
@@ -2275,6 +2393,8 @@ function connectWs() {
       if (ev.forage) S.forage = ev.forage;
       if (ev.projects) S.projects = { ...S.projects, ...ev.projects }; // 家人交了東西、修好了地方
       if (ev.decos) S.decos = ev.decos;
+      if (ev.gear) S.gear = ev.gear;
+      if (ev.crows) S.crows = ev.crows;
       if (ev.caveBest != null) S.caveInfo.best = ev.caveBest;
       if (ev.by !== S.meId) for (const a of ev.newAchievements || []) toast(`🏆 達成成就「${a.name}」！全家拿到 ${a.reward} 元`);
       if (ev.build) {
@@ -2462,6 +2582,7 @@ function draw() {
   const y0 = Math.max(0, Math.floor(camY / (T * k)) - 1), y1 = Math.min(S.H - 1, Math.ceil((camY + vh) / (T * k)) + 1);
   const now = serverNow();
   const blink = Math.floor(Date.now() / 400) % 2;
+  const spraying = Math.floor(Date.now() / 1000) % 6 === 0; // 灑水器每 6 秒噴一下水
 
   // 地面
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) g.drawImage(baseSprite(x, y, terrain(x, y)), x * T, y * T);
@@ -2489,6 +2610,9 @@ function draw() {
       if (rk) g.drawImage(sprite('ore_' + rk.type), x * T, y * T);
       else if (ch === 'F') {
         const t = S.tiles.get(key(x, y));
+        const gr = gearAt(x, y);
+        if (gr) { g.drawImage(gearSprite(gr.kind, spraying && gr.kind !== 'scarecrow' ? 1 : 0), x * T, y * T); continue; }
+        if (t && t.tilled && t.fert) g.drawImage(sprite('fertdots_' + t.fert), x * T, y * T);
         if (t && t.crop) {
           const st = stage(t, now);
           g.drawImage(cropSprite(t.crop, st), x * T, y * T);
@@ -2497,6 +2621,9 @@ function draw() {
       }
     }
   }
+  // 灑水器噴水的時候，澆到的田冒出小水珠；今天烏鴉來偷吃過的地方站著一隻烏鴉
+  if (spraying) for (const gr of S.gear) if (terrain(gr.x, gr.y) === 'F') for (const c of gearCovers(gr)) g.drawImage(sprite('spray'), c.x * T, c.y * T);
+  if (S.area === 'farm') for (const c of S.crows) g.drawImage(crowSprite(blink), c.x * T, c.y * T - 2);
   // 地毯平平的，畫在地上
   for (const d of S.decos) if (d.area === S.area && (S.decoKinds[d.kind] || {}).flat) g.drawImage(decoSprite(d.kind), d.x * T, d.y * T);
   // 撿得到的東西（海邊、後山、小鎮）

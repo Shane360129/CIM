@@ -380,9 +380,12 @@ export function grownMs(tile, now, scale = 1, rainy = NO_RAIN) {
   const have = tile.progress_ms || 0;
   if (have >= total) return total;
   const from = tile.tick_at || now;
-  const wet = wetMsBetween(from, now, tile.watered_until || 0, rainy, (total - have) / scale);
-  return Math.min(total, have + wet * scale);
+  const rate = scale * growRate(tile); // 施了速效肥料長得比較快
+  const wet = wetMsBetween(from, now, tile.watered_until || 0, rainy, (total - have) / rate);
+  return Math.min(total, have + wet * rate);
 }
+// 有灑水器澆的田：每天都是濕的（跟下雨天一樣）
+export const ALWAYS_WET = () => true;
 
 // 0 種子、1 發芽、2 長大中、3 可以收成
 export function cropStage(tile, now, scale = 1, rainy = NO_RAIN) {
@@ -508,8 +511,8 @@ export function giftReaction(villager, item) {
 // 生日那天送禮，喜歡的東西點數三倍
 export const isBirthday = (villager, day) => VILLAGERS[villager].birthday === day.slice(5);
 export function giftPoints(villager, item, day) {
-  const r = giftReaction(villager, item);
-  const p = GIFT_POINTS[r];
+  const r = giftReaction(villager, baseItem(item));
+  const p = GIFT_POINTS[r] > 0 ? GIFT_POINTS[r] + qualityOf(item) : GIFT_POINTS[r]; // 有星級的作物，對方更開心
   return { reaction: r, points: p > 0 && isBirthday(villager, day) ? p * 3 : p };
 }
 // 感情每到 2、4、6、8、10 顆愛心，村民會送你們家一份謝禮（每一級只送一次）
@@ -692,17 +695,25 @@ export const BUILDS = {
 };
 
 // 倉庫裡的東西能賣多少（賣不了的回傳 0）：作物、雞蛋牛奶、魚、礦石、料理、加工品
+// 有星級的作物寫成 crop:番茄@3（1 銅星、2 銀星、3 金星），只有作物有星級
 const ITEM_TABLES = () => ({ crop: CROPS, prod: PRODUCTS, fish: FISH, ore: ORES, dish: DISHES, good: GOODS, fruit: FRUITS, forage: FORAGE });
+const ITEM_RE = /^([a-z]+):([a-z0-9_]+)(?:@([123]))?$/;
 export function itemPrice(item) {
-  const [kind, id] = String(item).split(':');
-  const table = ITEM_TABLES()[kind];
-  return table && Object.hasOwn(table, id) ? table[id].sell : 0;
+  const m = ITEM_RE.exec(String(item));
+  if (!m || (m[3] && m[1] !== 'crop')) return 0;
+  const table = ITEM_TABLES()[m[1]];
+  if (!table || !Object.hasOwn(table, m[2])) return 0;
+  return m[3] ? Math.round(table[m[2]].sell * QUALITY[m[3]].mult) : table[m[2]].sell;
 }
 export const itemName = (item) => {
-  const [kind, id] = String(item).split(':');
-  const table = ITEM_TABLES()[kind];
-  return table && Object.hasOwn(table, id) ? table[id].name : item;
+  const m = ITEM_RE.exec(String(item));
+  const table = m && { ...ITEM_TABLES(), fert: FERTS, gear: GEAR }[m[1]];
+  if (!table || !Object.hasOwn(table, m[2]) || (m[3] && m[1] !== 'crop')) return item;
+  return (m[3] ? QUALITY[m[3]].name : '') + table[m[2]].name;
 };
+export const baseItem = (item) => String(item).split('@')[0];
+export const qualityOf = (item) => { const m = ITEM_RE.exec(String(item)); return m && m[3] ? Number(m[3]) : 0; };
+export const withQuality = (item, q) => (q ? `${item}@${q}` : item);
 
 // ---------------- 料理 ----------------
 // 在家裡的廚房用自己種的、養的、釣的東西煮菜。煮好的菜可以吃（恢復體力）、賣（比材料值錢）、送人。
@@ -769,7 +780,8 @@ export const DISHES = {
   cake: { name: '蛋糕', need: null, festival: true, energy: 50, sell: 300, shape: 'plate' },
   bbq: { name: '烤肉串', need: null, festival: true, energy: 20, sell: 80, shape: 'plate' },
 };
-export const ingredientItems = (key) => (INGREDIENT_GROUPS[key] ? INGREDIENT_GROUPS[key].items : [key]);
+const withStars = (i) => (i.startsWith('crop:') && !i.includes('@') ? [i, `${i}@1`, `${i}@2`, `${i}@3`] : [i]);
+export const ingredientItems = (key) => (INGREDIENT_GROUPS[key] ? INGREDIENT_GROUPS[key].items : [key]).flatMap(withStars);
 export const ingredientName = (key) => (INGREDIENT_GROUPS[key] ? INGREDIENT_GROUPS[key].name : itemName(key));
 export const ingredientHave = (items, key) => ingredientItems(key).reduce((n, i) => n + (items[i] || 0), 0);
 export const canCook = (items, dish) => !!DISHES[dish] && !!DISHES[dish].need && Object.entries(DISHES[dish].need).every(([k, q]) => ingredientHave(items, k) >= q);
@@ -883,6 +895,8 @@ export const ACHIEVEMENTS = [
   { id: 'harvest1', name: '第一次收成', desc: '收成一次', reward: 100, test: (s) => s.harvest >= 1 },
   { id: 'harvest100', name: '豐收', desc: '收成 100 次', reward: 1000, test: (s) => s.harvest >= 100 },
   { id: 'harvest500', name: '田園大師', desc: '收成 500 次', reward: 3000, test: (s) => s.harvest >= 500 },
+  { id: 'goldStar', name: '金星農夫', desc: '收成一顆金星作物', reward: 500, test: (s) => (s.goldHarvest || 0) >= 1 },
+  { id: 'sprinklers', name: '自動灑水', desc: '田裡擺了 4 個灑水器', reward: 800, test: (s) => (s.sprinklers || 0) >= 4 },
   { id: 'ship10k', name: '小有積蓄', desc: '出貨賺到 1 萬元', reward: 500, test: (s) => s.shipped >= 10000 },
   { id: 'ship100k', name: '牧場大亨', desc: '出貨賺到 10 萬元', reward: 3000, test: (s) => s.shipped >= 100000 },
   { id: 'animals5', name: '熱鬧的小屋', desc: '同時養 5 隻動物', reward: 500, test: (s) => s.animals >= 5 },
@@ -1387,5 +1401,76 @@ function landForageOf(farmId, day, area, season) {
     const p = spots.splice(Math.floor(rnd() * spots.length), 1)[0];
     out.push({ ...p, item: `forage:${pickWeighted(kinds, rnd())}`, tidal: false });
   }
+  return out;
+}
+
+// ---------------- 肥料、作物星級、灑水器、稻草人（第十九期） ----------------
+// 肥料：在攤位買，施在翻好的土上（種之前、種下去之後都可以，一格施一種）。
+// 一直有效到這一格收成（會再長的作物一直有效，挖掉才沒有）
+export const FERTS = {
+  basic: { name: '普通肥料', price: 30, quality: 1, desc: '收成比較容易有星級' },
+  speed: { name: '速效肥料', price: 60, speed: 1.25, desc: '作物長快 25%' },
+  quality: { name: '高級肥料', price: 120, quality: 2, desc: '收成很容易有銀星、金星' },
+};
+export const growRate = (tile) => (tile && Object.hasOwn(FERTS, tile.fert || '') && FERTS[tile.fert].speed) || 1;
+// 作物的星級：收成那一刻決定，賣的價錢乘上 mult
+export const QUALITY = { 1: { name: '銅星', mult: 1.25 }, 2: { name: '銀星', mult: 1.5 }, 3: { name: '金星', mult: 2 } };
+// 收成出現 [銅星, 銀星, 金星] 的機率（%）：沒施肥、普通肥料、高級肥料
+export const QUALITY_PCT = { 0: [10, 3, 1], 1: [25, 10, 4], 2: [25, 30, 15] };
+export function harvestQuality(farmId, x, y, at, fert) {
+  const pct = QUALITY_PCT[(Object.hasOwn(FERTS, fert || '') && FERTS[fert].quality) || 0];
+  const r = seededRandom(`${farmId}|${x},${y}|${at}|quality`)() * 100;
+  if (r < pct[2]) return 3;
+  if (r < pct[2] + pct[1]) return 2;
+  return r < pct[2] + pct[1] + pct[0] ? 1 : 0;
+}
+
+// 灑水器、稻草人：在雜貨店買（錢＋礦石），擺在田裡（牧場或溫室的田；那一格就不能種東西），可以收起來換位置。
+// 灑水器每天自動幫旁邊的田澆水（被澆到的田一直是濕的）；稻草人顧著附近 9×9 的田，烏鴉不敢來
+export const GEAR = {
+  sprinkler: { name: '灑水器', price: 800, need: { 'ore:copper': 3 }, range: 'cross', desc: '每天自動幫上下左右 4 格田澆水' },
+  sprinkler2: { name: '高級灑水器', price: 2500, need: { 'ore:silver': 2, 'ore:gold': 1 }, range: 'square', desc: '每天自動幫周圍 8 格田澆水' },
+  scarecrow: { name: '稻草人', price: 300, need: { 'ore:stone': 5 }, range: 'scare', desc: '附近 9×9 的田，烏鴉不敢來偷吃' },
+};
+export const GEAR_MAX = 30;
+export const SCARE_R = 4;
+export const isSprinkler = (kind) => !!GEAR[kind] && GEAR[kind].range !== 'scare';
+// 灑水器澆得到的格子：同一塊田（牧場或溫室）裡的 F
+export function gearCovers(g) {
+  const R = GEAR[g.kind] && GEAR[g.kind].range;
+  const d = R === 'cross' ? [[0, -1], [0, 1], [-1, 0], [1, 0]]
+    : R === 'square' ? [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]] : [];
+  const area = fieldArea(g.x, g.y);
+  return d.map(([dx, dy]) => ({ x: g.x + dx, y: g.y + dy })).filter((c) => area && fieldArea(c.x, c.y) === area);
+}
+// 有灑水器幫忙澆水的格子（'x,y'）
+export function sprinkledSet(gear) {
+  const out = new Set();
+  for (const g of gear) if (isSprinkler(g.kind)) for (const c of gearCovers(g)) out.add(`${c.x},${c.y}`);
+  return out;
+}
+export const scaredAt = (gear, x, y) => gear.some((g) => g.kind === 'scarecrow' && Math.abs(g.x - x) <= SCARE_R && Math.abs(g.y - y) <= SCARE_R);
+// 擺得下嗎：要是田、上面沒種東西、沒擺別的，總數有上限
+export function gearCheck(kind, x, y, gear, tile) {
+  if (!Object.hasOwn(GEAR, kind)) return '沒有這種東西';
+  if (!Number.isInteger(x) || !Number.isInteger(y) || !fieldArea(x, y)) return '要擺在田裡';
+  if (gear.some((g) => g.x === x && g.y === y)) return '這裡已經擺了東西';
+  if (tile && tile.crop) return '這格種了東西，換一格空的';
+  if (gear.length >= GEAR_MAX) return `田裡最多擺 ${GEAR_MAX} 個`;
+  return null;
+}
+
+// 烏鴉：沒下雨的日子，外面的田沒有稻草人顧著的作物有 CROW_MIN 棵以上，那天可能被偷吃 1 棵（15 棵以上會偷吃 2 棵）。
+// crops 是沒被顧著的作物位置；force 只給本機測試（'on' 一定來、'off' 不來）
+export const CROW_MIN = 6;
+export const CROW_PCT = 40;
+export function crowsOf(farmId, day, crops, force = '') {
+  if (!crops.length || force === 'off') return [];
+  const rnd = seededRandom(`${farmId}|${day}|crows`);
+  const roll = rnd() * 100;
+  if (force !== 'on' && (crops.length < CROW_MIN || roll >= CROW_PCT)) return [];
+  const pool = [...crops].sort((a, b) => a.y - b.y || a.x - b.x);
+  const out = [];
+  for (let n = crops.length >= 15 ? 2 : 1; n > 0 && pool.length; n--) out.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
   return out;
 }
