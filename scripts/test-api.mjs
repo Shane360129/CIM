@@ -352,9 +352,9 @@ if (fs0.villagersOut) {
 
 // 料理
 // 村民的故事、成就、週報
-check('有村民的故事、28 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 28
+check('有村民的故事、31 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 31
   && JSON.stringify(fs0.achievements) === '{}' && /^\d{4}-\d{2}-\d{2}$/.test(fs0.thisWeek?.week || ''));
-check('有 28 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 28 && !!fs0.ingredientGroups?.egg);
+check('有 35 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 35 && !!fs0.ingredientGroups?.egg);
 check('沒有這道菜', (await farmDo(groupId, { action: 'cook', dish: 'steak' }, TA)).status === 400
   && (await farmDo(groupId, { action: 'cook', dish: 'constructor' }, TA)).status === 400);
 r = await farmDo(groupId, { action: 'cook', dish: 'pumpkin_soup' }, TA);
@@ -545,6 +545,34 @@ if (fs0.weather.today !== 'typhoon') {
     money += o.data.gained.chest.money || 0;
     return o.data.cave.chest.opened && /打開過/.test((await farmDo(groupId, { action: 'cave_chest', floor: 1 }, TB)).data.error || '');
   })());
+}
+// 海邊
+check('牧場狀態有海邊、潮汐、今天撿得到的東西', fs0.beach?.length === 20 && Array.isArray(fs0.tide?.windows) && fs0.tide.windows.length >= 3
+  && (fs0.forage?.beach || []).length === 14 && Object.keys(fs0.forageKinds || {}).length === 7);
+if (fs0.weather.today !== 'typhoon') {
+  // 前面挖礦用了不少體力：誰還有體力就誰釣
+  const fishAt = async (body) => {
+    let x = await farmDo(groupId, body, TB);
+    if (/體力/.test(x.data.error || '')) x = await farmDo(groupId, body, TA);
+    return x;
+  };
+  r = await fishAt({ action: 'fish', area: 'beach', x: 22, y: 0, hooked: true });
+  const caught = r.data.gained?.item || '';
+  check(`在海邊釣魚：釣到海裡的東西（${caught}）`, r.status === 200 && fs0.fish[caught.slice(5)]?.where.includes('sea'), r.data.error);
+  check('海邊的沙灘不能釣魚', (await farmDo(groupId, { action: 'fish', area: 'beach', x: 12, y: 9, hooked: true }, TB)).status === 400);
+  r = await fishAt({ action: 'fish', area: 'beach', x: 19, y: 9, hooked: false });
+  check(fs0.tide.low ? '退潮時潮間帶是沙地，不能釣魚' : '漲潮時潮間帶是淺海，可以釣魚', fs0.tide.low ? r.status === 400 : r.status === 200, r.data.error);
+  const sand = fs0.forage.beach.find((f) => !f.tidal), tidal = fs0.forage.beach.find((f) => f.tidal);
+  r = await farmDo(groupId, { action: 'forage', area: 'beach', x: sand.x, y: sand.y }, TA);
+  check(`在沙灘撿到${sand.item}，第一次進圖鑑`, r.status === 200 && r.data.items[sand.item] >= 1 && r.data.gained.first && r.data.dex.includes(sand.item)
+    && r.data.forage.beach.length === 13);
+  check('聊天室說第一次撿到', (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('第一次撿到了')));
+  check('撿過的地方不能再撿、沒東西的地方、亂填的地方不行', (await farmDo(groupId, { action: 'forage', area: 'beach', x: sand.x, y: sand.y }, TB)).status === 400
+    && (await farmDo(groupId, { action: 'forage', area: 'beach', x: 1, y: 1 }, TB)).status === 400
+    && (await farmDo(groupId, { action: 'forage', area: '__proto__', x: sand.x, y: sand.y }, TB)).status === 400
+    && (await farmDo(groupId, { action: 'forage', area: 'beach', x: 'a', y: null }, TB)).status === 400);
+  r = await farmDo(groupId, { action: 'forage', area: 'beach', x: tidal.x, y: tidal.y }, TB);
+  check(fs0.tide.low ? `退潮了：潮間帶撿到${tidal.item}` : '漲潮時潮間帶的東西撿不到', fs0.tide.low ? r.status === 200 && r.data.items[tidal.item] >= 1 : /漲潮/.test(r.data.error || ''));
 }
 check('動物選美：亂填動物被擋、別的牧場的動物不行', (await farmDo(groupId, { action: 'beauty_enter', animalId: '__proto__' }, TA)).status === 400
   && (await farmDo(groupId, { action: 'beauty_enter', animalId: 99999 }, TA)).status === 400);

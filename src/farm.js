@@ -56,7 +56,7 @@ export const TOWN_MAP = [
   'T..............=.............T',
   'T..,,,...pppppppppppp...,,,..T',
   'T..,,,...pNpppppppppp...,,,..T',
-  'T........pppppOOppppp........T',
+  'T........pppppOOppppp........E',
   'T........pppppOOppppp........T',
   'T........pppppppppppp........T',
   'T..............=.............T',
@@ -105,14 +105,39 @@ export const GH_MAP = [
   'K,.....==.....,K',
   'KKKKKKKEKKKKKKKK',
 ];
-export const MAPS = { farm: FARM_MAP, town: TOWN_MAP, hill: HILL_MAP, gh: GH_MAP };
-export const AREAS = ['farm', 'town', 'hill', 'gh'];
+// 海邊：從小鎮東邊走過去。左邊是草地，中間沙灘（s），退潮時才走得過去的潮間帶（d），
+// 右邊是海（W）；防波堤（P）伸進海裡，站在堤的最前面可以釣到大魚。k 是礁石
+export const BEACH_MAP = [
+  'TTTTTTTTTTkksssssddddWWWWWWWWW',
+  'T......T...sssssssdddWWWWWWWWW',
+  'T..,,.......ssssssdddWWWWWWWWW',
+  'T..,,......sssssssddddWWWWWWWW',
+  'T.....T....sssPPPPPPPPPPPPWWWW',
+  'T..........ssssssdddWWWWWWWWWW',
+  'T..T.......sssssskddWWWWWWWWWW',
+  'T..........sssssssdddWWWWWWWWW',
+  'T.........ssssssssdddWWWWWWWWW',
+  'E=========sssssssssddWWWWWWWWW',
+  'T.........ssssssssdddWWWWWWWWW',
+  'T...T.....sssssssddddWWWWWWWWW',
+  'T..........sssssskdddWWWWWWWWW',
+  'T..,,......ssssssdddWWWWWWWWWW',
+  'T..,,.....ssssssddddWWWWWWWWWW',
+  'T.....T...sssssssdddWWWWWWWWWW',
+  'T.........ssssssskddWWWWWWWWWW',
+  'T...T......sssssddddWWWWWWWWWW',
+  'T..........ssssssdddWWWWWWWWWW',
+  'TTTTTTTTTTkksssssddddWWWWWWWWW',
+];
+export const MAPS = { farm: FARM_MAP, town: TOWN_MAP, hill: HILL_MAP, gh: GH_MAP, beach: BEACH_MAP };
+export const AREAS = ['farm', 'town', 'hill', 'gh', 'beach'];
 // 即時位置的「在哪裡」：四張地圖，或洞窟的某一層（cave1～cave20）
 export const isAreaKey = (a) => AREAS.includes(a) || /^cave([1-9]|1[0-9]|20)$/.test(String(a));
 // 走到 E 就換地圖。EXITS：每張地圖的出口通到哪；ARRIVE['從>到']：換過去之後站在哪
 export const EXITS = {
   farm: [{ x: 5, y: 19, to: 'town' }, { x: 29, y: 7, to: 'hill' }],
-  town: [{ x: 5, y: 0, to: 'farm' }],
+  town: [{ x: 5, y: 0, to: 'farm' }, { x: 29, y: 9, to: 'beach' }],
+  beach: [{ x: 0, y: 9, to: 'town' }],
   hill: [{ x: 0, y: 11, to: 'farm' }],
   gh: [{ x: 7, y: 9, to: 'farm' }],
 };
@@ -122,8 +147,9 @@ export const ARRIVE = {
   'farm>hill': { x: 1, y: 11 }, 'hill>farm': { x: 28, y: 7 },
   'farm>gh': { x: 7, y: 8 }, 'gh>farm': { x: 12, y: 4 },
   'cave>hill': { x: 26, y: 10 },
+  'town>beach': { x: 1, y: 9 }, 'beach>town': { x: 28, y: 9 },
 };
-const WALKABLE = new Set(['.', '=', 'F', 'p', ',', 'E', 'q']);
+const WALKABLE = new Set(['.', '=', 'F', 'p', ',', 'E', 'q', 's', 'P']);
 
 export const SEASONS = ['spring', 'summer', 'autumn', 'winter'];
 const ALL = SEASONS;
@@ -526,10 +552,22 @@ export const FISH = {
   bass: { name: '鱸魚', sell: 180, seasons: ['autumn', 'winter'], where: ['lake'], time: 'any', weight: 8 },
   goldfish: { name: '金魚', sell: 250, seasons: ALL, where: ['pond'], time: 'any', weight: 3 },
   eel: { name: '鰻魚', sell: 300, seasons: ['summer', 'autumn'], where: ['pond', 'lake'], time: 'night', weight: 5 }, // 下雨天白天也有
-  junk: { name: '破鞋子', sell: 2, seasons: ALL, where: ['pond', 'lake'], time: 'any', weight: 6 },
+  junk: { name: '破鞋子', sell: 2, seasons: ALL, where: ['pond', 'lake', 'sea'], time: 'any', weight: 6 },
+  // 海魚：在海邊釣（sea），站在防波堤最前面還釣得到大魚（deep）
+  mackerel: { name: '鯖魚', sell: 60, seasons: ALL, where: ['sea', 'deep'], time: 'any', weight: 30, sea: true },
+  porgy: { name: '黑鯛', sell: 120, seasons: ALL, where: ['sea', 'deep'], time: 'any', weight: 18, sea: true },
+  saury: { name: '秋刀魚', sell: 90, seasons: ['autumn'], where: ['sea', 'deep'], time: 'any', weight: 22, sea: true },
+  hairtail: { name: '白帶魚', sell: 150, seasons: ['autumn', 'winter'], where: ['sea', 'deep'], time: 'night', weight: 14, sea: true },
+  squid: { name: '小卷', sell: 130, seasons: ['spring', 'summer'], where: ['sea', 'deep'], time: 'night', weight: 14, sea: true },
+  mullet: { name: '烏魚', sell: 200, seasons: ['winter'], where: ['sea', 'deep'], time: 'any', weight: 12, sea: true },
+  octopus: { name: '章魚', sell: 180, seasons: ALL, where: ['sea'], time: 'any', weight: 6, sea: true },
+  mahi: { name: '鬼頭刀', sell: 220, seasons: ['spring', 'summer'], where: ['deep'], time: 'day', weight: 12, sea: true },
+  grouper: { name: '石斑魚', sell: 400, seasons: ALL, where: ['deep'], time: 'any', weight: 5, sea: true },
+  tuna: { name: '黑鮪魚', sell: 2500, seasons: ['spring', 'summer'], where: ['deep'], time: 'day', weight: 1, sea: true },
 };
 export const FISH_WINDOW_MS = 1500;     // 看到 ❗ 之後幾毫秒內要拉
-export const fishSpot = (area) => (area === 'farm' ? 'pond' : area === 'hill' ? 'lake' : null);
+// 海邊：在防波堤的最前面（x ≥ 24）釣是外海（deep），其他地方是近海（sea）
+export const fishSpot = (area, x = 0) => (area === 'farm' ? 'pond' : area === 'hill' ? 'lake' : area === 'beach' ? (x >= 24 ? 'deep' : 'sea') : null);
 export const isDaytime = (now) => { const h = new Date(now + TW).getUTCHours(); return h >= 6 && h < 18; };
 // 這一刻在這裡可能釣到哪些魚，各自的機會（權重）
 export function fishChoices(spot, season, day, rain) {
@@ -635,7 +673,7 @@ export const BUILDS = {
 };
 
 // 倉庫裡的東西能賣多少（賣不了的回傳 0）：作物、雞蛋牛奶、魚、礦石、料理、加工品
-const ITEM_TABLES = () => ({ crop: CROPS, prod: PRODUCTS, fish: FISH, ore: ORES, dish: DISHES, good: GOODS, fruit: FRUITS });
+const ITEM_TABLES = () => ({ crop: CROPS, prod: PRODUCTS, fish: FISH, ore: ORES, dish: DISHES, good: GOODS, fruit: FRUITS, forage: FORAGE });
 export function itemPrice(item) {
   const [kind, id] = String(item).split(':');
   const table = ITEM_TABLES()[kind];
@@ -688,6 +726,14 @@ export const DISHES = {
   orange_juice: { name: '柳丁汁', need: { 'fruit:orange': 3 }, energy: 20, sell: 260, shape: 'cup' },
   honey_potato: { name: '蜜地瓜', need: { 'crop:sweetpotato': 2, honey: 1 }, energy: 30, sell: 450, shape: 'plate' },
   honey_cake: { name: '蜂蜜蛋糕', need: { honey: 1, egg: 2, milk: 1 }, energy: 40, sell: 520, shape: 'plate' },
+  // 海鮮：海邊釣的魚、撿的蛤蜊螃蟹
+  saury_grill: { name: '鹽烤秋刀魚', need: { 'fish:saury': 1 }, energy: 25, sell: 200, shape: 'plate' },
+  clam_soup: { name: '蛤蜊湯', need: { 'forage:clam': 3 }, energy: 25, sell: 260, shape: 'bowl' },
+  squid_sanbei: { name: '三杯小卷', need: { 'fish:squid': 2 }, energy: 35, sell: 420, shape: 'plate' },
+  hairtail_sweet: { name: '糖醋白帶魚', need: { 'fish:hairtail': 1, 'good:ketchup': 1 }, energy: 35, sell: 400, shape: 'plate' },
+  seafood_congee: { name: '海鮮粥', need: { 'forage:crab': 1, 'forage:clam': 2, egg: 1 }, energy: 45, sell: 520, shape: 'bowl' },
+  karasumi: { name: '烏魚子', need: { 'fish:mullet': 2 }, energy: 30, sell: 900, shape: 'plate' },
+  tuna_sashimi: { name: '黑鮪魚生魚片', need: { 'fish:tuna': 1 }, energy: 60, sell: 3200, shape: 'plate' },
   // 節慶的食物：不能自己煮，節日或家人生日時收到（吃、賣、送人都可以）
   niangao: { name: '年糕', need: null, festival: true, energy: 30, sell: 120, shape: 'plate' },
   tangyuan: { name: '湯圓', need: null, festival: true, energy: 25, sell: 100, shape: 'bowl' },
@@ -835,6 +881,9 @@ export const ACHIEVEMENTS = [
   { id: 'cave10', name: '勇敢的探險家', desc: '下到洞窟第 10 層', reward: 800, test: (s) => (s.caveBest || 0) >= 10 },
   { id: 'caveBottom', name: '洞窟的最深處', desc: '打開洞窟第 20 層古老的寶箱', reward: 3000, test: (s) => (s.caveBottom || 0) >= 1 },
   { id: 'gems', name: '寶石收藏家', desc: '挖到紅寶石、藍寶石和鑽石', reward: 1500, test: (s) => (s.gems || 0) >= 3 },
+  { id: 'seaFish5', name: '海釣新手', desc: '釣到 5 種海魚', reward: 500, test: (s) => (s.seaFishKinds || 0) >= 5 },
+  { id: 'tuna', name: '黑鮪魚', desc: '在防波堤釣到黑鮪魚', reward: 2000, test: (s) => !!s.tuna },
+  { id: 'beachcomber', name: '海邊撿寶', desc: '撿過 6 種海邊的東西', reward: 300, test: (s) => (s.forageKinds || 0) >= 6 },
   { id: 'stories', name: '說故事的人', desc: '聽完所有村民的故事', reward: 2000, test: (s) => s.stories >= Object.keys(STORIES).length * STORY_HEARTS.length },
 ];
 export const achievementsMet = (stats) => ACHIEVEMENTS.filter((a) => a.test(stats)).map((a) => a.id);
@@ -1092,3 +1141,48 @@ export function chestLoot(farmId, day, floor) {
 }
 // 第 20 層第一次打開的「古老的寶箱」（每座牧場一次）
 export const CAVE_TREASURE = { money: 5000, item: 'ore:diamond', qty: 1 };
+
+// ---------------- 海邊：潮汐、撿東西 ----------------
+// 潮汐大約每 12 小時 25 分鐘漲退一次（簡化：以 2026-01-01 03:00 台灣時間為乾潮），
+// 退潮時潮間帶（d）露出來可以走過去，撿得到蛤蜊、螃蟹；漲潮時那裡是淺海，可以釣魚
+export const TIDE_HOURS = 12.42;
+const TIDE_EPOCH = Date.parse('2026-01-01T03:00:00+08:00');
+export const tideLevel = (now) => -Math.cos(2 * Math.PI * ((now - TIDE_EPOCH) / HOUR) / TIDE_HOURS); // -1 乾潮、1 滿潮
+export const isLowTide = (now) => tideLevel(now) < -0.35;
+// 某段時間裡的退潮時段 [[開始, 結束], ...]（每次大約 4 小時 50 分鐘）
+export function lowTideWindows(from, to) {
+  const period = TIDE_HOURS * HOUR, half = (Math.acos(0.35) / (2 * Math.PI)) * period;
+  const out = [];
+  for (let k = Math.floor((from - TIDE_EPOCH) / period) - 1; TIDE_EPOCH + k * period - half < to; k++) {
+    const c = TIDE_EPOCH + k * period;
+    if (c + half > from) out.push([Math.round(c - half), Math.round(c + half)]);
+  }
+  return out;
+}
+// 撿得到的東西（之後的野外採集也放在這裡）：where 是沙灘（sand）或潮間帶（tide，退潮才撿得到）
+export const FORAGE = {
+  shell: { name: '貝殼', sell: 20, where: 'sand', weight: 40 },
+  conch: { name: '海螺', sell: 60, where: 'sand', weight: 18 },
+  seaweed: { name: '海菜', sell: 30, where: 'tide', weight: 25 },
+  sea_glass: { name: '海玻璃', sell: 150, where: 'sand', weight: 5 },
+  clam: { name: '蛤蜊', sell: 40, where: 'tide', weight: 35 },
+  crab: { name: '螃蟹', sell: 120, where: 'tide', weight: 15 },
+  oyster: { name: '野生牡蠣', sell: 80, where: 'tide', weight: 12 },
+};
+export const BEACH_FINDS = { sand: 8, tide: 6 };
+// 海邊今天哪裡有東西可以撿（全家看到的一樣，隔天換一批）
+export function forageOf(farmId, day, area) {
+  if (area !== 'beach') return [];
+  const rnd = seededRandom(`${farmId}|${day}|forage|${area}`);
+  const out = [];
+  for (const [where, ch] of [['sand', 's'], ['tide', 'd']]) {
+    const spots = [];
+    BEACH_MAP.forEach((row, y) => [...row].forEach((c, x) => { if (c === ch) spots.push({ x, y }); }));
+    const kinds = Object.entries(FORAGE).filter(([, f]) => f.where === where).map(([id, f]) => ({ id, w: f.weight }));
+    for (let n = 0; n < BEACH_FINDS[where] && spots.length; n++) {
+      const p = spots.splice(Math.floor(rnd() * spots.length), 1)[0];
+      out.push({ ...p, item: `forage:${pickWeighted(kinds, rnd())}`, tidal: where === 'tide' });
+    }
+  }
+  return out;
+}

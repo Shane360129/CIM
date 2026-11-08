@@ -1340,6 +1340,7 @@ export function sprite(name, shirt = '#d9544d', flip = false, season = '') {
   if (name.startsWith('dish_')) { const [id, shape] = name.slice(5).split('@'); return dishSprite(id, shape); }
   if (name.startsWith('good_')) return goodSprite(name.slice(5));
   if (name.startsWith('fruit_')) return fruitSprite(name.slice(6));
+  if (name.startsWith('forage_')) return forageSprite(name.slice(7));
   if (name.startsWith('tree_')) { const [, kind, stage, ripe] = name.split('_'); return fruitTreeSprite(kind, Number(stage), ripe === 'r'); }
   if (name === 'honey' || name === 'honey_l') return honeySprite(name);
   const key = name + '|' + shirt + '|' + (flip ? 1 : 0) + '|' + season;
@@ -1376,7 +1377,20 @@ export const FISH_COLORS = {
   goldfish: ['#f28b2c', '#f6d34a', '#e0393e'],
   eel: ['#3d4a3a', '#8f9a6e', '#262e24'],
   junk: ['#6b4a2b', '#8d6a45', '#3a2818'],
+  mackerel: ['#3d6e8f', '#e8eef2', '#24465e'],
+  porgy: ['#3a3a40', '#9a9aa4', '#22222a'],
+  saury: ['#5a7ea8', '#eef2f6', '#2e4a6e'],
+  hairtail: ['#c9d1db', '#f4f6f8', '#8a96a4'],
+  squid: ['#e8b4a0', '#f6e2d8', '#c87a64'],
+  mullet: ['#7a8a96', '#dfe4e8', '#4e5a64'],
+  octopus: ['#c8553d', '#e8917a', '#8a3424'],
+  mahi: ['#3fae6a', '#f6d34a', '#2e7a4a'],
+  grouper: ['#8a5a3a', '#c98a5a', '#5e3b20'],
+  tuna: ['#1e2e4a', '#b8c4d4', '#121c30'],
 };
+// 小卷、章魚不是魚的形狀
+export const SQUID_SHAPE = ["................", "......1111......", ".....111111.....", ".....1o11o1.....", ".....111111.....", ".....122221.....", ".....122221.....", ".....122221.....", ".....122221.....", "......1221......", ".....3.33.3.....", "....3..33..3....", "....3..3...3....", "...3...3....3...", "................", "................"];
+export const OCTO_SHAPE = ["................", "................", ".....111111.....", "....11111111....", "...1111111111...", "...11o1111o11...", "...1111111111...", "...1222222221...", "....12222221....", "...1.1.11.1.1...", "..1..1.11.1..1..", "..3..3.33.3..3..", ".3..3..3..3..3..", "................", "................", "................"];
 export const ORE_COLORS = {
   stone: ['#a4a09a', '#8a8680', '#6e6a64', '#c9c5bf'],
   copper: ['#a4a09a', '#d9822b', '#6e6a64', '#c9c5bf'],
@@ -1403,11 +1417,12 @@ function shaped(key, shape, colors) {
 }
 // 料理：盤子（3 盤子、4 陰影）、碗（4 是碗上的藍色花紋）、杯子（4 是吸管），1、2 是菜的顏色
 export const DISH_SHAPES = { plate: ["................", "................", "................", "................", "................", "......1121......", "....11211211....", "...1121112111...", "..112111121112..", ".33333333333333.", ".43333333333334.", "..444444444444..", "................", "................", "................", "................"], bowl: ["................", "................", "................", "................", "....11211211....", "..112111121111..", ".33333333333333.", ".34444444444443.", "..333333333333..", "...3333333333...", "....33333333....", ".....444444.....", "................", "................", "................", "................"], cup: ["................", "..........4.....", ".........4......", "....33334333....", "....31141113....", "....31411113....", "....31111113....", "....31212123....", "....31111113....", "....31111113....", ".....311113.....", ".....311113.....", ".....333333.....", "................", "................", "................"] };
-export const DISH_COLORS = {"stirfry": ["#4f9d3f", "#8fd16a"], "tomato_egg": ["#e0393e", "#f6d34a"], "carrot_egg": ["#f28b2c", "#f6d34a"], "eggplant": ["#7b3fa0", "#c8553d"], "potato_salad": ["#f2e2a0", "#f6d34a"], "corn_grill": ["#f2b33d", "#8d5d32"], "cabbage_rice": ["#f4f1e8", "#9dd17a"], "sweetpotato_congee": ["#f4efe0", "#e8913a"], "radish_soup": ["#e9e4c8", "#ffffff"], "pumpkin_soup": ["#f2a03a", "#ffffff"], "fish_braised": ["#8a4a2a", "#c96a3a"], "bass_soup": ["#e8e4d0", "#d9b44a"], "eel_rice": ["#6b3a1e", "#f4f1e8"], "pudding": ["#f6d880", "#8d5d32"], "strawberry_milk": ["#f6b6c9", "#e0393e"], "watermelon_juice": ["#f05a5a", "#4f9d3f"], "pineapple_cake": ["#e8b45a", "#f6d34a"], "niangao": ["#c98a3a", "#e8b45a"], "tangyuan": ["#f4f1e8", "#f6b6c9"], "zongzi": ["#4f7d3a", "#8fb35a"], "mooncake": ["#c98a3a", "#8d5d32"], "candy": ["#e0393e", "#f6d34a"], "cake": ["#f6efe0", "#e0393e"], "caipu_egg": ["#f6d34a", "#c98a3a"], "kimchi_pot": ["#e05a3a", "#f6d880"], "cheese_potato": ["#f6d34a", "#e8913a"], "pancake": ["#e8b45a", "#d9344a"], "fries": ["#f2c94a", "#d9344a"], "corn_salad": ["#f6d34a", "#f6efc8"], "golden_pumpkin": ["#f2a03a", "#f6d34a"], "bbq": ["#8d4a2a", "#f2b33d"], "mango_ice": ["#f2b33d", "#f4f1e8"], "orange_juice": ["#f28b2c", "#f8b860"], "honey_potato": ["#e8913a", "#c87a1e"], "honey_cake": ["#e8b45a", "#8d5d32"]};
+export const DISH_COLORS = {"stirfry": ["#4f9d3f", "#8fd16a"], "tomato_egg": ["#e0393e", "#f6d34a"], "carrot_egg": ["#f28b2c", "#f6d34a"], "eggplant": ["#7b3fa0", "#c8553d"], "potato_salad": ["#f2e2a0", "#f6d34a"], "corn_grill": ["#f2b33d", "#8d5d32"], "cabbage_rice": ["#f4f1e8", "#9dd17a"], "sweetpotato_congee": ["#f4efe0", "#e8913a"], "radish_soup": ["#e9e4c8", "#ffffff"], "pumpkin_soup": ["#f2a03a", "#ffffff"], "fish_braised": ["#8a4a2a", "#c96a3a"], "bass_soup": ["#e8e4d0", "#d9b44a"], "eel_rice": ["#6b3a1e", "#f4f1e8"], "pudding": ["#f6d880", "#8d5d32"], "strawberry_milk": ["#f6b6c9", "#e0393e"], "watermelon_juice": ["#f05a5a", "#4f9d3f"], "pineapple_cake": ["#e8b45a", "#f6d34a"], "niangao": ["#c98a3a", "#e8b45a"], "tangyuan": ["#f4f1e8", "#f6b6c9"], "zongzi": ["#4f7d3a", "#8fb35a"], "mooncake": ["#c98a3a", "#8d5d32"], "candy": ["#e0393e", "#f6d34a"], "cake": ["#f6efe0", "#e0393e"], "caipu_egg": ["#f6d34a", "#c98a3a"], "kimchi_pot": ["#e05a3a", "#f6d880"], "cheese_potato": ["#f6d34a", "#e8913a"], "pancake": ["#e8b45a", "#d9344a"], "fries": ["#f2c94a", "#d9344a"], "corn_salad": ["#f6d34a", "#f6efc8"], "golden_pumpkin": ["#f2a03a", "#f6d34a"], "bbq": ["#8d4a2a", "#f2b33d"], "mango_ice": ["#f2b33d", "#f4f1e8"], "orange_juice": ["#f28b2c", "#f8b860"], "honey_potato": ["#e8913a", "#c87a1e"], "honey_cake": ["#e8b45a", "#8d5d32"], "saury_grill": ["#5a7ea8", "#e8913a"], "clam_soup": ["#f4efe0", "#d9b44a"], "squid_sanbei": ["#c87a3a", "#4f9d3f"], "hairtail_sweet": ["#e05a3a", "#f4f6f8"], "seafood_congee": ["#f4efe0", "#e0393e"], "karasumi": ["#e8913a", "#c8553d"], "tuna_sashimi": ["#d9344a", "#f6b6c9"]};
 const DISH_KIND = { plate: ['#f4f1ea', '#c9c5bf'], bowl: ['#f4f1ea', '#5a8fc8'], cup: ['#d9eef6', '#e0393e'] };
 export const dishSprite = (id, shape = 'plate') => shaped('dish_' + id, DISH_SHAPES[shape] || DISH_SHAPES.plate,
   [...(DISH_COLORS[id] || ['#c8553d', '#f6d34a']), ...(DISH_KIND[shape] || DISH_KIND.plate)]);
-export const fishSprite = (id) => shaped('fish_' + id, id === 'junk' ? BOOT_SHAPE : FISH_SHAPE, FISH_COLORS[id] || FISH_COLORS.tilapia);
+export const fishSprite = (id) => shaped('fish_' + id, id === 'junk' ? BOOT_SHAPE : id === 'squid' ? SQUID_SHAPE : id === 'octopus' ? OCTO_SHAPE : FISH_SHAPE,
+  FISH_COLORS[id] || FISH_COLORS.tilapia);
 export const oreSprite = (id) => shaped('ore_' + id, ROCK_SHAPE, ORE_COLORS[id] || ORE_COLORS.stone);
 
 // 作物某個階段的圖：種子、發芽兩個階段每種作物長得一樣，共用小白菜那兩張
@@ -1765,3 +1780,39 @@ export const chestSprite = (opened = false) => building('chest_' + (opened ? 1 :
   r('#7a4e2d', 2, 5, 12, 9); r('#8d5d32', 2, 5, 12, 3); r('#c9a227', 2, 8, 12, 1); r('#c9a227', 2, 13, 12, 1);
   r('#c9a227', 2, 5, 1, 9); r('#c9a227', 13, 5, 1, 9); r('#f6d34a', 7, 8, 2, 3); r('#2b2421', 7, 10, 2, 1);
 });
+
+// ---------------- 海邊 ----------------
+// 沙灘、潮間帶（退潮是濕沙地、漲潮是淺海）、海、防波堤、礁石
+export const beachTileSprite = (ch, v = 0, frame = 0) => building(`beach_${ch}_${v}_${frame}`, 16, 16, (r) => {
+  if (ch === 's') {
+    r('#ecd9a6', 0, 0, 16, 16);
+    for (const [x, y] of [[[3, 4], [11, 10], [7, 13]], [[12, 3], [5, 9], [9, 6]], [[6, 2], [13, 12], [2, 11]]][v % 3]) r('#d8c28a', x, y, 2, 1);
+  } else if (ch === 'dl') {          // 退潮：濕濕的沙地，有小水窪
+    r('#c8b07a', 0, 0, 16, 16); r('#b49c68', 0, 0, 16, 1);
+    const [x, y] = [[3, 9], [9, 4], [6, 11]][v % 3]; r('#9ad6e6', x, y, 4, 2); r('#c9eef6', x + 1, y, 1, 1);
+  } else if (ch === 'dh') {          // 漲潮：淺淺的海水
+    r('#7cc4dc', 0, 0, 16, 16); r('#a8dcec', (frame ? 2 : 6) + v, 5, 5, 1); r('#a8dcec', (frame ? 9 : 4), 11, 4, 1);
+  } else if (ch === 'W') {           // 海：比湖深一點的藍，有白色浪花
+    r('#2f7fb8', 0, 0, 16, 16); r('#4a98cc', 0, 8, 16, 8);
+    r('#e8f6fb', (frame ? 3 : 7) + v * 2, 4, 4, 1); r('#e8f6fb', (frame ? 10 : 2) + v, 12, 3, 1);
+  } else if (ch === 'P') {           // 防波堤的木棧道
+    r('#2f7fb8', 0, 0, 16, 16); r('#8d5d32', 0, 2, 16, 12);
+    for (let x = 0; x < 16; x += 4) r('#7a4e2d', x, 2, 1, 12);
+    r('#a8743f', 0, 2, 16, 1); r('#5e3b20', 0, 13, 16, 1); r('#5e3b20', 2, 14, 2, 2); r('#5e3b20', 12, 14, 2, 2);
+  } else if (ch === 'k') {           // 礁石
+    r('#ecd9a6', 0, 0, 16, 16); r('#6e6a64', 3, 6, 10, 8); r('#6e6a64', 2, 8, 12, 5); r('#8a8680', 4, 5, 7, 3); r('#a4a09a', 5, 6, 3, 1);
+    r('#4e4a44', 3, 13, 10, 1); r('#3f9a6a', 9, 11, 3, 2); r('#f4f1e8', 12, 9, 1, 1);
+  }
+});
+// 海邊撿到的東西
+const FORAGE_ART = {
+  shell: (r) => { r('#f6e2d8', 4, 6, 8, 6); r('#e8b4a0', 5, 6, 1, 6); r('#e8b4a0', 8, 6, 1, 6); r('#e8b4a0', 11, 7, 1, 4); r('#c87a64', 7, 12, 2, 1); },
+  conch: (r) => { r('#f2c9a0', 4, 5, 6, 8); r('#e8a070', 6, 3, 4, 3); r('#f6e2d8', 9, 8, 3, 4); r('#c87a50', 5, 7, 4, 1); r('#c87a50', 5, 10, 4, 1); },
+  seaweed: (r) => { r('#3f7a3a', 5, 4, 2, 9); r('#4f9d3f', 8, 3, 2, 10); r('#2e5a2a', 11, 6, 2, 7); r('#4f9d3f', 4, 12, 9, 1); },
+  sea_glass: (r) => { r('#8fd8c0', 5, 6, 6, 5); r('#c9f2e6', 6, 6, 2, 2); r('#5ab89a', 9, 9, 2, 2); },
+  clam: (r) => { r('#d8c8a8', 3, 7, 10, 5); r('#b8a47a', 4, 6, 8, 1); r('#8a7a5a', 3, 11, 10, 1); r('#f4ecd8', 5, 8, 3, 1); },
+  crab: (r) => { r('#e0393e', 4, 7, 8, 5); r('#a8252b', 4, 11, 8, 1); r('#e0393e', 2, 5, 2, 2); r('#e0393e', 12, 5, 2, 2); r('#2b2421', 6, 7, 1, 1); r('#2b2421', 9, 7, 1, 1);
+    for (const x of [3, 5, 10, 12]) r('#a8252b', x, 12, 1, 2); },
+  oyster: (r) => { r('#8a8680', 3, 6, 10, 7); r('#a4a09a', 4, 7, 8, 2); r('#e8e4dc', 6, 9, 4, 2); r('#5e5a54', 3, 12, 10, 1); },
+};
+export const forageSprite = (id) => building('forage_' + id, 16, 16, (r) => (FORAGE_ART[id] || FORAGE_ART.shell)(r));

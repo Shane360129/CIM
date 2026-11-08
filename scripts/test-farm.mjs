@@ -22,7 +22,9 @@ import {
   MARKET_STALLS, MARKET_ZONE, isNightMarket, NIGHT_FOODS, SPECIALS, specialsOf, GOLDFISH_MAX, RING_THROWS, ringPrize,
   BEAUTY_RIVALS, BEAUTY_PRIZES, beautyResult, HARVEST_RIVALS, HARVEST_MEDALS, harvestContest,
   CAVE_FLOORS, CAVE_STOPS, CAVE_ROCKS, CAVE_UP, CAVE_ARRIVE, CAVE_LAYOUTS, CAVE_CHEST_SPOTS, CAVE_ORES, caveFloor, caveTier, CHEST_LOOT, chestLoot, CAVE_TREASURE, isAreaKey,
+  BEACH_MAP, TIDE_HOURS, tideLevel, isLowTide, lowTideWindows, FORAGE, BEACH_FINDS, forageOf, fishSpot,
 } from '../src/farm.js';
+import { forageSprite } from '../public/farm-sprites.js';
 import { SPRITES, PALETTE, FISH_SHAPE, BOOT_SHAPE, ROCK_SHAPE, FISH_COLORS, ORE_COLORS, DISH_SHAPES, DISH_COLORS, GOOD_ART, FRUIT_COLORS, honeySprite, fruitTreeSprite } from '../public/farm-sprites.js';
 
 let pass = 0, fail = 0;
@@ -301,7 +303,7 @@ check('3×3 範圍不重複', new Set(area3x3(5, 5).map((c) => c.x + ',' + c.y))
 
 console.log('\n--- 料理 ---');
 const dishes = Object.entries(DISHES).filter(([, d]) => d.need);
-check('有 28 道自己煮得出來的菜（7 道用加工品）', [dishes.length, dishes.filter(([, d]) => Object.keys(d.need).some((k) => k.startsWith('good:') || k === 'mayo' || k === 'cheese')).length], [28, 7]);
+check('有 35 道自己煮得出來的菜（8 道用加工品）', [dishes.length, dishes.filter(([, d]) => Object.keys(d.need).some((k) => k.startsWith('good:') || k === 'mayo' || k === 'cheese')).length], [35, 8]);
 check('每道菜的材料都是真的東西（或雞蛋、牛奶這種組）', dishes.filter(([, d]) => !Object.keys(d.need).every((k) => INGREDIENT_GROUPS[k] || itemPrice(k) > 0)).map(([id]) => id), []);
 check('煮成菜比直接賣材料值錢', dishes.filter(([, d]) => d.sell <= Object.entries(d.need).reduce((n, [k, q]) => n + itemPrice(ingredientItems(k)[0]) * q, 0)).map(([id]) => id), []);
 check('每道菜都能補體力（不超過一整天的量）', dishes.every(([, d]) => d.energy > 0 && d.energy <= ENERGY_MAX), true);
@@ -409,7 +411,7 @@ check('感情很好但還沒聽過：從第一段開始說', storyDue(100, 0), 0
 const zero = { harvest: 0, shipped: 0, requests: 0, babies: 0, animals: 0, pets: 0, machines: 0, fishKinds: 0, dishKinds: 0, goodKinds: 0, amethyst: false, maxHearts: 0, minHearts: 0, stories: 0, gh: 0, house: 1 };
 check('什麼都還沒做：沒有成就', achievementsMet(zero), []);
 check('收成一次、領養寵物：兩個成就', achievementsMet({ ...zero, harvest: 1, pets: 1 }), ['harvest1', 'pet']);
-const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: 4, fishKinds: 9, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3 };
+const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: 4, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: 7 };
 check('全部做完：每個成就都達成', achievementsMet(full).length, ACHIEVEMENTS.length);
 check('成就的編號不重複、都有名字說明和獎金', new Set(ACHIEVEMENTS.map((a) => a.id)).size === ACHIEVEMENTS.length && ACHIEVEMENTS.every((a) => a.name && a.desc && a.reward > 0), true);
 check('「聽完所有故事」要 18 段', [achievementsMet({ ...full, stories: 17 }).includes('stories'), achievementsMet(full).includes('stories')], [false, true]);
@@ -556,6 +558,51 @@ check('即時位置：四張地圖和洞窟 1～20 層，其他的都不行', ['
 check('三個洞窟成就', [achievementsMet({ ...zero, caveBest: 10 }), achievementsMet({ ...zero, caveBottom: 1 }), achievementsMet({ ...zero, gems: 3 }), achievementsMet({ ...zero, caveBest: 9, gems: 2 })],
   [['cave10'], ['caveBottom'], ['gems'], []]);
 check('新的寶石都有圖', ['jade', 'ruby', 'sapphire', 'diamond'].every((id) => ORE_COLORS[id]), true);
+
+
+console.log('\n--- 海邊 ---');
+check('海邊地圖 30×20，小鎮東邊的出口通過去、海邊左邊的出口回小鎮', [BEACH_MAP.length, BEACH_MAP.every((r) => r.length === 30), TOWN_MAP[9][29], BEACH_MAP[9][0],
+  EXITS.town.some((e) => e.to === 'beach' && e.x === 29 && e.y === 9), EXITS.beach.some((e) => e.to === 'town'),
+  isWalkable(ARRIVE['town>beach'].x, ARRIVE['town>beach'].y, 'beach'), isWalkable(ARRIVE['beach>town'].x, ARRIVE['beach>town'].y, 'town')], [20, true, 'E', 'E', true, true, true, true]);
+const beachSeen = (() => {
+  const start = `${ARRIVE['town>beach'].x},${ARRIVE['town>beach'].y}`, seen = new Set([start]), q = [start];
+  while (q.length) {
+    const [x, y] = q.shift().split(',').map(Number);
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const k = `${x + dx},${y + dy}`;
+      if (!seen.has(k) && isWalkable(x + dx, y + dy, 'beach')) { seen.add(k); q.push(k); }
+    }
+  }
+  return seen;
+})();
+const beachCells = (ch) => BEACH_MAP.flatMap((r, y) => [...r].map((c, x) => (c === ch ? `${x},${y}` : null)).filter(Boolean));
+check('沙灘、防波堤（漲潮時也）都走得到', [...beachCells('s'), ...beachCells('P')].every((k) => beachSeen.has(k)), true);
+check('防波堤伸到外海：最前面旁邊是海、x ≥ 24 算外海', [BEACH_MAP[4][25], BEACH_MAP[4][26], fishSpot('beach', 25), fishSpot('beach', 12), fishSpot('farm'), fishSpot('town')], ['P', 'W', 'deep', 'sea', 'pond', null]);
+check('每條潮間帶都挨著沙灘（退潮時走得過去）', beachCells('d').every((k) => { const [x, y] = k.split(',').map(Number); return [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => 'sd'.includes(BEACH_MAP[y + dy]?.[x + dx] || 'T')); }), true);
+const seaFish = Object.entries(FISH).filter(([, f]) => f.sea).map(([id]) => id);
+check('10 種海魚，都只在海邊', [seaFish.length, seaFish.every((id) => FISH[id].where.every((w) => w === 'sea' || w === 'deep'))], [10, true]);
+const ids = (cs) => cs.map((c) => c.id).sort();
+check('黑鮪魚、鬼頭刀、石斑只在防波堤最前面釣得到', [ids(fishChoices('sea', 'summer', true, false)).some((i) => ['tuna', 'mahi', 'grouper'].includes(i)), ids(fishChoices('deep', 'summer', true, false)).includes('tuna')], [false, true]);
+check('黑鮪魚只在春夏白天、很稀有', [ids(fishChoices('deep', 'winter', true, false)).includes('tuna'), ids(fishChoices('deep', 'summer', false, false)).includes('tuna'), FISH.tuna.weight, FISH.tuna.sell], [false, false, 1, 2500]);
+check('小卷是夏天晚上、秋刀魚秋天、烏魚冬天', [ids(fishChoices('sea', 'summer', false, false)).includes('squid'), ids(fishChoices('sea', 'autumn', true, false)).includes('saury'), ids(fishChoices('sea', 'winter', true, false)).includes('mullet')], [true, true, true]);
+check('海邊也會釣到破鞋子；湖和池塘釣不到海魚', [ids(fishChoices('sea', 'spring', true, false)).includes('junk'), seaFish.some((id) => ids(fishChoices('lake', 'summer', true, false)).includes(id) || ids(fishChoices('pond', 'summer', false, false)).includes(id))], [true, false]);
+const tw0 = Date.parse('2026-11-08T00:00:00+08:00'), wins = lowTideWindows(tw0, tw0 + 86400000);
+check('一天大約退潮兩次，每次 4～5 小時', [wins.length >= 2 && wins.length <= 3, wins.every(([a, b]) => (b - a) / H > 4.5 && (b - a) / H < 5)], [true, true]);
+check('退潮時段的中間是退潮、兩次退潮中間是漲潮', [wins.every(([a, b]) => isLowTide((a + b) / 2)), !isLowTide(wins[0][1] + 2 * H), tideLevel((wins[0][0] + wins[0][1]) / 2) < -0.9], [true, true, true]);
+check(`潮汐週期 ${TIDE_HOURS} 小時：時段跟一分鐘一分鐘算的一樣`, (() => {
+  for (let t = tw0; t < tw0 + 86400000; t += 60000) if (isLowTide(t) !== wins.some(([a, b]) => t >= a && t < b)) return t;
+  return true;
+})(), true);
+const fg = forageOf(4, '2026-11-08', 'beach');
+check('海邊每天 8 個沙灘的、6 個潮間帶的東西，位置對、不重複', [fg.filter((f) => !f.tidal).length, fg.filter((f) => f.tidal).length, new Set(fg.map((f) => `${f.x},${f.y}`)).size,
+  fg.every((f) => BEACH_MAP[f.y][f.x] === (f.tidal ? 'd' : 's') && FORAGE[f.item.slice(7)]?.where === (f.tidal ? 'tide' : 'sand'))], [BEACH_FINDS.sand, BEACH_FINDS.tide, 14, true]);
+check('同一天一樣、隔天換新；別的地方（還）沒有', [JSON.stringify(forageOf(4, '2026-11-08', 'beach')) === JSON.stringify(fg), JSON.stringify(forageOf(4, '2026-11-09', 'beach')) === JSON.stringify(fg), forageOf(4, '2026-11-08', 'hill').length], [true, false, 0]);
+check('撿到的東西能賣能送、有圖', Object.keys(FORAGE).every((id) => itemPrice('forage:' + id) > 0 && typeof forageSprite === 'function'), true);
+check('海鮮料理：蛤蜊湯、海鮮粥、黑鮪魚生魚片', [DISHES.clam_soup.need, DISHES.seafood_congee.need['forage:crab'], DISHES.tuna_sashimi.sell > itemPrice('fish:tuna')], [{ 'forage:clam': 3 }, 1, true]);
+check('海魚都有圖、海鮮料理都有顏色', seaFish.every((id) => FISH_COLORS[id]) && ['saury_grill', 'clam_soup', 'squid_sanbei', 'hairtail_sweet', 'seafood_congee', 'karasumi', 'tuna_sashimi'].every((id) => DISH_COLORS[id]), true);
+check('三個海邊成就', [achievementsMet({ ...zero, seaFishKinds: 5 }), achievementsMet({ ...zero, tuna: true }), achievementsMet({ ...zero, forageKinds: 6 }), achievementsMet({ ...zero, seaFishKinds: 4, forageKinds: 5 })],
+  [['seaFish5'], ['tuna'], ['beachcomber'], []]);
+check('即時位置可以是海邊', isAreaKey('beach'), true);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

@@ -4,16 +4,16 @@
 import {
   sprite, cropSprite, houseSprite, shopSprite, barnSprite, storeSprite, eaterySprite, homeSprite, fountainSprite, SEASON_GROUND,
   greenhouseSprite, machineSprite, machineSpotSprite, ghTileSprite, fruitTreeSprite, treeSpotSprite, hiveSprite, hiveSpotSprite,
-  stallSprite, caveMouthSprite, caveTileSprite, caveLadderSprite, chestSprite,
+  stallSprite, caveMouthSprite, caveTileSprite, caveLadderSprite, chestSprite, beachTileSprite, forageSprite,
 } from '/farm-sprites.js';
 
 const T = 16;            // 一格 16 像素
 const SPEED = 4.5;       // 每秒走幾格
-const WALK = new Set(['.', '=', 'F', 'p', ',', 'E']);
+const WALK = new Set(['.', '=', 'F', 'p', ',', 'E', 's', 'P']); // s 沙灘、P 防波堤；潮間帶 d 退潮才走得過去
 // 點了會走過去互動的東西：田、出貨箱、攤位、房子、動物小屋、溫室、加工機；小鎮的雜貨店、小吃店、民宅、噴水池、告示板；
 // 後山的洞窟入口；洞窟裡往上、往下的梯子和寶箱
 const TARGETS = 'FBSHAGRQONWJMYZV^vC';
-const EXIT_LABEL = { town: '🏘️ 往小鎮', farm: '🌾 回牧場', hill: '⛰️ 往後山' };
+const EXIT_LABEL = { town: '🏘️ 往小鎮', farm: '🌾 回牧場', hill: '⛰️ 往後山', beach: '🌊 往海邊' };
 const SEASON = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
 const SEASON_ORDER = ['spring', 'summer', 'autumn', 'winter'];
 const SEASON_MONTHS = { spring: '3～5 月', summer: '6～8 月', autumn: '9～11 月', winter: '12～2 月' };
@@ -51,6 +51,7 @@ const S = {
   trees: [], hives: [], treeKinds: {}, fruits: {}, treeSpots: [], hiveSpots: [], hive: { price: 1500, max: 3, days: 3 },
   market: null, beauty: null, harvestContest: { count: 0, rivals: [] }, marketOn: false,
   cave: null, caveInfo: { best: 0, stops: [1], floors: 20 },
+  tide: { override: null, windows: [] }, lowTide: false, forage: {}, forageKinds: {},
   tool: 'hoe', seed: 'bokchoy', busy: false,
   me: { x: 5, y: 5, d: 'd', step: null, path: [], pending: null, anim: 0 },
   others: new Map(), floats: [], keys: [], view: 3, cam: { x: 0, y: 0 },
@@ -87,7 +88,15 @@ const stallOn = (x, y) => S.marketOn && Object.keys(S.market.stalls)
   .find((id) => { const st = S.market.stalls[id]; return y === st.y && x >= st.x && x < st.x + (st.w || 2); });
 const stallAt = (x, y) => S.area === 'town' && stallOn(x, y);
 // 後山的石頭擋路，挖掉才過得去
-const walkable = (x, y) => WALK.has(terrain(x, y)) && !rockAt(x, y) && !stallAt(x, y);
+const walkable = (x, y) => { const c = terrain(x, y); return (WALK.has(c) || (c === 'd' && S.lowTide)) && !rockAt(x, y) && !stallAt(x, y); };
+// 潮汐：伺服器給接下來兩天的退潮時段，這裡照時間算現在是不是退潮
+function lowTideNow() {
+  if (S.tide.override) return S.tide.override === 'low';
+  const now = serverNow();
+  return S.tide.windows.some(([a, b]) => now >= a && now < b);
+}
+// 海邊今天撿得到的東西（潮間帶的只有退潮看得到）
+const forageAt = (x, y) => S.area === 'beach' && (S.forage.beach || []).find((f) => f.x === x && f.y === y && (!f.tidal || S.lowTide));
 const serverNow = () => Date.now() + S.offset;
 const inSeason = (id) => !!S.crops[id] && S.crops[id].seasons.includes(S.season);
 // 溫室裡什麼季節的種子都能種
@@ -108,6 +117,7 @@ function itemInfo(item) {
   if (kind === 'dish' && S.dishes[id]) return { name: S.dishes[id].name, icon: `dish_${id}@${S.dishes[id].shape}`, sell: S.dishes[id].sell, dish: id };
   if (kind === 'good' && S.goods[id]) return { name: S.goods[id].name, icon: 'good_' + id, sell: S.goods[id].sell, good: id };
   if (kind === 'fruit' && S.fruits[id]) return { name: S.fruits[id].name, icon: 'fruit_' + id, sell: S.fruits[id].sell };
+  if (kind === 'forage' && S.forageKinds[id]) return { name: S.forageKinds[id].name, icon: 'forage_' + id, sell: S.forageKinds[id].sell };
   if (kind === 'sapling' && S.treeKinds[id]) return { name: `${S.treeKinds[id].name}苗`, icon: `tree_${id}_0`, sell: 0, sapling: id };
   return null;
 }
@@ -157,7 +167,9 @@ function applyTown(t) {
 
 function applyState(st) {
   // 兩張地圖：牧場和小鎮；重新同步時留在原本那一張
-  S.maps = { farm: st.map, town: st.town || st.map, hill: st.hill || st.map, gh: st.greenhouse || st.map, cave: S.cave ? S.cave.map : st.map };
+  S.maps = { farm: st.map, town: st.town || st.map, hill: st.hill || st.map, gh: st.greenhouse || st.map, beach: st.beach || st.map, cave: S.cave ? S.cave.map : st.map };
+  if (st.tide) { S.tide = st.tide; S.lowTide = lowTideNow(); }
+  S.forage = st.forage || {}; S.forageKinds = st.forageKinds || {};
   if (st.cave) S.caveInfo = st.cave;
   S.exits = st.exits || {}; S.fishData = st.fish || {}; S.oreData = st.ores || {};
   S.rocks = st.rocks || []; S.dex = st.dex || [];
@@ -656,6 +668,7 @@ function homeIndex(x, y) {
 function switchArea() {
   const ex = (S.exits[S.area] || []).find((e) => e.x === Math.round(S.me.x) && e.y === Math.round(S.me.y));
   if (ex && ex.to === 'hill' && S.weather.today === 'typhoon') return toast('🌀 颱風天不要上山，很危險！');
+  if (ex && ex.to === 'beach' && S.weather.today === 'typhoon') return toast('🌀 颱風天不要去海邊，很危險！');
   if (ex) goArea(ex.to);
 }
 function goArea(to) {
@@ -669,7 +682,7 @@ function goArea(to) {
   S.fishing = null;
   closeModal();
   sendPos(false);
-  toast({ town: '🏘️ 來到小鎮了', farm: '🌾 回到牧場了', hill: '⛰️ 來到後山了', gh: '🌱 進到溫室了' }[to]);
+  toast({ town: '🏘️ 來到小鎮了', farm: '🌾 回到牧場了', hill: '⛰️ 來到後山了', gh: '🌱 進到溫室了', beach: '🌊 來到海邊了' }[to]);
 }
 
 /* ---------- 釣魚、挖礦 ---------- */
@@ -775,6 +788,13 @@ function openDex() {
     el('p', { class: 'sub', text: `魚 ${nf}/${Object.keys(S.fishData).length}・礦石 ${no}/${Object.keys(S.oreData).length}・料理 ${recipeIds().filter((id) => have.has('dish:' + id)).length}/${recipeIds().length}・加工品 ${Object.keys(S.goods).filter((id) => have.has('good:' + id)).length}/${Object.keys(S.goods).length}。第一次拿到會在聊天室說一聲。` }),
     el('h2', { class: 'section', text: '🎣 魚' }), ...section('fish', S.fishData),
     el('h2', { class: 'section', text: '⛏️ 礦石' }), ...section('ore', S.oreData),
+    el('h2', { class: 'section', text: `🐚 採集 ${Object.keys(S.forageKinds).filter((id) => have.has('forage:' + id)).length}/${Object.keys(S.forageKinds).length}` }),
+    ...Object.entries(S.forageKinds).map(([id, d]) => {
+      const got = have.has('forage:' + id);
+      return el('div', { class: 'row' + (got ? '' : ' off') }, got ? icon('forage_' + id) : el('span', { class: 'big', text: '❔' }),
+        el('div', { class: 'grow' }, el('div', { class: 'name', text: got ? d.name : '？？？' }),
+          el('div', { class: 'meta', text: got ? `賣 ${d.sell} 元` : d.where === 'tide' ? '提示：海邊的潮間帶，退潮時撿' : d.where === 'sand' ? '提示：海邊的沙灘' : '提示：到外面走走看看' })));
+    }),
     el('h2', { class: 'section', text: `🌳 水果 ${Object.keys(S.fruits).filter((id) => have.has('fruit:' + id)).length}/${Object.keys(S.fruits).length}` }),
     ...Object.entries(S.fruits).map(([id, d]) => {
       const got = have.has('fruit:' + id);
@@ -819,7 +839,8 @@ async function openAchievements() {
     el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
 }
 function fishHint(d, unknown) {
-  const where = d.where.map((w) => (w === 'pond' ? '牧場池塘' : '後山的湖')).join('、');
+  const WHERE = { pond: '牧場池塘', lake: '後山的湖', sea: '海邊', deep: '防波堤最前面' };
+  const where = d.where.filter((w) => !(w === 'deep' && d.where.includes('sea'))).map((w) => WHERE[w] || w).join('、');
   const when = d.time === 'day' ? '白天' : d.time === 'night' ? '晚上' : '';
   const seasons = d.seasons.length === 4 ? '' : d.seasons.map((x) => SEASON[x]).join('') + '天';
   const hint = [where, seasons, when].filter(Boolean).join('・');
@@ -1148,6 +1169,9 @@ function festivalInfo() {
     const [, m, d] = S.nextFestival.date.split('-').map(Number);
     out.push(el('p', { class: 'note', text: `下一個節日：${N.emoji} ${N.name}（${m}/${d}，還有 ${days} 天）` }));
   }
+  const lows = S.tide.windows.filter(([a, b]) => b > serverNow() && a < serverNow() + 24 * 3600000)
+    .map(([a, b]) => `${fmtClock(a)}～${fmtClock(b)}`);
+  out.push(el('p', { class: 'note', text: S.tide.override ? `🌊 海邊現在${S.lowTide ? '退潮' : '漲潮'}（測試模式）` : `🌊 接下來的退潮：${lows.join('、') || '—'}（退潮時潮間帶撿得到蛤蜊、螃蟹）` }));
   out.push(el('p', { class: 'note', text: S.marketOn ? '🏮 今晚小鎮南邊有夜市，晚上 12 點收攤！' : '🏮 每個星期六晚上 5 點，小鎮南邊有夜市。' }));
   out.push(el('p', { class: 'note', text: S.todayEvents.length ? `📅 行事曆上的今天：${S.todayEvents.join('、')}` : '📅 行事曆上今天沒有事情。行事曆寫了家人生日，當天牧場也會幫忙慶生喔！' }));
   out.push(el('div', { class: 'actions wrap' }, el('button', {
@@ -1196,6 +1220,7 @@ async function doAct(body) {
     if (r.beauty) S.beauty = r.beauty;
     if (r.seasonHarvest != null) S.harvestContest.count = r.seasonHarvest;
     if (r.cave) applyCave(r.cave);
+    if (r.forage) S.forage = r.forage;
     if (r.caveBest != null) S.caveInfo.best = r.caveBest;
     for (const a of r.newAchievements || []) setTimeout(() => toast(`🏆 達成成就「${a.name}」！全家拿到 ${a.reward} 元`), 900);
     if (r.build) applyBuild(r.build);
@@ -1240,7 +1265,8 @@ function useOn(x, y) {
   if (ch === 'M') return useMachine(machineAt(x, y));
   if (ch === 'Y') return useTree(S.treeSpots.findIndex((p) => p.x === x && p.y === y));
   if (ch === 'Z') return useHive(S.hiveSpots.findIndex((p) => p.x === x && p.y === y));
-  if (ch === 'W') return startFishing(x, y);
+  if (forageAt(x, y)) return pickForage(x, y);
+  if (ch === 'W' || (ch === 'd' && !S.lowTide)) return startFishing(x, y);
   if (rockAt(x, y)) return mineRock(x, y);
   if (ch === 'G') return openStore();
   if (ch === 'R') return openEatery();
@@ -1560,6 +1586,24 @@ function playRing() {
     el('div', { class: 'actions' }, el('button', { class: 'btn primary big-btn', type: 'button', text: '⭕ 丟！', onclick: () => g.tap() })));
 }
 
+/* ---------- 海邊 ---------- */
+
+function tideText() {
+  if (S.tide.override) return S.lowTide ? '🏖️ 退潮中' : '🌊 漲潮中';
+  const now = serverNow();
+  const cur = S.tide.windows.find(([a, b]) => now >= a && now < b);
+  if (cur) return `🏖️ 退潮中（${fmtClock(cur[1])} 開始漲潮）`;
+  const next = S.tide.windows.find(([a]) => a > now);
+  return next ? `🌊 漲潮中（${fmtClock(next[0])} 退潮）` : '🌊 漲潮中';
+}
+async function pickForage(x, y) {
+  let r;
+  try { r = await doAct({ action: 'forage', area: S.area, x, y }); } catch { return; }
+  const c = itemInfo(r.gained.item);
+  floatAt(x, y, `+1 ${c.name}`, '#fff3b0');
+  if (r.gained.first) toast(`🎉 第一次撿到${c.name}！圖鑑新增一種`);
+}
+
 /* ---------- 後山洞窟 ---------- */
 
 function applyCave(c) {
@@ -1859,6 +1903,15 @@ function tapTile(tx, ty, fx = tx + 0.5, fy = ty + 0.5) {
     if (!path.length && !me.step) arrive();
     return;
   }
+  // 海邊的貝殼、螃蟹：走過去撿（站在旁邊或上面都可以）
+  if (forageAt(tx, ty)) {
+    const path = findPath(cx, cy, (x, y) => Math.abs(x - tx) + Math.abs(y - ty) <= 1);
+    if (!path) return toast('走不過去');
+    me.path = path;
+    me.pending = { x: tx, y: ty, forage: true };
+    if (!path.length && !me.step) arrive();
+    return;
+  }
   // 後山的石頭：走到旁邊挖
   if (rockAt(tx, ty)) {
     const path = findPath(cx, cy, (x, y) => Math.abs(x - tx) + Math.abs(y - ty) === 1);
@@ -1868,7 +1921,7 @@ function tapTile(tx, ty, fx = tx + 0.5, fy = ty + 0.5) {
     if (!path.length && !me.step) arrive();
     return;
   }
-  const target = TARGETS.includes(ch);
+  const target = TARGETS.includes(ch) || (ch === 'd' && !S.lowTide); // 漲潮的潮間帶是水，可以釣魚
   if (target) {
     // 走到旁邊（上下左右）再面向它動作。房子、攤位、動物小屋好幾格大，
     // 點到中間那格也算：走到這棟建築任何一格的旁邊就好
@@ -1926,6 +1979,7 @@ function arrive() {
     return patPet(p.pet);
   }
   if (p.rock) { me.d = dirTo(me.x, me.y, p.x, p.y); return mineRock(p.x, p.y); }
+  if (p.forage) { if (p.x !== me.x || p.y !== me.y) me.d = dirTo(me.x, me.y, p.x, p.y); return pickForage(p.x, p.y); }
   if (p.stall) {
     for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
       const nx = Math.round(me.x) + dx, ny = Math.round(me.y) + dy;
@@ -1941,13 +1995,15 @@ function arrive() {
     if (terrain(nx, ny) === ch && (ch !== 'F' || (nx === p.x && ny === p.y))) { fx = nx; fy = ny; break; }
   }
   me.d = dirTo(me.x, me.y, fx, fy);
-  if (ch === 'W') return useOn(fx, fy); // 釣竿拋到面前那一格水
+  if (ch === 'W' || ch === 'd') return useOn(fx, fy); // 釣竿拋到面前那一格水
   useOn(p.x, p.y);
 }
 
 function update(dt) {
   const me = S.me;
   fishTick();
+  const lt = lowTideNow();
+  if (lt !== S.lowTide) { S.lowTide = lt; if (S.area === 'beach') toast(lt ? '🏖️ 退潮了！潮間帶可以走過去撿蛤蜊、螃蟹' : '🌊 漲潮了，潮間帶淹起來了'); }
   // 夜市開了／收攤了：村民換地方逛、時鐘旁邊的 🏮
   const mo = marketOpen();
   if (mo !== S.marketOn) {
@@ -2054,6 +2110,7 @@ function connectWs() {
       if (ev.seasonHarvest != null) S.harvestContest.count = ev.seasonHarvest;
       // 家人在同一層挖石頭、開寶箱：這邊的畫面也跟著變
       if (ev.cave && S.cave && ev.cave.floor === S.cave.floor) applyCave(ev.cave);
+      if (ev.forage) S.forage = ev.forage;
       if (ev.caveBest != null) S.caveInfo.best = ev.caveBest;
       if (ev.by !== S.meId) for (const a of ev.newAchievements || []) toast(`🏆 達成成就「${a.name}」！全家拿到 ${a.reward} 元`);
       if (ev.build) {
@@ -2097,6 +2154,12 @@ function resize() {
 
 function baseSprite(x, y, ch) {
   if (S.area === 'cave') return caveTileSprite(ch === 'X' ? 'X' : '.', (x * 7 + y * 13) % 3);
+  if (S.area === 'beach') {
+    const v = (x * 7 + y * 13) % 3, fr = Math.floor(Date.now() / 700) % 2;
+    if (ch === 's' || ch === 'P' || ch === 'k') return beachTileSprite(ch, v);
+    if (ch === 'd') return beachTileSprite(S.lowTide ? 'dl' : 'dh', v, fr);
+    if (ch === 'W') return beachTileSprite('W', v, fr);
+  }
   if (S.area === 'gh') {
     // 溫室裡：玻璃牆、石板地，田不會跟著季節變色
     if (ch === 'K' || ch === '.') return ghTileSprite(ch);
@@ -2269,6 +2332,11 @@ function draw() {
       }
     }
   }
+  // 海邊撿得到的東西
+  if (S.area === 'beach') for (const f of S.forage.beach || []) {
+    if (f.tidal && !S.lowTide) continue;
+    g.drawImage(sprite('forage_' + f.item.slice(7)), f.x * T, f.y * T + (Math.floor(Date.now() / 500 + f.x) % 2));
+  }
   // 好幾格大的建築：每一棟在它左上角那一格畫一次
   const ground = SEASON_GROUND[S.season];
   let homes = 0;
@@ -2315,7 +2383,7 @@ function draw() {
   if (!me.step && !me.path.length) {
     const [dx, dy] = DIRS[me.d];
     const fx = Math.round(me.x) + dx, fy = Math.round(me.y) + dy;
-    if (TARGETS.includes(terrain(fx, fy)) || rockAt(fx, fy) || stallAt(fx, fy)) g.drawImage(sprite('cursor'), fx * T, fy * T);
+    if (TARGETS.includes(terrain(fx, fy)) || rockAt(fx, fy) || stallAt(fx, fy) || forageAt(fx, fy)) g.drawImage(sprite('cursor'), fx * T, fy * T);
   }
 
   // 角色：依 y 排序，後面的先畫
@@ -2408,6 +2476,14 @@ function draw() {
   };
   if (S.area === 'hill') for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++)
     if (terrain(x, y) === 'V' && terrain(x - 1, y) !== 'V' && terrain(x, y - 1) !== 'V') sign(x + 0.5, y, '⛏️ 洞窟');
+  if (S.area === 'beach') {
+    const label = tideText();
+    g.font = `bold ${Math.round(13 * dpr)}px sans-serif`;
+    const w = g.measureText(label).width + 16 * dpr, ty = (S.padTop || 0) * dpr + 22 * dpr;
+    g.fillStyle = 'rgba(30,60,90,.85)'; g.fillRect(vw / 2 - w / 2, ty - 16 * dpr, w, 22 * dpr);
+    g.fillStyle = '#e8f6fb'; g.fillText(label, vw / 2, ty);
+    g.font = `bold ${Math.round(11 * dpr)}px sans-serif`;
+  }
   if (S.area === 'cave' && S.cave) {
     sign(S.cave.up.x, S.cave.up.y, '🪜 回地面');
     if (S.cave.ladder) sign(S.cave.ladder.x, S.cave.ladder.y, `⬇️ 第 ${S.cave.floor + 1} 層`);
