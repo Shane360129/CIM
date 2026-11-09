@@ -2860,7 +2860,11 @@ export class ChatServer {
       unread: rows.filter((m) => !m.seen).length,
     };
   }
-  // FARM_BUGS=day／night 只給本機測試用：不管現在幾點，出來的都是白天／晚上的蟲
+  // FARM_BUGS=day／night 只給本機測試用：不管現在幾點，出來的都是白天／晚上的蟲；
+  // FARM_BUGS=off：完全沒有蟲（測試捕蟲以前的功能用，免得蟲剛好停在要走的路上）
+  farmBugsOff() {
+    return !!this.env && this.env.FARM_BUGS === 'off';
+  }
   farmBugTime(slot) {
     const o = this.env && this.env.FARM_BUGS;
     return o === 'day' || o === 'night' ? o : bugTimeOf(slot);
@@ -2871,7 +2875,7 @@ export class ChatServer {
     const gone = new Set(this.sql.exec(`SELECT area, idx FROM farm_bugs WHERE conversation_id = ? AND day = ? AND slot = ?`, conversationId, today, slot)
       .toArray().map((r) => `${r.area}|${r.idx}`));
     const areas = {};
-    for (const area of BUG_AREAS) areas[area] = bugsOf(conversationId, today, slot, area, season, weather, this.farmBugTime(slot)).filter((b) => !gone.has(`${area}|${b.idx}`));
+    for (const area of BUG_AREAS) areas[area] = this.farmBugsOff() ? [] : bugsOf(conversationId, today, slot, area, season, weather, this.farmBugTime(slot)).filter((b) => !gone.has(`${area}|${b.idx}`));
     const h = new Date(now + 8 * 3600000).getUTCHours();
     const until = now - ((now + 8 * 3600000) % 3600000) + ((slot + 1) * BUG_SLOT_H - h) * 3600000;
     return { slot, until, areas };
@@ -3980,7 +3984,7 @@ export class ChatServer {
       const area = String(body.area || '');
       if (!BUG_AREAS.includes(area)) throw new HttpError(400, '這裡沒有蟲');
       const idx = Number(body.idx), slot = bugSlotOf(now);
-      const bug = Number.isInteger(idx) && bugsOf(conversationId, today, slot, area, season, weatherToday, this.farmBugTime(slot)).find((b) => b.idx === idx);
+      const bug = Number.isInteger(idx) && !this.farmBugsOff() && bugsOf(conversationId, today, slot, area, season, weatherToday, this.farmBugTime(slot)).find((b) => b.idx === idx);
       if (!bug || this.sql.exec(`SELECT 1 FROM farm_bugs WHERE conversation_id = ? AND day = ? AND slot = ? AND area = ? AND idx = ?`,
         conversationId, today, slot, area, idx).toArray().length) throw new HttpError(400, '蟲已經飛走了');
       spend(NET.energy);
