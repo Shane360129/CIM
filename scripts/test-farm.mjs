@@ -30,6 +30,7 @@ import {
   GRAZE_HOURS, GRAZE_ZONE, grazes, grazeWeatherOk, grazePenaltyDue, grazeTiles, HORSE, HORSE_ZONE, RIDE_AREAS, horseSpeed,
   SMITH_TOOLS, SMITH_TIERS, TIER_MAX, toolSize, toolEnergy, toolArea, areaEnergy, smithCheck, toolTitle,
   NET, BUGS, BUG_SLOT_H, BUG_COUNT, BUG_AREAS, bugSlotOf, bugTimeOf, bugKinds, bugsOf, bugCaught,
+  MAILBOX, MAIL_TEXT_MAX, PARCEL_DAILY, MAIL_KEEP, cleanMail, WELCOME_LETTER, seasonLetter, VILLAGER_LETTERS, letterWriter, weeklyLetter, birthdayThanks,
   GEAR, GEAR_MAX, SCARE_R, isSprinkler, gearCovers, sprinkledSet, scaredAt, gearCheck, crowsOf, CROW_MIN, CROW_PCT, ALWAYS_WET,
 } from '../src/farm.js';
 import { forageSprite, projectSprite, decoSprite, homeTileSprite, BUG_IDS } from '../public/farm-sprites.js';
@@ -419,7 +420,7 @@ check('感情很好但還沒聽過：從第一段開始說', storyDue(100, 0), 0
 const zero = { harvest: 0, shipped: 0, requests: 0, babies: 0, animals: 0, pets: 0, machines: 0, fishKinds: 0, dishKinds: 0, goodKinds: 0, amethyst: false, maxHearts: 0, minHearts: 0, stories: 0, gh: 0, house: 1 };
 check('什麼都還沒做：沒有成就', achievementsMet(zero), []);
 check('收成一次、領養寵物：兩個成就', achievementsMet({ ...zero, harvest: 1, pets: 1 }), ['harvest1', 'pet']);
-const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: Object.keys(MACHINES).length, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: Object.keys(FORAGE).length, beachKinds: 7, mushrooms: 3, projects: 4, decoFarm: 5, decoHome: 5, goldHarvest: 1, sprinklers: 4, whiteRice: true, teaKinds: 2, notes: 5, horse: true, graze: 10, smithTiers: 9, goldTools: 3, bugKinds: 20, broadtail: true };
+const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: Object.keys(MACHINES).length, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: Object.keys(FORAGE).length, beachKinds: 7, mushrooms: 3, projects: 4, decoFarm: 5, decoHome: 5, goldHarvest: 1, sprinklers: 4, whiteRice: true, teaKinds: 2, notes: 5, horse: true, graze: 10, smithTiers: 9, goldTools: 3, bugKinds: 20, broadtail: true, mailSent: 5, letters: 10 };
 check('全部做完：每個成就都達成', achievementsMet(full).length, ACHIEVEMENTS.length);
 check('成就的編號不重複、都有名字說明和獎金', new Set(ACHIEVEMENTS.map((a) => a.id)).size === ACHIEVEMENTS.length && ACHIEVEMENTS.every((a) => a.name && a.desc && a.reward > 0), true);
 check('「聽完所有故事」要 18 段', [achievementsMet({ ...full, stories: 17 }).includes('stories'), achievementsMet(full).includes('stories')], [false, true]);
@@ -865,6 +866,29 @@ check('昆蟲可以賣、有名字', [itemPrice('bug:broadtail'), itemPrice('bug
 check('小傑最愛獨角仙、喜歡蟬', [giftReaction('jie', 'bug:rhino_beetle'), giftReaction('jie', 'bug:cicada')], ['love', 'like']);
 check('成就：小小昆蟲學家、國寶蝴蝶', [achievementsMet({ ...zero, bugKinds: 10 }), achievementsMet({ ...zero, bugKinds: 9 }), achievementsMet({ ...zero, broadtail: true })],
   [['bugs10'], [], ['broadtail']]);
+
+console.log('\n--- 信箱（第二十五期） ---');
+check('信箱在房子右邊（x），不能走上去，下面那格走得到', [terrainAt(MAILBOX.x, MAILBOX.y), isWalkable(MAILBOX.x, MAILBOX.y), isWalkable(MAILBOX.x, MAILBOX.y + 1), seen.has(`${MAILBOX.x},${MAILBOX.y + 1}`)],
+  ['x', false, true, true]);
+check('一封信最多 80 個字、一天寄 5 封、信箱留 40 封', [MAIL_TEXT_MAX, PARCEL_DAILY, MAIL_KEEP], [80, 5, 40]);
+check('信的內容：去掉看不見的字元、前後空白，太長切掉', [cleanMail('  晚安\u200b\n  明天見 '), cleanMail(''), cleanMail(null), [...cleanMail('好'.repeat(200))].length], ['晚安 明天見', '', '', 80]);
+check('見面禮：郵差志明送 5 包小白菜種子', [WELCOME_LETTER.from, WELCOME_LETTER.item, WELCOME_LETTER.qty, WELCOME_LETTER.body.includes('信箱')], ['zhi', 'seed:bokchoy', 5, true]);
+check('換季：阿福伯寄 3 包這一季的種子（不是小白菜，也不是秧苗）', ['spring', 'summer', 'autumn', 'winter'].map((se) => {
+  const L = seasonLetter(se), id = (L.item || '').slice(5);
+  return L.from === 'fu' && L.qty === 3 && id !== 'bokchoy' && !!CROPS[id] && !CROPS[id].paddy && CROPS[id].seasons.includes(se) && L.title.endsWith('天到了');
+}), [true, true, true, true]);
+check('每位村民都有 3 封信，有標題和內容', Object.keys(VILLAGERS).every((id) => VILLAGER_LETTERS[id] && VILLAGER_LETTERS[id].length === 3
+  && VILLAGER_LETTERS[id].every((l) => l.title && l.body.length > 20)), true);
+check('這週誰寫信：感情最好的（至少 1 顆愛心；一樣好照順序）', [letterWriter({}), letterWriter({ jie: 9 }), letterWriter({ lin: 10 }), letterWriter({ lin: 30, ama: 30 }), letterWriter({ fu: 12, zhi: 55 })],
+  [null, null, 'lin', 'ama', 'zhi']);
+const wl = weeklyLetter(5, '2026-11-09', 'lin');
+check('每週的信：同一週同一封，附的東西是村民喜歡的', [JSON.stringify(wl) === JSON.stringify(weeklyLetter(5, '2026-11-09', 'lin')), VILLAGER_LETTERS.lin.some((l) => l.title === wl.title),
+  !wl.item || (VILLAGERS.lin.likes.includes(wl.item) && wl.qty === 1 && itemPrice(wl.item) > 0)], [true, true, true]);
+check('一年下來有時候附東西、有時候沒有', (() => { const n = Array.from({ length: 52 }, (_, i) => weeklyLetter(5, `w${i}`, 'mei').item).filter(Boolean).length; return n > 10 && n < 42; })(), true);
+check('村民生日送了禮物：感謝信附上他最喜歡的東西 2 個（不會送蟲）', Object.keys(VILLAGERS).map((id) => { const L = birthdayThanks(id); return !!L.item && L.qty === 2 && itemPrice(L.item) > 0 && !L.item.startsWith('bug:') && L.body.includes(VILLAGERS[id].name); }),
+  Object.keys(VILLAGERS).map(() => true));
+check('成就：魚雁往返、鎮上的好朋友', [achievementsMet({ ...zero, mailSent: 5 }), achievementsMet({ ...zero, letters: 10 }), achievementsMet({ ...zero, mailSent: 4, letters: 9 })],
+  [['mail5'], ['letters10'], []]);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

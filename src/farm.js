@@ -21,7 +21,7 @@ export const FARM_MAP = [
   'TT......T.JJJJJ..............T',
   'T..HHHH.n.JJJJJ.SS....T......T',
   'T..HHHH...JJJJJ.SS......WWW..T',
-  'T..HHHH..B.......MMMMMMMWWWW.T',
+  'T..HHHHx.B.......MMMMMMMWWWW.T',
   'T....=..................WWW..T',
   'T....=================.......T',
   'T....=...............=.AAAA..E',
@@ -984,6 +984,8 @@ export const ACHIEVEMENTS = [
   { id: 'goldtools', name: '金光閃閃', desc: '鋤頭、澆水壺、鐮刀都打成金的', reward: 2000, test: (s) => (s.goldTools || 0) >= 3 },
   { id: 'bugs10', name: '小小昆蟲學家', desc: '抓到 10 種昆蟲', reward: 500, test: (s) => (s.bugKinds || 0) >= 10 },
   { id: 'broadtail', name: '國寶蝴蝶', desc: '抓到寬尾鳳蝶', reward: 1000, test: (s) => !!s.broadtail },
+  { id: 'mail5', name: '魚雁往返', desc: '寄 5 封信給家人', reward: 300, test: (s) => (s.mailSent || 0) >= 5 },
+  { id: 'letters10', name: '鎮上的好朋友', desc: '收到 10 封村民寄來的信', reward: 500, test: (s) => (s.letters || 0) >= 10 },
   { id: 'stories', name: '說故事的人', desc: '聽完所有村民的故事', reward: 2000, test: (s) => s.stories >= Object.keys(STORIES).length * STORY_HEARTS.length },
 ];
 export const achievementsMet = (stats) => ACHIEVEMENTS.filter((a) => a.test(stats)).map((a) => a.id);
@@ -1688,3 +1690,86 @@ export function bugsOf(farmId, day, slot, area, season, weather, time = bugTimeO
 // 揮網抓不抓得到：同一隻蟲結果一樣（稀有的有機會飛走）
 export const bugCaught = (farmId, day, slot, area, idx, kind) =>
   seededRandom(`${farmId}|${day}|net|${slot}|${area}|${idx}`)() < ((BUGS[kind] || {}).catch || 1);
+
+// ---------------- 信箱：村民的信、家人的包裹（第二十五期） ----------------
+// 房子右邊的信箱（地圖上的 x）。郵差志明會把鎮上的人寄來的信送到這裡；家人之間也可以互相寄信、寄一道菜。
+// 有新信的時候信箱的小紅旗會豎起來
+export const MAILBOX = { x: 7, y: 4 };
+export const MAIL_TEXT_MAX = 80;   // 家人寫的信最多幾個字
+export const PARCEL_DAILY = 5;     // 每個人每天最多寄幾封
+export const MAIL_KEEP = 40;       // 信箱裡最多留幾封（舊的會被收起來）
+export function cleanMail(raw) {
+  const t = [...String(raw ?? '').replace(/[\u0000-\u001f\u007f\u200b-\u200f\u202a-\u202e\u2066-\u2069]/g, ' ').replace(/\s+/g, ' ').trim()];
+  return t.length ? t.slice(0, MAIL_TEXT_MAX).join('') : '';
+}
+export const WELCOME_LETTER = {
+  from: 'zhi', title: '你們家的信箱裝好了！', item: 'seed:bokchoy', qty: 5,
+  body: '我是郵差志明。房子旁邊幫你們裝了一個信箱，鎮上的人寄來的信、家人之間互相寄的信，我都會送到這裡。小紅旗豎起來就是有新信喔！先送你們幾包小白菜種子，當作見面禮。',
+};
+const SEASON_LETTER_BODY = {
+  spring: '春天到了，田裡的土鬆鬆軟軟的，最適合播種。雜貨店進了這一季的種子，先送你們幾包試試看，種出來記得拿來給我看看！',
+  summer: '夏天好熱啊！記得多澆水、多喝水。這幾包是夏天長得最好的種子，送給你們。颱風來之前，熟了的要趕快收喔。',
+  autumn: '秋天是收成的季節！天氣涼了，種什麼都長得好。送你們幾包秋天的種子，豐收比賽加油！',
+  winter: '冬天冷颼颼的，外面的田能種的不多，可以多去後山挖礦、在溫室裡種菜。這幾包是冬天的種子，送給你們。',
+};
+const SEASON_ZH = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
+// 換季的時候，阿福伯寄來這一季的種子（小白菜以外最便宜的那一種，3 包）
+export function seasonLetter(season) {
+  const crop = Object.keys(CROPS).filter((id) => id !== 'bokchoy' && !CROPS[id].paddy && inSeason(id, season))
+    .sort((a, b) => CROPS[a].seed - CROPS[b].seed)[0];
+  return { from: 'fu', title: `${SEASON_ZH[season]}天到了`, body: SEASON_LETTER_BODY[season], item: crop ? `seed:${crop}` : null, qty: crop ? 3 : 0 };
+}
+// 每週跟你們家感情最好的村民寫一封信來（隨機附上一樣他喜歡的東西）
+export const VILLAGER_LETTERS = {
+  fu: [
+    { title: '最近生意不錯', body: '最近店裡的生意不錯，都是託你們的福。你們家的作物又大又好，客人都問是誰種的。有空來店裡坐坐，我請你們喝茶。' },
+    { title: '下雨天的小常識', body: '下雨天不用澆水，田裡的作物會自己喝個飽。省下來的體力，可以去後山釣魚、挖礦。這是我年輕時學到的。' },
+    { title: '我年輕的時候', body: '我年輕的時候也種過田，那時候沒有大鋤頭，一格一格慢慢翻，翻到腰都直不起來。現在有鐵匠鋪幫忙，你們真幸福啊。' },
+  ],
+  mei: [
+    { title: '想出新菜', body: '小吃店最近想出新菜，可是一直想不到用什麼材料。你們家種的菜那麼新鮮，下次多帶一點來，我煮給你們吃！' },
+    { title: '別忘了吃飯', body: '看你們每天在田裡忙到天黑，可別忘了吃飯！肚子餓了就來小吃店，一碗滷肉飯馬上就好。' },
+    { title: '夜市的攤位', body: '星期六晚上的夜市你們去了嗎？雞排攤的老闆是我表哥，跟他說是美玲介紹的，說不定會多給你一塊。' },
+  ],
+  jie: [
+    { title: '我抓到獨角仙了！', body: '我昨天晚上在後山抓到一隻好大的獨角仙！可是媽媽說要放回去。你們家有捕蟲網嗎？我們來比賽誰抓得多！' },
+    { title: '西瓜', body: '老師說夏天要多吃西瓜，因為西瓜有很多水。你們家有種西瓜嗎？我可以幫忙吃！' },
+    { title: '考試一百分', body: '我這次數學考一百分！老師給我一張貼紙。我把貼紙貼在這封信上了（找不到的話，可能被郵差叔叔撕走了）。' },
+  ],
+  ama: [
+    { title: '天氣變涼了', body: '最近早晚比較涼，你們出門要多穿一件。我年輕的時候在田裡工作，常常忘記加衣服，現在膝蓋都會痛。' },
+    { title: '曬菜脯', body: '阿嬤最近在曬菜脯，曬得香香的。蘿蔔收成的時候不要都賣掉，留一點醃起來，配稀飯最好吃。' },
+    { title: '謝謝你們常來看我', body: '謝謝你們常常來陪阿嬤聊天。看到你們一家人一起種田，就想到我年輕的時候。要好好照顧身體喔。' },
+  ],
+  lin: [
+    { title: '小朋友的作業', body: '班上的小朋友這週的作業是觀察植物。我跟他們說鎮上有一座很棒的牧場，下次可以帶他們去參觀嗎？' },
+    { title: '紫斑蝶', body: '冬天的時候，後山會有好多紫斑蝶飛來過冬，那是很特別的景象。如果你們看到了，一定要拍照給我看！' },
+    { title: '看書的好天氣', body: '今天下午很安靜，我坐在噴水池旁邊看書。偶爾停下來，什麼都不做，也是很重要的事喔。' },
+  ],
+  zhi: [
+    { title: '送信的路上', body: '今天送信的路上，看到你們家田裡的作物長得好好，騎車經過都忍不住多看兩眼。辛苦了！' },
+    { title: '腳踏車壞了', body: '我的腳踏車鏈條掉了，今天是走路送信的。所以這封信可能晚了一點點，不好意思！' },
+    { title: '鳳梨', body: '你們家有種鳳梨嗎？我最喜歡吃鳳梨了，又甜又酸。如果種出來了，可不可以留一顆給我？' },
+  ],
+};
+// 這一週誰寫信：感情最好的那一位（至少 1 顆愛心；一樣好就照村民的順序）
+export function letterWriter(points) {
+  let best = null;
+  for (const id of Object.keys(VILLAGERS)) if (friendHearts(points[id] || 0) >= 1 && (!best || (points[id] || 0) > (points[best] || 0))) best = id;
+  return best;
+}
+export function weeklyLetter(farmId, week, villager) {
+  const L = VILLAGER_LETTERS[villager];
+  const rnd = seededRandom(`${farmId}|${week}|letter|${villager}`);
+  const pick = L[Math.floor(rnd() * L.length)];
+  const gifts = VILLAGERS[villager].likes.filter((i) => itemPrice(i) > 0);
+  const gift = gifts.length && rnd() < 0.5 ? gifts[Math.floor(rnd() * gifts.length)] : null;
+  return { from: villager, title: pick.title, body: pick.body, item: gift, qty: gift ? 1 : 0 };
+}
+// 村民生日那天送了禮物：隔天寄一封感謝信，附上他最喜歡的東西 2 個
+export function birthdayThanks(villager) {
+  const V = VILLAGERS[villager];
+  const gift = [...V.loves, ...V.likes].find((i) => itemPrice(i) > 0 && !i.startsWith('bug:')) || null;
+  return { from: villager, title: '謝謝你們的生日禮物', body: `謝謝你們記得我的生日，還送了禮物給我！我好開心。這是我的一點心意，請收下。——${V.name}`,
+    item: gift, qty: gift ? 2 : 0 };
+}

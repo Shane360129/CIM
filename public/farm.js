@@ -5,7 +5,7 @@ import {
   sprite, cropSprite, houseSprite, shopSprite, barnSprite, storeSprite, eaterySprite, homeSprite, fountainSprite, SEASON_GROUND,
   greenhouseSprite, machineSprite, machineSpotSprite, ghTileSprite, fruitTreeSprite, treeSpotSprite, hiveSprite, hiveSpotSprite,
   stallSprite, caveMouthSprite, caveTileSprite, caveLadderSprite, chestSprite, beachTileSprite, forageSprite, projectSprite, decoSprite, homeTileSprite,
-  gearSprite, crowSprite, paddySprite, teaBushSprite, teaBudsSprite, smithSprite, bugSprite,
+  gearSprite, crowSprite, paddySprite, teaBushSprite, teaBudsSprite, smithSprite, bugSprite, mailboxSprite,
 } from '/farm-sprites.js';
 
 const T = 16;            // 一格 16 像素
@@ -13,7 +13,7 @@ const SPEED = 4.5;       // 每秒走幾格
 const WALK = new Set(['.', '=', 'F', 'p', ',', 'E', 's', 'P', 'r']); // s 沙灘、P 防波堤、r 水田；潮間帶 d 退潮才走得過去
 // 點了會走過去互動的東西：田、出貨箱、攤位、房子、動物小屋、溫室、加工機；小鎮的雜貨店、小吃店、民宅、噴水池、告示板；
 // 後山的洞窟入口；洞窟裡往上、往下的梯子和寶箱；小鎮修復計畫的土地公廟、老車站、農會、海邊的漁會
-const TARGETS = 'FBSHAGRQONWJMYZV^vCUILDrenb'; // r 水田、e 茶樹、n 家庭留言板、b 鐵匠鋪
+const TARGETS = 'FBSHAGRQONWJMYZV^vCUILDrenbx'; // r 水田、e 茶樹、n 家庭留言板、b 鐵匠鋪、x 信箱
 const PROJECT_AT = { U: 'temple', I: 'station', L: 'coop', D: 'harbor' };
 const EXIT_LABEL = { town: '🏘️ 往小鎮', farm: '🌾 回牧場', hill: '⛰️ 往後山', beach: '🌊 往海邊', terrace: '🍵 往梯田' };
 const SEASON = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
@@ -53,6 +53,7 @@ const S = {
   graze: { day: null, out: false }, grazeTiles: [], horse: null, horseInfo: {}, rideAreas: [],
   smithTools: {}, smithTiers: [],
   bugs: { areas: {} }, bugKinds: {}, net: false, netInfo: {},
+  mail: { list: [], unread: 0 }, mailInfo: {},
   pondTiles: [], pets: {}, petKinds: {}, petZoneTiles: [], petPos: {}, trails: new Map(),
   stories: {}, storyHearts: [2, 5, 8], achievementList: [], achievements: {}, thisWeek: null, activity: null, game: null,
   trees: [], hives: [], treeKinds: {}, fruits: {}, treeSpots: [], hiveSpots: [], hive: { price: 1500, max: 3, days: 3 },
@@ -247,6 +248,7 @@ function applyState(st) {
   S.notes = st.notes || []; S.emoteList = st.emotes || [];
   S.smithTools = st.smithTools || {}; S.smithTiers = st.smithTiers || [];
   S.bugs = st.bugs || { areas: {} }; S.bugKinds = st.bugKinds || {}; S.net = !!st.net; S.netInfo = st.netInfo || {};
+  S.mail = st.mail || { list: [], unread: 0 }; S.mailInfo = st.mailInfo || {};
   S.graze = st.graze || { day: null, out: false }; S.horse = st.horse || null; S.horseInfo = st.horseInfo || {}; S.rideAreas = st.rideAreas || [];
   // 放牧的草地：後山南邊（跟伺服器的 grazeTiles 一樣）
   S.grazeTiles = [];
@@ -1365,6 +1367,7 @@ async function doAct(body) {
     if (r.notes) S.notes = r.notes;
     if (r.bugs) S.bugs = r.bugs;
     if (r.net) S.net = true;
+    if (r.mail) S.mail = r.mail;
     if (r.graze) S.graze = r.graze;
     if (r.horse !== undefined) { S.horse = r.horse; renderRide(); }
     if (r.crows) S.crows = r.crows;
@@ -1407,6 +1410,7 @@ function useOn(x, y) {
   }
   if (ch === 'B') return openBin();
   if (ch === 'n') return openNotes();
+  if (ch === 'x') return openMailbox();
   if (ch === 'S') return openShop();
   if (ch === 'H') return openKitchen();
   if (ch === 'A') return openBarn();
@@ -1548,6 +1552,64 @@ function openNotes() {
     ...(rows.length ? rows : [el('div', { class: 'empty', text: '還沒有人留言，寫第一張吧' })]),
     el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
   setTimeout(() => input.focus(), 50);
+}
+
+// ---------- 信箱（第二十五期） ----------
+const mailFrom = (m) => (m.fromUser ? (S.members.get(m.fromUser) || {}).name || '家人'
+  : m.from && S.villagers[m.from] ? S.villagers[m.from].name : '郵差志明');
+const mailDate = (t) => { const d = new Date(t + 8 * 3600000); return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`; };
+const mailItem = (m) => (m.item ? `${(itemInfo(m.item) || { name: m.item }).name}${m.qty > 1 ? ' ×' + m.qty : ''}` : '');
+function openMailbox() {
+  const rows = (S.mail.list || []).map((m) => el('div', { class: 'row' + (m.read ? '' : ' unread') },
+    el('span', { class: 'big', text: m.fromUser ? '💌' : '✉️' }),
+    el('div', { class: 'grow' }, el('div', { class: 'name', text: (m.read ? '' : '🔴 ') + m.title }),
+      el('div', { class: 'meta', text: `${mailFrom(m)}・${mailDate(m.at)}${m.item ? `・附上${mailItem(m)}${m.claimed ? '（收下了）' : ''}` : ''}` })),
+    el('button', { class: 'btn', type: 'button', text: '打開', onclick: () => openLetter(m) })));
+  openModal(el('h2', { text: '📮 信箱' }),
+    el('p', { class: 'sub', text: '郵差志明會把鎮上的人寄來的信送到這裡。家人之間也可以互相寄信，還可以附上一道菜：對方打開信就會吃掉、補體力。' }),
+    ...(rows.length ? rows : [el('div', { class: 'empty', text: '還沒有信' })]),
+    el('div', { class: 'actions' },
+      el('button', { class: 'btn primary', type: 'button', text: '✏️ 寄信給家人', onclick: openWriteMail }),
+      el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
+}
+async function openLetter(m) {
+  let g = null;
+  if (!m.read || (m.item && !m.claimed)) {
+    try { g = (await doAct({ action: 'mail_open', id: m.id })).gained; } catch { return; }
+  }
+  const got = g && g.item ? (g.ate ? `🍽️ 吃了${itemInfo(g.item).name}，體力 +${g.energy}` : `📦 收下了${mailItem(g)}，放進倉庫了`)
+    : m.item && m.claimed ? `附上的${mailItem(m)}已經收下了` : null;
+  openModal(el('h2', { text: `✉️ ${m.title}` }),
+    el('div', { class: 'letter' }, el('p', { text: m.body }), el('p', { class: 'sign', text: `— ${mailFrom(m)}` })),
+    got ? el('p', { class: 'note', text: got }) : null,
+    el('div', { class: 'actions' },
+      el('button', { class: 'btn', type: 'button', text: '回信箱', onclick: openMailbox }),
+      el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
+}
+function openWriteMail() {
+  const others = [...S.members.values()].filter((m) => m.id !== S.meId);
+  if (!others.length) return toast('這個聊天室只有你一個人');
+  const to = el('select', { 'aria-label': '寄給誰' }, ...others.map((m) => el('option', { value: String(m.id), text: m.name })));
+  const dishes = Object.keys(S.items).filter((k) => k.startsWith('dish:') && S.items[k] > 0 && S.dishes[k.slice(5)]);
+  const item = el('select', { 'aria-label': '附上一道菜' }, el('option', { value: '', text: '不附東西' }),
+    ...dishes.map((k) => el('option', { value: k, text: `${itemInfo(k).name}（體力 +${S.dishes[k.slice(5)].energy}，倉庫有 ${S.items[k]} 份）` })));
+  const max = S.mailInfo.textMax || 80;
+  const text = el('input', { type: 'text', maxlength: String(max), placeholder: `想說的話（最多 ${max} 個字）`, 'aria-label': '信的內容' });
+  const send = el('button', { class: 'btn primary', type: 'button', text: '寄出' });
+  send.onclick = async () => {
+    if (!text.value.trim()) return toast('寫幾句話吧');
+    try {
+      await doAct({ action: 'mail_send', to: Number(to.value), text: text.value, ...(item.value ? { item: item.value } : {}) });
+      toast('📮 寄出去了！'); openMailbox();
+    } catch {}
+  };
+  openModal(el('h2', { text: '✏️ 寄信給家人' }),
+    el('p', { class: 'sub', text: `附上的菜，對方打開信就會吃掉補體力（體力是滿的就放進倉庫）。一個人一天最多寄 ${S.mailInfo.daily || 5} 封。` }),
+    el('div', { class: 'row' }, el('span', { class: 'big', text: '👤' }), el('div', { class: 'grow' }, el('div', { class: 'name', text: '寄給' }), to)),
+    el('div', { class: 'row' }, el('span', { class: 'big', text: '🍱' }), el('div', { class: 'grow' }, el('div', { class: 'name', text: '附上一道菜' }), item)),
+    el('div', { class: 'row' }, el('span', { class: 'big', text: '✏️' }), el('div', { class: 'grow' }, el('div', { class: 'name', text: '想說的話' }), text)),
+    el('div', { class: 'actions' }, send, el('button', { class: 'btn', type: 'button', text: '取消', onclick: openMailbox })));
+  setTimeout(() => text.focus(), 50);
 }
 
 // ---------- 捕蟲（第二十四期） ----------
@@ -2669,6 +2731,9 @@ function connectWs() {
       const area = ev.a || 'farm';
       if (!o.seen || o.a !== area) { o.x = ev.x; o.y = ev.y; o.seen = true; } // 換地圖了就直接出現在新位置
       o.tx = ev.x; o.ty = ev.y; o.d = ev.d; o.m = ev.m; o.a = area; o.h = !!ev.h;
+    } else if (ev.type === 'farm-mail') {
+      // 家人寄信給我：重新拿一次信箱（別人的信看不到）
+      if (ev.to === S.meId) loadState().then(() => toast('📮 有人寄信給你，到房子旁邊的信箱看看')).catch(() => {});
     } else if (ev.type === 'farm-horse') {
       S.horse = ev.horse; renderRide();
     } else if (ev.type === 'farm-emote') {
@@ -2900,6 +2965,7 @@ function draw() {
       if (ch === 'T') g.drawImage(treeSprite(x, y), x * T, y * T);
       else if (ch === 'e') g.drawImage(teaBushSprite(S.season), x * T, y * T);
       else if (ch === 'n') g.drawImage(sprite('familyboard_' + Math.min(6, S.notes.length)), x * T, y * T);
+      else if (ch === 'x') g.drawImage(mailboxSprite(S.mail.unread > 0), x * T, y * T);
       else if (ch === '^' || ch === 'v') g.drawImage(caveLadderSprite(ch === 'v'), x * T, y * T);
       else if (ch === 'C') g.drawImage(chestSprite(!!(S.cave && S.cave.chest && S.cave.chest.opened)), x * T, y * T);
       else if (ch === 'f') g.drawImage(sprite('fence'), x * T, y * T);

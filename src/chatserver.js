@@ -28,6 +28,7 @@ import {
   GRAZE_HOURS, grazes, grazeWeatherOk, grazePenaltyDue, HORSE, RIDE_AREAS,
   SMITH_TOOLS, SMITH_TIERS, toolSize, toolEnergy, toolArea, areaEnergy, smithCheck, toolTitle,
   NET, BUGS, BUG_AREAS, BUG_SLOT_H, bugSlotOf, bugTimeOf, bugsOf, bugCaught,
+  MAIL_TEXT_MAX, PARCEL_DAILY, MAIL_KEEP, cleanMail, WELCOME_LETTER, seasonLetter, letterWriter, weeklyLetter, birthdayThanks,
   FERTS, growRate, QUALITY, harvestQuality, withQuality, GEAR, isSprinkler, gearCovers, sprinkledSet, scaredAt, gearCheck, crowsOf, ALWAYS_WET,
 } from './farm.js';
 const ANIMAL_EMOJI = { chicken: '🐔', duck: '🦆', cow: '🐄', sheep: '🐑' };
@@ -587,6 +588,35 @@ CREATE TABLE IF NOT EXISTS farm_bugs (
 );
 `;
 
+// 信箱：村民寄來的信（key 讓同一封不會寄兩次）、家人寄的信（to_user 寄給誰；全家的信是 NULL）；
+// 附的東西誰收了；每個人讀過哪幾封；太舊的收起來（hidden）
+const SCHEMA_V28 = `
+CREATE TABLE IF NOT EXISTS farm_mail (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  conversation_id INTEGER NOT NULL,
+  key TEXT,
+  to_user INTEGER,
+  from_villager TEXT,
+  from_user INTEGER,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  item TEXT,
+  qty INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  claimed_by INTEGER,
+  claimed_at INTEGER,
+  hidden INTEGER NOT NULL DEFAULT 0
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_farm_mail_key ON farm_mail (conversation_id, key);
+CREATE INDEX IF NOT EXISTS idx_farm_mail ON farm_mail (conversation_id, id);
+CREATE TABLE IF NOT EXISTS farm_mail_read (
+  conversation_id INTEGER NOT NULL,
+  mail_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  PRIMARY KEY (conversation_id, mail_id, user_id)
+);
+`;
+
 // 訊息中的網址：http(s):// 或 www. 開頭，遇到空白、引號或中文標點即結束
 // （與前端 public/app.js 的 URL_RE / trimUrlTail 保持一致）
 const URL_RE = /(?:https?:\/\/|www\.)[^\s<>"'`\u3000、，。！？：；（）「」『』【】《》〈〉…]+/i;
@@ -891,6 +921,10 @@ export class ChatServer {
       if (v < 27) {
         this.sql.exec(SCHEMA_V27);
         this.setSetting('schema_version', '27');
+      }
+      if (v < 28) {
+        this.sql.exec(SCHEMA_V28);
+        this.setSetting('schema_version', '28');
       }
     });
     // 心跳不喚醒 DO：客戶端送 "ping"，執行環境自動回 "pong"
@@ -2023,7 +2057,7 @@ export class ChatServer {
     if (remaining.length === 0) {
       this.sql.exec(`DELETE FROM messages WHERE conversation_id = ?`, conversationId);
       this.sql.exec(`DELETE FROM conversations WHERE id = ?`, conversationId);
-      for (const t of ['farms', 'farm_tiles', 'farm_items', 'farm_players', 'farm_animals', 'farm_friends', 'farm_mined', 'farm_dex', 'farm_machines', 'farm_pets', 'farm_stats', 'farm_weekly', 'farm_achievements', 'farm_festival_play', 'farm_trees', 'farm_hives', 'farm_market_play', 'farm_beauty', 'farm_cave_mined', 'farm_cave_chests', 'farm_foraged', 'farm_bundles', 'farm_projects', 'farm_daily', 'farm_decos', 'farm_gear', 'farm_notes', 'farm_bugs'])
+      for (const t of ['farms', 'farm_tiles', 'farm_items', 'farm_players', 'farm_animals', 'farm_friends', 'farm_mined', 'farm_dex', 'farm_machines', 'farm_pets', 'farm_stats', 'farm_weekly', 'farm_achievements', 'farm_festival_play', 'farm_trees', 'farm_hives', 'farm_market_play', 'farm_beauty', 'farm_cave_mined', 'farm_cave_chests', 'farm_foraged', 'farm_bundles', 'farm_projects', 'farm_daily', 'farm_decos', 'farm_gear', 'farm_notes', 'farm_bugs', 'farm_mail', 'farm_mail_read'])
         this.sql.exec(`DELETE FROM ${t} WHERE conversation_id = ?`, conversationId);
     } else {
       this.addSystemMessage(conversationId, `${me.display_name} 離開了群組`);
@@ -2139,6 +2173,7 @@ export class ChatServer {
         farmDecos: this.sql.exec(`SELECT * FROM farm_decos`).toArray(),
         farmGear: this.sql.exec(`SELECT * FROM farm_gear`).toArray(),
         farmNotes: this.sql.exec(`SELECT * FROM farm_notes`).toArray(),
+        farmMail: this.sql.exec(`SELECT * FROM farm_mail WHERE hidden = 0`).toArray(),
         messageCount: this.sql.exec(`SELECT COUNT(*) AS c FROM messages`).one().c,
       });
     }
@@ -2706,6 +2741,52 @@ export class ChatServer {
     const n = Number(this.env && this.env.FARM_FAST_TREES);
     return Number.isFinite(n) && n > 0 ? n : null;
   }
+  // 信箱：寄一封信（key 一樣的只寄一次）；回傳新信的 id（已經寄過就是 null）。太舊的收起來
+  farmMailAdd(conversationId, letter, key, now, toUser = null, fromUser = null) {
+    const row = this.sql.exec(`INSERT INTO farm_mail (conversation_id, key, to_user, from_villager, from_user, title, body, item, qty, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING RETURNING id`,
+      conversationId, key, toUser, fromUser ? null : letter.from || null, fromUser, letter.title, letter.body, letter.item || null, letter.qty || 0, now).toArray()[0];
+    if (!row) return null;
+    if (!fromUser) this.farmStat(conversationId, 'letters', 1);
+    // 最多留 MAIL_KEEP 封：家人的舊信刪掉；村民的信留著 key（才不會再寄一次），只是收起來
+    const cut = this.sql.exec(`SELECT id FROM farm_mail WHERE conversation_id = ? AND hidden = 0 ORDER BY id DESC LIMIT 1 OFFSET ?`, conversationId, MAIL_KEEP).toArray()[0];
+    if (cut) {
+      this.sql.exec(`DELETE FROM farm_mail WHERE conversation_id = ? AND id <= ? AND key IS NULL`, conversationId, cut.id);
+      this.sql.exec(`UPDATE farm_mail SET hidden = 1 WHERE conversation_id = ? AND id <= ?`, conversationId, cut.id);
+      this.sql.exec(`DELETE FROM farm_mail_read WHERE conversation_id = ? AND mail_id <= ?`, conversationId, cut.id);
+    }
+    return row.id;
+  }
+  // 打開牧場的時候，郵差把該送的信送來：見面禮、每週感情最好的村民寫的信、村民生日送了禮物的感謝信
+  farmMailDeliver(conversationId, now) {
+    const today = taiwanDay(now);
+    this.farmMailAdd(conversationId, WELCOME_LETTER, 'welcome', now);
+    const week = this.farmWeek(today);
+    if (!this.sql.exec(`SELECT 1 FROM farm_mail WHERE conversation_id = ? AND key = ?`, conversationId, `week:${week}`).toArray().length) {
+      const points = Object.fromEntries(Object.keys(VILLAGERS).map((id) => [id, this.farmFriendRow(conversationId, id).points]));
+      const who = letterWriter(points);
+      if (who && this.farmMailAdd(conversationId, weeklyLetter(conversationId, week, who), `week:${week}`, now))
+        this.addSystemMessage(conversationId, `📮 郵差志明送來了一封${VILLAGERS[who].name}寫的信，到房子旁邊的信箱看看吧`);
+    }
+    const yday = taiwanDay(now - 86400000);
+    for (const id of Object.keys(VILLAGERS)) {
+      if (VILLAGERS[id].birthday !== yday.slice(5)) continue;
+      if (this.farmFriendRow(conversationId, id).gift_day !== yday) continue;
+      if (this.farmMailAdd(conversationId, birthdayThanks(id), `bday:${id}:${yday.slice(0, 4)}`, now))
+        this.addSystemMessage(conversationId, `📮 ${VILLAGERS[id].name}寄來了一封感謝信，謝謝你們送的生日禮物`);
+    }
+  }
+  // 我看得到的信（寄給全家的、寄給我的），新的在前面；還沒讀的有幾封
+  farmMailPub(conversationId, userId) {
+    const rows = this.sql.exec(`SELECT m.*, (SELECT 1 FROM farm_mail_read r WHERE r.conversation_id = m.conversation_id AND r.mail_id = m.id AND r.user_id = ?) AS seen
+      FROM farm_mail m WHERE m.conversation_id = ? AND m.hidden = 0 AND (m.to_user IS NULL OR m.to_user = ?) ORDER BY m.id DESC LIMIT 30`,
+    userId, conversationId, userId).toArray();
+    return {
+      list: rows.map((m) => ({ id: m.id, from: m.from_villager, fromUser: m.from_user, toUser: m.to_user, title: m.title, body: m.body,
+        item: m.item, qty: m.qty, at: m.created_at, claimed: !!m.claimed_by, claimedBy: m.claimed_by, read: !!m.seen })),
+      unread: rows.filter((m) => !m.seen).length,
+    };
+  }
   // FARM_BUGS=day／night 只給本機測試用：不管現在幾點，出來的都是白天／晚上的蟲
   farmBugTime(slot) {
     const o = this.env && this.env.FARM_BUGS;
@@ -3037,6 +3118,7 @@ export class ChatServer {
       seaFishKinds: dex.filter((i) => i.startsWith('fish:') && FISH[i.slice(5)]?.sea).length, tuna: dex.includes('fish:tuna'),
       forageKinds: dex.filter((i) => i.startsWith('forage:')).length,
       bugKinds: dex.filter((i) => i.startsWith('bug:')).length, broadtail: dex.includes('bug:broadtail'),
+      mailSent: st.mail_sent || 0, letters: st.letters || 0,
       beachKinds: dex.filter((i) => i.startsWith('forage:') && ['sand', 'tide'].includes(FORAGE[i.slice(7)]?.where)).length,
       mushrooms: dex.filter((i) => i.startsWith('forage:') && FORAGE[i.slice(7)]?.mushroom).length,
       projects: one(`SELECT COUNT(*) AS n FROM farm_projects WHERE conversation_id = ?`, conversationId),
@@ -3346,6 +3428,7 @@ export class ChatServer {
         const names = Object.keys(CROPS).filter((c) => inSeason(c, season)).map((c) => CROPS[c].name);
         this.addSystemMessage(conversationId,
           `${SEASON_EMOJI[season]} 家族牧場進入${SEASON_NAME[season]}天了！這一季可以種：${names.join('、')}`);
+        this.farmMailAdd(conversationId, seasonLetter(season), `season:${taiwanDay(now)}`, now);
         // 上一季的豐收比賽：全家收成幾次，跟另外三戶人家比（一次都沒收就不算參加）
         const count = this.sql.exec(`SELECT value FROM farm_stats WHERE conversation_id = ? AND key = 'season_harvest'`, conversationId).toArray()[0]?.value || 0;
         if (count > 0) {
@@ -3376,6 +3459,7 @@ export class ChatServer {
     this.farmCrows(conversationId, farm, now);
     this.farmGrazeCheck(conversationId, farm, now);
     this.farmSmithCheck(conversationId, farm, taiwanDay(now));
+    this.farmMailDeliver(conversationId, now);
     const tiles = this.sql
       .exec(`SELECT * FROM farm_tiles WHERE conversation_id = ?`, conversationId)
       .toArray()
@@ -3441,6 +3525,7 @@ export class ChatServer {
       graze: this.farmGrazePub(farm, today), horse: this.farmHorsePub(conversationId, farm, today), horseInfo: HORSE, rideAreas: RIDE_AREAS,
       smithTools: SMITH_TOOLS, smithTiers: SMITH_TIERS,
       bugs: this.farmBugsPub(conversationId, now), bugKinds: BUGS, net: !!farm.net, netInfo: NET,
+      mail: this.farmMailPub(conversationId, me.id), mailInfo: { textMax: MAIL_TEXT_MAX, daily: PARCEL_DAILY },
       gear: this.farmGearPub(conversationId), gearKinds: GEAR, ferts: FERTS, quality: QUALITY, crows: this.farmCrowsPub(farm, today),
       harvestContest: { count: this.sql.exec(`SELECT value FROM farm_stats WHERE conversation_id = ? AND key = 'season_harvest'`, conversationId).toArray()[0]?.value || 0, rivals: HARVEST_RIVALS },
       treeSpots: TREE_SPOTS, hiveSpots: HIVE_SPOTS, treeKinds: TREES, fruits: FRUITS, hive: HIVE,
@@ -3485,6 +3570,7 @@ export class ChatServer {
     let animalsChanged = false;
     let townChanged = smithDone;
     let bugsChanged = false;
+    let mailChanged = false;
     let rocksChanged = false;
     let dexChanged = false;
     let machinesChanged = false;
@@ -3688,6 +3774,45 @@ export class ChatServer {
       farm.graze_back = 1;
       gained = { back: true };
       grazeChanged = true;
+    } else if (action === 'mail_open') {
+      // 打開一封信：記成讀過；附的東西第一個打開的人收下（家人寄來的菜直接吃掉補體力，體力滿的話放進倉庫）
+      const id = Number(body.id);
+      const m = Number.isInteger(id) && this.sql.exec(`SELECT * FROM farm_mail WHERE conversation_id = ? AND id = ? AND hidden = 0`, conversationId, id).toArray()[0];
+      if (!m || (m.to_user && m.to_user !== me.id)) throw new HttpError(404, '找不到這封信');
+      this.sql.exec(`INSERT OR IGNORE INTO farm_mail_read (conversation_id, mail_id, user_id) VALUES (?, ?, ?)`, conversationId, id, me.id);
+      gained = { mail: id };
+      if (m.item && m.qty > 0 && !m.claimed_by) {
+        this.sql.exec(`UPDATE farm_mail SET claimed_by = ?, claimed_at = ? WHERE conversation_id = ? AND id = ?`, me.id, now, conversationId, id);
+        const dish = m.from_user && m.item.startsWith('dish:') && DISHES[m.item.slice(5)];
+        if (dish && p.energy < energyMax) {
+          const before = p.energy;
+          p.energy = Math.min(energyMax, p.energy + dish.energy);
+          gained = { mail: id, item: m.item, qty: 1, ate: true, energy: p.energy - before };
+        } else {
+          this.farmAddItem(conversationId, m.item, m.qty);
+          gained = { mail: id, item: m.item, qty: m.qty, ate: false };
+        }
+      }
+      mailChanged = true;
+    } else if (action === 'mail_send') {
+      // 寄信給家人：寫幾句話，可以附上一道菜（從倉庫拿）。一個人一天最多寄 PARCEL_DAILY 封
+      const to = Number(body.to);
+      if (!Number.isInteger(to) || to === me.id || !this.memberIds(conversationId).includes(to)) throw new HttpError(400, '要寄給這個聊天室的家人');
+      const text = cleanMail(body.text);
+      if (!text) throw new HttpError(400, '寫幾句話吧');
+      const item = body.item ? String(body.item) : null;
+      if (item && (!item.startsWith('dish:') || !Object.hasOwn(DISHES, item.slice(5)))) throw new HttpError(400, '只能附上一道菜');
+      if (item && (this.farmItems(conversationId)[item] || 0) < 1) throw new HttpError(400, `倉庫裡沒有${itemName(item)}`);
+      const dayStart = Date.parse(today + 'T00:00:00Z') - 8 * 3600000;
+      const sent = this.sql.exec(`SELECT COUNT(*) AS n FROM farm_mail WHERE conversation_id = ? AND from_user = ? AND created_at >= ?`, conversationId, me.id, dayStart).one().n;
+      if (sent >= PARCEL_DAILY) throw new HttpError(400, `今天已經寄了 ${PARCEL_DAILY} 封，明天再寄`);
+      if (item) this.farmAddItem(conversationId, item, -1);
+      const toName = this.userNames().get(to) || '家人';
+      const mid = this.farmMailAdd(conversationId, { title: `${me.display_name}寄來的信`, body: text, item, qty: item ? 1 : 0 }, null, now, to, me.id);
+      this.farmStat(conversationId, 'mail_sent', 1);
+      this.addSystemMessage(conversationId, `📮 ${me.display_name} 寄了一封信給 ${toName}${item ? `，還附上了${itemName(item)}` : ''}`);
+      this.sendToFarm(conversationId, { type: 'farm-mail', to });
+      gained = { sent: mid, to };
     } else if (action === 'buy_net') {
       // 雜貨店的捕蟲網：全家一支
       if (farm.net) throw new HttpError(400, '已經有捕蟲網了');
@@ -4489,6 +4614,7 @@ export class ChatServer {
     const gear = gearChanged ? this.farmGearPub(conversationId) : undefined;
     const notes = notesChanged ? this.farmNotesPub(conversationId) : undefined;
     const bugs = bugsChanged ? this.farmBugsPub(conversationId, now) : undefined;
+    const mail = mailChanged ? this.farmMailPub(conversationId, me.id) : undefined;
     const net = action === 'buy_net' ? true : undefined;
     const graze = grazeChanged ? this.farmGrazePub(farm, today) : undefined;
     const horse = horseChanged ? this.farmHorsePub(conversationId, farm, today) : undefined;
@@ -4514,7 +4640,7 @@ export class ChatServer {
       projects: projects ? { done: projects.done, given: projects.given } : undefined, decos, gear, crows, notes, graze, horse, bugs, net, now,
     });
     return json({ ok: true, energy: p.energy, energyMax: energyMaxOf(farm.house_level), tile: tileOut, tiles, money, items,
-      animals, town, rocks, dex, machines, build, pets, achievements, newAchievements, trees, hives, market, beauty, seasonHarvest, cave: caveOut || undefined, caveBest, forage, projects, decos, gear, crows, notes, graze, horse, bugs, net, gained, now });
+      animals, town, rocks, dex, machines, build, pets, achievements, newAchievements, trees, hives, market, beauty, seasonHarvest, cave: caveOut || undefined, caveBest, forage, projects, decos, gear, crows, notes, graze, horse, bugs, net, mail, gained, now });
   }
 
   farmSpend(conversationId, cost) {

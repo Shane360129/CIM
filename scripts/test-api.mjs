@@ -385,6 +385,36 @@ check('打工具：沒這種工具、還沒換大鋤頭、沒有銅礦都被擋'
   && /錢不夠|銅礦不夠/.test((await farmDo(groupId, { action: 'smith', tool: 'sickle' }, TA)).data.error || ''));
 r = await farmDo(groupId, { action: 'harvest', ...f1, area: true }, TA);
 check('還沒有鐮刀不能一次收成一片', r.status === 400 && /鐵匠鋪/.test(r.data.error || ''), r.data.error);
+// 信箱（第二十五期）
+{
+  const mA = (await farmGet(groupId, TA)).data;
+  const wel = (mA.mail?.list || []).find((m) => m.from === 'zhi' && m.item === 'seed:bokchoy');
+  check('信箱：郵差志明的見面禮（5 包小白菜種子），還沒讀', !!wel && wel.qty === 5 && !wel.read && !wel.claimed && mA.mail.unread >= 1 && mA.mailInfo?.textMax === 80);
+  const seeds0 = mA.items['seed:bokchoy'] || 0;
+  r = await farmDo(groupId, { action: 'mail_open', id: wel.id }, TA);
+  check(`打開見面禮：小白菜種子 ${seeds0} → ${seeds0 + 5}`, r.status === 200 && r.data.items['seed:bokchoy'] === seeds0 + 5 && r.data.gained.item === 'seed:bokchoy'
+    && r.data.mail.list.find((m) => m.id === wel.id).read, r.data.error);
+  r = await farmDo(groupId, { action: 'mail_open', id: wel.id }, TB);
+  check('朋友B 打開同一封：已經收下了，不會再拿一次', r.status === 200 && !r.data.gained.item && r.data.items['seed:bokchoy'] === seeds0 + 5 && r.data.mail.list.find((m) => m.id === wel.id).claimed);
+  check('寄信：給自己、給不在聊天室的人、沒寫字、附的不是菜、倉庫沒有的菜都被擋',
+    (await farmDo(groupId, { action: 'mail_send', to: IA, text: '嗨' }, TA)).status === 400
+    && (await farmDo(groupId, { action: 'mail_send', to: 999999, text: '嗨' }, TA)).status === 400
+    && /寫幾句話/.test((await farmDo(groupId, { action: 'mail_send', to: IB, text: '  \u200b ' }, TA)).data.error || '')
+    && /只能附上一道菜/.test((await farmDo(groupId, { action: 'mail_send', to: IB, text: '嗨', item: 'ore:gold' }, TA)).data.error || '')
+    && /倉庫裡沒有/.test((await farmDo(groupId, { action: 'mail_send', to: IB, text: '嗨', item: 'dish:pudding' }, TA)).data.error || ''));
+  r = await farmDo(groupId, { action: 'mail_send', to: IB, text: '今天的田我澆過了，晚上早點睡' }, TA);
+  check('寄一封信給朋友B，聊天室說一聲（不說內容）', r.status === 200 && (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('寄了一封信給 朋友B') && !m.content.includes('早點睡')), r.data.error);
+  const mB = (await farmGet(groupId, TB)).data.mail;
+  const toB = mB.list.find((m) => m.fromUser === IA && m.body.includes('早點睡'));
+  check('朋友B 的信箱有這封信、還沒讀；朋友A、朋友C 看不到', !!toB && !toB.read && toB.toUser === IB
+    && !(await farmGet(groupId, TA)).data.mail.list.some((m) => m.id === toB.id) && !(await farmGet(groupId, TC)).data.mail.list.some((m) => m.id === toB.id));
+  check('別人的信打不開', (await farmDo(groupId, { action: 'mail_open', id: toB.id }, TC)).status === 404 && (await farmDo(groupId, { action: 'mail_open', id: 'x' }, TC)).status === 404);
+  r = await farmDo(groupId, { action: 'mail_open', id: toB.id }, TB);
+  check('朋友B 讀了信', r.status === 200 && r.data.mail.list.find((m) => m.id === toB.id).read);
+  for (let i = 2; i <= 5; i++) await farmDo(groupId, { action: 'mail_send', to: IC, text: `第 ${i} 封` }, TA);
+  check('一個人一天最多寄 5 封', /今天已經寄了 5 封/.test((await farmDo(groupId, { action: 'mail_send', to: IC, text: '第 6 封' }, TA)).data.error || ''));
+  check('寄了 5 封：達成成就「魚雁往返」', (await farmGet(groupId, TA)).data.achievements?.mail5 !== undefined);
+}
 // 捕蟲（第二十四期）
 check('捕蟲：每張地圖這一批的蟲、20 種昆蟲、還沒有捕蟲網', ['farm', 'hill', 'town', 'beach', 'terrace'].every((a) => Array.isArray(fs0.bugs?.areas?.[a]))
   && Object.keys(fs0.bugKinds || {}).length === 20 && fs0.net === false && fs0.netInfo?.price === 500 && fs0.bugs.until > Date.now());
@@ -424,7 +454,7 @@ if (fs0.villagersOut) {
 
 // 料理
 // 村民的故事、成就、週報
-check('有村民的故事、48 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 48
+check('有村民的故事、50 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 50
   && JSON.stringify(fs0.achievements) === '{}' && /^\d{4}-\d{2}-\d{2}$/.test(fs0.thisWeek?.week || ''));
 check('有 47 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 47 && !!fs0.ingredientGroups?.egg);
 check('沒有這道菜', (await farmDo(groupId, { action: 'cook', dish: 'steak' }, TA)).status === 400
@@ -812,6 +842,22 @@ if (fs0.scale >= 3600) {
       check('（加速模式）聊天室說動物去後山吃草了', (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('放到後山的草地上吃草了')));
       r = await farmDo(groupId, { action: 'graze_in' }, TB);
       check('（加速模式）趕回小屋；今天不能再放一次', r.status === 200 && !r.data.graze.out && /今天已經放牧過/.test((await farmDo(groupId, { action: 'graze_out' }, TA)).data.error || ''));
+    }
+    // 信箱（第二十五期）：寄一道菜給家人（本機測試用 FARM_START_ITEMS 放了 2 份烤玉米）；感情好的村民每週寫信
+    {
+      // 聊天室訊息很多，最早那則「林老師寫的信」可能不在最新的一頁，這裡只看信箱
+      const mA = (await farmGet(groupId, TA)).data.mail;
+      check('（加速模式）跟林老師感情好：這週林老師寫信來', mA.list.some((m) => m.from === 'lin' && fs0.villagers?.lin && m.title));
+      const eB0 = (await farmGet(groupId, TB)).data.energy.now;
+      r = await farmDo(groupId, { action: 'mail_send', to: IB, text: '今天辛苦了，烤玉米給你吃', item: 'dish:corn_grill' }, TC);
+      check('（加速模式）寄一份烤玉米給朋友B：倉庫少一份，聊天室說附上了烤玉米', r.status === 200 && r.data.items['dish:corn_grill'] === 1
+        && (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('還附上了烤玉米')), r.data.error);
+      const letter = (await farmGet(groupId, TB)).data.mail.list.find((m) => m.item === 'dish:corn_grill');
+      r = await farmDo(groupId, { action: 'mail_open', id: letter.id }, TB);
+      const ate = r.data.gained?.ate;
+      check(`（加速模式）朋友B 打開信：${ate ? `吃掉烤玉米，體力 +${r.data.gained?.energy}` : '體力是滿的，烤玉米放進倉庫'}`, r.status === 200
+        && (ate ? r.data.energy === Math.min(r.data.energyMax, eB0 + fs0.dishes.corn_grill.energy) && r.data.items['dish:corn_grill'] === 1 : r.data.items['dish:corn_grill'] === 2), r.data.error);
+      check('（加速模式）再打開一次不會再吃一次', (await farmDo(groupId, { action: 'mail_open', id: letter.id }, TB)).data.gained?.item === undefined);
     }
     // 捕蟲（第二十四期）：買捕蟲網，抓一隻這一批的蟲（颱風、寒流天沒有蟲就跳過）
     {
