@@ -2913,7 +2913,7 @@ function baseSprite(x, y, ch) {
     if (ch === ',') return sprite('flowers');
   }
   if (ch === '=' || ch === 'E') return sprite('path');
-  if (ch === 'p') return sprite('plaza');
+  if (ch === 'p' || (S.area === 'town' && (ch === 'O' || ch === 'N'))) return sprite('plaza'); // 噴水池、布告欄底下也是石板，不會露出一塊草地
   if (ch === 'q') return sprite('gravel');
   if (ch === ',') return sprite('flowers', undefined, false, S.season);
   if (ch === 'W') return sprite(Math.floor(Date.now() / 600) % 2 ? 'water1' : 'water0');
@@ -2929,6 +2929,8 @@ function baseSprite(x, y, ch) {
 const GRASSY = ['.', ',', 'T'];
 const FRINGE = [[0, -1, 'top'], [0, 1, 'bottom'], [-1, 0, 'left'], [1, 0, 'right']];
 const OUTDOOR_GRASS = (area) => area !== 'cave' && area !== 'home' && area !== 'beach' && area !== 'gh';
+// 柵欄：上右下左哪幾格也是柵欄（1、2、4、8 加起來）
+const fenceMask = (x, y) => (terrain(x, y - 1) === 'f' ? 1 : 0) | (terrain(x + 1, y) === 'f' ? 2 : 0) | (terrain(x, y + 1) === 'f' ? 4 : 0) | (terrain(x - 1, y) === 'f' ? 8 : 0);
 // 樹：依位置挑一些變成櫻花（春）或紅楓（秋），其他照季節變色
 function treeSprite(x, y) {
   const alt = TREE_ALT[S.season];
@@ -3060,6 +3062,9 @@ function draw() {
     if ((ch0 === '=' || ch0 === 'E') && OUTDOOR_GRASS(S.area)) { // 小路旁邊是草地：草尖垂到路上，不會切得方方正正
       for (const [dx, dy, side] of FRINGE) if (GRASSY.includes(terrain(x + dx, y + dy))) g.drawImage(sprite('fringe_' + side, undefined, false, snowy ? 'snow' : S.season), x * T, y * T);
     }
+    if (ch0 === 'W' && OUTDOOR_GRASS(S.area)) { // 池塘靠岸的那一側：淺淺的水花
+      for (const [dx, dy, side] of FRINGE) if (terrain(x + dx, y + dy) !== 'W') g.drawImage(sprite('shore_' + side), x * T, y * T);
+    }
     if (snowy && (ch0 === '.' || ch0 === ',' || ch0 === 'T' || ch0 === 'w')) g.drawImage(snowCoverSprite((x * 7 + y * 3) % 3), x * T, y * T); // 下雪的山上白白一片
   }
   // 作物與物件
@@ -3073,7 +3078,7 @@ function draw() {
       else if (ch === 'x') g.drawImage(mailboxSprite(S.mail.unread > 0), x * T, y * T);
       else if (ch === '^' || ch === 'v') g.drawImage(caveLadderSprite(ch === 'v'), x * T, y * T);
       else if (ch === 'C') g.drawImage(chestSprite(!!(S.cave && S.cave.chest && S.cave.chest.opened)), x * T, y * T);
-      else if (ch === 'f') g.drawImage(sprite('fence'), x * T, y * T);
+      else if (ch === 'f') g.drawImage(sprite('fence_' + fenceMask(x, y)), x * T, y * T); // 柵欄跟旁邊的柵欄接起來
       else if (ch === 'B') g.drawImage(sprite('bin'), x * T, y * T);
       else if (ch === 'N') g.drawImage(sprite('board'), x * T, y * T);
       else if (ch === 'Y') {

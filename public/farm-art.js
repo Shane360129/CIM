@@ -37,7 +37,8 @@ const ramp = (base) => [shade(base, -0.2), shade(base, -0.1), base, shade(base, 
 function px(w, h, draw) {
   const c = document.createElement('canvas'); c.width = w; c.height = h;
   const g = c.getContext('2d');
-  const r = (col, x, y, ww = 1, hh = 1) => { g.fillStyle = col; g.fillRect(x, y, ww, hh); };
+  // 座標一律取整數：小數點的位置畫布會自動補半透明的邊，像素圖就糊了
+  const r = (col, x, y, ww = 1, hh = 1) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), Math.round(ww), Math.round(hh)); };
   const disc = (col, cx, cy, rx, ry = rx) => {
     for (let y = -ry; y <= ry; y++) { const ww = Math.round(rx * Math.sqrt(Math.max(0, 1 - (y * y) / (ry * ry + 0.01)))); r(col, cx - ww, cy + y, ww * 2 + 1, 1); }
   };
@@ -360,3 +361,5 @@ export function artSprite(name, shirt = '#d9544d', flip = false, season = '') {
   return c;
 }
 export const ART_NAMES = { crops: Object.keys(CROP_ART), animals: Object.keys(ANIMAL_ART) };
+// 給第二期（建築、小鎮，farm-art-town.js）共用的畫圖工具
+export { rnd, ramp, px, autoShade, outline, hd, flipped };

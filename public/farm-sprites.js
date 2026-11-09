@@ -4,6 +4,8 @@
 // 改圖直接改下面的字串即可：每行 16 個字元、每張 16 行。
 
 import { artSprite } from './farm-art.js';
+import { townSprite, houseArt, barnArt, shopArt, greenhouseArt, storeArt, eateryArt, homeArt, smithArt, fountainArt, projectArt, caveMouthArt, stallArt,
+  mailboxArt, familyBoardArt } from './farm-art-town.js';
 
 export const PALETTE = {
  "o": "#2b2421",
@@ -1356,7 +1358,7 @@ export function sprite(name, shirt = '#d9544d', flip = false, season = '') {
   if (name.startsWith('deco_')) return decoSprite(name.slice(5));
   if (name.startsWith('tree_')) { const [, kind, stage, ripe] = name.split('_'); return fruitTreeSprite(kind, Number(stage), ripe === 'r'); }
   if (name === 'honey' || name === 'honey_l') return honeySprite(name);
-  const art = artSprite(name, shirt, flip, season); // 已經換成 32×32 的圖（地面、田、作物、人物、動物、樹）
+  const art = artSprite(name, shirt, flip, season) || townSprite(name); // 已經換成兩倍解析度的圖（第一期：地面、作物、人物、動物、樹；第二期：柵欄、石板路、池塘…）
   if (art) return art;
   const key = name + '|' + shirt + '|' + (flip ? 1 : 0) + '|' + season;
   if (cache.has(key)) return cache.get(key);
@@ -1451,59 +1453,10 @@ export const hasCropArt = (crop) => crop === 'rice' || !!SPRITES[`${crop}_3`];
 
 // 房子（4×3 格 = 64×48）：紅屋頂、米色牆、木門、兩扇窗、煙囪。
 // 擴建過的房子：大臥室（窗台多了花箱、門口有燈），二樓（屋頂上多一扇老虎窗、門變成藍色）
-export function houseSprite(ground = '#62ad4b', level = 1) {
-  const ck = 'house|' + ground + '|' + level;
-  if (cache.has(ck)) return cache.get(ck);
-  const c = document.createElement('canvas');
-  c.width = 64; c.height = 48;
-  const g = c.getContext('2d');
-  const r = (col, x, y, w, h) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
-  r('#7a4e2d', 46, 2, 6, 10);                        // 煙囪
-  for (let i = 0; i < 20; i++) r(i % 4 === 3 ? '#a8432f' : '#c8553d', 2 + i, 22 - i, 60 - 2 * i, 1); // 屋頂
-  r('#8f3424', 0, 22, 64, 2);                         // 屋簷
-  r('#f2e2c4', 4, 24, 56, 24);                        // 牆
-  r('#d9c6a2', 4, 24, 56, 2);
-  r('#7a4e2d', 26, 30, 12, 18);                       // 門
-  r('#5e3b20', 26, 30, 12, 2); r('#f6d34a', 35, 39, 2, 2);
-  for (const wx of [10, 44]) { r('#5e3b20', wx - 1, 29, 12, 10); r('#9ad6f6', wx, 30, 10, 8); r('#ffffff', wx + 1, 31, 3, 2); r('#5e3b20', wx + 4, 30, 1, 8); }
-  if (level >= 2) {
-    for (const wx of [10, 44]) {                                   // 花箱
-      r('#8d5d32', wx - 1, 39, 12, 3);
-      for (let i = 0; i < 5; i++) r(i % 2 ? '#f6d34a' : '#e0393e', wx + i * 2, 37, 2, 2);
-      r('#4f9d3f', wx, 38, 10, 1);
-    }
-    r('#f6d34a', 40, 31, 2, 3); r('#5e3b20', 40, 30, 2, 1);        // 門燈
-  }
-  if (level >= 3) {
-    r('#3b6ea8', 26, 30, 12, 18); r('#2f5a8a', 26, 30, 12, 2); r('#f6d34a', 35, 39, 2, 2); // 藍色的門
-    for (let i = 0; i < 6; i++) r('#a8432f', 25 + i, 8 - i + 6, 14 - 2 * i, 1);         // 老虎窗的小屋頂
-    r('#f2e2c4', 26, 14, 12, 8); r('#5e3b20', 28, 15, 8, 6); r('#9ad6f6', 29, 16, 6, 4); r('#ffffff', 30, 16, 2, 1);
-  }
-  r(ground, 4, 46, 56, 2);
-  cache.set(ck, c);
-  return c;
-}
+export const houseSprite = (ground = '#62ad4b', level = 1) => houseArt(level);
 
 // 動物小屋（4×3 格 = 64×48）：紅色穀倉、白邊、大門上有白色 X、上面有放乾草的小窗
-export function barnSprite(ground = '#62ad4b') {
-  if (cache.has('barn|' + ground)) return cache.get('barn|' + ground);
-  const c = document.createElement('canvas');
-  c.width = 64; c.height = 48;
-  const g = c.getContext('2d');
-  const r = (col, x, y, w, h) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
-  for (let i = 0; i < 14; i++) r(i % 3 === 2 ? '#5e2219' : '#7a2e22', 18 - i, 2 + i, 28 + 2 * i, 1);   // 屋頂
-  r('#5e2219', 2, 16, 60, 2);
-  r('#b8432f', 4, 18, 56, 28);                                                                        // 牆
-  for (let x = 8; x < 60; x += 6) r('#a33a28', x, 18, 1, 28);                                         // 木板紋
-  r('#ffffff', 4, 18, 56, 1); r('#ffffff', 4, 18, 1, 28); r('#ffffff', 59, 18, 1, 28);              // 白邊
-  r('#ffffff', 26, 6, 12, 9); r('#e8c26a', 27, 7, 10, 7); r('#c99a2e', 27, 11, 10, 3);              // 乾草窗
-  r('#ffffff', 21, 26, 22, 20); r('#8f2a1d', 23, 28, 18, 18);                                         // 大門
-  for (let i = 0; i < 18; i++) { r('#ffffff', 23 + i, 28 + i, 1, 1); r('#ffffff', 40 - i, 28 + i, 1, 1); }
-  r('#ffffff', 31, 28, 2, 18);
-  r(ground, 4, 46, 17, 2); r(ground, 43, 46, 17, 2);
-  cache.set('barn|' + ground, c);
-  return c;
-}
+export const barnSprite = () => barnArt();
 
 // 小鎮的大建築都用程式畫：雜貨店、小吃店（4×3 格）、民宅（3×2 格）、噴水池（2×2 格）
 function building(key, w, h, draw) {
@@ -1540,11 +1493,7 @@ export const snowmanSprite = (snowy, parts = 0, nose = false) => building(`snowm
 });
 
 // 房子旁邊的信箱：木頭柱子、紅色的信箱；有新信的時候小紅旗豎起來
-export const mailboxSprite = (up) => building('mailbox_' + (up ? 1 : 0), 16, 16, (r) => {
-  r('#5e3b20', 7, 9, 2, 7); r('#3a2818', 6, 15, 4, 1);
-  r('#b8442e', 3, 3, 10, 7); r('#d9583e', 3, 3, 10, 2); r('#8d2e20', 3, 9, 10, 1); r('#2b2421', 5, 6, 6, 1);
-  if (up) { r('#f6d34a', 13, 0, 1, 7); r('#e0393e', 13, 0, 3, 3); } else { r('#f6d34a', 13, 6, 3, 1); r('#e0393e', 14, 6, 2, 2); }
-});
+export const mailboxSprite = (up) => mailboxArt(up);
 
 // ---------------- 昆蟲（第二十四期） ----------------
 // 蝴蝶：翅膀上半 c1、下半 c2，張開（f=0）、收一半（f=1）；deco 畫翅膀上的花紋
@@ -1600,80 +1549,18 @@ export const BUG_IDS = Object.keys(BUG_ART);
 export const bugSprite = (id, f = 0) => building(`bug_${id}_${f ? 1 : 0}`, 16, 16, (r) => (BUG_ART[id] || BUG_ART.cabbage_white)(r, f ? 1 : 0));
 
 // 阿鐵師傅的鐵匠鋪（2×2 格）：石頭牆、深紅瓦屋頂、冒煙的煙囪、門裡的爐火一閃一閃、門口的鐵砧
-export const smithSprite = (f = 0) => building('smith_' + f, 32, 32, (r) => {
-  r('#5e5a54', 23, 2, 5, 6); r('#46423e', 22, 2, 7, 1);                                   // 煙囪
-  r('#d8d4cc', f ? 24 : 25, 0, 3, 2); r('#c9c5bf', f ? 27 : 22, f ? 0 : 1, 2, 1);          // 冒煙
-  r('#9a4a36', 6, 4, 16, 2); r('#7a3a2a', 2, 6, 28, 5); r('#9a4a36', 2, 6, 28, 1); r('#5e2a1e', 1, 11, 30, 1); // 屋頂
-  r('#9c968b', 2, 12, 28, 17);                                                             // 石頭牆
-  for (const [x, y, w] of [[3, 13, 5], [10, 14, 4], [22, 13, 6], [4, 20, 4], [24, 19, 4], [3, 25, 6], [22, 24, 3]]) r('#7e786e', x, y, w, 2);
-  r('#2b2421', 12, 16, 9, 13); r('#5e3b20', 11, 15, 11, 1);                               // 門口
-  r(f ? '#f6a04a' : '#e0763a', 13, 22, 7, 6); r(f ? '#f6d34a' : '#f6b04a', 15, 24, 3, 3); // 爐火
-  r('#8d5d32', 3, 15, 7, 5); r('#c9c5bf', 4, 16, 5, 1); r('#5e3b20', 6, 17, 1, 3);         // 招牌：一把鐵鎚
-  r('#5e5e66', 23, 23, 7, 1); r('#3a3a40', 23, 24, 7, 2); r('#3a3a40', 25, 26, 3, 2); r('#2b2b30', 23, 28, 7, 1); // 鐵砧
-  r('#6e6a64', 1, 29, 30, 1);
-});
+export const smithSprite = (f = 0) => smithArt(f);
 // 阿福伯的雜貨店：綠色遮雨棚、木頭招牌、玻璃櫥窗裡擺著鋤頭和澆水壺
-export const storeSprite = () => building('store', 64, 48, (r) => {
-  r('#7a4e2d', 2, 4, 60, 3); r('#8d5d32', 4, 7, 56, 3);                       // 屋簷
-  r('#e8dcc0', 4, 10, 56, 38); r('#d4c4a0', 4, 10, 56, 2);                    // 牆
-  r('#f6d34a', 14, 0, 36, 7); r('#8d5d32', 14, 0, 36, 1); r('#8d5d32', 14, 6, 36, 1); // 招牌
-  for (let x = 17; x < 48; x += 4) r('#7a4e2d', x, 2, 2, 3);
-  for (let i = 0; i < 14; i++) r(i % 2 ? '#ffffff' : '#3f9a3f', 4 + i * 4, 12, 4, 6); // 遮雨棚
-  r('#2b7a33', 4, 18, 56, 1);
-  r('#5e3b20', 7, 22, 22, 18); r('#bfe6f6', 8, 23, 20, 16);                   // 櫥窗
-  r('#8d5d32', 11, 28, 2, 10); r('#9aa3a8', 9, 27, 6, 2);                     // 鋤頭
-  r('#4aa3df', 19, 31, 7, 6); r('#4aa3df', 25, 30, 3, 2); r('#3487c6', 19, 36, 7, 1); // 澆水壺
-  r('#7a4e2d', 38, 24, 16, 24); r('#5e3b20', 38, 24, 16, 2); r('#f6d34a', 50, 36, 2, 2); // 門
-  r('#62ad4b', 4, 46, 34, 2);
-});
+export const storeSprite = () => storeArt();
 // 美玲姐的小吃店：紅燈籠、紅色布簾、店門口的蒸籠
-export const eaterySprite = () => building('eatery', 64, 48, (r) => {
-  r('#5e2219', 2, 4, 60, 4); r('#7a2e22', 4, 8, 56, 3);
-  r('#f2e2c4', 4, 11, 56, 37);
-  r('#c8553d', 10, 0, 44, 6); r('#f6d34a', 13, 2, 38, 2);                     // 招牌
-  for (const lx of [8, 52]) { r('#e0393e', lx, 12, 6, 7); r('#f6d34a', lx + 2, 19, 2, 2); r('#a8252b', lx, 14, 6, 1); } // 燈籠
-  r('#c8553d', 18, 14, 28, 9); for (let x = 20; x < 46; x += 6) r('#f2e2c4', x, 14, 1, 9);   // 布簾
-  r('#5e3b20', 22, 23, 20, 25); r('#7a4e2d', 23, 24, 18, 24);                 // 門
-  r('#bdbdbd', 8, 34, 10, 4); r('#d9d9d9', 8, 30, 10, 4); r('#a0a0a0', 8, 38, 10, 2); // 蒸籠
-  r('#ffffff', 10, 26, 2, 3); r('#ffffff', 14, 25, 2, 4);                     // 熱氣
-  r('#62ad4b', 4, 46, 18, 2); r('#62ad4b', 42, 46, 18, 2);
-});
+export const eaterySprite = () => eateryArt();
 // 民宅：三種屋頂顏色
-const ROOFS = ['#3b6ea8', '#4f9d6b', '#b8656e'];
-export const homeSprite = (i = 0) => building('home' + i, 48, 32, (r) => {
-  const roof = ROOFS[i % ROOFS.length];
-  for (let k = 0; k < 10; k++) r(roof, 14 - k, 2 + k, 20 + 2 * k, 1);
-  r('#2b2421', 2, 12, 44, 1);
-  r('#f6efe0', 4, 13, 40, 19);
-  r('#7a4e2d', 20, 19, 9, 13); r('#f6d34a', 26, 26, 1, 1);
-  r('#5e3b20', 7, 17, 9, 8); r('#9ad6f6', 8, 18, 7, 6); r('#5e3b20', 33, 17, 9, 8); r('#9ad6f6', 34, 18, 7, 6);
-  r('#62ad4b', 4, 30, 16, 2); r('#62ad4b', 29, 30, 15, 2);
-});
+export const homeSprite = (i = 0) => homeArt(i);
 // 噴水池：圓形石頭水池，中間噴水（兩張輪流畫，水會動）
-export const fountainSprite = (frame = 0) => building('fountain' + frame, 32, 32, (r) => {
-  r('#9c968b', 4, 6, 24, 22); r('#9c968b', 2, 9, 28, 16); r('#9c968b', 7, 4, 18, 26);
-  r('#4aa3df', 5, 9, 22, 16); r('#4aa3df', 8, 7, 16, 20);
-  r('#d6d1c7', 14, 8, 4, 14);
-  r('#9ad6f6', 15, frame ? 2 : 4, 2, 7); r('#9ad6f6', 12, frame ? 5 : 6, 2, 3); r('#9ad6f6', 18, frame ? 6 : 5, 2, 3);
-  r('#ffffff', 10, 14, 3, 1); r('#ffffff', 20, 18, 3, 1);
-});
+export const fountainSprite = (frame = 0) => fountainArt(frame);
 
 // 商店攤位（2×2 格 = 32×32）：紅白條紋遮陽棚、木櫃台、招牌
-export function shopSprite() {
-  if (cache.has('shop')) return cache.get('shop');
-  const c = document.createElement('canvas');
-  c.width = 32; c.height = 32;
-  const g = c.getContext('2d');
-  const r = (col, x, y, w, h) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
-  r('#8d5d32', 3, 10, 2, 22); r('#8d5d32', 27, 10, 2, 22);   // 柱子
-  for (let i = 0; i < 8; i++) r(i % 2 ? '#ffffff' : '#e0393e', i * 4, 4, 4, 8);  // 遮陽棚
-  for (let i = 0; i < 8; i++) r(i % 2 ? '#e8e8e8' : '#b52a30', i * 4, 12, 4, 2);
-  r('#bd864f', 1, 20, 30, 10); r('#8d5d32', 1, 20, 30, 2); r('#8d5d32', 1, 29, 30, 2); // 櫃台
-  r('#f28b2c', 6, 16, 4, 4); r('#e0393e', 12, 16, 4, 4); r('#6cc25a', 18, 16, 4, 4); r('#f6d34a', 24, 17, 3, 3); // 貨品
-  r('#f6d34a', 9, 0, 14, 5); r('#8d5d32', 9, 0, 14, 1);      // 招牌
-  cache.set('shop', c);
-  return c;
-}
+export const shopSprite = () => shopArt();
 
 // ---------------- 加工品、加工機、溫室 ----------------
 // 加工品的圖：瓶子（美乃滋、番茄醬）、罐子（果醬、菜脯、泡菜、鹹菜）、起司塊。[樣子, 內容物顏色, 亮面／蓋子顏色]
@@ -1764,27 +1651,7 @@ export const machineSpotSprite = () => building('machine_spot', 16, 16, (r) => {
 
 // 溫室（5×3 格 = 80×48）：白色框架、玻璃牆、玻璃屋頂，看得到裡面的綠色植物；中間是玻璃門。
 // 還沒蓋：圍起來的空地，插著「溫室預定地」的木牌
-export function greenhouseSprite(built, ground = '#62ad4b') {
-  return building(`greenhouse_${built ? 1 : 0}_${ground}`, 80, 48, (r) => {
-    if (!built) {
-      r('#a77b4f', 4, 14, 72, 32); r('#8d6a42', 4, 14, 72, 2);
-      for (const [x, y] of [[12, 22], [30, 36], [52, 26], [64, 40], [20, 40]]) { r('#9c968b', x, y, 4, 3); r('#c9c5bf', x, y, 2, 1); }
-      for (let x = 2; x < 80; x += 10) { r('#8d5d32', x, 10, 2, 8); r('#8d5d32', x, 40, 2, 8); }
-      r('#bd864f', 2, 12, 76, 2); r('#bd864f', 2, 42, 76, 2);
-      r('#8d5d32', 38, 18, 3, 16); r('#e8c28a', 30, 14, 20, 10); r('#8d5d32', 30, 14, 20, 1); r('#8d5d32', 30, 23, 20, 1);
-      r('#4f9d3f', 34, 17, 3, 4); r('#4f9d3f', 38, 16, 3, 5); r('#4f9d3f', 42, 17, 3, 4);  // 牌子上畫著小苗
-      return;
-    }
-    for (let i = 0; i < 16; i++) r(i % 4 === 0 ? '#ffffff' : '#bfe6f6', 8 + i, 16 - i, 64 - 2 * i, 1); // 玻璃屋頂
-    r('#ffffff', 39, 0, 2, 17); r('#e8f4fa', 4, 16, 72, 2);
-    r('#9fd0ea', 4, 18, 72, 30);                                       // 玻璃牆
-    for (let y = 20; y < 46; y += 6) for (let x = 6; x < 74; x += 7) r((x + y) % 3 ? '#4f9d3f' : '#6cc25a', x, y + 2, 4, 3); // 裡面的植物
-    for (let x = 4; x < 77; x += 12) r('#ffffff', x, 18, 2, 30);       // 白框
-    r('#ffffff', 4, 30, 72, 1); r('#ffffff', 4, 46, 72, 2);
-    r('#ffffff', 31, 24, 18, 24); r('#bfe6f6', 33, 26, 14, 22); r('#ffffff', 39, 26, 2, 22); r('#f6d34a', 37, 37, 2, 2); // 門
-    r(ground, 4, 46, 26, 2); r(ground, 50, 46, 26, 2);
-  });
-}
+export const greenhouseSprite = (built) => greenhouseArt(built);
 // 溫室裡面：K 玻璃牆、地上鋪石板
 export const ghTileSprite = (ch) => building('gh_' + ch, 16, 16, (r) => {
   if (ch === 'K') {
@@ -1847,43 +1714,11 @@ export const honeySprite = (id) => building('honeyjar_' + id, 16, 16, (r) => {
 });
 
 // 夜市攤位（2 格寬，32×28）：條紋遮雨棚、木頭攤子，攤子上擺的東西每一攤不一樣
-const STALL_STRIPE = { goldfish: '#3a8fd6', ring: '#e0393e', snack: '#f28b2c', special: '#8a4fc0' };
-export const stallSprite = (kind) => building('stall_' + kind, 32, 28, (r) => {
-  const c = STALL_STRIPE[kind] || '#e0393e';
-  r('#5e3b20', 2, 6, 2, 22); r('#5e3b20', 28, 6, 2, 22);                     // 柱子
-  for (let i = 0; i < 8; i++) r(i % 2 ? '#ffffff' : c, i * 4, 0, 4, 8);       // 遮雨棚
-  for (let i = 0; i < 8; i++) r(i % 2 ? '#ffffff' : c, i * 4 + 1, 8, 2, 2);   // 下緣的花邊
-  r('#2b2421', 0, 0, 32, 1);
-  r('#8d5d32', 1, 18, 30, 3); r('#a8743f', 1, 18, 30, 1);                     // 檯面
-  r('#7a4e2d', 2, 21, 28, 7); r(c, 4, 22, 24, 4); r('#ffffff', 6, 23, 20, 2); // 前面的布條
-  if (kind === 'goldfish') {
-    r('#9ad6f6', 5, 13, 22, 5); r('#4aa3df', 5, 13, 22, 1); r('#c9dde6', 4, 12, 24, 1); // 水盆
-    for (const [x, y] of [[8, 15], [14, 14], [20, 16], [24, 14]]) { r('#f28b2c', x, y, 2, 1); r('#e0393e', x + 2, y, 1, 1); }
-  } else if (kind === 'ring') {
-    for (let i = 0; i < 5; i++) { const x = 5 + i * 5; r(i % 2 ? '#7a4e2d' : '#3f9a3f', x, 12, 3, 6); r('#c9dde6', x + 1, 10, 1, 2); }
-    r('#f6d34a', 11, 15, 5, 1); r('#f6d34a', 11, 17, 5, 1);                   // 套中的圈圈
-  } else if (kind === 'snack') {
-    r('#3a3a3a', 6, 15, 12, 3); r('#5a5a5a', 7, 14, 10, 1); r('#f2b33d', 9, 13, 6, 2); // 鍋子裡的雞排
-    r('#ffffff', 10, 10, 1, 2); r('#ffffff', 13, 9, 1, 3);                    // 熱氣
-    r('#f6efe0', 21, 12, 5, 6); r('#8d5d32', 21, 15, 5, 3); r('#2b2421', 22, 16, 1, 1); r('#2b2421', 24, 17, 1, 1); r('#e0393e', 23, 10, 1, 3); // 珍奶
-  } else {
-    r('#e0393e', 6, 13, 6, 5); r('#f6d34a', 8, 13, 2, 5); r('#f6d34a', 6, 15, 6, 1);   // 禮物盒
-    r('#b98ae0', 15, 13, 4, 5); r('#e0c8f6', 16, 13, 1, 2);                   // 紫水晶
-    r('#f2b33d', 22, 13, 5, 5); r('#8d5d32', 22, 12, 5, 1); r('#ffe08a', 23, 14, 1, 3);  // 蜂蜜
-  }
-});
+export const stallSprite = (kind) => stallArt(kind);
 
 // ---------------- 後山洞窟 ----------------
 // 洞窟入口（2×2 格）：山壁上的岩石、黑黑的洞口、木頭框和掛著的油燈、鐵軌通進去
-export const caveMouthSprite = () => building('cave_mouth', 32, 32, (r) => {
-  r('#6e6a64', 0, 4, 32, 28); r('#8a8680', 2, 2, 28, 6); r('#8a8680', 0, 8, 4, 20); r('#8a8680', 28, 8, 4, 20); // 岩石
-  r('#a4a09a', 5, 3, 6, 2); r('#a4a09a', 20, 4, 7, 2); r('#5e5a54', 3, 14, 2, 6); r('#5e5a54', 27, 18, 2, 6);
-  r('#120e0c', 8, 10, 16, 22); r('#120e0c', 10, 8, 12, 2);                      // 洞口
-  r('#7a4e2d', 7, 9, 2, 23); r('#7a4e2d', 23, 9, 2, 23); r('#8d5d32', 7, 8, 18, 2); // 木頭框
-  r('#2b2421', 21, 10, 1, 2); r('#f6d34a', 20, 12, 3, 3); r('#fff3b0', 21, 13, 1, 1); // 油燈
-  r('#9aa3a8', 11, 28, 1, 4); r('#9aa3a8', 20, 28, 1, 4);                       // 鐵軌
-  for (let y = 29; y < 32; y += 2) r('#5e3b20', 10, y, 12, 1);
-});
+export const caveMouthSprite = () => caveMouthArt();
 // 洞窟裡的岩壁、地面（位置不同，花紋不一樣）
 export const caveTileSprite = (ch, v = 0) => building(`cave_${ch}_${v}`, 16, 16, (r) => {
   if (ch === 'X') {
@@ -1995,46 +1830,7 @@ export const forageSprite = (id) => building('forage_' + id, 16, 16, (r) => (FOR
 
 // ---------------- 小鎮修復計畫 ----------------
 // 四個地方（2×2 格，32×32）：修好之前顏色褪掉、屋頂破洞、釘著木板；修好之後漂漂亮亮
-const PROJECT_LOOK = {
-  temple: { roof: '#c8302e', trim: '#f2c94a', wall: '#f2e2c4', door: '#8a2a20', old: ['#7a6a5e', '#9c8e80', '#b8ab98'] },
-  station: { roof: '#3b6ea8', trim: '#f4f1e8', wall: '#e8e4dc', door: '#5e3b20', old: ['#5e6670', '#8a8e92', '#b4b0a8'] },
-  coop: { roof: '#3f7a3a', trim: '#f6d34a', wall: '#f4efe0', door: '#7a4e2d', old: ['#5e6a58', '#8e9484', '#b8b4a4'] },
-  harbor: { roof: '#7a4e2d', trim: '#4aa3df', wall: '#c9a477', door: '#5e3b20', old: ['#5e5048', '#7e7064', '#a09280'] },
-};
-export const projectSprite = (kind, restored) => building(`project_${kind}_${restored ? 1 : 0}`, 32, 32, (r) => {
-  const L = PROJECT_LOOK[kind] || PROJECT_LOOK.coop;
-  const roof = restored ? L.roof : L.old[0], trim = restored ? L.trim : L.old[1], wall = restored ? L.wall : L.old[2];
-  if (kind === 'temple') {
-    // 土地公廟：翹起來的屋簷、紅柱子、香爐
-    r(roof, 2, 6, 28, 4); r(roof, 0, 5, 4, 2); r(roof, 28, 5, 4, 2); r(roof, 6, 2, 20, 4); r(trim, 4, 10, 24, 1); r(trim, 13, 0, 6, 3);
-    r(wall, 4, 11, 24, 19); r(restored ? '#c8302e' : L.old[1], 5, 11, 3, 19); r(restored ? '#c8302e' : L.old[1], 24, 11, 3, 19);
-    r(L.door, 12, 16, 8, 14); r(restored ? '#f6d34a' : '#8a8680', 14, 13, 4, 2);
-    if (restored) { r('#8d5d32', 13, 26, 6, 3); r('#c9a227', 14, 25, 4, 1); r('#ffffff', 15, 21, 1, 4); r('#ffffff', 17, 22, 1, 3); }
-  } else if (kind === 'station') {
-    // 老車站：斜屋頂、時鐘、站牌、月台
-    r(roof, 0, 4, 32, 6); r(trim, 0, 10, 32, 1); r(wall, 2, 11, 28, 17); r('#8a8680', 0, 28, 32, 4);
-    r(trim, 12, 0, 8, 6); r(restored ? '#2b2421' : L.old[0], 15, 2, 2, 2);
-    r(L.door, 13, 18, 6, 10); r(restored ? '#9ad6f6' : L.old[0], 4, 15, 6, 6); r(restored ? '#9ad6f6' : L.old[0], 22, 15, 6, 6);
-    if (restored) { r('#3b6ea8', 4, 12, 24, 2); r('#f4f1e8', 8, 12, 16, 2); }
-  } else if (kind === 'coop') {
-    // 農會：倉庫式的屋頂、招牌、門口的稻穀袋
-    for (let k = 0; k < 8; k++) r(roof, 8 - k, 2 + k, 16 + 2 * k, 1);
-    r(wall, 2, 10, 28, 20); r(trim, 6, 11, 20, 3); r(L.door, 12, 18, 8, 12); r('#5e3b20', 15, 18, 2, 12);
-    if (restored) { r('#e8d29a', 3, 24, 5, 6); r('#c9a96a', 3, 24, 5, 1); r('#e8d29a', 24, 25, 5, 5); r('#4f9d3f', 9, 12, 3, 1); }
-  } else {
-    // 漁會：木頭小屋、晾著的漁網、船錨
-    r(roof, 0, 6, 32, 5); r(roof, 4, 3, 24, 3); r(wall, 2, 11, 28, 18); for (let x = 2; x < 30; x += 4) r(L.old[0], x, 11, 1, 18);
-    r(L.door, 13, 18, 6, 11); r(trim, 4, 14, 6, 5); r(trim, 22, 14, 6, 5);
-    if (restored) { for (let x = 22; x < 30; x += 2) r('#e8e4dc', x, 21, 1, 8); for (let y = 21; y < 29; y += 2) r('#e8e4dc', 22, y, 8, 1);
-      r('#5e5a54', 4, 22, 1, 6); r('#5e5a54', 2, 26, 5, 1); r('#5e5a54', 3, 22, 3, 1); }
-  }
-  if (!restored) {
-    // 釘起來的木板、裂痕、施工中的牌子
-    r('#a8743f', 10, 19, 12, 2); r('#a8743f', 11, 24, 10, 2); r('#5e3b20', 10, 19, 1, 2); r('#5e3b20', 21, 24, 1, 2);
-    r('#2b2421', 6, 13, 1, 4); r('#2b2421', 7, 16, 1, 3); r('#2b2421', 25, 6, 3, 1);
-    r('#f6d34a', 1, 26, 8, 5); r('#2b2421', 2, 27, 6, 1); r('#2b2421', 2, 29, 6, 1); r('#5e3b20', 4, 31, 2, 1);
-  }
-});
+export const projectSprite = (kind, restored) => projectArt(kind, restored);
 
 // ---------------- 裝飾與家具 ----------------
 const DECO_ART = {
@@ -2174,12 +1970,7 @@ export const riceSprite = (stage) => building('rice_' + stage, 16, 16, (r) => {
 
 // ---------------- 家庭留言板（第二十一期） ----------------
 // 軟木塞板子，上面釘著幾張彩色的小紙條（n 張，最多畫 6 張）
-export const familyBoardSprite = (n = 0) => building('familyboard_' + n, 16, 16, (r) => {
-  r('#7a4e2d', 3, 11, 2, 5); r('#7a4e2d', 11, 11, 2, 5);
-  r('#8d5d32', 1, 1, 14, 11); r('#c9a477', 2, 2, 12, 9); r('#b08a5e', 2, 10, 12, 1);
-  const spots = [[3, 3], [7, 3], [11, 3], [4, 7], [8, 7], [11, 7]], cols = ['#f6e08a', '#f6b6c9', '#a8d8f0', '#c8f0a8', '#f2c8a0', '#e0c8f0'];
-  for (let i = 0; i < Math.min(6, n); i++) { const [x, y] = spots[i]; r(cols[i], x, y, 3, 3); r('#d9344a', x + 1, y, 1, 1); }
-});
+export const familyBoardSprite = (n = 0) => familyBoardArt(n);
 
 // ---------------- 馬（第二十二期） ----------------
 // 咖啡色的馬，黑色的鬃毛和尾巴；frame 1 腳換一下（走路）；flip 往左看

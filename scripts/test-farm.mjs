@@ -36,6 +36,7 @@ import {
 } from '../src/farm.js';
 import { forageSprite, projectSprite, decoSprite, homeTileSprite, BUG_IDS } from '../public/farm-sprites.js';
 import { ART_NAMES, shade } from '../public/farm-art.js';
+import { PROJECT_LOOK, STALL_STRIPE, TOWN_ART } from '../public/farm-art-town.js';
 import { SPRITES, PALETTE, FISH_SHAPE, BOOT_SHAPE, ROCK_SHAPE, FISH_COLORS, ORE_COLORS, DISH_SHAPES, DISH_COLORS, GOOD_ART, FRUIT_COLORS, honeySprite, fruitTreeSprite } from '../public/farm-sprites.js';
 
 let pass = 0, fail = 0;
@@ -923,6 +924,7 @@ check('成就：巨無霸、堆雪人、對流星許願', [achievementsMet({ ...
 // 美術第一期：32×32 的新圖
 check('除了稻子（梯田另外畫），每種作物都有 32×32 的新圖', Object.keys(CROPS).filter((c) => c !== 'rice' && !ART_NAMES.crops.includes(c)), []);
 check('雞、鴨、牛、羊、狗、貓都有 32×32 的新圖', ['chicken', 'duck', 'cow', 'sheep', 'dog', 'cat'].filter((a) => !ART_NAMES.animals.includes(a)), []);
+check('美術第二期：四棟修復建築、四個夜市攤位都有自己的樣子，建築和小鎮的圖都在', [Object.keys(PROJECTS).filter((k) => !PROJECT_LOOK[k]), Object.keys(MARKET_STALLS).filter((k) => !STALL_STRIPE[k]), TOWN_ART.length >= 20], [[], [], true]);
 const lum = (c) => [1, 3, 5].reduce((n, i) => n + parseInt(c.slice(i, i + 2), 16), 0);
 check('明暗：亮一階比較亮、暗一階比較暗、0 不變', [lum(shade('#62ad4b', 0.1)) > lum('#62ad4b'), lum(shade('#62ad4b', -0.1)) < lum('#62ad4b'), shade('#62ad4b', 0)],
   [true, true, '#62ad4b']);
