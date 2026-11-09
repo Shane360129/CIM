@@ -377,6 +377,14 @@ check('錢不夠買不起大鋤頭', /錢不夠/.test((await farmDo(groupId, { a
 check('沒有這種工具', (await farmDo(groupId, { action: 'upgrade_tool', tool: 'tractor' }, TA)).status === 400);
 r = await farmDo(groupId, { action: 'water', ...f1, area: true }, TA);
 check('還沒升級不能一次澆 3×3', r.status === 400 && /升級/.test(r.data.error || ''), r.data.error);
+// 鐵匠鋪（第二十三期）
+check('鐵匠鋪：工具都還沒打、師傅沒在打東西；有銅銀金的資料', JSON.stringify(fs0.tools?.tiers) === '{"hoe":0,"can":0,"sickle":0}'
+  && fs0.tools.smith === null && fs0.smithTiers?.length === 4 && fs0.smithTools?.sickle?.name === '鐮刀' && fs0.tools.hoe === 1);
+check('打工具：沒這種工具、還沒換大鋤頭、沒有銅礦都被擋', (await farmDo(groupId, { action: 'smith', tool: '__proto__' }, TA)).status === 400
+  && /雜貨店/.test((await farmDo(groupId, { action: 'smith', tool: 'hoe' }, TA)).data.error || '')
+  && /錢不夠|銅礦不夠/.test((await farmDo(groupId, { action: 'smith', tool: 'sickle' }, TA)).data.error || ''));
+r = await farmDo(groupId, { action: 'harvest', ...f1, area: true }, TA);
+check('還沒有鐮刀不能一次收成一片', r.status === 400 && /鐵匠鋪/.test(r.data.error || ''), r.data.error);
 
 // 後山：釣魚、挖礦、圖鑑
 check('有後山地圖、出口、今天的 20 顆石頭、魚和礦石的資料', fs0.hill?.length === 20 && fs0.exits?.farm?.length === 2
@@ -411,7 +419,7 @@ if (fs0.villagersOut) {
 
 // 料理
 // 村民的故事、成就、週報
-check('有村民的故事、44 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 44
+check('有村民的故事、46 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 46
   && JSON.stringify(fs0.achievements) === '{}' && /^\d{4}-\d{2}-\d{2}$/.test(fs0.thisWeek?.week || ''));
 check('有 47 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 47 && !!fs0.ingredientGroups?.egg);
 check('沒有這道菜', (await farmDo(groupId, { action: 'cook', dish: 'steak' }, TA)).status === 400
@@ -800,6 +808,34 @@ if (fs0.scale >= 3600) {
       r = await farmDo(groupId, { action: 'graze_in' }, TB);
       check('（加速模式）趕回小屋；今天不能再放一次', r.status === 200 && !r.data.graze.out && /今天已經放牧過/.test((await farmDo(groupId, { action: 'graze_out' }, TA)).data.error || ''));
     }
+    // 鐵匠鋪（第二十三期，本機測試用 FARM_SMITH=now 交給師傅馬上就打好）
+    {
+      const cu0 = (await farmGet(groupId, TA)).data.items['ore:copper'] || 0;
+      r = await farmDo(groupId, { action: 'smith', tool: 'sickle' }, TA);
+      money -= fs0.smithTiers[1].price;
+      check(`（加速模式）打一把銅鐮刀：1,500 元和 5 個銅礦（${cu0} → ${cu0 - 5}）→ ${money}`, r.status === 200 && r.data.gained?.ready === true && r.data.gained.tier === 1
+        && r.data.town?.tools?.tiers?.sickle === 1 && r.data.town.tools.smith === null && r.data.money === money && (r.data.items['ore:copper'] || 0) === cu0 - 5, r.data.error);
+      const sys = (await listIn(groupId, TA)).filter((m) => m.type === 'system');
+      check('（加速模式）聊天室說交給師傅、打好了', sys.some((m) => m.content.includes('交給阿鐵師傅，要打成銅鐮刀')) && sys.some((m) => m.content.includes('阿鐵師傅把銅鐮刀打好了')));
+      // 銅鐮刀一次收成 3×3：種 3 顆小白菜，點中間那顆
+      const row3 = [fields[66], fields[67], fields[68]];
+      r = await farmDo(groupId, { action: 'buy', item: 'seed:bokchoy', qty: 3 }, TA);
+      money -= fs0.crops.bokchoy.seed * 3;
+      for (const g of row3) {
+        await farmDo(groupId, { action: 'till', ...g }, TA);
+        await farmDo(groupId, { action: 'plant', crop: 'bokchoy', ...g }, TA);
+        await farmDo(groupId, { action: 'water', ...g }, TA);
+      }
+      await new Promise((ok) => setTimeout(ok, 3300));
+      const before = (await farmGet(groupId, TA)).data;
+      const ripe = before.tiles.filter((t) => row3.some((g) => g.x === t.x && g.y === t.y) && t.crop === 'bokchoy').length;
+      const bok0 = baseQty(before.items, 'crop:bokchoy');
+      r = await farmDo(groupId, { action: 'harvest', ...row3[1], area: true }, TA);
+      check(`（加速模式）銅鐮刀一次收成 ${ripe} 顆小白菜`, r.status === 200 && ripe >= 2 && r.data.gained?.qty === ripe && r.data.tiles?.length === ripe
+        && baseQty(r.data.items, 'crop:bokchoy') === bok0 + ripe && r.data.tiles.every((t) => !t.crop), r.data.error || JSON.stringify(r.data.gained));
+      check('（加速模式）附近沒有熟的就不收', /沒有熟了的/.test((await farmDo(groupId, { action: 'harvest', ...row3[1], area: true }, TA)).data.error || ''));
+      check('（加速模式）不是田不能收', (await farmDo(groupId, { action: 'harvest', x: 5, y: 5, area: true }, TA)).status === 400);
+    }
     // 肥料（第十九期）
     r = await farmDo(groupId, { action: 'buy', item: 'fert:speed', qty: 2 }, TA);
     money -= 2 * fs0.ferts.speed.price;
@@ -929,12 +965,12 @@ if (fs0.scale >= 3600) {
     {
       const st = (await farmGet(groupId, TA)).data;
       const pick = Object.values(st.projects.list).flatMap((P) => Object.entries(P.bundles))
-        .flatMap(([bid, B]) => Object.entries(B.need).map(([k, q]) => ({ bid, k, q }))).find((x) => x.k.includes(':') && st.items[x.k] > 0);
+        .flatMap(([bid, B]) => Object.entries(B.need).map(([k, q]) => ({ bid, k, q }))).find((x) => x.k.includes(':') && baseQty(st.items, x.k) > 0);
       if (pick) {
-        const before = st.items[pick.k], want = Math.min(before, pick.q);
+        const before = baseQty(st.items, pick.k), want = Math.min(before, pick.q); // 有星級的也算（交的時候一起交）
         r = await farmDo(groupId, { action: 'donate', bundle: pick.bid, item: pick.k }, TA);
         check(`（加速模式）修復計畫：交了 ${want} 個 ${pick.k}（只交需要的數量）`, r.status === 200 && r.data.gained.donated === want
-          && r.data.projects.given[pick.bid][pick.k] === want && (r.data.items[pick.k] || 0) === before - want);
+          && r.data.projects.given[pick.bid][pick.k] === want && baseQty(r.data.items, pick.k) === before - want);
         if (want === pick.q) check('（加速模式）交齊的那一項不能再交', /交齊/.test((await farmDo(groupId, { action: 'donate', bundle: pick.bid, item: pick.k }, TB)).data.error || ''));
         check('（加速模式）朋友B 打開牧場也看到交了', (await farmGet(groupId, TB)).data.projects.given[pick.bid][pick.k] === want);
       }

@@ -28,6 +28,7 @@ import {
   FERTS, growRate, QUALITY, QUALITY_PCT, harvestQuality, baseItem, qualityOf, withQuality, itemName,
   TERRACE_MAP, plantableIn, EMOTES, NOTE_LEN, NOTE_MAX, cleanNote,
   GRAZE_HOURS, GRAZE_ZONE, grazes, grazeWeatherOk, grazePenaltyDue, grazeTiles, HORSE, HORSE_ZONE, RIDE_AREAS, horseSpeed,
+  SMITH_TOOLS, SMITH_TIERS, TIER_MAX, toolSize, toolEnergy, toolArea, areaEnergy, smithCheck, toolTitle,
   GEAR, GEAR_MAX, SCARE_R, isSprinkler, gearCovers, sprinkledSet, scaredAt, gearCheck, crowsOf, CROW_MIN, CROW_PCT, ALWAYS_WET,
 } from '../src/farm.js';
 import { forageSprite, projectSprite, decoSprite, homeTileSprite } from '../public/farm-sprites.js';
@@ -215,7 +216,7 @@ TOWN_MAP.forEach((r, y) => [...r].forEach((c, x) => townCells.push({ x, y, c }))
 check('小鎮每一格能走的地方都走得到', townCells.filter((p) => isWalkable(p.x, p.y, 'town')).every((p) => townSeen.has(`${p.x},${p.y}`)), true);
 const touch = (ch) => townCells.filter((p) => p.c === ch).some((p) =>
   [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => townSeen.has(`${p.x + dx},${p.y + dy}`)));
-check('雜貨店、小吃店、民宅、噴水池、告示板都走得到旁邊', ['G', 'R', 'Q', 'O', 'N'].map(touch), [true, true, true, true, true]);
+check('雜貨店、小吃店、民宅、噴水池、告示板、鐵匠鋪都走得到旁邊', ['G', 'R', 'Q', 'O', 'N', 'b'].map(touch), [true, true, true, true, true, true]);
 check('牧場的出口從家門口走得到', seen.has('5,19') && terrainAt(5, 19) === 'E', true);
 check('小鎮的出口從進來的地方走得到', townSeen.has('5,0') && terrainAt(5, 0, 'town') === 'E', true);
 check('每個出口都是 E、通到存在的地圖，換過去站的地方能走、而且不是出口（不會一直來回跳）',
@@ -417,7 +418,7 @@ check('感情很好但還沒聽過：從第一段開始說', storyDue(100, 0), 0
 const zero = { harvest: 0, shipped: 0, requests: 0, babies: 0, animals: 0, pets: 0, machines: 0, fishKinds: 0, dishKinds: 0, goodKinds: 0, amethyst: false, maxHearts: 0, minHearts: 0, stories: 0, gh: 0, house: 1 };
 check('什麼都還沒做：沒有成就', achievementsMet(zero), []);
 check('收成一次、領養寵物：兩個成就', achievementsMet({ ...zero, harvest: 1, pets: 1 }), ['harvest1', 'pet']);
-const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: Object.keys(MACHINES).length, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: Object.keys(FORAGE).length, beachKinds: 7, mushrooms: 3, projects: 4, decoFarm: 5, decoHome: 5, goldHarvest: 1, sprinklers: 4, whiteRice: true, teaKinds: 2, notes: 5, horse: true, graze: 10 };
+const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: Object.keys(MACHINES).length, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: Object.keys(FORAGE).length, beachKinds: 7, mushrooms: 3, projects: 4, decoFarm: 5, decoHome: 5, goldHarvest: 1, sprinklers: 4, whiteRice: true, teaKinds: 2, notes: 5, horse: true, graze: 10, smithTiers: 9, goldTools: 3 };
 check('全部做完：每個成就都達成', achievementsMet(full).length, ACHIEVEMENTS.length);
 check('成就的編號不重複、都有名字說明和獎金', new Set(ACHIEVEMENTS.map((a) => a.id)).size === ACHIEVEMENTS.length && ACHIEVEMENTS.every((a) => a.name && a.desc && a.reward > 0), true);
 check('「聽完所有故事」要 18 段', [achievementsMet({ ...full, stories: 17 }).includes('stories'), achievementsMet(full).includes('stories')], [false, true]);
@@ -803,6 +804,35 @@ check('騎馬：愛心越多越快（1.6～2.1 倍），屋子、溫室、洞窟
   RIDE_AREAS.includes('farm'), ['home', 'gh', 'cave'].some((a) => RIDE_AREAS.includes(a))], [1.6, 1.7, 2.1, 2.1, 3000, true, false]);
 check('成就：我的愛駒、青青草原', [achievementsMet({ ...zero, horse: true }), achievementsMet({ ...zero, graze: 10 }), achievementsMet({ ...zero, graze: 9 })],
   [['horse'], ['graze10'], []]);
+
+console.log('\n--- 鐵匠鋪、工具升級（第二十三期） ---');
+const smithCells = TOWN_MAP.flatMap((r, y) => [...r].map((c, x) => ({ x, y, c }))).filter((p) => p.c === 'b');
+check('鐵匠鋪在小鎮右上角，2×2、不能走進去', [smithCells.map((p) => `${p.x},${p.y}`).join(' '), smithCells.some((p) => isWalkable(p.x, p.y, 'town'))],
+  ['26,2 27,2 26,3 27,3', false]);
+check('鋤頭、澆水壺、鐮刀可以打；鋤頭和澆水壺要先換大的', [Object.keys(SMITH_TOOLS), SMITH_TOOLS.hoe.needBig, SMITH_TOOLS.can.needBig, SMITH_TOOLS.sickle.needBig, TIER_MAX],
+  [['hoe', 'can', 'sickle'], true, true, false, 3]);
+check('銅、銀、金：錢越來越多，礦石分別是銅礦、銀礦、金礦', SMITH_TIERS.slice(1).map((t) => [t.name, t.ore, t.qty]), [['銅', 'ore:copper', 5], ['銀', 'ore:silver', 5], ['金', 'ore:gold', 5]]);
+check('越好的越貴', SMITH_TIERS[1].price < SMITH_TIERS[2].price && SMITH_TIERS[2].price < SMITH_TIERS[3].price, true);
+check('範圍：普通 1 格、大的 3×3、銅 3×3、銀 5×3、金 5×5', [toolSize(0, false), toolSize(0, true), toolSize(1, true), toolSize(2, false), toolSize(3, true), toolSize(9, true)],
+  [[1, 1], [3, 3], [3, 3], [5, 3], [5, 5], [5, 5]]);
+check('體力：普通照原價、銅銀少一半、金只要四分之一', [toolEnergy(0), toolEnergy(1), toolEnergy(2), toolEnergy(3)], [1, 0.5, 0.5, 0.25]);
+const a53 = toolArea(10, 10, [5, 3]);
+check('範圍裡的格子：點的那格最先、不重複、剛好填滿', [a53.length, a53[0], new Set(a53.map((c) => `${c.x},${c.y}`)).size,
+  Math.min(...a53.map((c) => c.x)), Math.max(...a53.map((c) => c.x)), Math.min(...a53.map((c) => c.y)), Math.max(...a53.map((c) => c.y)), toolArea(3, 3, [1, 1])],
+  [15, { x: 10, y: 10 }, 15, 8, 12, 9, 11, [{ x: 3, y: 3 }]]);
+check('由近到遠：前 5 格是點的那格和上下左右', toolArea(10, 10, [5, 5]).slice(0, 5).map((c) => Math.abs(c.x - 10) + Math.abs(c.y - 10)), [0, 1, 1, 1, 1]);
+check('體力加起來再無條件進位：銅鋤頭翻 9 格 9 點、金澆水壺澆 25 格 7 點、普通鋤頭 9 格 18 點、第一格至少 1 點',
+  [areaEnergy(9, 2, 0.5), areaEnergy(25, 1, 0.25), areaEnergy(9, 2, 1), areaEnergy(1, 1, 0.25), areaEnergy(0, 2, 0.5)], [9, 7, 18, 1, 0]);
+check('一格一格算的時候，多花的加起來剛好等於總共', (() => { let sum = 0; for (let k = 1; k <= 25; k++) sum += areaEnergy(k, 3, 0.25) - areaEnergy(k - 1, 3, 0.25); return sum === areaEnergy(25, 3, 0.25); })(), true);
+check('打不了的原因：沒這種工具、還沒換大的、錢不夠、礦石不夠、已經是金的', [
+  smithCheck('tractor', 0, {}, 1e9, 2), smithCheck('constructor', 0, {}, 1e9, 2), /雜貨店/.test(smithCheck('hoe', 0, { 'ore:copper': 9 }, 1e9, 1)),
+  /錢不夠/.test(smithCheck('sickle', 0, { 'ore:copper': 9 }, 1499, 0)), /銅礦不夠/.test(smithCheck('sickle', 0, { 'ore:copper': 4 }, 1e9, 0)),
+  /銀礦不夠/.test(smithCheck('can', 1, { 'ore:copper': 9 }, 1e9, 2)), /已經是金/.test(smithCheck('sickle', 3, {}, 1e9, 0))],
+  ['沒有這種工具', '沒有這種工具', true, true, true, true, true]);
+check('東西夠了就能打', [smithCheck('sickle', 0, { 'ore:copper': 5 }, 1500, 0), smithCheck('hoe', 2, { 'ore:gold': 5 }, 10000, 2)], [null, null]);
+check('工具的名字', [toolTitle('hoe', 0, false), toolTitle('hoe', 0, true), toolTitle('can', 1, true), toolTitle('sickle', 3, false)], ['鋤頭', '大鋤頭', '銅澆水壺', '金鐮刀']);
+check('成就：打鐵趁熱、金光閃閃', [achievementsMet({ ...zero, smithTiers: 1 }), achievementsMet({ ...zero, smithTiers: 8, goldTools: 2 }), achievementsMet({ ...zero, smithTiers: 9, goldTools: 3 })],
+  [['smith'], ['smith'], ['smith', 'goldtools']]);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

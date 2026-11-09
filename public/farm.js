@@ -5,7 +5,7 @@ import {
   sprite, cropSprite, houseSprite, shopSprite, barnSprite, storeSprite, eaterySprite, homeSprite, fountainSprite, SEASON_GROUND,
   greenhouseSprite, machineSprite, machineSpotSprite, ghTileSprite, fruitTreeSprite, treeSpotSprite, hiveSprite, hiveSpotSprite,
   stallSprite, caveMouthSprite, caveTileSprite, caveLadderSprite, chestSprite, beachTileSprite, forageSprite, projectSprite, decoSprite, homeTileSprite,
-  gearSprite, crowSprite, paddySprite, teaBushSprite, teaBudsSprite,
+  gearSprite, crowSprite, paddySprite, teaBushSprite, teaBudsSprite, smithSprite,
 } from '/farm-sprites.js';
 
 const T = 16;            // 一格 16 像素
@@ -13,7 +13,7 @@ const SPEED = 4.5;       // 每秒走幾格
 const WALK = new Set(['.', '=', 'F', 'p', ',', 'E', 's', 'P', 'r']); // s 沙灘、P 防波堤、r 水田；潮間帶 d 退潮才走得過去
 // 點了會走過去互動的東西：田、出貨箱、攤位、房子、動物小屋、溫室、加工機；小鎮的雜貨店、小吃店、民宅、噴水池、告示板；
 // 後山的洞窟入口；洞窟裡往上、往下的梯子和寶箱；小鎮修復計畫的土地公廟、老車站、農會、海邊的漁會
-const TARGETS = 'FBSHAGRQONWJMYZV^vCUILDren'; // r 水田、e 茶樹、n 家庭留言板
+const TARGETS = 'FBSHAGRQONWJMYZV^vCUILDrenb'; // r 水田、e 茶樹、n 家庭留言板、b 鐵匠鋪
 const PROJECT_AT = { U: 'temple', I: 'station', L: 'coop', D: 'harbor' };
 const EXIT_LABEL = { town: '🏘️ 往小鎮', farm: '🌾 回牧場', hill: '⛰️ 往後山', beach: '🌊 往海邊', terrace: '🍵 往梯田' };
 const SEASON = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
@@ -51,6 +51,7 @@ const S = {
   gear: [], gearKinds: {}, ferts: {}, quality: {}, crows: [],
   notes: [], emoteList: [], emotes: new Map(),
   graze: { day: null, out: false }, grazeTiles: [], horse: null, horseInfo: {}, rideAreas: [],
+  smithTools: {}, smithTiers: [],
   pondTiles: [], pets: {}, petKinds: {}, petZoneTiles: [], petPos: {}, trails: new Map(),
   stories: {}, storyHearts: [2, 5, 8], achievementList: [], achievements: {}, thisWeek: null, activity: null, game: null,
   trees: [], hives: [], treeKinds: {}, fruits: {}, treeSpots: [], hiveSpots: [], hive: { price: 1500, max: 3, days: 3 },
@@ -242,6 +243,7 @@ function applyState(st) {
   S.spawn = st.spawn;
   // 手上的種子不是這一季的，就換成這一季有的（優先選倉庫裡有的）；在溫室裡什麼種子都能種，不用換
   S.notes = st.notes || []; S.emoteList = st.emotes || [];
+  S.smithTools = st.smithTools || {}; S.smithTiers = st.smithTiers || [];
   S.graze = st.graze || { day: null, out: false }; S.horse = st.horse || null; S.horseInfo = st.horseInfo || {}; S.rideAreas = st.rideAreas || [];
   // 放牧的草地：後山南邊（跟伺服器的 grazeTiles 一樣）
   S.grazeTiles = [];
@@ -307,12 +309,28 @@ function renderClock() {
     (S.festival && S.festivals[S.festival] ? ` ${S.festivals[S.festival].emoji}` : '') + (S.birthdays.length ? ' 🎂' : '') + (S.marketOn ? ' 🏮' : '');
 }
 
+// 工具打到第幾級（鐵匠鋪）；一次處理的範圍
+const tierOf = (k) => ((S.tools && S.tools.tiers) || {})[k] || 0;
+const sizeOf = (tier, big) => (tier > 0 && S.smithTiers[tier] ? S.smithTiers[tier].size : big ? [3, 3] : [1, 1]);
+const wideTool = (k) => S.tools[k] >= 2 || tierOf(k) > 0;
+// 工具列上的名字：大鋤頭 3×3、銅鋤頭 3×3、金澆水 5×5、銀鐮刀 5×3（收成那一格變鐮刀）
+function toolLabel(key, name) {
+  const tk = key === 'hand' ? 'sickle' : key;
+  if (!['hoe', 'can', 'sickle'].includes(tk)) return null;
+  const tier = tierOf(tk), big = tk !== 'sickle' && S.tools[tk] >= 2;
+  if (!tier && !big) return null;
+  const [w, h] = sizeOf(tier, big);
+  const pre = tier ? (S.smithTiers[tier] || {}).name || '' : '大';
+  return { name: pre + (tk === 'sickle' ? '鐮刀' : name), count: `${w}×${h}`, ico: tk === 'sickle' ? '🌾' : null };
+}
+
 function renderToolbar() {
   const bar = $('toolbar');
   bar.textContent = '';
   TOOLS.forEach((tool, i) => {
     let ico = tool.ico, name = tool.name, count = null;
-    if ((tool.key === 'hoe' || tool.key === 'can') && S.tools[tool.key] >= 2) { name = '大' + name; count = '3×3'; }
+    const lab = toolLabel(tool.key, name);
+    if (lab) { name = lab.name; count = lab.count; if (lab.ico) ico = lab.ico; }
     if (tool.key === 'seed' && isFert(S.seed)) {
       ico = '🧪'; name = S.ferts[S.seed.slice(5)] ? S.ferts[S.seed.slice(5)].name : '肥料';
       count = S.items[S.seed] || 0;
@@ -732,7 +750,7 @@ async function useOnAnimal(a) {
 
 /* ---------- 小鎮 ---------- */
 
-const BIG = { H: 1, S: 1, A: 1, G: 1, R: 1, Q: 1, O: 1, J: 1, V: 1, U: 1, I: 1, L: 1, D: 1 };
+const BIG = { H: 1, S: 1, A: 1, G: 1, R: 1, Q: 1, O: 1, J: 1, V: 1, U: 1, I: 1, L: 1, D: 1, b: 1 };
 const HOMES = ['ama', 'lin', 'jie'];   // 三間民宅由左到右：王阿嬤、林老師、小傑家
 function homeIndex(x, y) {
   const tops = [];
@@ -1157,7 +1175,7 @@ function openStore() {
   const rows = Object.entries(S.toolShop).map(([id, t]) => {
     const have = S.tools[id] >= 2;
     return el('div', { class: 'row' }, el('span', { class: 'big', text: id === 'hoe' ? '⛏️' : '💧' }),
-      el('div', { class: 'grow' }, el('div', { class: 'name', text: t.name }), el('div', { class: 'meta', text: `${t.desc}（只做需要的格子，體力照格子算）` })),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: t.name }), el('div', { class: 'meta', text: `${t.desc}（只做需要的格子，體力照格子算）。之後可以拿到鐵匠鋪打成銅、銀、金的` })),
       el('button', {
         class: 'btn primary', type: 'button', text: have ? '已經有了' : `買 ${t.price}`, disabled: have || t.price > S.money,
         onclick: async () => { try { await doAct({ action: 'upgrade_tool', tool: id }); toast(`買了${t.name}！`); renderToolbar(); openStore(); } catch {} },
@@ -1345,7 +1363,7 @@ async function doAct(body) {
     // 田地上的動作：收成飄出「+1 作物」，其他飄出扣了幾點體力（釣魚、挖礦自己處理）
     if (body.x != null && body.action !== 'fish' && body.action !== 'mine') {
       const got = r.gained && r.gained.item && itemInfo(r.gained.item);
-      if (got) floatAt(body.x, body.y, `+1 ${got.name}`, '#fff3b0');
+      if (got) floatAt(body.x, body.y, r.gained.items && r.gained.qty > 1 ? `+${r.gained.qty} 收成` : `+1 ${got.name}`, '#fff3b0');
       else if (spent > 0) floatAt(body.x, body.y, `-${spent}⚡`, '#ffffff');
     }
     renderHud();
@@ -1390,6 +1408,7 @@ function useOn(x, y) {
   if (ch === 'W' || (ch === 'd' && !S.lowTide)) return startFishing(x, y);
   if (rockAt(x, y)) return mineRock(x, y);
   if (ch === 'G') return openStore();
+  if (ch === 'b') return openSmith();
   if (ch === 'R') return openEatery();
   if (ch === 'N') return openBoard();
   if (ch === 'O') return toast('噴水池裡有好多硬幣，許個願吧 ✨');
@@ -1400,18 +1419,19 @@ function useOn(x, y) {
   const t = S.tiles.get(key(x, y)) || { tilled: false, crop: null };
   const now = serverNow();
   if (t.crop && stage(t, now) === 3) {
-    return doAct({ action: 'harvest', x, y }).then((r) => {
+    return doAct({ action: 'harvest', x, y, ...(tierOf('sickle') > 0 ? { area: true } : {}) }).then((r) => {
       const q = r && r.gained && r.gained.quality;
-      if (q >= 2) toast(`${q === 3 ? '🌟' : '⭐'} 收成了${itemInfo(r.gained.item).name}！賣 ${itemInfo(r.gained.item).sell} 元`);
+      if (r && r.gained && r.gained.qty > 1 && r.gained.items) toast(`🌾 一次收成了 ${r.gained.qty} 個${q >= 2 ? `，最好的是${itemInfo(r.gained.item).name}` : ''}`);
+      else if (q >= 2) toast(`${q === 3 ? '🌟' : '⭐'} 收成了${itemInfo(r.gained.item).name}！賣 ${itemInfo(r.gained.item).sell} 元`);
     }).catch(() => {});
   }
   if (paddy && S.tool === 'hoe' && !t.crop) return toast('水田不用翻土，拿「種子」工具選秧苗直接插秧');
   if (paddy && S.tool === 'can') return toast('水田裡都是水，不用澆');
   if (S.tool === 'hoe') {
-    if (!t.tilled) return doAct({ action: 'till', x, y, ...(S.tools.hoe >= 2 ? { area: true } : {}) }).catch(() => {});
+    if (!t.tilled) return doAct({ action: 'till', x, y, ...(wideTool('hoe') ? { area: true } : {}) }).catch(() => {});
     if (t.crop) return confirmDig(t, x, y);
     // 大鋤頭：點翻好的地，也會把旁邊還沒翻的一起翻好
-    if (S.tools.hoe >= 2) return doAct({ action: 'till', x, y, area: true }).catch(() => {});
+    if (wideTool('hoe')) return doAct({ action: 'till', x, y, area: true }).catch(() => {});
     return toast('這塊已經翻好了，換「種子」來播種');
   }
   if (S.tool === 'can') {
@@ -1421,7 +1441,7 @@ function useOn(x, y) {
       S.rainWarned = true;
       return toast('今天下雨，田地整天都是濕的，不用澆水 ☔（真的要澆再點一次）');
     }
-    return doAct({ action: 'water', x, y, ...(S.tools.can >= 2 ? { area: true } : {}) }).catch(() => {});
+    return doAct({ action: 'water', x, y, ...(wideTool('can') ? { area: true } : {}) }).catch(() => {});
   }
   if (S.tool === 'seed' && isFert(S.seed)) {
     const F = S.ferts[S.seed.slice(5)];
@@ -1516,6 +1536,48 @@ function openNotes() {
     ...(rows.length ? rows : [el('div', { class: 'empty', text: '還沒有人留言，寫第一張吧' })]),
     el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
   setTimeout(() => input.focus(), 50);
+}
+
+// ---------- 阿鐵師傅的鐵匠鋪（第二十三期） ----------
+const SMITH_ICO = { hoe: '⛏️', can: '💧', sickle: '🌾' };
+// 這把工具（第幾級）能做什麼：一次翻 5×3，體力少一半
+function smithPerk(tool, tier, big) {
+  const [w, h] = sizeOf(tier, big);
+  const T = S.smithTools[tool] || {}, m = tier > 0 && S.smithTiers[tier] ? S.smithTiers[tier].energy : 1;
+  if (w === 1) return tool === 'sickle' ? '一次收成一格' : '一次一格';
+  return `一次${T.verb} ${w}×${h}` + (tool !== 'sickle' && m < 1 ? `，體力${m === 0.5 ? '少一半' : '只要四分之一'}` : '');
+}
+function openSmith() {
+  const job = S.tools.smith;
+  const title = (id, tier, big) => (tier > 0 ? S.smithTiers[tier].name : big ? '大' : '') + S.smithTools[id].name;
+  const rows = Object.entries(S.smithTools).map(([id, T]) => {
+    const tier = tierOf(id), big = id !== 'sickle' && S.tools[id] >= 2, next = S.smithTiers[tier + 1];
+    const busy = !!job && job.tool === id;
+    let meta, ok = false;
+    if (!next) meta = `${smithPerk(id, tier, big)}。已經是最好的了 ✨`;
+    else if (T.needBig && !big) meta = `${smithPerk(id, tier, big)}。要先到阿福伯的雜貨店換大${id === 'can' ? '澆水壺' : T.name}，再拿來打`;
+    else {
+      const have = Math.min(S.items[next.ore] || 0, next.qty);
+      ok = !job && S.money >= next.price && have >= next.qty;
+      meta = `現在${smithPerk(id, tier, big)}。打成${next.name}${T.name}：${smithPerk(id, tier + 1, true)}。要 ${next.price.toLocaleString()} 元・${itemInfo(next.ore).name} ${have}/${next.qty}`;
+    }
+    return el('div', { class: 'row' + (next ? '' : ' off') }, el('span', { class: 'big', text: SMITH_ICO[id] || '🔨' }),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: title(id, tier, big) + (busy ? `（師傅正在打成${next.name}的）` : '') }), el('div', { class: 'meta', text: meta })),
+      next ? el('button', {
+        class: 'btn primary', type: 'button', text: busy ? '明天來拿' : '交給師傅', disabled: !ok,
+        onclick: async () => {
+          try {
+            const r = await doAct({ action: 'smith', tool: id });
+            toast(r.gained.ready ? `🔨 ${title(id, r.gained.tier, true)}打好了！` : `🔨 交給阿鐵師傅了，明天就打好${title(id, r.gained.tier, true)}`);
+            renderToolbar(); openSmith();
+          } catch {}
+        },
+      }) : null);
+  });
+  openModal(el('h2', { text: '🔨 阿鐵師傅的鐵匠鋪' }),
+    el('p', { class: 'sub', text: `用後山、洞窟挖到的礦石，把工具打成銅、銀、金的：一次做一大片，還比較省體力。打一把要一天（明天來拿），師傅打的時候舊的先借你用，一次只能打一把。錢包 ${S.money.toLocaleString()} 元。` }),
+    job && S.smithTools[job.tool] ? el('p', { class: 'note', text: `🔥 師傅正在打${title(job.tool, tierOf(job.tool) + 1, true)}，明天就好了` }) : null,
+    ...rows, el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
 }
 
 // ---------- 放牧、騎馬（第二十二期） ----------
@@ -2835,6 +2897,7 @@ function draw() {
       const img = PROJECT_AT[ch] ? projectSprite(PROJECT_AT[ch], !!S.projects.done[PROJECT_AT[ch]]) : ch === 'V' ? caveMouthSprite() : ch === 'H' ? houseSprite(ground, S.houseLevel) : ch === 'S' ? shopSprite() : ch === 'A' ? barnSprite(ground)
         : ch === 'J' ? greenhouseSprite(S.ghBuilt, ground)
         : ch === 'G' ? storeSprite() : ch === 'R' ? eaterySprite() : ch === 'Q' ? homeSprite(homes++)
+        : ch === 'b' ? smithSprite(Math.floor(Date.now() / 400) % 2)
         : fountainSprite(Math.floor(Date.now() / 500) % 2);
       g.drawImage(img, x * T, y * T);
     }

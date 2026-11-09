@@ -10,7 +10,7 @@ import {
   wetUntilOf, dayEndOf, nextSeasonStart,
   ANIMALS, PRODUCTS, FEED_PRICE, LOVE_MAX, hearts, productOf, animalReadyAt, animalHasProduct, cleanAnimalName, PEN,
   TOWN_MAP, AREAS, ARRIVE, VILLAGERS, FRIEND_MAX, friendHearts, giftPoints, friendReward, villagerOut, requestOf,
-  TALK_POINTS, REQUEST_POINTS, FOODS, TOOL_UPGRADES, area3x3, isBirthday,
+  TALK_POINTS, REQUEST_POINTS, FOODS, TOOL_UPGRADES, isBirthday,
   HILL_MAP, EXITS, FISH, ORES, fishSpot, isDaytime, fishChoices, pickWeighted, rocksOf, itemPrice, itemName, terrainAt,
   DISHES, INGREDIENT_GROUPS, cookTakes, FESTIVALS, festivalOn, festivalsAfter, nextFestival, isBirthdayEvent,
   GH_MAP, fieldArea, GOODS, MACHINES, MACHINE_SPOTS, MACHINE_BATCH, machineReadyAt, BUILDS, energyMaxOf,
@@ -26,6 +26,7 @@ import {
   HOME_MAP, DECOS, decoCheck, ingredientHave,
   TERRACE_MAP, plantableIn, EMOTES, NOTE_MAX, cleanNote,
   GRAZE_HOURS, grazes, grazeWeatherOk, grazePenaltyDue, HORSE, RIDE_AREAS,
+  SMITH_TOOLS, SMITH_TIERS, toolSize, toolEnergy, toolArea, areaEnergy, smithCheck, toolTitle,
   FERTS, growRate, QUALITY, harvestQuality, withQuality, GEAR, isSprinkler, gearCovers, sprinkledSet, scaredAt, gearCheck, crowsOf, ALWAYS_WET,
 } from './farm.js';
 const ANIMAL_EMOJI = { chicken: '🐔', duck: '🦆', cow: '🐄', sheep: '🐑' };
@@ -563,6 +564,15 @@ ALTER TABLE farms ADD COLUMN horse_pet_day TEXT;
 ALTER TABLE farms ADD COLUMN horse_rider INTEGER;
 `;
 
+// 鐵匠鋪：鋤頭、澆水壺、鐮刀打到第幾級（0 還沒打、1 銅、2 銀、3 金）；師傅正在打哪一把、哪一天交給他的
+const SCHEMA_V26 = `
+ALTER TABLE farms ADD COLUMN hoe_tier INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE farms ADD COLUMN can_tier INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE farms ADD COLUMN sickle_tier INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE farms ADD COLUMN smith_tool TEXT;
+ALTER TABLE farms ADD COLUMN smith_day TEXT;
+`;
+
 // 訊息中的網址：http(s):// 或 www. 開頭，遇到空白、引號或中文標點即結束
 // （與前端 public/app.js 的 URL_RE / trimUrlTail 保持一致）
 const URL_RE = /(?:https?:\/\/|www\.)[^\s<>"'`\u3000、，。！？：；（）「」『』【】《》〈〉…]+/i;
@@ -859,6 +869,10 @@ export class ChatServer {
       if (v < 25) {
         this.sql.exec(SCHEMA_V25);
         this.setSetting('schema_version', '25');
+      }
+      if (v < 26) {
+        this.sql.exec(SCHEMA_V26);
+        this.setSetting('schema_version', '26');
       }
     });
     // 心跳不喚醒 DO：客戶端送 "ping"，執行環境自動回 "pong"
@@ -2674,6 +2688,24 @@ export class ChatServer {
     const n = Number(this.env && this.env.FARM_FAST_TREES);
     return Number.isFinite(n) && n > 0 ? n : null;
   }
+  // FARM_SMITH=now 只給本機測試用：交給師傅馬上就打好（不用等到明天）
+  farmSmithNow() {
+    return this.env && this.env.FARM_SMITH === 'now';
+  }
+  // 交給阿鐵師傅的工具：隔天（或本機測試的 FARM_SMITH=now）就打好了，聊天室說一聲
+  farmSmithCheck(conversationId, farm, today) {
+    const tool = farm.smith_tool;
+    if (!tool || (farm.smith_day === today && !this.farmSmithNow())) return false;
+    this.sql.exec(`UPDATE farms SET smith_tool = NULL, smith_day = NULL WHERE conversation_id = ?`, conversationId);
+    farm.smith_tool = null; farm.smith_day = null;
+    if (!Object.hasOwn(SMITH_TOOLS, tool)) return true;
+    const col = `${tool}_tier`, tier = Math.min(SMITH_TIERS.length - 1, (farm[col] || 0) + 1);
+    this.sql.exec(`UPDATE farms SET ${col} = ? WHERE conversation_id = ?`, tier, conversationId);
+    farm[col] = tier;
+    const [w, h] = toolSize(tier, true);
+    this.addSystemMessage(conversationId, `🔨 阿鐵師傅把${toolTitle(tool, tier, true)}打好了！現在一次${SMITH_TOOLS[tool].verb} ${w}×${h}${tool === 'sickle' ? '' : `，體力${toolEnergy(tier) === 0.5 ? '少一半' : '只要四分之一'}`}`);
+    return true;
+  }
   // FARM_GRAZE=open 只給本機測試用：不管幾點都可以放牧，也不會算成「待了一整晚」（同一天）
   farmGrazeForce() {
     const o = this.env && this.env.FARM_GRAZE;
@@ -2949,7 +2981,8 @@ export class ChatServer {
     const one = (q, ...a) => this.sql.exec(q, ...a).one().n;
     const dex = this.farmDex(conversationId);
     const pts = Object.keys(VILLAGERS).map((id) => this.farmFriendRow(conversationId, id));
-    const farm = this.sql.exec(`SELECT gh_built, house_level, horse_name FROM farms WHERE conversation_id = ?`, conversationId).one();
+    const farm = this.sql.exec(`SELECT gh_built, house_level, horse_name, hoe_tier, can_tier, sickle_tier FROM farms WHERE conversation_id = ?`, conversationId).one();
+    const tiers = [farm.hoe_tier || 0, farm.can_tier || 0, farm.sickle_tier || 0];
     return {
       harvest: st.harvest || 0, shipped: st.shipped || 0, requests: st.requests || 0, babies: st.babies || 0, goldHarvest: st.gold_harvest || 0, notes: st.notes || 0,
       sprinklers: one(`SELECT COUNT(*) AS n FROM farm_gear WHERE conversation_id = ? AND kind IN ('sprinkler', 'sprinkler2')`, conversationId),
@@ -2961,6 +2994,7 @@ export class ChatServer {
       goodKinds: dex.filter((i) => i.startsWith('good:')).length, amethyst: dex.includes('ore:amethyst'),
       maxHearts: Math.max(...pts.map((f) => friendHearts(f.points))), minHearts: Math.min(...pts.map((f) => friendHearts(f.points))),
       stories: pts.reduce((n, f) => n + (f.story_level || 0), 0), gh: farm.gh_built, house: farm.house_level, horse: !!farm.horse_name, graze: st.graze || 0,
+      smithTiers: tiers.reduce((a, b) => a + b, 0), goldTools: tiers.filter((t) => t >= 3).length,
       trees: one(`SELECT COUNT(*) AS n FROM farm_trees WHERE conversation_id = ?`, conversationId),
       honey: dex.includes('prod:honey') || dex.includes('prod:honey_l'),
       goldfish3: st.goldfish3 || 0, beautyWin: st.beauty_win || 0, harvestGold: st.harvest_gold || 0,
@@ -3180,7 +3214,8 @@ export class ChatServer {
     return {
       friends: this.farmFriendsPub(conversationId, today),
       request: { ...this.farmRequest(today), done: farm.request_day === today },
-      tools: { hoe: farm.hoe_level, can: farm.can_level },
+      tools: { hoe: farm.hoe_level, can: farm.can_level, tiers: { hoe: farm.hoe_tier || 0, can: farm.can_tier || 0, sickle: farm.sickle_tier || 0 },
+        smith: farm.smith_tool ? { tool: farm.smith_tool, day: farm.smith_day } : null },
       festivalClaimed: farm.festival_claim === today,
     };
   }
@@ -3303,6 +3338,7 @@ export class ChatServer {
     this.farmTyphoon(conversationId, farm, now, scale, rainy, wet);
     this.farmCrows(conversationId, farm, now);
     this.farmGrazeCheck(conversationId, farm, now);
+    this.farmSmithCheck(conversationId, farm, taiwanDay(now));
     const tiles = this.sql
       .exec(`SELECT * FROM farm_tiles WHERE conversation_id = ?`, conversationId)
       .toArray()
@@ -3366,6 +3402,7 @@ export class ChatServer {
       home: HOME_MAP, terrace: TERRACE_MAP, decos: this.farmDecosPub(conversationId), decoKinds: DECOS,
       notes: this.farmNotesPub(conversationId), emotes: EMOTES,
       graze: this.farmGrazePub(farm, today), horse: this.farmHorsePub(conversationId, farm, today), horseInfo: HORSE, rideAreas: RIDE_AREAS,
+      smithTools: SMITH_TOOLS, smithTiers: SMITH_TIERS,
       gear: this.farmGearPub(conversationId), gearKinds: GEAR, ferts: FERTS, quality: QUALITY, crows: this.farmCrowsPub(farm, today),
       harvestContest: { count: this.sql.exec(`SELECT value FROM farm_stats WHERE conversation_id = ? AND key = 'season_harvest'`, conversationId).toArray()[0]?.value || 0, rivals: HARVEST_RIVALS },
       treeSpots: TREE_SPOTS, hiveSpots: HIVE_SPOTS, treeKinds: TREES, fruits: FRUITS, hive: HIVE,
@@ -3395,6 +3432,7 @@ export class ChatServer {
     const crowEaten = this.farmCrows(conversationId, farm, now);
     const grazeBack = this.farmGrazeCheck(conversationId, farm, now);
     let grazeChanged = grazeBack, horseChanged = false;
+    const smithDone = this.farmSmithCheck(conversationId, farm, taiwanDay(now));
     const gearAt = (x, y) => gearRows.find((g) => g.x === x && g.y === y);
     let gearChanged = false;
     let notesChanged = false;
@@ -3407,7 +3445,7 @@ export class ChatServer {
     let tilesOut = null;
     let gained = null;
     let animalsChanged = false;
-    let townChanged = false;
+    let townChanged = smithDone;
     let rocksChanged = false;
     let dexChanged = false;
     let machinesChanged = false;
@@ -3443,20 +3481,23 @@ export class ChatServer {
     };
 
     if ((action === 'till' || action === 'water') && body.area === true) {
-      // 升級過的大鋤頭／大澆水壺：一次處理 3×3，只做需要的格子，體力不夠就做到哪算到哪
-      if ((action === 'till' ? farm.hoe_level : farm.can_level) < 2)
-        throw new HttpError(400, '要先到小鎮阿福伯的雜貨店升級工具');
+      // 大鋤頭／大澆水壺一次 3×3；鐵匠打過的照材質（銅 3×3、銀 5×3、金 5×5，體力打折）。
+      // 只做需要的格子，體力不夠就做到哪算到哪
+      const big = (action === 'till' ? farm.hoe_level : farm.can_level) >= 2;
+      const tier = (action === 'till' ? farm.hoe_tier : farm.can_tier) || 0;
+      if (!big && !tier) throw new HttpError(400, '要先到小鎮阿福伯的雜貨店升級工具');
       const x = Number(body.x), y = Number(body.y);
       const area = fieldOf(x, y);
       if (area === 'terrace') throw new HttpError(400, '水田不用翻土、也不用澆水，直接插秧');
       const fresh = (20 * 3600000) / scale; // 4 小時內才澆過的就跳過
+      const base = ENERGY_COST[action] + coldExtra(area, action), mult = toolEnergy(tier);
       tilesOut = [];
       let tired = false;
-      for (const c of area3x3(x, y)) {
+      for (const c of toolArea(x, y, toolSize(tier, big))) {
         if (fieldArea(c.x, c.y) !== area || gearAt(c.x, c.y)) continue;
         const t = this.farmTileRow(conversationId, c.x, c.y, now);
         if (action === 'till' ? t.tilled : (!t.tilled || t.watered_until - now > fresh || wet.has(`${c.x},${c.y}`))) continue;
-        const cost = ENERGY_COST[action] + coldExtra(area, action);
+        const done = tilesOut.length, cost = areaEnergy(done + 1, base, mult) - areaEnergy(done, base, mult);
         if (p.energy < cost) { tired = true; break; }
         p.energy -= cost;
         if (action === 'till') Object.assign(t, { tilled: 1, crop: null, progress_ms: 0, tick_at: now });
@@ -3468,6 +3509,39 @@ export class ChatServer {
         if (tired) throw new HttpError(400, '體力用完了，明天再來吧 😴');
         throw new HttpError(400, action === 'till' ? '這附近的田都翻好了' : '這附近的田都澆過了');
       }
+    } else if (action === 'harvest' && body.area === true) {
+      // 鐵匠打的鐮刀：一次收成一片（銅 3×3、銀 5×3、金 5×5），只收熟了的
+      const tier = farm.sickle_tier || 0;
+      if (!tier) throw new HttpError(400, '要先到小鎮的鐵匠鋪打一把鐮刀');
+      const x = Number(body.x), y = Number(body.y);
+      const area = fieldOf(x, y);
+      tilesOut = [];
+      const got = {};
+      let best = 0, gold = 0;
+      for (const c of toolArea(x, y, toolSize(tier, false))) {
+        if (fieldArea(c.x, c.y) !== area || gearAt(c.x, c.y)) continue;
+        if (area === 'gh' && !farm.gh_built) continue;
+        const t = this.farmTileRow(conversationId, c.x, c.y, now);
+        if (!t.crop || cropStage(t, now, scale, this.tileRain(c.x, c.y, rainy, wet)) < 3) continue;
+        const q = harvestQuality(conversationId, c.x, c.y, now, t.fert);
+        const item = withQuality(`crop:${t.crop}`, q);
+        this.farmAddItem(conversationId, item, 1);
+        got[item] = (got[item] || 0) + 1;
+        best = Math.max(best, q);
+        if (q === 3) gold++;
+        const again = regrowProgressMs(t.crop);
+        if (again != null) Object.assign(t, { progress_ms: again, tick_at: now });
+        else Object.assign(t, { crop: null, progress_ms: 0, tick_at: now, fert: null });
+        this.farmSaveTile(conversationId, t);
+        tilesOut.push(this.farmTilePub(t, now, scale, rainy, wet));
+      }
+      const n = tilesOut.length;
+      if (!n) throw new HttpError(400, '這附近沒有熟了的作物');
+      this.farmStat(conversationId, 'harvest', n);
+      this.farmStat(conversationId, 'season_harvest', n);
+      if (gold) this.farmStat(conversationId, 'gold_harvest', gold);
+      weekAdd.harvest = n;
+      gained = { items: got, qty: n, quality: best, item: Object.keys(got).sort((a, b) => b.localeCompare(a))[0] };
     } else if (['till', 'dig', 'plant', 'water', 'harvest'].includes(action)) {
       const x = Number(body.x), y = Number(body.y);
       const area = fieldOf(x, y);
@@ -3575,6 +3649,29 @@ export class ChatServer {
       farm.graze_back = 1;
       gained = { back: true };
       grazeChanged = true;
+    } else if (action === 'smith') {
+      // 把工具交給阿鐵師傅打成下一級（明天來拿），同時只能打一把
+      const tool = String(body.tool || '');
+      if (!Object.hasOwn(SMITH_TOOLS, tool)) throw new HttpError(400, '沒有這種工具');
+      if (farm.smith_tool) {
+        const busy = farm.smith_tool;
+        throw new HttpError(400, `阿鐵師傅正在打${toolTitle(busy, (farm[`${busy}_tier`] || 0) + 1, true)}，明天打好了再拿別的來`);
+      }
+      const tier = farm[`${tool}_tier`] || 0;
+      const bigLevel = tool === 'hoe' ? farm.hoe_level : tool === 'can' ? farm.can_level : 0;
+      const money0 = this.sql.exec(`SELECT money FROM farms WHERE conversation_id = ?`, conversationId).one().money;
+      const why = smithCheck(tool, tier, this.farmItems(conversationId), money0, bigLevel);
+      if (why) throw new HttpError(400, why);
+      const next = SMITH_TIERS[tier + 1];
+      this.farmSpend(conversationId, next.price);
+      this.farmAddItem(conversationId, next.ore, -next.qty);
+      this.sql.exec(`UPDATE farms SET smith_tool = ?, smith_day = ? WHERE conversation_id = ?`, tool, today, conversationId);
+      Object.assign(farm, { smith_tool: tool, smith_day: today });
+      this.farmStat(conversationId, 'smith', 1);
+      this.addSystemMessage(conversationId, `🔨 ${me.display_name} 把${toolTitle(tool, tier, bigLevel >= 2)}交給阿鐵師傅，要打成${toolTitle(tool, tier + 1, true)}（明天就好了）`);
+      const ready = this.farmSmithCheck(conversationId, farm, today); // 本機測試 FARM_SMITH=now 馬上就好
+      gained = { smith: tool, tier: tier + 1, ready };
+      townChanged = true;
     } else if (action === 'buy_horse') {
       if (farm.horse_name) throw new HttpError(400, `已經有一匹馬「${farm.horse_name}」了`);
       const name = cleanAnimalName(body.name);

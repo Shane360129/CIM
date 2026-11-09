@@ -45,12 +45,12 @@ export const FARM_W = FARM_MAP[0].length;
 export const FARM_H = FARM_MAP.length;
 export const FARM_SPAWN = { x: 5, y: 5 }; // 家門口
 
-// 小鎮：G 阿福伯的雜貨店、R 美玲姐的小吃店、Q 民宅、p 廣場石板、O 噴水池、N 委託告示板、, 花圃、E 回牧場
+// 小鎮：G 阿福伯的雜貨店、R 美玲姐的小吃店、Q 民宅、p 廣場石板、O 噴水池、N 委託告示板、, 花圃、E 回牧場、b 阿鐵師傅的鐵匠鋪
 export const TOWN_MAP = [
   'TTTTTETTTTTTTTTTTTTTTTTTTTTTTT',
   'T....=.......................T',
-  'T.UU.=..GGGG......RRRR.II.T..T',
-  'T.UU.=..GGGG......RRRR.II....T',
+  'T.UU.=..GGGG......RRRR.II.bb.T',
+  'T.UU.=..GGGG......RRRR.II.bb.T',
   'T....=..GGGG......RRRR.......T',
   'T....========================T',
   'T..............=.............T',
@@ -980,6 +980,8 @@ export const ACHIEVEMENTS = [
   { id: 'notes5', name: '家人的小紙條', desc: '在牧場的留言板寫了 5 則留言', reward: 300, test: (s) => (s.notes || 0) >= 5 },
   { id: 'horse', name: '我的愛駒', desc: '買了一匹馬', reward: 300, test: (s) => !!s.horse },
   { id: 'graze10', name: '青青草原', desc: '放牧 10 天', reward: 800, test: (s) => (s.graze || 0) >= 10 },
+  { id: 'smith', name: '打鐵趁熱', desc: '在鐵匠鋪打好第一把工具', reward: 300, test: (s) => (s.smithTiers || 0) >= 1 },
+  { id: 'goldtools', name: '金光閃閃', desc: '鋤頭、澆水壺、鐮刀都打成金的', reward: 2000, test: (s) => (s.goldTools || 0) >= 3 },
   { id: 'stories', name: '說故事的人', desc: '聽完所有村民的故事', reward: 2000, test: (s) => s.stories >= Object.keys(STORIES).length * STORY_HEARTS.length },
 ];
 export const achievementsMet = (stats) => ACHIEVEMENTS.filter((a) => a.test(stats)).map((a) => a.id);
@@ -1574,3 +1576,46 @@ export const HORSE = { price: 3000, loveMax: 20 };
 export const HORSE_ZONE = { x0: 22, y0: 6, x1: 28, y1: 6 };
 export const RIDE_AREAS = ['farm', 'town', 'hill', 'beach', 'terrace'];
 export const horseSpeed = (love) => (16 + Math.floor(Math.min(HORSE.loveMax, Math.max(0, love || 0)) / 4)) / 10; // 0～5 顆愛心：1.6～2.1 倍
+
+// ---------------- 鐵匠鋪：工具打成銅、銀、金（第二十三期） ----------------
+// 阿鐵師傅的鐵匠鋪在小鎮右上角。工具全家共用；打一把要一天（明天來拿），師傅打的時候舊的先借你用，同時只能打一把。
+// 鋤頭、澆水壺要先在雜貨店換成大的（3×3）才能拿來打；鐮刀（收成用）直接打
+export const SMITH_TOOLS = {
+  hoe: { name: '鋤頭', short: '鋤頭', verb: '翻', needBig: true },
+  can: { name: '澆水壺', short: '澆水', verb: '澆', needBig: true },
+  sickle: { name: '鐮刀', short: '鐮刀', verb: '收成', needBig: false },
+};
+// 第 1～3 級：要的錢和礦石、一次處理的範圍（寬×高）、體力打幾折
+export const SMITH_TIERS = [
+  null,
+  { name: '銅', price: 1500, ore: 'ore:copper', qty: 5, size: [3, 3], energy: 0.5 },
+  { name: '銀', price: 4000, ore: 'ore:silver', qty: 5, size: [5, 3], energy: 0.5 },
+  { name: '金', price: 10000, ore: 'ore:gold', qty: 5, size: [5, 5], energy: 0.25 },
+];
+export const TIER_MAX = SMITH_TIERS.length - 1;
+// 一次處理的範圍：打過的照材質；沒打過的大鋤頭／大澆水壺 3×3；其他一次一格
+export const toolSize = (tier, big) => (tier > 0 ? SMITH_TIERS[Math.min(tier, TIER_MAX)].size : big ? [3, 3] : [1, 1]);
+// 用這把工具的體力打幾折（沒打過的照原價）
+export const toolEnergy = (tier) => (tier > 0 ? SMITH_TIERS[Math.min(tier, TIER_MAX)].energy : 1);
+// 範圍裡的格子：點的那一格先做，再由近到遠（體力不夠時至少做到點的那一格）
+export function toolArea(x, y, size) {
+  const [w, h] = size, out = [];
+  for (let dy = -Math.floor(h / 2); dy <= Math.floor(h / 2); dy++)
+    for (let dx = -Math.floor(w / 2); dx <= Math.floor(w / 2); dx++) out.push({ x: x + dx, y: y + dy, d: Math.abs(dx) + Math.abs(dy) });
+  return out.sort((a, b) => a.d - b.d || a.y - b.y || a.x - b.x).map(({ x: ax, y: ay }) => ({ x: ax, y: ay }));
+}
+// 做完 k 格一共花多少體力：每格 base 點、打 mult 折，加起來無條件進位（第 k 格多花的就是 areaEnergy(k) - areaEnergy(k - 1)）
+export const areaEnergy = (k, base, mult) => Math.ceil(k * base * mult - 1e-9);
+// 能不能拿去打下一級：可以的話回傳 null，不行回傳原因
+export function smithCheck(tool, tier, have, money, bigLevel) {
+  const T = SMITH_TOOLS[tool];
+  if (!T || !Object.hasOwn(SMITH_TOOLS, tool)) return '沒有這種工具';
+  if (tier >= TIER_MAX) return `已經是金${T.name}了，沒辦法再好了`;
+  if (T.needBig && bigLevel < 2) return `要先到阿福伯的雜貨店換大${T.short === '澆水' ? '澆水壺' : T.name}，再拿來打`;
+  const next = SMITH_TIERS[tier + 1];
+  if (money < next.price) return `錢不夠，打${next.name}${T.name}要 ${next.price.toLocaleString()} 元`;
+  if ((have[next.ore] || 0) < next.qty) return `${ORES[next.ore.slice(4)].name}不夠，要 ${next.qty} 個（後山、洞窟挖得到）`;
+  return null;
+}
+// 工具現在叫什麼：金鋤頭、大澆水壺、鐮刀（還沒打）
+export const toolTitle = (tool, tier, big) => (tier > 0 ? SMITH_TIERS[Math.min(tier, TIER_MAX)].name : big ? '大' : '') + SMITH_TOOLS[tool].name;
