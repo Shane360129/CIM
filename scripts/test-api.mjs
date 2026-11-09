@@ -286,6 +286,24 @@ if (fs0.weather.today !== 'typhoon') {
     && (await farmDo(groupId, { action: 'forage', area: 'terrace', x: teaList[0].x, y: teaList[0].y }, TA)).status === 400);
 }
 
+// 家庭留言板（第二十一期）
+check('牧場有家庭留言板（還沒有留言）和 8 種表情', Array.isArray(fs0.notes) && fs0.notes.length === 0 && fs0.emotes?.length === 8 && fs0.map[2][8] === 'n');
+check('留言：空白的、亂填的不行', (await farmDo(groupId, { action: 'note_add', text: '   ' }, TA)).status === 400 && (await farmDo(groupId, { action: 'note_add' }, TA)).status === 400);
+r = await farmDo(groupId, { action: 'note_add', text: '  晚上回家\n吃飯喔  ' }, TA);
+const note1 = r.data.notes?.[0];
+check('朋友A 貼了一張留言（去掉多的空白），寫著是誰留的', r.status === 200 && r.data.notes.length === 1 && note1.text === '晚上回家 吃飯喔' && note1.name === '朋友A');
+check('聊天室說朋友A 在留言板寫了什麼', (await listIn(groupId, TB)).some((m) => m.type === 'system' && m.content.includes('朋友A 在牧場的留言板寫了：「晚上回家 吃飯喔」')));
+check('朋友B 打開牧場看得到這張留言', (await farmGet(groupId, TB)).data.notes?.[0]?.text === '晚上回家 吃飯喔');
+r = await farmDo(groupId, { action: 'note_add', text: '長'.repeat(200) }, TB);
+check('太長的留言只留前 60 個字', r.status === 200 && r.data.notes[0].text === '長'.repeat(60));
+check('別人的留言不能拿掉、亂填的編號被擋', (await farmDo(groupId, { action: 'note_del', id: note1.id }, TB)).status === 403
+  && (await farmDo(groupId, { action: 'note_del', id: 'x' }, TB)).status === 400 && (await farmDo(groupId, { action: 'note_del', id: 999999 }, TB)).status === 400);
+r = await farmDo(groupId, { action: 'note_del', id: note1.id }, TA);
+check('自己的留言可以拿掉', r.status === 200 && r.data.notes.length === 1 && r.data.notes[0].name === '朋友B');
+for (let i = 0; i < 20; i++) r = await farmDo(groupId, { action: 'note_add', text: `第 ${i + 1} 張` }, TB);
+check('留言板最多留 20 張，最舊的拿掉', r.data.notes.length === 20 && r.data.notes[0].text === '第 20 張' && r.data.notes.at(-1).text === '第 1 張');
+check('不是成員不能留言（404）', (await farmDo(dmAdminA.id, { action: 'note_add', text: '嗨' }, TB)).status === 404);
+
 // 動物：在動物小屋買、取名字、每天摸摸和餵飯，過幾個小時收雞蛋
 check('一開始沒有動物，有雞和牛可以買', fs0.animals?.length === 0 && !!fs0.animalKinds?.chicken && !!fs0.animalKinds?.cow);
 check('買動物要取名字', (await farmDo(groupId, { action: 'buy_animal', kind: 'chicken', name: '  ' }, TA)).status === 400);
@@ -386,7 +404,7 @@ if (fs0.villagersOut) {
 
 // 料理
 // 村民的故事、成就、週報
-check('有村民的故事、41 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 41
+check('有村民的故事、42 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 42
   && JSON.stringify(fs0.achievements) === '{}' && /^\d{4}-\d{2}-\d{2}$/.test(fs0.thisWeek?.week || ''));
 check('有 47 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 47 && !!fs0.ingredientGroups?.egg);
 check('沒有這道菜', (await farmDo(groupId, { action: 'cook', dish: 'steak' }, TA)).status === 400

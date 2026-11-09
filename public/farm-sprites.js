@@ -1340,6 +1340,7 @@ export function sprite(name, shirt = '#d9544d', flip = false, season = '') {
   if (name.startsWith('fertdots_')) return fertDotsSprite(name.slice(9));
   if (name.startsWith('gear_')) return gearSprite(name.slice(5));
   if (name === 'crow') return crowSprite();
+  if (name.startsWith('familyboard_')) return familyBoardSprite(Number(name.slice(12)) || 0);
   if (/^rice_[0-3]$/.test(name)) return riceSprite(Number(name.slice(5))); // 稻子用程式畫（倉庫、商店的圖示）
   if (name === 'spray') return spraySprite();
   if (name.startsWith('fish_')) return fishSprite(name.slice(5));
@@ -2064,4 +2065,13 @@ export const riceSprite = (stage) => building('rice_' + stage, 16, 16, (r) => {
     if (stage >= 1) { r(c, bx - 2, by - h + 2, 1, h - 2); r(c, bx + 2, by - h + 2, 1, h - 2); }
     if (stage === 3) { r('#f2d06a', bx - 2, by - h - 1, 2, 2); r('#f2d06a', bx + 1, by - h - 1, 2, 2); r('#e0b84a', bx, by - h - 1, 1, 1); }
   }
+});
+
+// ---------------- 家庭留言板（第二十一期） ----------------
+// 軟木塞板子，上面釘著幾張彩色的小紙條（n 張，最多畫 6 張）
+export const familyBoardSprite = (n = 0) => building('familyboard_' + n, 16, 16, (r) => {
+  r('#7a4e2d', 3, 11, 2, 5); r('#7a4e2d', 11, 11, 2, 5);
+  r('#8d5d32', 1, 1, 14, 11); r('#c9a477', 2, 2, 12, 9); r('#b08a5e', 2, 10, 12, 1);
+  const spots = [[3, 3], [7, 3], [11, 3], [4, 7], [8, 7], [11, 7]], cols = ['#f6e08a', '#f6b6c9', '#a8d8f0', '#c8f0a8', '#f2c8a0', '#e0c8f0'];
+  for (let i = 0; i < Math.min(6, n); i++) { const [x, y] = spots[i]; r(cols[i], x, y, 3, 3); r('#d9344a', x + 1, y, 1, 1); }
 });

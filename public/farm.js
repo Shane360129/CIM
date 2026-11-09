@@ -13,7 +13,7 @@ const SPEED = 4.5;       // 每秒走幾格
 const WALK = new Set(['.', '=', 'F', 'p', ',', 'E', 's', 'P', 'r']); // s 沙灘、P 防波堤、r 水田；潮間帶 d 退潮才走得過去
 // 點了會走過去互動的東西：田、出貨箱、攤位、房子、動物小屋、溫室、加工機；小鎮的雜貨店、小吃店、民宅、噴水池、告示板；
 // 後山的洞窟入口；洞窟裡往上、往下的梯子和寶箱；小鎮修復計畫的土地公廟、老車站、農會、海邊的漁會
-const TARGETS = 'FBSHAGRQONWJMYZV^vCUILDre'; // r 水田、e 茶樹
+const TARGETS = 'FBSHAGRQONWJMYZV^vCUILDren'; // r 水田、e 茶樹、n 家庭留言板
 const PROJECT_AT = { U: 'temple', I: 'station', L: 'coop', D: 'harbor' };
 const EXIT_LABEL = { town: '🏘️ 往小鎮', farm: '🌾 回牧場', hill: '⛰️ 往後山', beach: '🌊 往海邊', terrace: '🍵 往梯田' };
 const SEASON = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
@@ -49,6 +49,7 @@ const S = {
   festivals: {}, festival: null, festivalClaimed: false, nextFestival: null, todayEvents: [], birthdays: [],
   machines: {}, machineKinds: {}, machineSpots: {}, machineBatch: 5, goods: {}, builds: {}, ghBuilt: false, houseLevel: 1,
   gear: [], gearKinds: {}, ferts: {}, quality: {}, crows: [],
+  notes: [], emoteList: [], emotes: new Map(),
   pondTiles: [], pets: {}, petKinds: {}, petZoneTiles: [], petPos: {}, trails: new Map(),
   stories: {}, storyHearts: [2, 5, 8], achievementList: [], achievements: {}, thisWeek: null, activity: null, game: null,
   trees: [], hives: [], treeKinds: {}, fruits: {}, treeSpots: [], hiveSpots: [], hive: { price: 1500, max: 3, days: 3 },
@@ -239,6 +240,7 @@ function applyState(st) {
   S.members = new Map(st.members.map((m) => [m.id, m]));
   S.spawn = st.spawn;
   // 手上的種子不是這一季的，就換成這一季有的（優先選倉庫裡有的）；在溫室裡什麼種子都能種，不用換
+  S.notes = st.notes || []; S.emoteList = st.emotes || [];
   S.gear = st.gear || []; S.gearKinds = st.gearKinds || {}; S.ferts = st.ferts || {}; S.quality = st.quality || {}; S.crows = st.crows || [];
   if (!isFert(S.seed) && !canPlantHere(S.seed)) {
     const ids = Object.keys(S.crops).filter(inSeason);
@@ -1316,6 +1318,7 @@ async function doAct(body) {
     if (r.projects) S.projects = r.projects;
     if (r.decos) S.decos = r.decos;
     if (r.gear) S.gear = r.gear;
+    if (r.notes) S.notes = r.notes;
     if (r.crows) S.crows = r.crows;
     if (r.caveBest != null) S.caveInfo.best = r.caveBest;
     for (const a of r.newAchievements || []) setTimeout(() => toast(`🏆 達成成就「${a.name}」！全家拿到 ${a.reward} 元`), 900);
@@ -1355,6 +1358,7 @@ function useOn(x, y) {
     if (ch === 'C') return openChest();
   }
   if (ch === 'B') return openBin();
+  if (ch === 'n') return openNotes();
   if (ch === 'S') return openShop();
   if (ch === 'H') return openKitchen();
   if (ch === 'A') return openBarn();
@@ -1428,6 +1432,72 @@ function describe(t, now) {
   const fert = t.fert && S.ferts[t.fert] ? `・施了${S.ferts[t.fert].name}` : '';
   if (!wet(t, now)) return toast(`${c.name}：土乾了，澆水才會繼續長（還差 ${fmtLeft(left)}${fert}）`);
   toast(`${c.name}：再 ${fmtLeft(left)} 就能收成${c.regrow ? '（收完會再長）' : ''}${fert}`);
+}
+
+// 表情：選一個，頭上冒泡泡，在線的家人都看得到
+function openEmotes() {
+  openModal(el('h2', { text: '😊 打個招呼' }), el('p', { class: 'sub', text: '頭上會冒出泡泡，同一座牧場在線的家人都看得到' }),
+    el('div', { class: 'emote-grid' }, ...S.emoteList.map((e, i) => el('button', { type: 'button', text: e, 'aria-label': e, onclick: () => sendEmote(i) }))),
+    el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
+}
+function sendEmote(i) {
+  closeModal();
+  S.emotes.set(S.meId, { e: S.emoteList[i], until: performance.now() + 3000 });
+  try { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ t: 'emote', e: i })); } catch {}
+}
+
+// 拍照：把現在的牧場畫面加上一條字（牧場名字、日期），縮小成 JPEG，可以傳到聊天室或存下來
+function takePhoto() {
+  const src = canvas;
+  const top = Math.min(src.height - 1, Math.round((S.padTop || 0) * dpr)); // 上面被狀態列擋住的那一條不要
+  const scale = Math.min(1, 1280 / src.width);
+  const c = document.createElement('canvas');
+  c.width = Math.round(src.width * scale); c.height = Math.round((src.height - top) * scale);
+  const pg = c.getContext('2d');
+  pg.drawImage(src, 0, top, src.width, src.height - top, 0, 0, c.width, c.height);
+  const d = new Date(serverNow() + 8 * 3600000);
+  const label = `🌾 ${S.title}・${d.getUTCMonth() + 1}/${d.getUTCDate()}・${SEASON[S.season]}天`;
+  const fs = Math.max(14, Math.round(c.width / 40));
+  pg.fillStyle = 'rgba(0,0,0,0.45)'; pg.fillRect(0, c.height - fs * 2, c.width, fs * 2);
+  pg.fillStyle = '#ffffff'; pg.font = `bold ${fs}px sans-serif`; pg.textBaseline = 'middle';
+  pg.fillText(label, fs * 0.7, c.height - fs);
+  let url = '';
+  for (const q of [0.85, 0.7, 0.55, 0.4]) { url = c.toDataURL('image/jpeg', q); if (url.length <= 650000) break; }
+  const share = el('button', { class: 'btn primary', type: 'button', text: '傳到聊天室' });
+  share.onclick = async () => {
+    share.disabled = true;
+    try {
+      await api(`/api/conversations/${convId}/messages`, { method: 'POST', body: { type: 'image', content: url } });
+      toast('📷 照片傳到聊天室了'); closeModal();
+    } catch (e) { toast(e.message); share.disabled = false; }
+  };
+  openModal(el('h2', { text: '📷 牧場的照片' }), el('img', { class: 'photo-preview', src: url, alt: '牧場的照片' }),
+    el('div', { class: 'actions' },
+      el('a', { class: 'btn', href: url, download: `牧場-${d.getUTCMonth() + 1}-${d.getUTCDate()}.jpg`, text: '存到手機／電腦' }),
+      share, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
+}
+
+// 家庭留言板：寫小紙條給家人（聊天室也會說一聲），自己寫的可以拿掉
+function openNotes() {
+  const input = el('input', { type: 'text', maxlength: '60', placeholder: '寫給家人的話（最多 60 個字）', 'aria-label': '留言' });
+  const post = el('button', { class: 'btn primary', type: 'button', text: '貼上去' });
+  post.onclick = async () => {
+    if (!input.value.trim()) return toast('寫點什麼吧');
+    try { await doAct({ action: 'note_add', text: input.value }); toast('📌 貼好了，聊天室也說了一聲'); openNotes(); } catch {}
+  };
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') post.click(); });
+  const ago = (t) => { const m = Math.round((serverNow() - t) / 60000); return m < 1 ? '剛剛' : m < 60 ? `${m} 分鐘前` : m < 1440 ? `${Math.round(m / 60)} 小時前` : `${Math.round(m / 1440)} 天前`; };
+  const rows = S.notes.map((n) => el('div', { class: 'row' }, el('span', { class: 'big', text: '📝' }),
+    el('div', { class: 'grow' }, el('div', { class: 'note-text', text: n.text }), el('div', { class: 'meta', text: `${n.name}・${ago(n.at)}` })),
+    n.userId === S.meId ? el('button', {
+      class: 'btn', type: 'button', text: '拿掉', 'aria-label': '拿掉這則留言',
+      onclick: async () => { try { await doAct({ action: 'note_del', id: n.id }); openNotes(); } catch {} },
+    }) : null));
+  openModal(el('h2', { text: '📌 家庭留言板' }), el('p', { class: 'sub', text: '寫給家人的小紙條，大家打開牧場都看得到（最多留 20 張）' }),
+    el('div', { class: 'row' }, input, post),
+    ...(rows.length ? rows : [el('div', { class: 'empty', text: '還沒有人留言，寫第一張吧' })]),
+    el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
+  setTimeout(() => input.focus(), 50);
 }
 
 // 點擺在田裡的灑水器、稻草人：說明、收起來
@@ -2386,6 +2456,8 @@ function connectWs() {
       const area = ev.a || 'farm';
       if (!o.seen || o.a !== area) { o.x = ev.x; o.y = ev.y; o.seen = true; } // 換地圖了就直接出現在新位置
       o.tx = ev.x; o.ty = ev.y; o.d = ev.d; o.m = ev.m; o.a = area;
+    } else if (ev.type === 'farm-emote') {
+      if (S.emoteList[ev.e]) S.emotes.set(ev.userId, { e: S.emoteList[ev.e], until: performance.now() + 3000 });
     } else if (ev.type === 'farm-leave') {
       S.others.delete(ev.userId);
     } else if (ev.type === 'farm-update') {
@@ -2408,6 +2480,7 @@ function connectWs() {
       if (ev.projects) S.projects = { ...S.projects, ...ev.projects }; // 家人交了東西、修好了地方
       if (ev.decos) S.decos = ev.decos;
       if (ev.gear) S.gear = ev.gear;
+      if (ev.notes) S.notes = ev.notes;
       if (ev.crows) S.crows = ev.crows;
       if (ev.caveBest != null) S.caveInfo.best = ev.caveBest;
       if (ev.by !== S.meId) for (const a of ev.newAchievements || []) toast(`🏆 達成成就「${a.name}」！全家拿到 ${a.reward} 元`);
@@ -2607,6 +2680,7 @@ function draw() {
       const ch = terrain(x, y);
       if (ch === 'T') g.drawImage(treeSprite(x, y), x * T, y * T);
       else if (ch === 'e') g.drawImage(teaBushSprite(S.season), x * T, y * T);
+      else if (ch === 'n') g.drawImage(sprite('familyboard_' + Math.min(6, S.notes.length)), x * T, y * T);
       else if (ch === '^' || ch === 'v') g.drawImage(caveLadderSprite(ch === 'v'), x * T, y * T);
       else if (ch === 'C') g.drawImage(chestSprite(!!(S.cave && S.cave.chest && S.cave.chest.opened)), x * T, y * T);
       else if (ch === 'f') g.drawImage(sprite('fence'), x * T, y * T);
@@ -2736,6 +2810,17 @@ function draw() {
       if (b.a.babyUntil > now) g.drawImage(img, b.x * T + 3, b.y * T + 3, 10, 10); // 寶寶小一號
       else g.drawImage(img, b.x * T, b.y * T - 2);
     }
+  }
+  // 表情泡泡：頭上冒 3 秒
+  const tnow = performance.now();
+  for (const p of people) {
+    const em = !p.villager && S.emotes.get(p.mine ? S.meId : p.id);
+    if (!em || em.until < tnow) continue;
+    const bx = p.x * T + 8, by = p.y * T - 19; // 名字的上面
+    g.fillStyle = '#3a2a1c'; g.fillRect(bx - 8, by - 7, 16, 13); g.fillRect(bx - 2, by + 6, 4, 2);
+    g.fillStyle = '#ffffff'; g.fillRect(bx - 7, by - 6, 14, 11); g.fillRect(bx - 1, by + 5, 2, 2);
+    g.font = '9px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(em.e, bx, by);
   }
 
   // 攤位之間拉一條電線，掛著紅黃綠的小燈泡（晚上會亮）
@@ -2956,6 +3041,8 @@ canvas.addEventListener('pointerup', (e) => {
 });
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 $('btn-bag').addEventListener('click', openBag);
+$('btn-emote').addEventListener('click', openEmotes);
+$('btn-photo').addEventListener('click', takePhoto);
 $('hud-clock').addEventListener('click', openForecast);
 // 從聊天室開的新視窗直接關掉；直接打開網址的話回聊天室
 $('btn-close').addEventListener('click', () => {

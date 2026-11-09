@@ -26,7 +26,7 @@ import {
   PROJECTS, bundleOf, PROJECT_DONE_REWARD, shipPrice, COOP_BONUS, PRAYERS, prayerOf,
   HOME_MAP, DECOS, DECO_MAX, decoCheck, LAND_FINDS,
   FERTS, growRate, QUALITY, QUALITY_PCT, harvestQuality, baseItem, qualityOf, withQuality, itemName,
-  TERRACE_MAP, plantableIn,
+  TERRACE_MAP, plantableIn, EMOTES, NOTE_LEN, NOTE_MAX, cleanNote,
   GEAR, GEAR_MAX, SCARE_R, isSprinkler, gearCovers, sprinkledSet, scaredAt, gearCheck, crowsOf, CROW_MIN, CROW_PCT, ALWAYS_WET,
 } from '../src/farm.js';
 import { forageSprite, projectSprite, decoSprite, homeTileSprite } from '../public/farm-sprites.js';
@@ -416,7 +416,7 @@ check('感情很好但還沒聽過：從第一段開始說', storyDue(100, 0), 0
 const zero = { harvest: 0, shipped: 0, requests: 0, babies: 0, animals: 0, pets: 0, machines: 0, fishKinds: 0, dishKinds: 0, goodKinds: 0, amethyst: false, maxHearts: 0, minHearts: 0, stories: 0, gh: 0, house: 1 };
 check('什麼都還沒做：沒有成就', achievementsMet(zero), []);
 check('收成一次、領養寵物：兩個成就', achievementsMet({ ...zero, harvest: 1, pets: 1 }), ['harvest1', 'pet']);
-const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: Object.keys(MACHINES).length, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: Object.keys(FORAGE).length, beachKinds: 7, mushrooms: 3, projects: 4, decoFarm: 5, decoHome: 5, goldHarvest: 1, sprinklers: 4, whiteRice: true, teaKinds: 2 };
+const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: Object.keys(MACHINES).length, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: Object.keys(FORAGE).length, beachKinds: 7, mushrooms: 3, projects: 4, decoFarm: 5, decoHome: 5, goldHarvest: 1, sprinklers: 4, whiteRice: true, teaKinds: 2, notes: 5 };
 check('全部做完：每個成就都達成', achievementsMet(full).length, ACHIEVEMENTS.length);
 check('成就的編號不重複、都有名字說明和獎金', new Set(ACHIEVEMENTS.map((a) => a.id)).size === ACHIEVEMENTS.length && ACHIEVEMENTS.every((a) => a.name && a.desc && a.reward > 0), true);
 check('「聽完所有故事」要 18 段', [achievementsMet({ ...full, stories: 17 }).includes('stories'), achievementsMet(full).includes('stories')], [false, true]);
@@ -780,6 +780,14 @@ check('米和茶的料理：蛋炒飯、菜飯、香菇油飯、菜脯飯糰、�
   && DISHES[id].sell > Object.entries(DISHES[id].need).reduce((n, [k, q]) => n + q * itemPrice(ingredientItems(k)[0]), 0)), true);
 check('灑水器不擺在水田', gearCheck('sprinkler', paddies[0].x, paddies[0].y, [], null), '水田不用灑水器，也沒有烏鴉');
 check('成就：粒粒皆辛苦、茶園主人', [achievementsMet({ ...zero, whiteRice: true }), achievementsMet({ ...zero, teaKinds: 2 }), achievementsMet({ ...zero, teaKinds: 1 })], [['rice'], ['tea'], []]);
+
+console.log('\n--- 牧場相機與家人互動 ---');
+check('家庭留言板在房子右邊，旁邊站得到人', [terrainAt(8, 2), [[8, 3], [7, 2], [9, 2]].some(([x, y]) => seen.has(`${x},${y}`))], ['n', true]);
+check('8 種表情，不重複', [EMOTES.length, new Set(EMOTES).size], [8, 8]);
+check('留言：去掉前後空白、換行和看不見的字元，最多 60 個字', [cleanNote('  晚上  回家\n吃飯  '), cleanNote('a\u202eb\u0000c'), [...cleanNote('好'.repeat(100))].length,
+  cleanNote(''), cleanNote(null), cleanNote('   '), cleanNote('😀'.repeat(70)).length, NOTE_LEN, NOTE_MAX],
+  ['晚上 回家 吃飯', 'a b c', 60, '', '', '', 120, 60, 20]);
+check('成就：家人的小紙條', [achievementsMet({ ...zero, notes: 5 }), achievementsMet({ ...zero, notes: 4 })], [['notes5'], []]);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

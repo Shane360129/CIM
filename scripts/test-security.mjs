@@ -109,6 +109,28 @@ fw = await farmWs(dm.id, 'f'.repeat(64));
 check('假 token 連不上牧場即時連線', !fw.ok);
 fw = await farmWs(dm.id, TA);
 check('自己連得上，並收到「誰在牧場」', fw.ok && fw.msg?.type === 'farm-presence');
+// 表情泡泡（第二十一期）：只轉給同一座牧場的人，亂填的不轉，一秒最多一個
+const emotesGot = await new Promise((done) => {
+  const got = [];
+  const rx = new WebSocket(`${WSB}/ws?farm=${dm.id}`, ['cim.v1', 'token.' + ADMIN]);
+  const stop = setTimeout(() => done(got), 6000);
+  rx.onmessage = (e) => { const m = JSON.parse(e.data); if (m.type === 'farm-emote') got.push(m); };
+  rx.onopen = () => {
+    const tx = new WebSocket(`${WSB}/ws?farm=${dm.id}`, ['cim.v1', 'token.' + TA]);
+    tx.onopen = async () => {
+      for (const e of [99, -1, 'x', 1.5, null, '__proto__']) tx.send(JSON.stringify({ t: 'emote', e }));
+      tx.send(JSON.stringify({ t: 'emote', e: 2 }));
+      tx.send(JSON.stringify({ t: 'emote', e: 3 })); // 太快了，不轉
+      await new Promise((ok) => setTimeout(ok, 1100));
+      tx.send(JSON.stringify({ t: 'emote', e: 4 }));
+      setTimeout(() => { clearTimeout(stop); try { tx.close(); rx.close(); } catch {} done(got); }, 600);
+    };
+  };
+});
+check('表情：亂填的不轉、一秒最多一個，寫著是誰發的', JSON.stringify(emotesGot.map((m) => m.e)) === '[2,4]' && emotesGot.every((m) => m.userId === IA),
+  JSON.stringify(emotesGot));
+check('別人不能在我的牧場留言板留言、拿掉留言（404）', (await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'note_add', text: '嗨' } }, TC)).status === 404
+  && (await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'note_del', id: 1 } }, TC)).status === 404);
 const r0 = await j(`/api/farm/${dm.id}`, { method: 'POST', body: { action: 'buy_animal', kind: 'chicken', name: '\u202e花\u200b小\u0007' } }, TA);
 check('動物名字裡的隱藏字元（反向文字、零寬、控制字元）會被拿掉', r0.status === 200 && r0.data.animals?.[0]?.name === '花小', JSON.stringify(r0.data.animals?.[0]?.name));
 check('別人不能摸我牧場的動物（404）',

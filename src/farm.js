@@ -13,13 +13,13 @@ const TW = 8 * HOUR; // 台灣時間 UTC+8
 
 // 地形：T 樹、. 草地、= 小路、F 田、f 柵欄、H 房子、S 商店、B 出貨箱、W 池塘、A 動物小屋、E 往小鎮的出口、
 // J 溫室（蓋好之後點它走進去）、M 加工機的位置（攤位下面到池塘一排七台）、
-// Y 種果樹的位置（最下面一排）、Z 放蜂箱的位置（左下角）
+// Y 種果樹的位置（最下面一排）、Z 放蜂箱的位置（左下角）、n 家庭留言板（房子右邊）
 // 動物小屋下面用柵欄圍了一塊草地給雞和牛散步，左邊 (22,13) 是門；左下角的小路走出去是小鎮，
 // 動物小屋右邊 (29,7) 走出去是後山
 export const FARM_MAP = [
   'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
   'TT......T.JJJJJ..............T',
-  'T..HHHH...JJJJJ.SS....T......T',
+  'T..HHHH.n.JJJJJ.SS....T......T',
   'T..HHHH...JJJJJ.SS......WWW..T',
   'T..HHHH..B.......MMMMMMMWWWW.T',
   'T....=..................WWW..T',
@@ -977,6 +977,7 @@ export const ACHIEVEMENTS = [
   { id: 'tea', name: '茶園主人', desc: '做出烏龍茶和蜜香紅茶', reward: 800, test: (s) => (s.teaKinds || 0) >= 2 },
   { id: 'mushrooms', name: '菇菇採集家', desc: '採到木耳、香菇和靈芝', reward: 800, test: (s) => (s.mushrooms || 0) >= 3 },
   { id: 'forageAll', name: '採集達人', desc: '採集圖鑑全部撿過', reward: 2000, test: (s) => (s.forageKinds || 0) >= Object.keys(FORAGE).length },
+  { id: 'notes5', name: '家人的小紙條', desc: '在牧場的留言板寫了 5 則留言', reward: 300, test: (s) => (s.notes || 0) >= 5 },
   { id: 'stories', name: '說故事的人', desc: '聽完所有村民的故事', reward: 2000, test: (s) => s.stories >= Object.keys(STORIES).length * STORY_HEARTS.length },
 ];
 export const achievementsMet = (stats) => ACHIEVEMENTS.filter((a) => a.test(stats)).map((a) => a.id);
@@ -1532,4 +1533,16 @@ function teaOf(season) {
   const out = [];
   TERRACE_MAP.forEach((row, y) => [...row].forEach((c, x) => { if (c === 'e') out.push({ x, y, item, tidal: false }); }));
   return out;
+}
+
+// ---------------- 牧場相機與家人互動（第二十一期） ----------------
+// 表情：在牧場頭上冒一個泡泡，同一座牧場在線的家人都看得到（不存資料庫）
+export const EMOTES = ['👋', '❤️', '👍', '😂', '😮', '🎉', '😴', '🙏'];
+export const EMOTE_MS = 3000;
+// 家庭留言板：每則最多 60 個字，最多留 20 則（滿了把最舊的拿掉）
+export const NOTE_LEN = 60;
+export const NOTE_MAX = 20;
+export function cleanNote(raw) {
+  const t = [...String(raw ?? '').replace(/[\u0000-\u001f\u007f\u200b-\u200f\u202a-\u202e\u2066-\u2069]/g, ' ').replace(/\s+/g, ' ').trim()];
+  return t.length ? t.slice(0, NOTE_LEN).join('') : '';
 }
