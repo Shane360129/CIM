@@ -1511,6 +1511,30 @@ function building(key, w, h, draw) {
   cache.set(key, c);
   return c;
 }
+// ---------------- 冬天的雪（第二十六期） ----------------
+// 下雪的草地：白白的，露出一點點草尖（三種，排起來比較自然）
+export const snowCoverSprite = (v = 0) => building('snowcover_' + v, 16, 16, (r) => {
+  r('#eef3f8', 0, 0, 16, 16); r('#dde7f1', 0, 13, 16, 3);
+  for (const [x, y] of [[[3, 4], [11, 9], [6, 12]], [[9, 3], [2, 10], [13, 13]], [[5, 7], [12, 4], [8, 14]]][v % 3]) { r('#7fae5a', x, y, 1, 2); r('#ffffff', x - 1, y - 1, 3, 1); }
+});
+// 樹頂積雪
+export const snowCapSprite = () => building('snowcap', 16, 16, (r) => {
+  r('#f4f8fc', 3, 1, 10, 2); r('#ffffff', 5, 0, 6, 1); r('#f4f8fc', 2, 3, 3, 1); r('#f4f8fc', 11, 3, 3, 1); r('#dde7f1', 4, 3, 8, 1);
+});
+// 後山的雪人小丘：沒下雪的時候是一塊小木牌；下雪的時候是雪堆，堆了幾段就畫幾段（16×24，往上多畫 8 格）
+export const snowmanSprite = (snowy, parts = 0, nose = false) => building(`snowman_${snowy ? 1 : 0}_${parts}_${nose ? 1 : 0}`, 16, 24, (r) => {
+  if (!snowy) { r('#8d5d32', 7, 15, 2, 9); r('#a8743f', 3, 10, 10, 6); r('#5e3b20', 3, 15, 10, 1); r('#ffffff', 7, 11, 2, 4); r('#ffffff', 6, 12, 4, 2); return; }
+  if (parts < 1) { r('#e4ecf4', 2, 19, 12, 5); r('#ffffff', 4, 17, 8, 3); return; }
+  r('#ffffff', 3, 15, 10, 8); r('#ffffff', 4, 14, 8, 1); r('#dfe8f2', 3, 21, 10, 2); r('#e4ecf4', 2, 22, 12, 2);
+  if (parts >= 2) { r('#ffffff', 4, 9, 8, 6); r('#ffffff', 5, 8, 6, 1); r('#2b2421', 7, 11, 2, 1); r('#2b2421', 7, 13, 2, 1); }
+  if (parts >= 3) {
+    r('#ffffff', 5, 3, 6, 5); r('#2b2421', 6, 5, 1, 1); r('#2b2421', 9, 5, 1, 1); r('#2b2421', 7, 7, 2, 1);
+    r('#c8302e', 5, 1, 6, 2); r('#f6d34a', 7, 0, 2, 1); r('#3b6ea8', 4, 8, 8, 1); r('#3b6ea8', 10, 9, 2, 3);
+    r('#8d5d32', 1, 10, 3, 1); r('#8d5d32', 12, 10, 3, 1);
+    if (nose) r('#f08a3a', 8, 6, 3, 1);
+  }
+});
+
 // 房子旁邊的信箱：木頭柱子、紅色的信箱；有新信的時候小紅旗豎起來
 export const mailboxSprite = (up) => building('mailbox_' + (up ? 1 : 0), 16, 16, (r) => {
   r('#5e3b20', 7, 9, 2, 7); r('#3a2818', 6, 15, 4, 1);

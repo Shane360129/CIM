@@ -31,6 +31,7 @@ import {
   SMITH_TOOLS, SMITH_TIERS, TIER_MAX, toolSize, toolEnergy, toolArea, areaEnergy, smithCheck, toolTitle,
   NET, BUGS, BUG_SLOT_H, BUG_COUNT, BUG_AREAS, bugSlotOf, bugTimeOf, bugKinds, bugsOf, bugCaught,
   MAILBOX, MAIL_TEXT_MAX, PARCEL_DAILY, MAIL_KEEP, cleanMail, WELCOME_LETTER, seasonLetter, VILLAGER_LETTERS, letterWriter, weeklyLetter, birthdayThanks,
+  GIANTS, GIANT_PCT, giantCells, giantsToday, SNOW_AREAS, SNOW_SPOT, SNOWMAN, isSnowDay, METEOR_DATES, WISHES, meteorNightOf, isMeteorNight,
   GEAR, GEAR_MAX, SCARE_R, isSprinkler, gearCovers, sprinkledSet, scaredAt, gearCheck, crowsOf, CROW_MIN, CROW_PCT, ALWAYS_WET,
 } from '../src/farm.js';
 import { forageSprite, projectSprite, decoSprite, homeTileSprite, BUG_IDS } from '../public/farm-sprites.js';
@@ -420,7 +421,7 @@ check('感情很好但還沒聽過：從第一段開始說', storyDue(100, 0), 0
 const zero = { harvest: 0, shipped: 0, requests: 0, babies: 0, animals: 0, pets: 0, machines: 0, fishKinds: 0, dishKinds: 0, goodKinds: 0, amethyst: false, maxHearts: 0, minHearts: 0, stories: 0, gh: 0, house: 1 };
 check('什麼都還沒做：沒有成就', achievementsMet(zero), []);
 check('收成一次、領養寵物：兩個成就', achievementsMet({ ...zero, harvest: 1, pets: 1 }), ['harvest1', 'pet']);
-const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: Object.keys(MACHINES).length, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: Object.keys(FORAGE).length, beachKinds: 7, mushrooms: 3, projects: 4, decoFarm: 5, decoHome: 5, goldHarvest: 1, sprinklers: 4, whiteRice: true, teaKinds: 2, notes: 5, horse: true, graze: 10, smithTiers: 9, goldTools: 3, bugKinds: 20, broadtail: true, mailSent: 5, letters: 10 };
+const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: Object.keys(MACHINES).length, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: Object.keys(FORAGE).length, beachKinds: 7, mushrooms: 3, projects: 4, decoFarm: 5, decoHome: 5, goldHarvest: 1, sprinklers: 4, whiteRice: true, teaKinds: 2, notes: 5, horse: true, graze: 10, smithTiers: 9, goldTools: 3, bugKinds: 20, broadtail: true, mailSent: 5, letters: 10, giants: 1, snowmen: 1, wishes: 1 };
 check('全部做完：每個成就都達成', achievementsMet(full).length, ACHIEVEMENTS.length);
 check('成就的編號不重複、都有名字說明和獎金', new Set(ACHIEVEMENTS.map((a) => a.id)).size === ACHIEVEMENTS.length && ACHIEVEMENTS.every((a) => a.name && a.desc && a.reward > 0), true);
 check('「聽完所有故事」要 18 段', [achievementsMet({ ...full, stories: 17 }).includes('stories'), achievementsMet(full).includes('stories')], [false, true]);
@@ -889,6 +890,34 @@ check('村民生日送了禮物：感謝信附上他最喜歡的東西 2 個（�
   Object.keys(VILLAGERS).map(() => true));
 check('成就：魚雁往返、鎮上的好朋友', [achievementsMet({ ...zero, mailSent: 5 }), achievementsMet({ ...zero, letters: 10 }), achievementsMet({ ...zero, mailSent: 4, letters: 9 })],
   [['mail5'], ['letters10'], []]);
+
+console.log('\n--- 巨大作物、冬天的雪、流星雨（第二十六期） ---');
+check('巨大作物：南瓜、西瓜、高麗菜，比九顆加起來還值錢', [Object.keys(GIANTS), ['pumpkin', 'watermelon', 'cabbage'].every((c) => GIANTS[c].sell > CROPS[c].sell * 9),
+  itemPrice('giant:watermelon'), itemName('giant:cabbage'), GIANT_PCT], [['pumpkin', 'watermelon', 'cabbage'], true, 6300, '巨大高麗菜', 34]);
+check('一顆巨大作物佔 3×3 九格', [giantCells({ x: 5, y: 10 }).length, giantCells({ x: 5, y: 10 })[8]], [9, { x: 7, y: 12 }]);
+const ripeOf = (m) => (x, y) => m.get(`${x},${y}`) || null;
+const patchOf = (x0, y0, w, h, crop) => { const m = new Map(); for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) m.set(`${x},${y}`, crop); return m; };
+check('9 格同一種熟了的南瓜（機率 100）：長出一顆', giantsToday(1, 'd', ripeOf(patchOf(5, 10, 3, 3, 'pumpkin')), [], 100), [{ x: 5, y: 10, crop: 'pumpkin' }]);
+check('機率 0：不會長', giantsToday(1, 'd', ripeOf(patchOf(5, 10, 3, 3, 'pumpkin')), [], 0), []);
+check('4×3 只長一顆（不重疊）、6×3 長兩顆', [giantsToday(1, 'd', ripeOf(patchOf(5, 10, 4, 3, 'pumpkin')), [], 100).length, giantsToday(1, 'd', ripeOf(patchOf(5, 10, 6, 3, 'pumpkin')), [], 100).length], [1, 2]);
+const mixedP = patchOf(5, 10, 3, 3, 'pumpkin'); mixedP.set('6,11', 'watermelon');
+check('混了別的作物、少一排、番茄都不會長', [giantsToday(1, 'd', ripeOf(mixedP), [], 100), giantsToday(1, 'd', ripeOf(patchOf(5, 10, 3, 2, 'pumpkin')), [], 100),
+  giantsToday(1, 'd', ripeOf(patchOf(5, 10, 3, 3, 'tomato')), [], 100)], [[], [], []]);
+check('已經有巨大作物的格子不再算；田外面不會長', [giantsToday(1, 'd', ripeOf(patchOf(5, 10, 3, 3, 'pumpkin')), [{ x: 5, y: 10, crop: 'pumpkin' }], 100),
+  giantsToday(1, 'd', ripeOf(patchOf(1, 1, 3, 3, 'pumpkin')), [], 100)], [[], []]);
+check('平常大約三分之一的機會', (() => { let n = 0; for (let i = 0; i < 300; i++) n += giantsToday(i, 'd', ripeOf(patchOf(5, 10, 3, 3, 'pumpkin'))).length; return n > 70 && n < 140; })(), true);
+check('冬天寒流、下雨的日子，後山和梯田下雪', [isSnowDay('winter', 'cold'), isSnowDay('winter', 'rain'), isSnowDay('winter', 'sun'), isSnowDay('autumn', 'cold'), SNOW_AREAS],
+  [true, true, false, false, ['hill', 'terrace']]);
+check('雪人小丘在後山（w），不能走上去，旁邊走得到；三段、一段 2 點體力', [terrainAt(SNOW_SPOT.x, SNOW_SPOT.y, 'hill'), isWalkable(SNOW_SPOT.x, SNOW_SPOT.y, 'hill'),
+  isWalkable(SNOW_SPOT.x + 1, SNOW_SPOT.y, 'hill'), SNOWMAN.parts, SNOWMAN.energy], ['w', false, true, 3, 2]);
+check('流星雨是哪一晚：晚上 8 點以後算今天、半夜算前一晚、白天沒有', [meteorNightOf(Date.UTC(2026, 11, 13, 12, 30)), meteorNightOf(Date.UTC(2026, 11, 13, 17, 0)),
+  meteorNightOf(Date.UTC(2026, 11, 14, 2, 0))], ['2026-12-13', '2026-12-13', null]);
+check('雙子座流星雨晴天看得到、下雨看不到；秋天平常的晚上沒有', [METEOR_DATES.includes('12-13'), isMeteorNight('2026-12-13', 'sun', 'winter'), isMeteorNight('2026-12-13', 'rain', 'winter'),
+  isMeteorNight('2026-10-05', 'sun', 'autumn'), isMeteorNight(null, 'sun', 'winter')], [true, true, false, false, false]);
+check('冬天晴朗的晚上常常有流星', (() => { let n = 0; for (const m of ['2026-12', '2027-01', '2027-02']) for (let d = 1; d <= 28; d++) n += isMeteorNight(`${m}-${String(d).padStart(2, '0')}`, 'sun', 'winter') ? 1 : 0; return n > 10 && n < 35; })(), true);
+check('四個願望', Object.keys(WISHES), ['health', 'wealth', 'harvest', 'friends']);
+check('成就：巨無霸、堆雪人、對流星許願', [achievementsMet({ ...zero, giants: 1 }), achievementsMet({ ...zero, snowmen: 1 }), achievementsMet({ ...zero, wishes: 1 })],
+  [['giant'], ['snowman'], ['wish']]);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

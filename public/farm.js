@@ -6,6 +6,7 @@ import {
   greenhouseSprite, machineSprite, machineSpotSprite, ghTileSprite, fruitTreeSprite, treeSpotSprite, hiveSprite, hiveSpotSprite,
   stallSprite, caveMouthSprite, caveTileSprite, caveLadderSprite, chestSprite, beachTileSprite, forageSprite, projectSprite, decoSprite, homeTileSprite,
   gearSprite, crowSprite, paddySprite, teaBushSprite, teaBudsSprite, smithSprite, bugSprite, mailboxSprite,
+  snowCoverSprite, snowCapSprite, snowmanSprite,
 } from '/farm-sprites.js';
 
 const T = 16;            // 一格 16 像素
@@ -13,7 +14,7 @@ const SPEED = 4.5;       // 每秒走幾格
 const WALK = new Set(['.', '=', 'F', 'p', ',', 'E', 's', 'P', 'r']); // s 沙灘、P 防波堤、r 水田；潮間帶 d 退潮才走得過去
 // 點了會走過去互動的東西：田、出貨箱、攤位、房子、動物小屋、溫室、加工機；小鎮的雜貨店、小吃店、民宅、噴水池、告示板；
 // 後山的洞窟入口；洞窟裡往上、往下的梯子和寶箱；小鎮修復計畫的土地公廟、老車站、農會、海邊的漁會
-const TARGETS = 'FBSHAGRQONWJMYZV^vCUILDrenbx'; // r 水田、e 茶樹、n 家庭留言板、b 鐵匠鋪、x 信箱
+const TARGETS = 'FBSHAGRQONWJMYZV^vCUILDrenbxw'; // r 水田、e 茶樹、n 家庭留言板、b 鐵匠鋪、x 信箱、w 雪人小丘
 const PROJECT_AT = { U: 'temple', I: 'station', L: 'coop', D: 'harbor' };
 const EXIT_LABEL = { town: '🏘️ 往小鎮', farm: '🌾 回牧場', hill: '⛰️ 往後山', beach: '🌊 往海邊', terrace: '🍵 往梯田' };
 const SEASON = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
@@ -54,6 +55,8 @@ const S = {
   smithTools: {}, smithTiers: [],
   bugs: { areas: {} }, bugKinds: {}, net: false, netInfo: {},
   mail: { list: [], unread: 0 }, mailInfo: {},
+  giants: [], giantKinds: {}, snow: { day: false, parts: 0, nose: false }, snowman: { parts: 3, energy: 2 },
+  meteor: { active: false }, wishes: {}, wishMoney: 0,
   pondTiles: [], pets: {}, petKinds: {}, petZoneTiles: [], petPos: {}, trails: new Map(),
   stories: {}, storyHearts: [2, 5, 8], achievementList: [], achievements: {}, thisWeek: null, activity: null, game: null,
   trees: [], hives: [], treeKinds: {}, fruits: {}, treeSpots: [], hiveSpots: [], hive: { price: 1500, max: 3, days: 3 },
@@ -143,6 +146,7 @@ function itemInfo(item) {
   if (kind === 'deco' && S.decoKinds[id]) return { name: S.decoKinds[id].name, icon: 'deco_' + id, sell: 0, deco: id };
   if (kind === 'forage' && S.forageKinds[id]) return { name: S.forageKinds[id].name, icon: 'forage_' + id, sell: S.forageKinds[id].sell };
   if (kind === 'bug' && S.bugKinds[id]) return { name: S.bugKinds[id].name, icon: 'bug_' + id, sell: S.bugKinds[id].sell };
+  if (kind === 'giant' && S.giantKinds[id]) return { name: S.giantKinds[id].name, icon: id + '_3', sell: S.giantKinds[id].sell, giant: id };
   if (kind === 'sapling' && S.treeKinds[id]) return { name: `${S.treeKinds[id].name}苗`, icon: `tree_${id}_0`, sell: 0, sapling: id };
   return null;
 }
@@ -249,6 +253,9 @@ function applyState(st) {
   S.smithTools = st.smithTools || {}; S.smithTiers = st.smithTiers || [];
   S.bugs = st.bugs || { areas: {} }; S.bugKinds = st.bugKinds || {}; S.net = !!st.net; S.netInfo = st.netInfo || {};
   S.mail = st.mail || { list: [], unread: 0 }; S.mailInfo = st.mailInfo || {};
+  S.giants = st.giants || []; S.giantKinds = st.giantKinds || {}; S.snow = st.snow || { day: false, parts: 0, nose: false }; S.snowman = st.snowman || S.snowman;
+  S.meteor = st.meteor || { active: false }; S.wishes = st.wishes || {}; S.wishMoney = st.wishMoney || 0;
+  renderWish();
   S.graze = st.graze || { day: null, out: false }; S.horse = st.horse || null; S.horseInfo = st.horseInfo || {}; S.rideAreas = st.rideAreas || [];
   // 放牧的草地：後山南邊（跟伺服器的 grazeTiles 一樣）
   S.grazeTiles = [];
@@ -1368,6 +1375,9 @@ async function doAct(body) {
     if (r.bugs) S.bugs = r.bugs;
     if (r.net) S.net = true;
     if (r.mail) S.mail = r.mail;
+    if (r.giants) S.giants = r.giants;
+    if (r.snow) S.snow = r.snow;
+    if (r.meteor) { S.meteor = r.meteor; renderWish(); }
     if (r.graze) S.graze = r.graze;
     if (r.horse !== undefined) { S.horse = r.horse; renderRide(); }
     if (r.crows) S.crows = r.crows;
@@ -1411,6 +1421,7 @@ function useOn(x, y) {
   if (ch === 'B') return openBin();
   if (ch === 'n') return openNotes();
   if (ch === 'x') return openMailbox();
+  if (ch === 'w') return openSnowman();
   if (ch === 'S') return openShop();
   if (ch === 'H') return openKitchen();
   if (ch === 'A') return openBarn();
@@ -1437,7 +1448,8 @@ function useOn(x, y) {
   if (t.crop && stage(t, now) === 3) {
     return doAct({ action: 'harvest', x, y, ...(tierOf('sickle') > 0 ? { area: true } : {}) }).then((r) => {
       const q = r && r.gained && r.gained.quality;
-      if (r && r.gained && r.gained.qty > 1 && r.gained.items) toast(`🌾 一次收成了 ${r.gained.qty} 個${q >= 2 ? `，最好的是${itemInfo(r.gained.item).name}` : ''}`);
+      if (r && r.gained && r.gained.giant) toast(`🎉 收成了一顆${itemInfo(r.gained.item).name}！可以賣 ${itemInfo(r.gained.item).sell.toLocaleString()} 元`);
+      else if (r && r.gained && r.gained.qty > 1 && r.gained.items) toast(`🌾 一次收成了 ${r.gained.qty} 個${q >= 2 ? `，最好的是${itemInfo(r.gained.item).name}` : ''}`);
       else if (q >= 2) toast(`${q === 3 ? '🌟' : '⭐'} 收成了${itemInfo(r.gained.item).name}！賣 ${itemInfo(r.gained.item).sell} 元`);
     }).catch(() => {});
   }
@@ -1552,6 +1564,78 @@ function openNotes() {
     ...(rows.length ? rows : [el('div', { class: 'empty', text: '還沒有人留言，寫第一張吧' })]),
     el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
   setTimeout(() => input.focus(), 50);
+}
+
+// ---------- 巨大作物、冬天的雪、流星雨（第二十六期） ----------
+const inGiant = (x, y) => S.area === 'farm' && S.giants.some((gi) => x >= gi.x && x <= gi.x + 2 && y >= gi.y && y <= gi.y + 2);
+const snowHere = () => !!(S.snow && S.snow.day) && (S.area === 'hill' || S.area === 'terrace');
+// 山上的大雪：比寒流的小雪多、飄得慢
+function drawSnow(vw, vh) {
+  g.fillStyle = 'rgba(210,225,245,0.16)'; g.fillRect(0, 0, vw, vh);
+  const t = performance.now() / 1000, n = Math.round((vw * vh) / (dpr * dpr) / 2500);
+  for (let i = 0; i < n; i++) {
+    const sz = (i % 3 === 0 ? 3.5 : 2.2) * dpr;
+    const y = ((i * 0.4142 + t * (0.05 + ((i * 0.618) % 1) * 0.05)) % 1) * vh;
+    const x = (((i * 0.7548) % 1) * vw + Math.sin(t * 0.8 + i) * 16 * dpr + vw) % vw;
+    g.fillStyle = i % 4 ? 'rgba(255,255,255,0.9)' : 'rgba(235,242,255,0.75)';
+    g.fillRect(x, y, sz, sz);
+  }
+}
+// 流星：每隔一會兒從右上往左下劃過一道
+const meteors = [];
+function drawMeteors(vw, vh) {
+  if (!S.meteor || !S.meteor.active) return;
+  const t = performance.now();
+  if (meteors.length < 3 && Math.random() < 0.025) meteors.push({ x: (0.3 + Math.random() * 0.7) * vw, y: Math.random() * 0.35 * vh, born: t, len: (60 + Math.random() * 80) * dpr });
+  for (let i = meteors.length - 1; i >= 0; i--) {
+    const m = meteors[i], age = (t - m.born) / 900;
+    if (age > 1) { meteors.splice(i, 1); continue; }
+    const hx = m.x - age * 260 * dpr, hy = m.y + age * 140 * dpr;
+    const grad = g.createLinearGradient(hx, hy, hx + m.len, hy - m.len * 0.54);
+    grad.addColorStop(0, `rgba(255,255,230,${(1 - age).toFixed(2)})`); grad.addColorStop(1, 'rgba(255,255,230,0)');
+    g.strokeStyle = grad; g.lineWidth = 2.5 * dpr;
+    g.beginPath(); g.moveTo(hx, hy); g.lineTo(hx + m.len, hy - m.len * 0.54); g.stroke();
+  }
+}
+function openSnowman() {
+  const S0 = S.snow, max = S.snowman.parts || 3;
+  if (!S0.day) {
+    return openModal(el('h2', { text: '⛄ 雪人小丘' }),
+      el('p', { class: 'sub', text: '冬天寒流或下雨的日子，後山和梯田會下雪（平地只是很冷）。下雪的時候來這裡堆一個雪人吧！' }),
+      el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
+  }
+  const done = S0.parts >= max;
+  const carrot = Object.keys(S.items).find((k) => k.split('@')[0] === 'crop:carrot' && S.items[k] > 0);
+  const step = async (body, msg) => { try { await doAct({ action: 'snowman', ...body }); toast(msg()); openSnowman(); } catch {} };
+  openModal(el('h2', { text: '⛄ 堆雪人' }),
+    el('p', { class: 'sub', text: done ? `雪人堆好了！${S0.nose ? '還插上了紅蘿蔔鼻子。' : ''}雪停了就會融化，趁現在多看幾眼。`
+      : `下雪了！一次堆一段（${S.snowman.energy} 點體力）：底座、身體、頭，三段堆好就完成，家人也可以一起堆。現在堆了 ${S0.parts}/${max} 段。` }),
+    el('div', { class: 'actions' },
+      done ? null : el('button', { class: 'btn primary', type: 'button', text: ['堆底座', '堆身體', '堆頭'][S0.parts] || '堆一段',
+        onclick: () => step({ step: 'roll' }, () => (S.snow.parts >= max ? '⛄ 雪人堆好了！' : `堆好第 ${S.snow.parts} 段了`)) }),
+      done && !S0.nose ? el('button', { class: 'btn', type: 'button', text: carrot ? '🥕 插上紅蘿蔔鼻子' : '🥕 鼻子（倉庫沒有紅蘿蔔）', disabled: !carrot,
+        onclick: () => step({ step: 'nose' }, () => '🥕 插上鼻子了，好可愛！') }) : null,
+      el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
+}
+function renderWish() {
+  const b = $('btn-wish');
+  if (b) b.classList.toggle('hidden', !(S.meteor && S.meteor.active && !S.meteor.wished));
+}
+function openWish() {
+  const M = S.meteor || {};
+  if (!M.active) return toast('今晚沒有流星雨');
+  const rows = Object.entries(S.wishes).map(([id, w]) => el('div', { class: 'row' }, el('span', { class: 'big', text: w.emoji }),
+    el('div', { class: 'grow' }, el('div', { class: 'name', text: w.name }), el('div', { class: 'meta', text: w.desc })),
+    M.wished ? null : el('button', { class: 'btn primary', type: 'button', text: '許這個願', onclick: async () => {
+      try {
+        const r = await doAct({ action: 'wish', wish: id });
+        toast(`🌠 ${w.name}！${id === 'health' ? '體力補滿了' : id === 'wealth' ? `錢包 +${S.wishMoney} 元` : id === 'harvest' ? `收到 3 包${seedName(r.gained.seed)}` : '村民們都更喜歡你們了'}`);
+        closeModal();
+      } catch {}
+    } })));
+  openModal(el('h2', { text: '🌠 流星雨' }),
+    el('p', { class: 'sub', text: M.wished ? `今晚已經許過願了：${(S.wishes[M.wished] || {}).name || ''}。` : '今晚有流星雨！看到流星的時候許一個願望吧（每個人一晚一次）。' }),
+    ...rows, el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
 }
 
 // ---------- 信箱（第二十五期） ----------
@@ -2763,6 +2847,8 @@ function connectWs() {
       if (ev.notes) S.notes = ev.notes;
       if (ev.bugs) S.bugs = ev.bugs;
       if (ev.net) S.net = true;
+      if (ev.giants) S.giants = ev.giants;
+      if (ev.snow) S.snow = ev.snow;
       if (ev.graze) S.graze = ev.graze;
       if (ev.horse !== undefined) { S.horse = ev.horse; renderRide(); }
       if (ev.crows) S.crows = ev.crows;
@@ -2844,6 +2930,7 @@ function treeSprite(x, y) {
 function drawWeather(vw, vh) {
   const w = S.weather.today;
   if (S.area === 'gh') return; // 溫室裡淋不到雨
+  if (snowHere()) { drawSnow(vw, vh); return; } // 冬天的山上：下雨變下雪
   if (w === 'cloud') { g.fillStyle = 'rgba(90,100,115,0.14)'; g.fillRect(0, 0, vw, vh); return; }
   const t = performance.now() / 1000;
   if (w === 'cold') {
@@ -2957,12 +3044,18 @@ function draw() {
   const spraying = Math.floor(Date.now() / 1000) % 6 === 0; // 灑水器每 6 秒噴一下水
 
   // 地面
-  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) g.drawImage(baseSprite(x, y, terrain(x, y)), x * T, y * T);
+  const snowy = snowHere();
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const ch0 = terrain(x, y);
+    g.drawImage(baseSprite(x, y, ch0), x * T, y * T);
+    if (snowy && (ch0 === '.' || ch0 === ',' || ch0 === 'T' || ch0 === 'w')) g.drawImage(snowCoverSprite((x * 7 + y * 3) % 3), x * T, y * T); // 下雪的山上白白一片
+  }
   // 作物與物件
   for (let y = y0; y <= y1; y++) {
     for (let x = x0; x <= x1; x++) {
       const ch = terrain(x, y);
-      if (ch === 'T') g.drawImage(treeSprite(x, y), x * T, y * T);
+      if (ch === 'T') { g.drawImage(treeSprite(x, y), x * T, y * T); if (snowy) g.drawImage(snowCapSprite(), x * T, y * T); }
+      else if (ch === 'w') g.drawImage(snowmanSprite(S.snow.day, S.snow.parts, S.snow.nose), x * T, y * T - 8);
       else if (ch === 'e') g.drawImage(teaBushSprite(S.season), x * T, y * T);
       else if (ch === 'n') g.drawImage(sprite('familyboard_' + Math.min(6, S.notes.length)), x * T, y * T);
       else if (ch === 'x') g.drawImage(mailboxSprite(S.mail.unread > 0), x * T, y * T);
@@ -2988,7 +3081,7 @@ function draw() {
         const gr = gearAt(x, y);
         if (gr) { g.drawImage(gearSprite(gr.kind, spraying && gr.kind !== 'scarecrow' ? 1 : 0), x * T, y * T); continue; }
         if (t && t.tilled && t.fert) g.drawImage(sprite('fertdots_' + t.fert), x * T, y * T);
-        if (t && t.crop) {
+        if (t && t.crop && !inGiant(x, y)) {
           const st = stage(t, now);
           g.drawImage(cropSprite(t.crop, st), x * T, y * T);
           if (st === 3 && blink) g.drawImage(sprite('sparkle'), x * T, y * T);
@@ -3016,6 +3109,12 @@ function draw() {
     if (f.tidal && !S.lowTide) continue;
     if (f.item.startsWith('forage:tea')) { g.drawImage(teaBudsSprite(f.item === 'forage:tea_summer'), f.x * T, f.y * T); continue; } // 茶樹冒新芽
     g.drawImage(sprite('forage_' + f.item.slice(7)), f.x * T, f.y * T + (Math.floor(Date.now() / 500 + f.x) % 2));
+  }
+  // 巨大作物：佔 3×3，畫一顆放大的作物和影子
+  if (S.area === 'farm') for (const gi of S.giants) {
+    g.fillStyle = 'rgba(40,30,20,0.25)'; g.beginPath(); g.ellipse((gi.x + 1.5) * T, (gi.y + 2.7) * T, T * 1.4, T * 0.35, 0, 0, Math.PI * 2); g.fill();
+    g.drawImage(cropSprite(gi.crop, 3), gi.x * T - 2, gi.y * T - 6, T * 3 + 4, T * 3 + 4);
+    if (blink) g.drawImage(sprite('sparkle'), (gi.x + 2) * T, gi.y * T);
   }
   // 好幾格大的建築：每一棟在它左上角那一格畫一次
   const ground = SEASON_GROUND[S.season];
@@ -3277,7 +3376,7 @@ function draw() {
     }
     g.globalCompositeOperation = 'source-over';
   }
-  if (S.area !== 'cave' && S.area !== 'home') { drawWeather(vw, vh); drawFireworks(vw, vh, now); }
+  if (S.area !== 'cave' && S.area !== 'home') { drawWeather(vw, vh); drawFireworks(vw, vh, now); drawMeteors(vw, vh); }
 }
 
 let last = performance.now();
@@ -3344,6 +3443,7 @@ $('btn-bag').addEventListener('click', openBag);
 $('btn-emote').addEventListener('click', openEmotes);
 $('btn-photo').addEventListener('click', takePhoto);
 $('btn-ride').addEventListener('click', toggleRide);
+$('btn-wish').addEventListener('click', openWish);
 $('hud-clock').addEventListener('click', openForecast);
 // 從聊天室開的新視窗直接關掉；直接打開網址的話回聊天室
 $('btn-close').addEventListener('click', () => {

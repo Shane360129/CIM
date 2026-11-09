@@ -83,7 +83,7 @@ export const HILL_MAP = [
   'T....T..........=......T.....T',
   'E================............T',
   'T.......T....................T',
-  'T...........T........T.......T',
+  'T...w.......T........T.......T',
   'T..T.........................T',
   'T.......T.........T......T...T',
   'T...T.............,,,........T',
@@ -653,7 +653,7 @@ export const ORES = {
 };
 export const QUARRY = { x0: 16, y0: 1, x1: 27, y1: 6 };
 export const ROCKS_PER_DAY = 20;
-function seededRandom(seedText) {
+export function seededRandom(seedText) {
   let h = 2166136261;
   for (const ch of seedText) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
   let a = h >>> 0;
@@ -734,7 +734,7 @@ export const BUILDS = {
 
 // 倉庫裡的東西能賣多少（賣不了的回傳 0）：作物、雞蛋牛奶、魚、礦石、料理、加工品
 // 有星級的作物寫成 crop:番茄@3（1 銅星、2 銀星、3 金星），只有作物有星級
-const ITEM_TABLES = () => ({ crop: CROPS, prod: PRODUCTS, fish: FISH, ore: ORES, dish: DISHES, good: GOODS, fruit: FRUITS, forage: FORAGE, bug: BUGS });
+const ITEM_TABLES = () => ({ crop: CROPS, prod: PRODUCTS, fish: FISH, ore: ORES, dish: DISHES, good: GOODS, fruit: FRUITS, forage: FORAGE, bug: BUGS, giant: GIANTS });
 const ITEM_RE = /^([a-z]+):([a-z0-9_]+)(?:@([123]))?$/;
 export function itemPrice(item) {
   const m = ITEM_RE.exec(String(item));
@@ -986,6 +986,9 @@ export const ACHIEVEMENTS = [
   { id: 'broadtail', name: '國寶蝴蝶', desc: '抓到寬尾鳳蝶', reward: 1000, test: (s) => !!s.broadtail },
   { id: 'mail5', name: '魚雁往返', desc: '寄 5 封信給家人', reward: 300, test: (s) => (s.mailSent || 0) >= 5 },
   { id: 'letters10', name: '鎮上的好朋友', desc: '收到 10 封村民寄來的信', reward: 500, test: (s) => (s.letters || 0) >= 10 },
+  { id: 'giant', name: '巨無霸', desc: '收成一顆巨大作物', reward: 1000, test: (s) => (s.giants || 0) >= 1 },
+  { id: 'snowman', name: '堆雪人', desc: '在後山堆好一個雪人', reward: 300, test: (s) => (s.snowmen || 0) >= 1 },
+  { id: 'wish', name: '對流星許願', desc: '流星雨的晚上許一個願望', reward: 300, test: (s) => (s.wishes || 0) >= 1 },
   { id: 'stories', name: '說故事的人', desc: '聽完所有村民的故事', reward: 2000, test: (s) => s.stories >= Object.keys(STORIES).length * STORY_HEARTS.length },
 ];
 export const achievementsMet = (stats) => ACHIEVEMENTS.filter((a) => a.test(stats)).map((a) => a.id);
@@ -1772,4 +1775,63 @@ export function birthdayThanks(villager) {
   const gift = [...V.loves, ...V.likes].find((i) => itemPrice(i) > 0 && !i.startsWith('bug:')) || null;
   return { from: villager, title: '謝謝你們的生日禮物', body: `謝謝你們記得我的生日，還送了禮物給我！我好開心。這是我的一點心意，請收下。——${V.name}`,
     item: gift, qty: gift ? 2 : 0 };
+}
+
+// ---------------- 巨大作物（第二十六期） ----------------
+// 南瓜、西瓜、高麗菜種成 3×3 一整片，全部熟了，每天早上有機會長成一顆巨大作物（只有牧場的田，溫室裡不會）。
+// 長出來就一直在，點任何一格收成，一次收一整顆（很值錢，第一次聊天室會說）
+export const GIANTS = {
+  pumpkin: { name: '巨大南瓜', sell: 5400, emoji: '🎃' },
+  watermelon: { name: '巨大西瓜', sell: 6300, emoji: '🍉' },
+  cabbage: { name: '巨大高麗菜', sell: 2700, emoji: '🥬' },
+};
+export const GIANT_PCT = 34; // 每一片、每天
+export const giantCells = (g) => [0, 1, 2].flatMap((dy) => [0, 1, 2].map((dx) => ({ x: g.x + dx, y: g.y + dy })));
+// 今天會長出哪幾顆：ripe(x, y) 回傳熟了的作物（或 null）；已經有的巨大作物佔住的格子不算；一片一片不重疊
+export function giantsToday(farmId, day, ripe, have = [], pct = GIANT_PCT) {
+  const used = new Set(have.flatMap((g) => giantCells(g).map((c) => `${c.x},${c.y}`)));
+  const out = [];
+  for (let y = 0; y < FARM_H - 2; y++) for (let x = 0; x < FARM_W - 2; x++) {
+    const crop = ripe(x, y);
+    if (!crop || !GIANTS[crop]) continue;
+    const cells = giantCells({ x, y });
+    if (cells.some((c) => used.has(`${c.x},${c.y}`) || terrainAt(c.x, c.y) !== 'F' || ripe(c.x, c.y) !== crop)) continue;
+    if (Math.floor(seededRandom(`${farmId}|${day}|giant|${x}|${y}`)() * 100) >= pct) continue;
+    out.push({ x, y, crop });
+    cells.forEach((c) => used.add(`${c.x},${c.y}`));
+  }
+  return out;
+}
+
+// ---------------- 冬天的雪、雪人（第二十六期） ----------------
+// 冬天寒流或下雨的日子，後山和梯田（山上）會下雪；平地只是很冷。下雪的日子可以在後山的雪人小丘堆雪人：
+// 點一下堆一段（2 點體力），底座、身體、頭三段堆好就完成，倉庫有紅蘿蔔的話可以插上鼻子。雪停了就融化
+export const SNOW_AREAS = ['hill', 'terrace'];
+export const SNOW_SPOT = { area: 'hill', x: 4, y: 13 };
+export const SNOWMAN = { parts: 3, energy: 2 };
+export const isSnowDay = (season, weather) => season === 'winter' && (weather === 'cold' || weather === 'rain');
+
+// ---------------- 流星雨（第二十六期） ----------------
+// 晴朗（或多雲）的晚上 8 點到半夜 3 點：每年的英仙座（8/12、8/13）、雙子座（12/13、12/14）、象限儀（1/3、1/4）流星雨，
+// 冬天也常常有流星。每個人一晚可以許一個願望
+export const METEOR_DATES = ['08-12', '08-13', '12-13', '12-14', '01-03', '01-04'];
+export const METEOR_HOURS = [20, 3];
+export const METEOR_WINTER_PCT = 20;
+export const WISHES = {
+  health: { name: '身體健康', emoji: '💪', desc: '體力馬上補滿' },
+  wealth: { name: '發大財', emoji: '💰', desc: '全家的錢包 +300 元' },
+  harvest: { name: '大豐收', emoji: '🌱', desc: '收到 3 包這一季的種子' },
+  friends: { name: '跟大家感情更好', emoji: '❤️', desc: '每位村民感情 +2' },
+};
+export const WISH_MONEY = 300;
+// 流星雨是哪一晚：晚上 8 點以後算今天，半夜 0～3 點算前一天晚上
+export const meteorNightOf = (now) => {
+  const h = new Date(now + 8 * 3600000).getUTCHours();
+  return h >= METEOR_HOURS[0] ? taiwanDay(now) : h < METEOR_HOURS[1] ? taiwanDay(now - 86400000) : null;
+};
+// 這一晚有沒有流星雨（看晚上那一天的天氣）
+export function isMeteorNight(night, weather, season) {
+  if (!night || (weather !== 'sun' && weather !== 'cloud')) return false;
+  if (METEOR_DATES.includes(night.slice(5))) return true;
+  return season === 'winter' && Math.floor(seededRandom(`meteor|${night}`)() * 100) < METEOR_WINTER_PCT;
 }

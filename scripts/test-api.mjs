@@ -385,6 +385,11 @@ check('打工具：沒這種工具、還沒換大鋤頭、沒有銅礦都被擋'
   && /錢不夠|銅礦不夠/.test((await farmDo(groupId, { action: 'smith', tool: 'sickle' }, TA)).data.error || ''));
 r = await farmDo(groupId, { action: 'harvest', ...f1, area: true }, TA);
 check('還沒有鐮刀不能一次收成一片', r.status === 400 && /鐵匠鋪/.test(r.data.error || ''), r.data.error);
+// 巨大作物、冬天的雪、流星雨（第二十六期）
+check('巨大作物、雪、流星雨的資料', Array.isArray(fs0.giants) && Object.keys(fs0.giantKinds || {}).length === 3 && typeof fs0.snow?.day === 'boolean'
+  && fs0.snow.spot?.area === 'hill' && typeof fs0.meteor?.active === 'boolean' && Object.keys(fs0.wishes || {}).length === 4);
+if (!fs0.snow.day) check('沒下雪不能堆雪人', /沒有下雪/.test((await farmDo(groupId, { action: 'snowman' }, TA)).data.error || ''));
+if (!fs0.meteor.active) check('沒有流星雨不能許願', /沒有流星雨/.test((await farmDo(groupId, { action: 'wish', wish: 'health' }, TA)).data.error || ''));
 // 信箱（第二十五期）
 {
   const mA = (await farmGet(groupId, TA)).data;
@@ -454,7 +459,7 @@ if (fs0.villagersOut) {
 
 // 料理
 // 村民的故事、成就、週報
-check('有村民的故事、50 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 50
+check('有村民的故事、53 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 53
   && JSON.stringify(fs0.achievements) === '{}' && /^\d{4}-\d{2}-\d{2}$/.test(fs0.thisWeek?.week || ''));
 check('有 47 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 47 && !!fs0.ingredientGroups?.egg);
 check('沒有這道菜', (await farmDo(groupId, { action: 'cook', dish: 'steak' }, TA)).status === 400
@@ -842,6 +847,17 @@ if (fs0.scale >= 3600) {
       check('（加速模式）聊天室說動物去後山吃草了', (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('放到後山的草地上吃草了')));
       r = await farmDo(groupId, { action: 'graze_in' }, TB);
       check('（加速模式）趕回小屋；今天不能再放一次', r.status === 200 && !r.data.graze.out && /今天已經放牧過/.test((await farmDo(groupId, { action: 'graze_out' }, TA)).data.error || ''));
+    }
+    // 流星雨（第二十六期，本機測試用 FARM_METEOR=on 今晚一定有流星雨）
+    {
+      check('（加速模式）亂填的願望被擋', (await farmDo(groupId, { action: 'wish', wish: '__proto__' }, TA)).status === 400);
+      r = await farmDo(groupId, { action: 'wish', wish: 'wealth' }, TA);
+      money += fs0.wishMoney; // 成就獎金 farmDo 已經算進去了
+      check(`（加速模式）許願「發大財」：錢包 +${fs0.wishMoney}（還有成就獎金）→ ${money}`, r.status === 200 && r.data.money === money && r.data.meteor?.wished === 'wealth', r.data.error || `實際 ${r.data.money}，成就 ${JSON.stringify(r.data.newAchievements)}`);
+      check('（加速模式）一晚只能許一次', /已經許過願/.test((await farmDo(groupId, { action: 'wish', wish: 'health' }, TA)).data.error || ''));
+      r = await farmDo(groupId, { action: 'wish', wish: 'health' }, TB);
+      check('（加速模式）朋友B 許願「身體健康」：體力補滿', r.status === 200 && r.data.energy === r.data.energyMax, r.data.error);
+      check('（加速模式）聊天室說誰許了什麼願', (await listIn(groupId, TA)).filter((m) => m.type === 'system' && m.content.includes('對著流星許願')).length === 2);
     }
     // 信箱（第二十五期）：寄一道菜給家人（本機測試用 FARM_START_ITEMS 放了 2 份烤玉米）；感情好的村民每週寫信
     {
