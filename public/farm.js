@@ -758,9 +758,12 @@ function goArea(to) {
   S.floats = [];
   S.fishing = null;
   closeModal();
+  // 走進不能騎馬的地方（屋子、溫室、洞窟）：先下馬，家人那邊也不會再看到你騎在馬上
+  const offHorse = riding() && !S.rideAreas.includes(to);
+  if (offHorse) { S.horse.rider = null; renderRide(); }
   sendPos(false);
   toast({ town: '🏘️ 來到小鎮了', farm: '🌾 回到牧場了', hill: '⛰️ 來到後山了', gh: '🌱 進到溫室了', beach: '🌊 來到海邊了', home: '🏠 進到屋子裡了', terrace: '🍵 來到梯田了：上面是茶園，下面是水田' }[to]);
-  if (riding() && !S.rideAreas.includes(to)) { doAct({ action: 'dismount' }).catch(() => {}); toast(`先下馬，${S.horse.name}在外面等你`); }
+  if (offHorse) { doAct({ action: 'dismount' }).catch(() => {}); toast(`先下馬，${S.horse.name}在外面等你`); }
   // 到梯田：倉庫有秧苗就直接拿秧苗；離開梯田：換回這一季的種子
   if (to === 'terrace' && S.items['seed:rice'] && !isFert(S.seed)) S.seed = 'rice';
   else if (from === 'terrace' && S.seed === 'rice') S.seed = Object.keys(S.crops).find((id) => canPlantHere(id) && S.items['seed:' + id]) || 'bokchoy';
@@ -1536,6 +1539,7 @@ async function toggleRide() {
   if (!S.horse) return toast('還沒有馬，到動物小屋買一匹');
   if (riding()) {
     try { await doAct({ action: 'dismount' }); toast(`下馬了，${S.horse.name}自己走回動物小屋旁邊`); } catch {}
+    sendPos(false);
     return;
   }
   if (!S.rideAreas.includes(S.area)) return toast('這裡不能騎馬，到外面再騎');

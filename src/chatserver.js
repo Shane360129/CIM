@@ -4312,6 +4312,7 @@ export class ChatServer {
     const newAchievements = this.farmCheckAchievements(conversationId, me, now);
     const money = this.sql.exec(`SELECT money FROM farms WHERE conversation_id = ?`, conversationId).one().money;
     const items = this.farmItems(conversationId);
+    if (grazeBack) animalsChanged = true; // 放牧的動物自己走回小屋了
     const animals = animalsChanged
       ? this.farmAnimalRows(conversationId).map((a) => this.farmAnimalPub(a, scale, taiwanDay(now))) : undefined;
     const town = townChanged ? this.farmTownPub(conversationId, today) : undefined;
@@ -4324,7 +4325,6 @@ export class ChatServer {
     const notes = notesChanged ? this.farmNotesPub(conversationId) : undefined;
     const graze = grazeChanged ? this.farmGrazePub(farm, today) : undefined;
     const horse = horseChanged ? this.farmHorsePub(conversationId, farm, today) : undefined;
-    if (grazeBack) animalsChanged = true;
     const crows = crowEaten.length ? this.farmCrowsPub(farm, today) : undefined;
     const machines = machinesChanged ? this.farmMachinesPub(conversationId, scale) : undefined;
     const build = buildChanged ? this.farmBuildPub(farm) : undefined;
