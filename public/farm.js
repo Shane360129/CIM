@@ -5,17 +5,17 @@ import {
   sprite, cropSprite, houseSprite, shopSprite, barnSprite, storeSprite, eaterySprite, homeSprite, fountainSprite, SEASON_GROUND,
   greenhouseSprite, machineSprite, machineSpotSprite, ghTileSprite, fruitTreeSprite, treeSpotSprite, hiveSprite, hiveSpotSprite,
   stallSprite, caveMouthSprite, caveTileSprite, caveLadderSprite, chestSprite, beachTileSprite, forageSprite, projectSprite, decoSprite, homeTileSprite,
-  gearSprite, crowSprite,
+  gearSprite, crowSprite, paddySprite, teaBushSprite, teaBudsSprite,
 } from '/farm-sprites.js';
 
 const T = 16;            // 一格 16 像素
 const SPEED = 4.5;       // 每秒走幾格
-const WALK = new Set(['.', '=', 'F', 'p', ',', 'E', 's', 'P']); // s 沙灘、P 防波堤；潮間帶 d 退潮才走得過去
+const WALK = new Set(['.', '=', 'F', 'p', ',', 'E', 's', 'P', 'r']); // s 沙灘、P 防波堤、r 水田；潮間帶 d 退潮才走得過去
 // 點了會走過去互動的東西：田、出貨箱、攤位、房子、動物小屋、溫室、加工機；小鎮的雜貨店、小吃店、民宅、噴水池、告示板；
 // 後山的洞窟入口；洞窟裡往上、往下的梯子和寶箱；小鎮修復計畫的土地公廟、老車站、農會、海邊的漁會
-const TARGETS = 'FBSHAGRQONWJMYZV^vCUILD';
+const TARGETS = 'FBSHAGRQONWJMYZV^vCUILDre'; // r 水田、e 茶樹
 const PROJECT_AT = { U: 'temple', I: 'station', L: 'coop', D: 'harbor' };
-const EXIT_LABEL = { town: '🏘️ 往小鎮', farm: '🌾 回牧場', hill: '⛰️ 往後山', beach: '🌊 往海邊' };
+const EXIT_LABEL = { town: '🏘️ 往小鎮', farm: '🌾 回牧場', hill: '⛰️ 往後山', beach: '🌊 往海邊', terrace: '🍵 往梯田' };
 const SEASON = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
 const SEASON_ORDER = ['spring', 'summer', 'autumn', 'winter'];
 const SEASON_MONTHS = { spring: '3～5 月', summer: '6～8 月', autumn: '9～11 月', winter: '12～2 月' };
@@ -108,10 +108,12 @@ const forageAt = (x, y) => (S.forage[S.area] || []).find((f) => f.x === x && f.y
 const serverNow = () => Date.now() + S.offset;
 const inSeason = (id) => !!S.crops[id] && S.crops[id].seasons.includes(S.season);
 // 溫室裡什麼季節的種子都能種
-const canPlantHere = (id) => !!S.crops[id] && (S.area === 'gh' || inSeason(id));
+const canPlantHere = (id) => !!S.crops[id] && !!S.crops[id].paddy === (S.area === 'terrace') && (S.area === 'gh' || inSeason(id));
+const seedName = (id) => (S.crops[id] ? S.crops[id].seedName || `${S.crops[id].name}種子` : '種子');
 const machineAt = (x, y) => S.area === 'farm' && Object.keys(S.machineSpots).find((id) => S.machineSpots[id].x === x && S.machineSpots[id].y === y);
 const seasonsText = (list) => (list.length === 4 ? '一年四季' : list.map((x) => SEASON[x] + '天').join('、'));
-const cropMeta = (c) => `${c.hours} 小時成熟・賣 ${c.sell} 元` + (c.regrow ? `・收成後每 ${c.regrow} 小時再收一次` : '');
+const cropMeta = (c) => `${c.hours} 小時成熟・賣 ${c.sell} 元` + (c.regrow ? `・收成後每 ${c.regrow} 小時再收一次` : '')
+  + (c.paddy ? '・插在梯田的水田裡，不用翻土、不用澆水，碾米機碾成白米' : '');
 const PRODUCT_EMOJI = { egg: '🥚', egg_l: '🥚', milk: '🥛', milk_l: '🥛', duck_egg: '🥚', duck_egg_l: '🥚', wool: '🧶', wool_l: '🧶' };
 // 倉庫裡的東西：seed:作物、crop:作物、prod:雞蛋牛奶、feed 飼料
 function itemInfo(item) {
@@ -125,7 +127,7 @@ function itemInfo(item) {
   }
   if (kind === 'fert' && S.ferts[id]) return { name: S.ferts[id].name, icon: 'fert_' + id, sell: 0, fert: id };
   if (kind === 'gear' && S.gearKinds[id]) return { name: S.gearKinds[id].name, icon: 'gear_' + id, sell: 0, gear: id };
-  if (kind === 'seed' && S.crops[id]) return { name: `${S.crops[id].name}種子`, icon: 'seed', sell: 0, crop: id };
+  if (kind === 'seed' && S.crops[id]) return { name: seedName(id), icon: 'seed', sell: 0, crop: id };
   if (kind === 'crop' && S.crops[id]) return { name: S.crops[id].name, icon: id + '_3', sell: S.crops[id].sell };
   if (kind === 'prod' && S.products[id]) return { name: S.products[id].name, icon: id, sell: S.products[id].sell };
   if (kind === 'fish' && S.fishData[id]) return { name: S.fishData[id].name, icon: 'fish_' + id, sell: S.fishData[id].sell };
@@ -187,7 +189,7 @@ function applyTown(t) {
 function applyState(st) {
   // 兩張地圖：牧場和小鎮；重新同步時留在原本那一張
   S.maps = { farm: st.map, town: st.town || st.map, hill: st.hill || st.map, gh: st.greenhouse || st.map, beach: st.beach || st.map,
-    home: st.home || st.map, cave: S.cave ? S.cave.map : st.map };
+    home: st.home || st.map, terrace: st.terrace || st.map, cave: S.cave ? S.cave.map : st.map };
   S.decos = st.decos || []; S.decoKinds = st.decoKinds || {};
   if (st.tide) { S.tide = st.tide; S.lowTide = lowTideNow(); }
   S.forage = st.forage || {}; S.forageKinds = st.forageKinds || {};
@@ -307,7 +309,7 @@ function renderToolbar() {
       ico = '🧪'; name = S.ferts[S.seed.slice(5)] ? S.ferts[S.seed.slice(5)].name : '肥料';
       count = S.items[S.seed] || 0;
     } else if (tool.key === 'seed') {
-      name = S.crops[S.seed] ? S.crops[S.seed].name : '種子';
+      name = S.crops[S.seed] ? S.crops[S.seed].seedName || S.crops[S.seed].name : '種子'; // 稻子寫「秧苗」
       count = S.items['seed:' + S.seed] || 0;
     }
     bar.append(el('button', {
@@ -361,7 +363,7 @@ function openShop() {
     };
     sync();
     return el('div', { class: 'row' }, icon(id + '_3'),
-      el('div', { class: 'grow' }, el('div', { class: 'name', text: `${c.name}種子` }),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: seedName(id) }),
         el('div', { class: 'meta', text: `${c.seed} 元・${inSeason(id) ? '' : '🌱 溫室用・'}${cropMeta(c)}` })),
       el('span', { class: 'qty' },
         el('button', { type: 'button', text: '−', onclick: () => { n = Math.max(1, n - 1); sync(); } }), qtyB,
@@ -743,7 +745,11 @@ function goArea(to) {
   S.fishing = null;
   closeModal();
   sendPos(false);
-  toast({ town: '🏘️ 來到小鎮了', farm: '🌾 回到牧場了', hill: '⛰️ 來到後山了', gh: '🌱 進到溫室了', beach: '🌊 來到海邊了', home: '🏠 進到屋子裡了' }[to]);
+  toast({ town: '🏘️ 來到小鎮了', farm: '🌾 回到牧場了', hill: '⛰️ 來到後山了', gh: '🌱 進到溫室了', beach: '🌊 來到海邊了', home: '🏠 進到屋子裡了', terrace: '🍵 來到梯田了：上面是茶園，下面是水田' }[to]);
+  // 到梯田：倉庫有秧苗就直接拿秧苗；離開梯田：換回這一季的種子
+  if (to === 'terrace' && S.items['seed:rice'] && !isFert(S.seed)) S.seed = 'rice';
+  else if (from === 'terrace' && S.seed === 'rice') S.seed = Object.keys(S.crops).find((id) => canPlantHere(id) && S.items['seed:' + id]) || 'bokchoy';
+  renderToolbar();
 }
 
 /* ---------- 釣魚、挖礦 ---------- */
@@ -856,6 +862,7 @@ function openDex() {
       return el('div', { class: 'row' + (got ? '' : ' off') }, got ? icon('forage_' + id) : el('span', { class: 'big', text: '❔' }),
         el('div', { class: 'grow' }, el('div', { class: 'name', text: got ? d.name : '？？？' }),
           el('div', { class: 'meta', text: got ? `賣 ${d.sell} 元` : d.where === 'tide' ? '提示：海邊的潮間帶，退潮時撿' : d.where === 'sand' ? '提示：海邊的沙灘'
+            : d.where === 'tea' ? `提示：梯田的茶園（後山往下走）・${d.seasons.map((x) => SEASON[x]).join('')}天`
             : `提示：${d.where === 'hill' ? '後山' : '小鎮'}的草地・${d.seasons.length === 4 ? '一年四季（很少見）' : d.seasons.map((x) => SEASON[x]).join('') + '天'}` })));
     }),
     el('h2', { class: 'section', text: `🌳 水果 ${Object.keys(S.fruits).filter((id) => have.has('fruit:' + id)).length}/${Object.keys(S.fruits).length}` }),
@@ -1195,11 +1202,12 @@ function openSeedPicker() {
     const n = S.items['seed:' + id] || 0;
     const ok = canPlantHere(id);
     return el('div', { class: 'row' + (ok ? '' : ' off') }, icon(id + '_3'),
-      el('div', { class: 'grow' }, el('div', { class: 'name', text: `${c.name}種子` }),
-        el('div', { class: 'meta', text: ok ? `還有 ${n} 包・${cropMeta(c)}` : `還有 ${n} 包・${seasonsText(c.seasons)}才能種${S.ghBuilt ? '（溫室裡隨時能種）' : ''}` })),
+      el('div', { class: 'grow' }, el('div', { class: 'name', text: seedName(id) }),
+        el('div', { class: 'meta', text: ok ? `還有 ${n} 包・${cropMeta(c)}` : c.paddy ? `還有 ${n} 把・插在梯田的水田裡（後山往下走）`
+          : S.area === 'terrace' ? `還有 ${n} 包・水田只能種稻子` : `還有 ${n} 包・${seasonsText(c.seasons)}才能種${S.ghBuilt ? '（溫室裡隨時能種）' : ''}` })),
       el('button', {
         class: 'btn' + (S.seed === id ? ' primary' : ''), type: 'button', disabled: !ok,
-        text: S.seed === id ? '使用中' : ok ? '用這個' : '等季節',
+        text: S.seed === id ? '使用中' : ok ? '用這個' : c.paddy || S.area === 'terrace' ? '不能種' : '等季節',
         onclick: () => { S.seed = id; S.tool = 'seed'; renderToolbar(); closeModal(); },
       }));
   });
@@ -1355,6 +1363,7 @@ function useOn(x, y) {
   if (ch === 'Y') return useTree(S.treeSpots.findIndex((p) => p.x === x && p.y === y));
   if (ch === 'Z') return useHive(S.hiveSpots.findIndex((p) => p.x === x && p.y === y));
   if (forageAt(x, y)) return pickForage(x, y);
+  if (ch === 'e') return toast('這棵茶樹今天採過了，明天會再冒新芽');
   if (decoAt(x, y)) return openDeco(decoAt(x, y));
   if (ch === 'W' || (ch === 'd' && !S.lowTide)) return startFishing(x, y);
   if (rockAt(x, y)) return mineRock(x, y);
@@ -1363,7 +1372,8 @@ function useOn(x, y) {
   if (ch === 'N') return openBoard();
   if (ch === 'O') return toast('噴水池裡有好多硬幣，許個願吧 ✨');
   if (ch === 'Q') { const who = HOMES[homeIndex(x, y)]; return toast(who ? `這是${S.villagers[who].name}的家` : '別人的家'); }
-  if (ch !== 'F') return;
+  if (ch !== 'F' && ch !== 'r') return;
+  const paddy = ch === 'r'; // 水田：不用翻土、不用澆水，只能種稻子
   if (gearAt(x, y)) return openGear(gearAt(x, y));
   const t = S.tiles.get(key(x, y)) || { tilled: false, crop: null };
   const now = serverNow();
@@ -1373,6 +1383,8 @@ function useOn(x, y) {
       if (q >= 2) toast(`${q === 3 ? '🌟' : '⭐'} 收成了${itemInfo(r.gained.item).name}！賣 ${itemInfo(r.gained.item).sell} 元`);
     }).catch(() => {});
   }
+  if (paddy && S.tool === 'hoe' && !t.crop) return toast('水田不用翻土，拿「種子」工具選秧苗直接插秧');
+  if (paddy && S.tool === 'can') return toast('水田裡都是水，不用澆');
   if (S.tool === 'hoe') {
     if (!t.tilled) return doAct({ action: 'till', x, y, ...(S.tools.hoe >= 2 ? { area: true } : {}) }).catch(() => {});
     if (t.crop) return confirmDig(t, x, y);
@@ -1391,17 +1403,19 @@ function useOn(x, y) {
   }
   if (S.tool === 'seed' && isFert(S.seed)) {
     const F = S.ferts[S.seed.slice(5)];
-    if (!t.tilled) return toast('要先用鋤頭翻土');
+    if (!t.tilled && !paddy) return toast('要先用鋤頭翻土');
     if (t.fert) return toast(`這格已經施了${(S.ferts[t.fert] || F).name}，收成之後才能再施`);
     if (!S.items[S.seed]) return toast(`沒有${F.name}了，去攤位買`);
     return doAct({ action: 'fertilize', x, y, fert: S.seed.slice(5) }).then(() => renderToolbar()).catch(() => {});
   }
   if (S.tool === 'seed') {
-    if (!t.tilled) return toast('要先用鋤頭翻土');
+    if (!t.tilled && !paddy) return toast('要先用鋤頭翻土');
     if (t.crop) return describe(t, now);
     const sc = S.crops[S.seed];
+    if (paddy && !sc.paddy) return toast('水田只能種稻子，按「種子」換成秧苗（攤位有賣）');
+    if (!paddy && sc.paddy) return toast('秧苗要插在梯田的水田裡（後山往下走）');
     if (!canPlantHere(S.seed)) return toast(`${sc.name}要${seasonsText(sc.seasons)}才能種，按「種子」換一種${S.ghBuilt ? '（溫室裡隨時能種）' : ''}`);
-    if (!S.items['seed:' + S.seed]) { toast(`沒有${sc.name}種子了，去商店買吧`); return; }
+    if (!S.items['seed:' + S.seed]) { toast(`沒有${seedName(S.seed)}了，去攤位買吧`); return; }
     return doAct({ action: 'plant', x, y, crop: S.seed }).catch(() => {});
   }
   if (t.crop) return describe(t, now);
@@ -2455,6 +2469,7 @@ function baseSprite(x, y, ch) {
   if (ch === 'q') return sprite('gravel');
   if (ch === ',') return sprite('flowers', undefined, false, S.season);
   if (ch === 'W') return sprite(Math.floor(Date.now() / 600) % 2 ? 'water1' : 'water0');
+  if (ch === 'r') return paddySprite((x * 7 + y * 13) % 3, Math.floor(Date.now() / 900) % 2);
   if (ch === 'F') {
     const t = S.tiles.get(key(x, y));
     if (t && t.tilled) return sprite(wet(t, serverNow()) ? 'soil_wet' : 'soil_dry');
@@ -2591,6 +2606,7 @@ function draw() {
     for (let x = x0; x <= x1; x++) {
       const ch = terrain(x, y);
       if (ch === 'T') g.drawImage(treeSprite(x, y), x * T, y * T);
+      else if (ch === 'e') g.drawImage(teaBushSprite(S.season), x * T, y * T);
       else if (ch === '^' || ch === 'v') g.drawImage(caveLadderSprite(ch === 'v'), x * T, y * T);
       else if (ch === 'C') g.drawImage(chestSprite(!!(S.cave && S.cave.chest && S.cave.chest.opened)), x * T, y * T);
       else if (ch === 'f') g.drawImage(sprite('fence'), x * T, y * T);
@@ -2608,7 +2624,7 @@ function draw() {
       }
       const rk = rockAt(x, y);
       if (rk) g.drawImage(sprite('ore_' + rk.type), x * T, y * T);
-      else if (ch === 'F') {
+      else if (ch === 'F' || ch === 'r') {
         const t = S.tiles.get(key(x, y));
         const gr = gearAt(x, y);
         if (gr) { g.drawImage(gearSprite(gr.kind, spraying && gr.kind !== 'scarecrow' ? 1 : 0), x * T, y * T); continue; }
@@ -2629,6 +2645,7 @@ function draw() {
   // 撿得到的東西（海邊、後山、小鎮）
   for (const f of S.forage[S.area] || []) {
     if (f.tidal && !S.lowTide) continue;
+    if (f.item.startsWith('forage:tea')) { g.drawImage(teaBudsSprite(f.item === 'forage:tea_summer'), f.x * T, f.y * T); continue; } // 茶樹冒新芽
     g.drawImage(sprite('forage_' + f.item.slice(7)), f.x * T, f.y * T + (Math.floor(Date.now() / 500 + f.x) % 2));
   }
   // 好幾格大的建築：每一棟在它左上角那一格畫一次

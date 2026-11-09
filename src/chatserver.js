@@ -24,6 +24,7 @@ import {
   BEACH_MAP, FORAGE, forageOf, isLowTide, lowTideWindows,
   PROJECTS, bundleOf, PROJECT_DONE_REWARD, shipPrice, ONSEN_PRICE, PRAY_ENERGY, prayerOf, ingredientItems, ingredientName,
   HOME_MAP, DECOS, decoCheck, ingredientHave,
+  TERRACE_MAP, plantableIn,
   FERTS, growRate, QUALITY, harvestQuality, withQuality, GEAR, isSprinkler, gearCovers, sprinkledSet, scaredAt, gearCheck, crowsOf, ALWAYS_WET,
 } from './farm.js';
 const ANIMAL_EMOJI = { chicken: '🐔', duck: '🦆', cow: '🐄', sheep: '🐑' };
@@ -2665,7 +2666,7 @@ export class ChatServer {
   farmForagePub(conversationId, today) {
     const out = {};
     const season = this.farmSeason(Date.now());
-    for (const area of ['beach', 'hill', 'town']) {
+    for (const area of ['beach', 'hill', 'town', 'terrace']) {
       const taken = new Set(this.sql.exec(`SELECT x, y FROM farm_foraged WHERE conversation_id = ? AND day = ? AND area = ?`, conversationId, today, area)
         .toArray().map((r) => `${r.x},${r.y}`));
       out[area] = forageOf(conversationId, today, area, season).filter((f) => !taken.has(`${f.x},${f.y}`));
@@ -2755,7 +2756,7 @@ export class ChatServer {
 
   // 溫室裡的田雨淋不到：天氣永遠當作沒下雨；有灑水器澆的田（wet 裡有）每天都是濕的
   tileRain(x, y, rainy, wet = null) {
-    if (wet && wet.has(`${x},${y}`)) return ALWAYS_WET;
+    if ((wet && wet.has(`${x},${y}`)) || fieldArea(x, y) === 'terrace') return ALWAYS_WET; // 水田裡都是水
     return fieldArea(x, y) === 'gh' ? NO_RAIN : rainy;
   }
   // 擺在田裡的灑水器、稻草人
@@ -2830,7 +2831,7 @@ export class ChatServer {
     farm.typhoon_seen = today;
     const blown = [];
     for (const t of this.sql.exec(`SELECT * FROM farm_tiles WHERE conversation_id = ? AND crop IS NOT NULL`, conversationId).toArray()) {
-      if (fieldArea(t.x, t.y) !== 'farm' || cropStage(t, now, scale, this.tileRain(t.x, t.y, rainy, wet)) < 3) continue;
+      if (fieldArea(t.x, t.y) === 'gh' || cropStage(t, now, scale, this.tileRain(t.x, t.y, rainy, wet)) < 3) continue;
       blown.push(CROPS[t.crop] ? CROPS[t.crop].name : t.crop);
       this.sql.exec(`UPDATE farm_tiles SET crop = NULL, progress_ms = 0, fert = NULL, tick_at = ? WHERE conversation_id = ? AND x = ? AND y = ?`,
         now, conversationId, t.x, t.y);
@@ -2856,6 +2857,7 @@ export class ChatServer {
     return {
       harvest: st.harvest || 0, shipped: st.shipped || 0, requests: st.requests || 0, babies: st.babies || 0, goldHarvest: st.gold_harvest || 0,
       sprinklers: one(`SELECT COUNT(*) AS n FROM farm_gear WHERE conversation_id = ? AND kind IN ('sprinkler', 'sprinkler2')`, conversationId),
+      whiteRice: dex.includes('good:white_rice'), teaKinds: ['good:oolong', 'good:black_tea'].filter((i) => dex.includes(i)).length,
       animals: one(`SELECT COUNT(*) AS n FROM farm_animals WHERE conversation_id = ?`, conversationId),
       pets: one(`SELECT COUNT(*) AS n FROM farm_pets WHERE conversation_id = ?`, conversationId),
       machines: one(`SELECT COUNT(*) AS n FROM farm_machines WHERE conversation_id = ?`, conversationId),
@@ -3264,7 +3266,7 @@ export class ChatServer {
       cave: { best: farm.cave_best || 0, stops: CAVE_STOPS, floors: CAVE_FLOORS },
       tide: this.farmTidePub(now), forage: this.farmForagePub(conversationId, today), forageKinds: FORAGE,
       projects: this.farmProjectsPub(conversationId, me, today),
-      home: HOME_MAP, decos: this.farmDecosPub(conversationId), decoKinds: DECOS,
+      home: HOME_MAP, terrace: TERRACE_MAP, decos: this.farmDecosPub(conversationId), decoKinds: DECOS,
       gear: this.farmGearPub(conversationId), gearKinds: GEAR, ferts: FERTS, quality: QUALITY, crows: this.farmCrowsPub(farm, today),
       harvestContest: { count: this.sql.exec(`SELECT value FROM farm_stats WHERE conversation_id = ? AND key = 'season_harvest'`, conversationId).toArray()[0]?.value || 0, rivals: HARVEST_RIVALS },
       treeSpots: TREE_SPOTS, hiveSpots: HIVE_SPOTS, treeKinds: TREES, fruits: FRUITS, hive: HIVE,
@@ -3344,6 +3346,7 @@ export class ChatServer {
         throw new HttpError(400, '要先到小鎮阿福伯的雜貨店升級工具');
       const x = Number(body.x), y = Number(body.y);
       const area = fieldOf(x, y);
+      if (area === 'terrace') throw new HttpError(400, '水田不用翻土、也不用澆水，直接插秧');
       const fresh = (20 * 3600000) / scale; // 4 小時內才澆過的就跳過
       tilesOut = [];
       let tired = false;
@@ -3370,6 +3373,8 @@ export class ChatServer {
       const t = this.farmTileRow(conversationId, x, y, now);
       if (gearAt(x, y)) throw new HttpError(400, `這格擺了${GEAR[gearAt(x, y).kind].name}，點它可以收起來`);
 
+      if (area === 'terrace' && (action === 'till' || action === 'water'))
+        throw new HttpError(400, action === 'till' ? '水田不用翻土，拿秧苗直接插秧' : '水田裡都是水，不用澆');
       if (action === 'till') {
         if (t.tilled) throw new HttpError(400, '這塊已經翻好土了');
         spend(ENERGY_COST.till + coldExtra(area, 'till'));
@@ -3380,16 +3385,18 @@ export class ChatServer {
         Object.assign(t, { crop: null, progress_ms: 0, tick_at: now, fert: null }); // 肥料跟著挖掉
       } else if (action === 'plant') {
         const crop = String(body.crop || '');
-        if (!CROPS[crop]) throw new HttpError(400, '沒有這種種子');
+        if (!Object.hasOwn(CROPS, crop)) throw new HttpError(400, '沒有這種種子');
+        // 稻子只能插在梯田的水田裡，水田只能種稻子
+        if (!plantableIn(crop, area)) throw new HttpError(400, CROPS[crop].paddy ? '秧苗要插在梯田的水田裡（後山往下走）' : '水田只能種稻子（攤位有賣秧苗）');
         if (area !== 'gh' && !inSeason(crop, season))
-          throw new HttpError(400, `${CROPS[crop].name}要${seasonsText(CROPS[crop].seasons)}天才能種（溫室裡什麼時候都能種）`);
-        if (!t.tilled) throw new HttpError(400, '要先用鋤頭翻土');
+          throw new HttpError(400, `${CROPS[crop].name}要${seasonsText(CROPS[crop].seasons)}天才能種${CROPS[crop].paddy ? '' : '（溫室裡什麼時候都能種）'}`);
+        if (!t.tilled && area !== 'terrace') throw new HttpError(400, '要先用鋤頭翻土');
         if (t.crop) throw new HttpError(400, '這裡已經種了東西');
-        if ((this.farmItems(conversationId)[`seed:${crop}`] || 0) < 1)
-          throw new HttpError(400, `沒有${CROPS[crop].name}種子了，去商店買吧`);
+        const seedName = CROPS[crop].seedName || `${CROPS[crop].name}種子`;
+        if ((this.farmItems(conversationId)[`seed:${crop}`] || 0) < 1) throw new HttpError(400, `沒有${seedName}了，去攤位買吧`);
         spend(ENERGY_COST.plant + coldExtra(area, 'plant'));
         this.farmAddItem(conversationId, `seed:${crop}`, -1);
-        Object.assign(t, { crop, progress_ms: 0, tick_at: now }); // 土本來就濕的話繼續算
+        Object.assign(t, { crop, progress_ms: 0, tick_at: now, tilled: 1 }); // 土本來就濕的話繼續算；水田不用翻土
       } else if (action === 'water') {
         if (!t.tilled) throw new HttpError(400, '要先用鋤頭翻土');
         spend(ENERGY_COST.water + coldExtra(area, 'water'));
@@ -3418,12 +3425,13 @@ export class ChatServer {
     } else if (action === 'fertilize') {
       // 施肥：翻好的土，一格施一種，種之前、種了之後都可以
       const x = Number(body.x), y = Number(body.y);
-      fieldOf(x, y);
+      const area = fieldOf(x, y);
       const fert = String(body.fert || '');
       if (!Object.hasOwn(FERTS, fert)) throw new HttpError(400, '沒有這種肥料');
       if (gearAt(x, y)) throw new HttpError(400, `這格擺了${GEAR[gearAt(x, y).kind].name}`);
       const t = this.farmTileRow(conversationId, x, y, now);
-      if (!t.tilled) throw new HttpError(400, '要先用鋤頭翻土');
+      if (!t.tilled && area !== 'terrace') throw new HttpError(400, '要先用鋤頭翻土');
+      t.tilled = 1;
       if (t.fert) throw new HttpError(400, `這格已經施了${FERTS[t.fert] ? FERTS[t.fert].name : '肥料'}，收成之後才能再施`);
       if (!(this.farmItems(conversationId)[`fert:${fert}`] > 0)) throw new HttpError(400, `沒有${FERTS[fert].name}了，去攤位買`);
       this.farmAddItem(conversationId, `fert:${fert}`, -1);
@@ -3488,7 +3496,7 @@ export class ChatServer {
         else {
           if (kind !== 'seed' || !CROPS[id]) throw new HttpError(400, '攤位只賣種子、肥料和飼料');
           if (!inSeason(id, season) && !farm.gh_built)
-            throw new HttpError(400, `${CROPS[id].name}種子要${seasonsText(CROPS[id].seasons)}天才有賣（蓋了溫室就什麼時候都買得到）`);
+            throw new HttpError(400, `${CROPS[id].seedName || CROPS[id].name + '種子'}要${seasonsText(CROPS[id].seasons)}天才有賣${CROPS[id].paddy ? '' : '（蓋了溫室就什麼時候都買得到）'}`);
           cost = CROPS[id].seed * qty;
         }
         this.farmSpend(conversationId, cost);
@@ -3779,7 +3787,7 @@ export class ChatServer {
     } else if (action === 'forage') {
       // 撿東西：海邊的沙灘隨時可以撿、潮間帶要退潮才撿得到；後山、小鎮的草地上有這一季的野菜、菇類
       const area = String(body.area || '');
-      if (!['beach', 'hill', 'town'].includes(area)) throw new HttpError(400, '這裡沒有東西可以撿');
+      if (!['beach', 'hill', 'town', 'terrace'].includes(area)) throw new HttpError(400, '這裡沒有東西可以撿');
       if (weatherToday === 'typhoon' && area !== 'town') throw new HttpError(400, area === 'beach' ? '颱風天不要去海邊，很危險！' : '颱風天不要上山，很危險！');
       const x = Number(body.x), y = Number(body.y);
       const f = Number.isInteger(x) && Number.isInteger(y) && forageOf(conversationId, today, area, season).find((r) => r.x === x && r.y === y);

@@ -12,7 +12,7 @@ const DAY = 24 * HOUR;
 const TW = 8 * HOUR; // 台灣時間 UTC+8
 
 // 地形：T 樹、. 草地、= 小路、F 田、f 柵欄、H 房子、S 商店、B 出貨箱、W 池塘、A 動物小屋、E 往小鎮的出口、
-// J 溫室（蓋好之後點它走進去）、M 加工機的位置（攤位右邊一排五台）、
+// J 溫室（蓋好之後點它走進去）、M 加工機的位置（攤位下面到池塘一排七台）、
 // Y 種果樹的位置（最下面一排）、Z 放蜂箱的位置（左下角）
 // 動物小屋下面用柵欄圍了一塊草地給雞和牛散步，左邊 (22,13) 是門；左下角的小路走出去是小鎮，
 // 動物小屋右邊 (29,7) 走出去是後山
@@ -21,7 +21,7 @@ export const FARM_MAP = [
   'TT......T.JJJJJ..............T',
   'T..HHHH...JJJJJ.SS....T......T',
   'T..HHHH...JJJJJ.SS......WWW..T',
-  'T..HHHH..B........MMMMM.WWWW.T',
+  'T..HHHH..B.......MMMMMMMWWWW.T',
   'T....=..................WWW..T',
   'T....=================.......T',
   'T....=...............=.AAAA..E',
@@ -89,7 +89,7 @@ export const HILL_MAP = [
   'T...T.............,,,........T',
   'T..........T......,,,....T...T',
   'T....T.......................T',
-  'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+  'TTTTTTTTTTTTTTTETTTTTTTTTTTTTT',
 ];
 // 溫室裡面：K 玻璃牆、F 溫室的田（四季都能種、不會被雨淋到，要自己澆水）、, 盆栽、E 回牧場。
 // 溫室田地的座標故意跟牧場的田不重疊（牧場的田在第 9～14 列），所以兩邊的田可以存在同一張表、用 x,y 分得出來
@@ -140,8 +140,32 @@ export const HOME_MAP = [
   'X..........X',
   'XXXXXEXXXXXX',
 ];
-export const MAPS = { farm: FARM_MAP, town: TOWN_MAP, hill: HILL_MAP, gh: GH_MAP, beach: BEACH_MAP, home: HOME_MAP };
-export const AREAS = ['farm', 'town', 'hill', 'gh', 'beach', 'home'];
+// 梯田：後山最下面往下走。左上是茶園（e 茶樹，每天可以採茶菁），下面和右邊是一層一層的水田（r，只能種稻子）。
+// 水田的座標跟牧場、溫室的田不重疊（田地存在同一張表，用座標分是哪一塊田）
+export const TERRACE_MAP = [
+  'TTTTTTTTTTTTTTTETTTTTTTTTTTTTT',
+  'T..............=.............T',
+  'T....T.........=.....T.......T',
+  'T..eeeeeeee....=.............T',
+  'T..............=.......T.....T',
+  'T..eeeeeeee....=.............T',
+  'T..............=..T..........T',
+  'T..T...........=.............T',
+  'T..............=......T......T',
+  'T......T.......=.............T',
+  'T..............=..........T..T',
+  'T..............=..rrrrrrrrrr.T',
+  'T..T...........=..rrrrrrrrrr.T',
+  'T..............=.............T',
+  'T........T.....=.............T',
+  'T..rrrrrrrrrr..=..rrrrrrrrrr.T',
+  'T..rrrrrrrrrr..=..rrrrrrrrrr.T',
+  'T..............=.............T',
+  'T....T.........=........T....T',
+  'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+];
+export const MAPS = { farm: FARM_MAP, town: TOWN_MAP, hill: HILL_MAP, gh: GH_MAP, beach: BEACH_MAP, home: HOME_MAP, terrace: TERRACE_MAP };
+export const AREAS = ['farm', 'town', 'hill', 'gh', 'beach', 'home', 'terrace'];
 // 即時位置的「在哪裡」：四張地圖，或洞窟的某一層（cave1～cave20）
 export const isAreaKey = (a) => AREAS.includes(a) || /^cave([1-9]|1[0-9]|20)$/.test(String(a));
 // 走到 E 就換地圖。EXITS：每張地圖的出口通到哪；ARRIVE['從>到']：換過去之後站在哪
@@ -150,7 +174,8 @@ export const EXITS = {
   town: [{ x: 5, y: 0, to: 'farm' }, { x: 29, y: 9, to: 'beach' }],
   beach: [{ x: 0, y: 9, to: 'town' }],
   home: [{ x: 5, y: 7, to: 'farm' }],
-  hill: [{ x: 0, y: 11, to: 'farm' }],
+  hill: [{ x: 0, y: 11, to: 'farm' }, { x: 15, y: 19, to: 'terrace' }],
+  terrace: [{ x: 15, y: 0, to: 'hill' }],
   gh: [{ x: 7, y: 9, to: 'farm' }],
 };
 // 溫室沒有走進去的出口格：在牧場點溫室（J）就會走進去
@@ -161,8 +186,9 @@ export const ARRIVE = {
   'cave>hill': { x: 26, y: 10 },
   'town>beach': { x: 1, y: 9 }, 'beach>town': { x: 28, y: 9 },
   'farm>home': { x: 5, y: 6 }, 'home>farm': { x: 5, y: 5 },
+  'hill>terrace': { x: 15, y: 1 }, 'terrace>hill': { x: 15, y: 18 },
 };
-const WALKABLE = new Set(['.', '=', 'F', 'p', ',', 'E', 'q', 's', 'P']);
+const WALKABLE = new Set(['.', '=', 'F', 'p', ',', 'E', 'q', 's', 'P', 'r']);
 
 export const SEASONS = ['spring', 'summer', 'autumn', 'winter'];
 const ALL = SEASONS;
@@ -185,6 +211,8 @@ export const CROPS = {
   pumpkin: { name: '南瓜', seed: 100, sell: 360, hours: 36, seasons: ['autumn'] },
   watermelon: { name: '西瓜', seed: 120, sell: 420, hours: 40, seasons: ['summer'] },
   pineapple: { name: '鳳梨', seed: 150, sell: 520, hours: 48, seasons: ['summer'] },
+  // 稻子：一期稻作（春）、二期稻作（夏），只能插秧在梯田的水田裡（不用翻土、不用澆水），收成的是稻穀，碾米機碾成白米
+  rice: { name: '稻穀', seedName: '秧苗', seed: 40, sell: 110, hours: 36, seasons: ['spring', 'summer'], paddy: true },
 };
 export const inSeason = (crop, season) => !!CROPS[crop] && CROPS[crop].seasons.includes(season);
 
@@ -301,7 +329,10 @@ export const START_ITEMS = { 'seed:bokchoy': 9 };
 export const terrainAt = (x, y, area = 'farm') => (MAPS[area][y] && MAPS[area][y][x]) || 'T';
 export const isField = (x, y) => terrainAt(x, y) === 'F';
 // 這格田在牧場還是溫室（都不是回傳 null）
-export const fieldArea = (x, y) => (terrainAt(x, y) === 'F' ? 'farm' : terrainAt(x, y, 'gh') === 'F' ? 'gh' : null);
+export const fieldArea = (x, y) => (terrainAt(x, y) === 'F' ? 'farm' : terrainAt(x, y, 'gh') === 'F' ? 'gh'
+  : terrainAt(x, y, 'terrace') === 'r' ? 'terrace' : null);
+// 這種作物能不能種在這塊田：稻子只能種水田，水田只能種稻子
+export const plantableIn = (crop, area) => !!CROPS[crop] && !!CROPS[crop].paddy === (area === 'terrace');
 export const isWalkable = (x, y, area = 'farm') => WALKABLE.has(terrainAt(x, y, area));
 
 export const cropTotalMs = (crop) => CROPS[crop].hours * HOUR;
@@ -663,6 +694,9 @@ export const GOODS = {
   dried_shiitake: { name: '乾香菇', sell: 220 },
   dried_woodear: { name: '乾木耳', sell: 160 },
   dried_shoot: { name: '筍乾', sell: 200 },
+  oolong: { name: '烏龍茶', sell: 120 },
+  black_tea: { name: '蜜香紅茶', sell: 160 },
+  white_rice: { name: '白米', sell: 240 },
   salted_egg: { name: '鹹鴨蛋', sell: 220 },
 };
 // 加工機：在小鎮的雜貨店買（錢＋後山挖的礦石），放在牧場攤位右邊。一次最多放 MACHINE_BATCH 個同一種東西，
@@ -678,9 +712,13 @@ export const MACHINES = {
   // 曬架：把山上採的香菇、木耳、竹筍曬乾
   dryer: { name: '曬架', price: 1200, need: { 'ore:stone': 15, 'ore:copper': 2 }, hours: 8,
     makes: { 'forage:shiitake': 'dried_shiitake', 'forage:wood_ear': 'dried_woodear', 'forage:bamboo_shoot': 'dried_shoot', 'forage:winter_shoot': 'dried_shoot' } },
+  // 製茶機：茶菁做成烏龍茶；夏天小綠葉蟬咬過的夏茶菁做成蜜香紅茶
+  tea: { name: '製茶機', price: 1800, need: { 'ore:copper': 4 }, hours: 6, makes: { 'forage:tea_leaf': 'oolong', 'forage:tea_summer': 'black_tea' } },
+  // 碾米機：稻穀碾成白米
+  mill: { name: '碾米機', price: 1500, need: { 'ore:stone': 10, 'ore:copper': 2 }, hours: 2, makes: { 'crop:rice': 'white_rice' } },
 };
 // 加工機在牧場上的位置（地圖上的 M）
-export const MACHINE_SPOTS = { mayo: { x: 18, y: 4 }, cheese: { x: 19, y: 4 }, jam: { x: 20, y: 4 }, pickle: { x: 21, y: 4 }, dryer: { x: 22, y: 4 } };
+export const MACHINE_SPOTS = { tea: { x: 17, y: 4 }, mayo: { x: 18, y: 4 }, cheese: { x: 19, y: 4 }, jam: { x: 20, y: 4 }, pickle: { x: 21, y: 4 }, dryer: { x: 22, y: 4 }, mill: { x: 23, y: 4 } };
 export const machineAt = (x, y) => Object.keys(MACHINE_SPOTS).find((id) => MACHINE_SPOTS[id].x === x && MACHINE_SPOTS[id].y === y) || null;
 // 放進去的東西什麼時候做好（scale 一樣只給本機測試）
 export const machineReadyAt = (m, scale = 1) => (m.started_at || 0) + (MACHINES[m.kind].hours * HOUR) / scale;
@@ -771,6 +809,13 @@ export const DISHES = {
   chestnut_roast: { name: '糖炒栗子', need: { 'forage:chestnut': 3 }, energy: 25, sell: 260, shape: 'plate' },
   woodear_drink: { name: '木耳露', need: { 'forage:wood_ear': 2, honey: 1 }, energy: 25, sell: 420, shape: 'cup' },
   lingzhi_tea: { name: '靈芝茶', need: { 'forage:lingzhi': 1 }, energy: 60, sell: 1500, shape: 'cup' },
+  // 自己種的米、自己做的茶
+  fried_rice: { name: '蛋炒飯', need: { 'good:white_rice': 1, egg: 1 }, energy: 30, sell: 380, shape: 'plate' },
+  veg_rice: { name: '菜飯', need: { 'good:white_rice': 1, 'crop:bokchoy': 1 }, energy: 25, sell: 320, shape: 'bowl' },
+  oil_rice: { name: '香菇油飯', need: { 'good:white_rice': 1, 'good:dried_shiitake': 1 }, energy: 40, sell: 560, shape: 'bowl' },
+  rice_ball: { name: '菜脯飯糰', need: { 'good:white_rice': 1, 'good:pickled_radish': 1 }, energy: 35, sell: 520, shape: 'plate' },
+  oolong_honey: { name: '蜂蜜烏龍茶', need: { 'good:oolong': 1, honey: 1 }, energy: 20, sell: 420, shape: 'cup' },
+  milk_tea: { name: '鮮奶茶', need: { 'good:black_tea': 1, milk: 1 }, energy: 25, sell: 360, shape: 'cup' },
   // 節慶的食物：不能自己煮，節日或家人生日時收到（吃、賣、送人都可以）
   niangao: { name: '年糕', need: null, festival: true, energy: 30, sell: 120, shape: 'plate' },
   tangyuan: { name: '湯圓', need: null, festival: true, energy: 25, sell: 100, shape: 'bowl' },
@@ -928,6 +973,8 @@ export const ACHIEVEMENTS = [
   { id: 'restoreAll', name: '小鎮重生', desc: '小鎮修復計畫的四個地方都修好', reward: 3000, test: (s) => (s.projects || 0) >= 4 },
   { id: 'deco5', name: '佈置牧場', desc: '在牧場擺 5 個裝飾', reward: 300, test: (s) => (s.decoFarm || 0) >= 5 },
   { id: 'cozyHome', name: '溫暖的小窩', desc: '在屋子裡擺 5 件家具', reward: 300, test: (s) => (s.decoHome || 0) >= 5 },
+  { id: 'rice', name: '粒粒皆辛苦', desc: '碾出第一包白米', reward: 500, test: (s) => !!s.whiteRice },
+  { id: 'tea', name: '茶園主人', desc: '做出烏龍茶和蜜香紅茶', reward: 800, test: (s) => (s.teaKinds || 0) >= 2 },
   { id: 'mushrooms', name: '菇菇採集家', desc: '採到木耳、香菇和靈芝', reward: 800, test: (s) => (s.mushrooms || 0) >= 3 },
   { id: 'forageAll', name: '採集達人', desc: '採集圖鑑全部撿過', reward: 2000, test: (s) => (s.forageKinds || 0) >= Object.keys(FORAGE).length },
   { id: 'stories', name: '說故事的人', desc: '聽完所有村民的故事', reward: 2000, test: (s) => s.stories >= Object.keys(STORIES).length * STORY_HEARTS.length },
@@ -1226,12 +1273,16 @@ export const FORAGE = {
   dandelion: { name: '蒲公英', sell: 20, where: 'town', seasons: ['spring'], weight: 30 },
   ginger_lily: { name: '野薑花', sell: 70, where: 'town', seasons: ['summer', 'autumn'], weight: 25 },
   kumquat: { name: '金桔', sell: 40, where: 'town', seasons: ['winter'], weight: 25 },
+  // 梯田的茶園：每棵茶樹每天採一次（不花體力）。春、秋、冬採茶菁，夏天採小綠葉蟬咬過的夏茶菁
+  tea_leaf: { name: '茶菁', sell: 30, where: 'tea', seasons: ['spring', 'autumn', 'winter'], weight: 0 },
+  tea_summer: { name: '夏茶菁', sell: 40, where: 'tea', seasons: ['summer'], weight: 0 },
 };
 export const BEACH_FINDS = { sand: 8, tide: 6 };
 export const LAND_FINDS = { hill: 8, town: 4 };
 // 海邊今天哪裡有東西可以撿（全家看到的一樣，隔天換一批）
 export function forageOf(farmId, day, area, season = 'spring') {
   if (area === 'hill' || area === 'town') return landForageOf(farmId, day, area, season);
+  if (area === 'terrace') return teaOf(season);
   if (area !== 'beach') return [];
   const rnd = seededRandom(`${farmId}|${day}|forage|${area}`);
   const out = [];
@@ -1454,6 +1505,7 @@ export const scaredAt = (gear, x, y) => gear.some((g) => g.kind === 'scarecrow' 
 export function gearCheck(kind, x, y, gear, tile) {
   if (!Object.hasOwn(GEAR, kind)) return '沒有這種東西';
   if (!Number.isInteger(x) || !Number.isInteger(y) || !fieldArea(x, y)) return '要擺在田裡';
+  if (fieldArea(x, y) === 'terrace') return '水田不用灑水器，也沒有烏鴉';
   if (gear.some((g) => g.x === x && g.y === y)) return '這裡已經擺了東西';
   if (tile && tile.crop) return '這格種了東西，換一格空的';
   if (gear.length >= GEAR_MAX) return `田裡最多擺 ${GEAR_MAX} 個`;
@@ -1472,5 +1524,12 @@ export function crowsOf(farmId, day, crops, force = '') {
   const pool = [...crops].sort((a, b) => a.y - b.y || a.x - b.x);
   const out = [];
   for (let n = crops.length >= 15 ? 2 : 1; n > 0 && pool.length; n--) out.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
+  return out;
+}
+// 梯田的茶園：每棵茶樹（e）每天都可以採一次，採到什麼看季節
+function teaOf(season) {
+  const item = season === 'summer' ? 'forage:tea_summer' : 'forage:tea_leaf';
+  const out = [];
+  TERRACE_MAP.forEach((row, y) => [...row].forEach((c, x) => { if (c === 'e') out.push({ x, y, item, tidal: false }); }));
   return out;
 }

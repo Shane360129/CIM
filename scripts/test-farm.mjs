@@ -26,6 +26,7 @@ import {
   PROJECTS, bundleOf, PROJECT_DONE_REWARD, shipPrice, COOP_BONUS, PRAYERS, prayerOf,
   HOME_MAP, DECOS, DECO_MAX, decoCheck, LAND_FINDS,
   FERTS, growRate, QUALITY, QUALITY_PCT, harvestQuality, baseItem, qualityOf, withQuality, itemName,
+  TERRACE_MAP, plantableIn,
   GEAR, GEAR_MAX, SCARE_R, isSprinkler, gearCovers, sprinkledSet, scaredAt, gearCheck, crowsOf, CROW_MIN, CROW_PCT, ALWAYS_WET,
 } from '../src/farm.js';
 import { forageSprite, projectSprite, decoSprite, homeTileSprite } from '../public/farm-sprites.js';
@@ -111,7 +112,7 @@ check('季節：夏、秋、冬', [seasonOf(Date.UTC(2026, 6, 1)), seasonOf(Date
 
 console.log('\n--- 四季與作物 ---');
 const crops = Object.entries(CROPS);
-check('作物有 14 種', crops.length, 14);
+check('作物有 15 種（14 種種在田裡、稻子種在梯田的水田）', [crops.length, crops.filter(([, c]) => c.paddy).map(([id]) => id)], [15, ['rice']]);
 check('每種作物都標好季節', crops.every(([, c]) => c.seasons.length && c.seasons.every((x) => SEASONS.includes(x))), true);
 check('每一季至少 5 種能種', SEASONS.map((se) => crops.filter(([id]) => inSeason(id, se)).length >= 5), [true, true, true, true]);
 check('小白菜一年四季都能種（新手不會卡住）', SEASONS.every((se) => inSeason('bokchoy', se)), true);
@@ -144,7 +145,7 @@ check('名字：控制字元、反向文字之類的隱藏字元會被拿掉', c
 console.log('\n--- 每種作物都有圖 ---');
 const goodGrid = (g) => Array.isArray(g) && g.length === 16 && g.every((r) => r.length === 16 && [...r].every((ch) => ch === '.' || PALETTE[ch]));
 check('長大中、可收成兩張圖都有，而且是 16×16、顏色都有定義',
-  crops.filter(([id]) => !goodGrid(SPRITES[id + '_2']) || !goodGrid(SPRITES[id + '_3'])).map(([id]) => id), []);
+  crops.filter(([id, c]) => !c.paddy && (!goodGrid(SPRITES[id + '_2']) || !goodGrid(SPRITES[id + '_3']))).map(([id]) => id), []); // 稻子用程式畫（riceSprite）
 check('所有圖都是 16×16、顏色都有定義', Object.entries(SPRITES).filter(([, g]) => !goodGrid(g)).map(([n]) => n), []);
 check('小鎮的石板、花圃、告示板、採石場的地都有圖', ['plaza', 'flowers', 'board', 'gravel'].filter((n) => !goodGrid(SPRITES[n])), []);
 check('動物（兩張走路圖）、雞蛋牛奶、飼料都有圖',
@@ -307,7 +308,7 @@ check('3×3 範圍不重複', new Set(area3x3(5, 5).map((c) => c.x + ',' + c.y))
 
 console.log('\n--- 料理 ---');
 const dishes = Object.entries(DISHES).filter(([, d]) => d.need);
-check('有 41 道自己煮得出來的菜（8 道用加工品）', [dishes.length, dishes.filter(([, d]) => Object.keys(d.need).some((k) => k.startsWith('good:') || k === 'mayo' || k === 'cheese')).length], [41, 8]);
+check('有 47 道自己煮得出來的菜（14 道用加工品）', [dishes.length, dishes.filter(([, d]) => Object.keys(d.need).some((k) => k.startsWith('good:') || k === 'mayo' || k === 'cheese')).length], [47, 14]);
 check('每道菜的材料都是真的東西（或雞蛋、牛奶這種組）', dishes.filter(([, d]) => !Object.keys(d.need).every((k) => INGREDIENT_GROUPS[k] || itemPrice(k) > 0)).map(([id]) => id), []);
 check('煮成菜比直接賣材料值錢', dishes.filter(([, d]) => d.sell <= Object.entries(d.need).reduce((n, [k, q]) => n + itemPrice(ingredientItems(k)[0]) * q, 0)).map(([id]) => id), []);
 check('每道菜都能補體力（不超過一整天的量）', dishes.every(([, d]) => d.energy > 0 && d.energy <= ENERGY_MAX), true);
@@ -415,7 +416,7 @@ check('感情很好但還沒聽過：從第一段開始說', storyDue(100, 0), 0
 const zero = { harvest: 0, shipped: 0, requests: 0, babies: 0, animals: 0, pets: 0, machines: 0, fishKinds: 0, dishKinds: 0, goodKinds: 0, amethyst: false, maxHearts: 0, minHearts: 0, stories: 0, gh: 0, house: 1 };
 check('什麼都還沒做：沒有成就', achievementsMet(zero), []);
 check('收成一次、領養寵物：兩個成就', achievementsMet({ ...zero, harvest: 1, pets: 1 }), ['harvest1', 'pet']);
-const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: Object.keys(MACHINES).length, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: Object.keys(FORAGE).length, beachKinds: 7, mushrooms: 3, projects: 4, decoFarm: 5, decoHome: 5, goldHarvest: 1, sprinklers: 4 };
+const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: Object.keys(MACHINES).length, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: Object.keys(FORAGE).length, beachKinds: 7, mushrooms: 3, projects: 4, decoFarm: 5, decoHome: 5, goldHarvest: 1, sprinklers: 4, whiteRice: true, teaKinds: 2 };
 check('全部做完：每個成就都達成', achievementsMet(full).length, ACHIEVEMENTS.length);
 check('成就的編號不重複、都有名字說明和獎金', new Set(ACHIEVEMENTS.map((a) => a.id)).size === ACHIEVEMENTS.length && ACHIEVEMENTS.every((a) => a.name && a.desc && a.reward > 0), true);
 check('「聽完所有故事」要 18 段', [achievementsMet({ ...full, stories: 17 }).includes('stories'), achievementsMet(full).includes('stories')], [false, true]);
@@ -756,6 +757,29 @@ check('烏鴉：作物太少不來、同一天結果一樣；測試用的 on／o
   [true, true, 1, 0]);
 check('成就：金星農夫、自動灑水', [achievementsMet({ ...zero, goldHarvest: 1 }), achievementsMet({ ...zero, sprinklers: 4 }), achievementsMet({ ...zero, sprinklers: 3 })],
   [['goldStar'], ['sprinklers'], []]);
+
+console.log('\n--- 稻田與茶園 ---');
+check('梯田也是 30×20、從後山最下面走下去', [TERRACE_MAP.length, TERRACE_MAP.every((r) => r.length === 30), terrainAt(15, 19, 'hill'), EXITS.hill.some((e) => e.to === 'terrace'), isAreaKey('terrace')],
+  [20, true, 'E', true, true]);
+const terraceSeen = reach('terrace', ARRIVE['hill>terrace']);
+const tCells = []; TERRACE_MAP.forEach((r, y) => [...r].forEach((c, x) => tCells.push({ x, y, c })));
+check('梯田每一格能走的地方都走得到，每棵茶樹旁邊都站得到人', [tCells.filter((p) => isWalkable(p.x, p.y, 'terrace')).every((p) => terraceSeen.has(`${p.x},${p.y}`)),
+  tCells.filter((p) => p.c === 'e').every((p) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => terraceSeen.has(`${p.x + dx},${p.y + dy}`)))], [true, true]);
+const paddies = tCells.filter((p) => p.c === 'r');
+check(`水田 ${paddies.length} 格：座標跟牧場、溫室的田不重疊，都算梯田的田`, [paddies.length >= 40, paddies.every((p) => terrainAt(p.x, p.y) !== 'F' && terrainAt(p.x, p.y, 'gh') !== 'F' && fieldArea(p.x, p.y) === 'terrace'),
+  paddies.every((p) => terraceSeen.has(`${p.x},${p.y}`))], [true, true, true]);
+check('稻子：春、夏種，秧苗只能插水田，水田只能種稻子', [CROPS.rice.seasons, CROPS.rice.seedName, plantableIn('rice', 'terrace'), plantableIn('rice', 'farm'), plantableIn('rice', 'gh'),
+  plantableIn('bokchoy', 'terrace'), plantableIn('bokchoy', 'farm'), plantableIn('nope', 'farm')], [['spring', 'summer'], '秧苗', true, false, false, false, true, false]);
+const teaN = tCells.filter((p) => p.c === 'e').length;
+check(`茶園 ${teaN} 棵茶樹：每天每棵都能採，春秋冬是茶菁、夏天是夏茶菁`, [forageOf(5, '2026-11-08', 'terrace', 'autumn').length, forageOf(5, '2026-07-08', 'terrace', 'summer').every((f) => f.item === 'forage:tea_summer'),
+  forageOf(5, '2026-01-08', 'terrace', 'winter').every((f) => f.item === 'forage:tea_leaf'), JSON.stringify(forageOf(5, '2026-11-08', 'terrace', 'autumn')) === JSON.stringify(forageOf(9, '2026-11-09', 'terrace', 'autumn'))],
+  [teaN, true, true, true]);
+check('製茶機、碾米機：在加工機那一排，做出來的比原本值錢兩倍以上', [MACHINE_SPOTS.tea, MACHINE_SPOTS.mill, terrainAt(17, 4), terrainAt(23, 4),
+  ['tea', 'mill'].every((k) => Object.entries(MACHINES[k].makes).every(([i, g]) => GOODS[g].sell >= itemPrice(i) * 2))], [{ x: 17, y: 4 }, { x: 23, y: 4 }, 'M', 'M', true]);
+check('米和茶的料理：蛋炒飯、菜飯、香菇油飯、菜脯飯糰、蜂蜜烏龍茶、鮮奶茶', ['fried_rice', 'veg_rice', 'oil_rice', 'rice_ball', 'oolong_honey', 'milk_tea'].every((id) => DISHES[id]
+  && DISHES[id].sell > Object.entries(DISHES[id].need).reduce((n, [k, q]) => n + q * itemPrice(ingredientItems(k)[0]), 0)), true);
+check('灑水器不擺在水田', gearCheck('sprinkler', paddies[0].x, paddies[0].y, [], null), '水田不用灑水器，也沒有烏鴉');
+check('成就：粒粒皆辛苦、茶園主人', [achievementsMet({ ...zero, whiteRice: true }), achievementsMet({ ...zero, teaKinds: 2 }), achievementsMet({ ...zero, teaKinds: 1 })], [['rice'], ['tea'], []]);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);
