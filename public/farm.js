@@ -255,7 +255,6 @@ function applyState(st) {
   S.mail = st.mail || { list: [], unread: 0 }; S.mailInfo = st.mailInfo || {};
   S.giants = st.giants || []; S.giantKinds = st.giantKinds || {}; S.snow = st.snow || { day: false, parts: 0, nose: false }; S.snowman = st.snowman || S.snowman;
   S.meteor = st.meteor || { active: false }; S.wishes = st.wishes || {}; S.wishMoney = st.wishMoney || 0;
-  renderWish();
   S.graze = st.graze || { day: null, out: false }; S.horse = st.horse || null; S.horseInfo = st.horseInfo || {}; S.rideAreas = st.rideAreas || [];
   // 放牧的草地：後山南邊（跟伺服器的 grazeTiles 一樣）
   S.grazeTiles = [];
@@ -361,6 +360,9 @@ function renderToolbar() {
     }, el('kbd', { text: String(i + 1) }), el('span', { class: 'ico', text: ico }), el('span', { text: name }),
       count != null ? el('span', { class: 'count', text: typeof count === 'number' ? '×' + count : count }) : null));
   });
+  // 流星雨的晚上（還沒許願）：工具列最後多一個「🌠 許願」
+  if (S.meteor && S.meteor.active && !S.meteor.wished) bar.append(el('button', { class: 'tool wish', type: 'button', 'aria-label': '對流星許願', onclick: openWish },
+    el('span', { class: 'ico', text: '🌠' }), el('span', { text: '許願' })));
 }
 
 /* ---------- 彈窗：商店、出貨箱、倉庫、選種子 ---------- */
@@ -1617,10 +1619,7 @@ function openSnowman() {
         onclick: () => step({ step: 'nose' }, () => '🥕 插上鼻子了，好可愛！') }) : null,
       el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
 }
-function renderWish() {
-  const b = $('btn-wish');
-  if (b) b.classList.toggle('hidden', !(S.meteor && S.meteor.active && !S.meteor.wished));
-}
+function renderWish() { renderToolbar(); }
 function openWish() {
   const M = S.meteor || {};
   if (!M.active) return toast('今晚沒有流星雨');
@@ -3443,7 +3442,6 @@ $('btn-bag').addEventListener('click', openBag);
 $('btn-emote').addEventListener('click', openEmotes);
 $('btn-photo').addEventListener('click', takePhoto);
 $('btn-ride').addEventListener('click', toggleRide);
-$('btn-wish').addEventListener('click', openWish);
 $('hud-clock').addEventListener('click', openForecast);
 // 從聊天室開的新視窗直接關掉；直接打開網址的話回聊天室
 $('btn-close').addEventListener('click', () => {
