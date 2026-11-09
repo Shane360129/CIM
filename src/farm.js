@@ -978,6 +978,8 @@ export const ACHIEVEMENTS = [
   { id: 'mushrooms', name: '菇菇採集家', desc: '採到木耳、香菇和靈芝', reward: 800, test: (s) => (s.mushrooms || 0) >= 3 },
   { id: 'forageAll', name: '採集達人', desc: '採集圖鑑全部撿過', reward: 2000, test: (s) => (s.forageKinds || 0) >= Object.keys(FORAGE).length },
   { id: 'notes5', name: '家人的小紙條', desc: '在牧場的留言板寫了 5 則留言', reward: 300, test: (s) => (s.notes || 0) >= 5 },
+  { id: 'horse', name: '我的愛駒', desc: '買了一匹馬', reward: 300, test: (s) => !!s.horse },
+  { id: 'graze10', name: '青青草原', desc: '放牧 10 天', reward: 800, test: (s) => (s.graze || 0) >= 10 },
   { id: 'stories', name: '說故事的人', desc: '聽完所有村民的故事', reward: 2000, test: (s) => s.stories >= Object.keys(STORIES).length * STORY_HEARTS.length },
 ];
 export const achievementsMet = (stats) => ACHIEVEMENTS.filter((a) => a.test(stats)).map((a) => a.id);
@@ -1546,3 +1548,29 @@ export function cleanNote(raw) {
   const t = [...String(raw ?? '').replace(/[\u0000-\u001f\u007f\u200b-\u200f\u202a-\u202e\u2066-\u2069]/g, ' ').replace(/\s+/g, ' ').trim()];
   return t.length ? t.slice(0, NOTE_LEN).join('') : '';
 }
+
+// ---------------- 騎馬與放牧（第二十二期） ----------------
+// 放牧：天氣好（晴天、多雲）的白天 6～16 點，把小屋裡的雞、牛、羊放到後山南邊的草地上吃草（鴨子留在池塘）。
+// 吃青草算今天餵過了（不用飼料），曬太陽心情特別好（愛心多 +1）。
+// 晚上 8 點以前要趕回小屋，不然在外面待一整晚會嚇到（愛心 -1）
+export const GRAZE_HOURS = [6, 16];
+export const GRAZE_BACK_HOUR = 20;
+export const GRAZE_ZONE = { area: 'hill', x0: 1, y0: 12, x1: 28, y1: 18 };
+export const grazes = (kind) => !!ANIMALS[kind] && ANIMALS[kind].zone !== 'pond';
+export const grazeWeatherOk = (w) => w === 'sun' || w === 'cloud';
+// 放出去了、還沒趕回來，而且已經過了晚上 8 點（或已經是隔天）
+export const grazePenaltyDue = (day, back, today, hour) => !!day && !back && (day !== today || hour >= GRAZE_BACK_HOUR);
+// 後山草地上動物可以走的格子（不踩花、不踩出口）
+export function grazeTiles() {
+  const out = [];
+  for (let y = GRAZE_ZONE.y0; y <= GRAZE_ZONE.y1; y++) for (let x = GRAZE_ZONE.x0; x <= GRAZE_ZONE.x1; x++) {
+    if (terrainAt(x, y, 'hill') === '.') out.push({ x, y });
+  }
+  return out;
+}
+// 馬：一座牧場一匹，在動物小屋買（要取名字）。平常在動物小屋和池塘中間的路上走來走去。
+// 騎上去走得快（愛心越多越快），同時只能一個人騎；屋子、溫室、洞窟裡不能騎
+export const HORSE = { price: 3000, loveMax: 20 };
+export const HORSE_ZONE = { x0: 22, y0: 6, x1: 28, y1: 6 };
+export const RIDE_AREAS = ['farm', 'town', 'hill', 'beach', 'terrace'];
+export const horseSpeed = (love) => (16 + Math.floor(Math.min(HORSE.loveMax, Math.max(0, love || 0)) / 4)) / 10; // 0～5 顆愛心：1.6～2.1 倍

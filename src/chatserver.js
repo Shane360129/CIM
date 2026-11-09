@@ -25,6 +25,7 @@ import {
   PROJECTS, bundleOf, PROJECT_DONE_REWARD, shipPrice, ONSEN_PRICE, PRAY_ENERGY, prayerOf, ingredientItems, ingredientName,
   HOME_MAP, DECOS, decoCheck, ingredientHave,
   TERRACE_MAP, plantableIn, EMOTES, NOTE_MAX, cleanNote,
+  GRAZE_HOURS, grazes, grazeWeatherOk, grazePenaltyDue, HORSE, RIDE_AREAS,
   FERTS, growRate, QUALITY, harvestQuality, withQuality, GEAR, isSprinkler, gearCovers, sprinkledSet, scaredAt, gearCheck, crowsOf, ALWAYS_WET,
 } from './farm.js';
 const ANIMAL_EMOJI = { chicken: '🐔', duck: '🦆', cow: '🐄', sheep: '🐑' };
@@ -552,6 +553,16 @@ CREATE TABLE IF NOT EXISTS farm_notes (
 CREATE INDEX IF NOT EXISTS idx_farm_notes ON farm_notes (conversation_id, id);
 `;
 
+// 騎馬與放牧：今天放牧了沒、趕回來了沒；馬的名字、愛心、今天摸過了沒、現在誰在騎
+const SCHEMA_V25 = `
+ALTER TABLE farms ADD COLUMN graze_day TEXT;
+ALTER TABLE farms ADD COLUMN graze_back INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE farms ADD COLUMN horse_name TEXT;
+ALTER TABLE farms ADD COLUMN horse_love INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE farms ADD COLUMN horse_pet_day TEXT;
+ALTER TABLE farms ADD COLUMN horse_rider INTEGER;
+`;
+
 // 訊息中的網址：http(s):// 或 www. 開頭，遇到空白、引號或中文標點即結束
 // （與前端 public/app.js 的 URL_RE / trimUrlTail 保持一致）
 const URL_RE = /(?:https?:\/\/|www\.)[^\s<>"'`\u3000、，。！？：；（）「」『』【】《》〈〉…]+/i;
@@ -844,6 +855,10 @@ export class ChatServer {
       if (v < 24) {
         this.sql.exec(SCHEMA_V24);
         this.setSetting('schema_version', '24');
+      }
+      if (v < 25) {
+        this.sql.exec(SCHEMA_V25);
+        this.setSetting('schema_version', '25');
       }
     });
     // 心跳不喚醒 DO：客戶端送 "ping"，執行環境自動回 "pong"
@@ -2514,7 +2529,7 @@ export class ChatServer {
       const here = [];
       for (const ws of this.ctx.getWebSockets(`f:${farmId}`)) {
         const a = ws.deserializeAttachment();
-        if (a && ws !== server && a.userId !== user.id) here.push({ userId: a.userId, x: a.x, y: a.y, d: a.d, a: a.a || 'farm' });
+        if (a && ws !== server && a.userId !== user.id) here.push({ userId: a.userId, x: a.x, y: a.y, d: a.d, a: a.a || 'farm', h: !!a.h });
       }
       queueMicrotask(() => { try { server.send(JSON.stringify({ type: 'farm-presence', players: here })); } catch {} });
     } else {
@@ -2550,8 +2565,8 @@ export class ChatServer {
     const d = ['u', 'd', 'l', 'r'].includes(msg.d) ? msg.d : 'd';
     if (!Number.isFinite(x) || !Number.isFinite(y) || x < 0 || y < 0 || x > FARM_W || y > FARM_H) return;
     const area = isAreaKey(msg.a) ? msg.a : 'farm'; // 在哪張地圖（溫室比較小、洞窟每一層是 cave1～cave20，也在這個範圍內）
-    ws.serializeAttachment({ ...a, x, y, d, a: area });
-    const out = JSON.stringify({ type: 'farm-pos', userId: a.userId, x, y, d, a: area, m: !!msg.m });
+    ws.serializeAttachment({ ...a, x, y, d, a: area, h: !!msg.h });
+    const out = JSON.stringify({ type: 'farm-pos', userId: a.userId, x, y, d, a: area, m: !!msg.m, h: !!msg.h });
     for (const other of this.ctx.getWebSockets(`f:${a.farm}`)) {
       if (other !== ws) { try { other.send(out); } catch {} }
     }
@@ -2562,7 +2577,16 @@ export class ChatServer {
     if (a && a.farm) {
       const still = this.ctx.getWebSockets(`f:${a.farm}`)
         .some((o) => o !== ws && (o.deserializeAttachment() || {}).userId === a.userId);
-      if (!still) this.sendToFarm(a.farm, { type: 'farm-leave', userId: a.userId }, ws);
+      if (!still) {
+        this.sendToFarm(a.farm, { type: 'farm-leave', userId: a.userId }, ws);
+        // 騎著馬離開牧場：馬自己走回動物小屋旁邊
+        const f = this.sql.exec(`SELECT * FROM farms WHERE conversation_id = ?`, a.farm).toArray()[0];
+        if (f && f.horse_rider === a.userId) {
+          this.sql.exec(`UPDATE farms SET horse_rider = NULL WHERE conversation_id = ?`, a.farm);
+          f.horse_rider = null;
+          this.sendToFarm(a.farm, { type: 'farm-horse', horse: this.farmHorsePub(a.farm, f, taiwanDay(Date.now())) }, ws);
+        }
+      }
     }
     // 客戶端發起關閉時，伺服器須回應 close 以完成握手，
     // 否則客戶端會永遠卡在 CLOSING 狀態
@@ -2649,6 +2673,44 @@ export class ChatServer {
   farmFastTrees() {
     const n = Number(this.env && this.env.FARM_FAST_TREES);
     return Number.isFinite(n) && n > 0 ? n : null;
+  }
+  // FARM_GRAZE=open 只給本機測試用：不管幾點都可以放牧，也不會算成「待了一整晚」（同一天）
+  farmGrazeForce() {
+    const o = this.env && this.env.FARM_GRAZE;
+    return o === 'open' ? o : '';
+  }
+  farmGrazeOpen(now) {
+    const h = new Date(now + 8 * 3600000).getUTCHours();
+    return this.farmGrazeForce() === 'open' || (h >= GRAZE_HOURS[0] && h < GRAZE_HOURS[1]);
+  }
+  // 放牧的動物過了晚上 8 點還沒趕回來：嚇到了（愛心 -1），自己走回小屋
+  farmGrazeCheck(conversationId, farm, now) {
+    const today = taiwanDay(now), hour = new Date(now + 8 * 3600000).getUTCHours();
+    if (!grazePenaltyDue(farm.graze_day, farm.graze_back, today, hour)) return false;
+    if (this.farmGrazeForce() === 'open' && farm.graze_day === today) return false;
+    for (const a of this.farmAnimalRows(conversationId)) {
+      if (!grazes(a.kind)) continue;
+      a.love = Math.max(0, (a.love || 0) - 1);
+      this.farmSaveAnimal(a);
+    }
+    this.sql.exec(`UPDATE farms SET graze_back = 1 WHERE conversation_id = ?`, conversationId);
+    farm.graze_back = 1;
+    this.addSystemMessage(conversationId, '🌙 雞、牛、羊在後山的草地上待了一整晚，有點嚇到了（愛心 -1），已經自己走回小屋了。放牧之後記得晚上 8 點前趕回來喔');
+    return true;
+  }
+  farmGrazePub(farm, today) {
+    return { day: farm.graze_day || null, out: farm.graze_day === today && !farm.graze_back };
+  }
+  // 現在誰在騎馬：騎的人還開著牧場才算（關掉牧場的話別人就能騎）
+  farmRiderNow(conversationId, farm) {
+    if (!farm.horse_rider) return null;
+    const here = this.ctx.getWebSockets(`f:${conversationId}`).some((w) => (w.deserializeAttachment() || {}).userId === farm.horse_rider);
+    return here ? farm.horse_rider : null;
+  }
+  farmHorsePub(conversationId, farm, today) {
+    if (!farm.horse_name) return null;
+    return { name: farm.horse_name, love: farm.horse_love || 0, hearts: hearts(farm.horse_love || 0), pettedToday: farm.horse_pet_day === today,
+      rider: this.farmRiderNow(conversationId, farm) };
   }
   // FARM_CROWS=on／off 只給本機測試用：烏鴉一定來／不來
   farmCrowsForce() {
@@ -2887,7 +2949,7 @@ export class ChatServer {
     const one = (q, ...a) => this.sql.exec(q, ...a).one().n;
     const dex = this.farmDex(conversationId);
     const pts = Object.keys(VILLAGERS).map((id) => this.farmFriendRow(conversationId, id));
-    const farm = this.sql.exec(`SELECT gh_built, house_level FROM farms WHERE conversation_id = ?`, conversationId).one();
+    const farm = this.sql.exec(`SELECT gh_built, house_level, horse_name FROM farms WHERE conversation_id = ?`, conversationId).one();
     return {
       harvest: st.harvest || 0, shipped: st.shipped || 0, requests: st.requests || 0, babies: st.babies || 0, goldHarvest: st.gold_harvest || 0, notes: st.notes || 0,
       sprinklers: one(`SELECT COUNT(*) AS n FROM farm_gear WHERE conversation_id = ? AND kind IN ('sprinkler', 'sprinkler2')`, conversationId),
@@ -2898,7 +2960,7 @@ export class ChatServer {
       fishKinds: dex.filter((i) => i.startsWith('fish:')).length, dishKinds: dex.filter((i) => i.startsWith('dish:')).length,
       goodKinds: dex.filter((i) => i.startsWith('good:')).length, amethyst: dex.includes('ore:amethyst'),
       maxHearts: Math.max(...pts.map((f) => friendHearts(f.points))), minHearts: Math.min(...pts.map((f) => friendHearts(f.points))),
-      stories: pts.reduce((n, f) => n + (f.story_level || 0), 0), gh: farm.gh_built, house: farm.house_level,
+      stories: pts.reduce((n, f) => n + (f.story_level || 0), 0), gh: farm.gh_built, house: farm.house_level, horse: !!farm.horse_name, graze: st.graze || 0,
       trees: one(`SELECT COUNT(*) AS n FROM farm_trees WHERE conversation_id = ?`, conversationId),
       honey: dex.includes('prod:honey') || dex.includes('prod:honey_l'),
       goldfish3: st.goldfish3 || 0, beautyWin: st.beauty_win || 0, harvestGold: st.harvest_gold || 0,
@@ -3240,6 +3302,7 @@ export class ChatServer {
     const wet = sprinkledSet(this.farmGear(conversationId));
     this.farmTyphoon(conversationId, farm, now, scale, rainy, wet);
     this.farmCrows(conversationId, farm, now);
+    this.farmGrazeCheck(conversationId, farm, now);
     const tiles = this.sql
       .exec(`SELECT * FROM farm_tiles WHERE conversation_id = ?`, conversationId)
       .toArray()
@@ -3302,6 +3365,7 @@ export class ChatServer {
       projects: this.farmProjectsPub(conversationId, me, today),
       home: HOME_MAP, terrace: TERRACE_MAP, decos: this.farmDecosPub(conversationId), decoKinds: DECOS,
       notes: this.farmNotesPub(conversationId), emotes: EMOTES,
+      graze: this.farmGrazePub(farm, today), horse: this.farmHorsePub(conversationId, farm, today), horseInfo: HORSE, rideAreas: RIDE_AREAS,
       gear: this.farmGearPub(conversationId), gearKinds: GEAR, ferts: FERTS, quality: QUALITY, crows: this.farmCrowsPub(farm, today),
       harvestContest: { count: this.sql.exec(`SELECT value FROM farm_stats WHERE conversation_id = ? AND key = 'season_harvest'`, conversationId).toArray()[0]?.value || 0, rivals: HARVEST_RIVALS },
       treeSpots: TREE_SPOTS, hiveSpots: HIVE_SPOTS, treeKinds: TREES, fruits: FRUITS, hive: HIVE,
@@ -3329,6 +3393,8 @@ export class ChatServer {
     let wet = sprinkledSet(gearRows);
     this.farmTyphoon(conversationId, farm, now, scale, rainy, wet);
     const crowEaten = this.farmCrows(conversationId, farm, now);
+    const grazeBack = this.farmGrazeCheck(conversationId, farm, now);
+    let grazeChanged = grazeBack, horseChanged = false;
     const gearAt = (x, y) => gearRows.find((g) => g.x === x && g.y === y);
     let gearChanged = false;
     let notesChanged = false;
@@ -3476,6 +3542,66 @@ export class ChatServer {
       this.farmSaveTile(conversationId, t);
       tileOut = this.farmTilePub(t, now, scale, rainy, wet);
       gained = { fert };
+    } else if (action === 'graze_out') {
+      // 放牧：天氣好的白天，把雞、牛、羊放到後山吃草（算今天餵過了，愛心多 +1）
+      if (farm.graze_day === today) throw new HttpError(400, farm.graze_back ? '今天已經放牧過了，明天再帶牠們出去' : '動物已經在後山吃草了');
+      if (!grazeWeatherOk(weatherToday))
+        throw new HttpError(400, weatherToday === 'cold' ? '寒流天太冷了，動物不想出門' : '下雨天不能放牧，讓牠們待在小屋裡');
+      if (!this.farmGrazeOpen(now)) throw new HttpError(400, '放牧要在白天 6 點到下午 4 點之間出門（晚上 8 點前要趕回來）');
+      const herd = this.farmAnimalRows(conversationId).filter((a) => grazes(a.kind));
+      if (!herd.length) throw new HttpError(400, '小屋裡還沒有雞、牛、羊');
+      let fed = 0;
+      const got = {};
+      for (const a of herd) {
+        const pending = a.fed_at && !a.collected;
+        if (a.fed_day !== today && !(pending && !animalHasProduct(a, now, scale))) {
+          const g = pending ? this.farmCollect(conversationId, a, now, scale) : null;
+          if (g) got[g.item] = (got[g.item] || 0) + 1;
+          Object.assign(a, { fed_at: now, fed_day: today, collected: isBaby(a, now) ? 1 : 0, love: Math.min(LOVE_MAX, a.love + 1) });
+          fed++;
+        }
+        a.love = Math.min(LOVE_MAX, a.love + 1); // 曬太陽、吃青草，心情特別好
+        this.farmSaveAnimal(a);
+      }
+      this.sql.exec(`UPDATE farms SET graze_day = ?, graze_back = 0 WHERE conversation_id = ?`, today, conversationId);
+      Object.assign(farm, { graze_day: today, graze_back: 0 });
+      this.farmStat(conversationId, 'graze', 1);
+      this.addSystemMessage(conversationId, `🌿 ${me.display_name} 把 ${herd.length} 隻動物放到後山的草地上吃草了，晚上 8 點前記得趕回小屋`);
+      gained = { grazed: herd.length, fed, items: got };
+      animalsChanged = true; grazeChanged = true;
+    } else if (action === 'graze_in') {
+      if (!(farm.graze_day === today && !farm.graze_back)) throw new HttpError(400, '動物都在小屋裡');
+      this.sql.exec(`UPDATE farms SET graze_back = 1 WHERE conversation_id = ?`, conversationId);
+      farm.graze_back = 1;
+      gained = { back: true };
+      grazeChanged = true;
+    } else if (action === 'buy_horse') {
+      if (farm.horse_name) throw new HttpError(400, `已經有一匹馬「${farm.horse_name}」了`);
+      const name = cleanAnimalName(body.name);
+      if (!name) throw new HttpError(400, '幫牠取個名字（最多 8 個字）');
+      this.farmSpend(conversationId, HORSE.price);
+      this.sql.exec(`UPDATE farms SET horse_name = ?, horse_love = 0, horse_pet_day = NULL, horse_rider = NULL WHERE conversation_id = ?`, name, conversationId);
+      Object.assign(farm, { horse_name: name, horse_love: 0, horse_pet_day: null, horse_rider: null });
+      this.addSystemMessage(conversationId, `🐴 ${me.display_name} 買了一匹馬，取名叫「${name}」！在動物小屋旁邊，騎上去走得比較快`);
+      horseChanged = true;
+    } else if (action === 'horse_pet' || action === 'ride' || action === 'dismount') {
+      if (!farm.horse_name) throw new HttpError(400, '還沒有馬，到動物小屋買一匹');
+      if (action === 'horse_pet') {
+        if (farm.horse_pet_day === today) throw new HttpError(400, `今天已經摸過${farm.horse_name}了`);
+        farm.horse_love = Math.min(HORSE.loveMax, (farm.horse_love || 0) + 1);
+        farm.horse_pet_day = today;
+        this.sql.exec(`UPDATE farms SET horse_love = ?, horse_pet_day = ? WHERE conversation_id = ?`, farm.horse_love, today, conversationId);
+      } else if (action === 'ride') {
+        if (!RIDE_AREAS.includes(String(body.area || ''))) throw new HttpError(400, '這裡不能騎馬');
+        const rider = this.farmRiderNow(conversationId, farm);
+        if (rider && rider !== me.id) throw new HttpError(400, `${this.userNames().get(rider) || '家人'}正在騎${farm.horse_name}`);
+        farm.horse_rider = me.id;
+        this.sql.exec(`UPDATE farms SET horse_rider = ? WHERE conversation_id = ?`, me.id, conversationId);
+      } else if (farm.horse_rider === me.id) {
+        farm.horse_rider = null;
+        this.sql.exec(`UPDATE farms SET horse_rider = NULL WHERE conversation_id = ?`, conversationId);
+      }
+      horseChanged = true;
     } else if (action === 'note_add') {
       // 家庭留言板：寫一張小紙條，聊天室也說一聲
       const text = cleanNote(body.text);
@@ -4196,6 +4322,9 @@ export class ChatServer {
       ...crowEaten.map((c) => this.farmTilePub(this.farmTileRow(conversationId, c.x, c.y, now), now, scale, rainy, wetNow))];
     const gear = gearChanged ? this.farmGearPub(conversationId) : undefined;
     const notes = notesChanged ? this.farmNotesPub(conversationId) : undefined;
+    const graze = grazeChanged ? this.farmGrazePub(farm, today) : undefined;
+    const horse = horseChanged ? this.farmHorsePub(conversationId, farm, today) : undefined;
+    if (grazeBack) animalsChanged = true;
     const crows = crowEaten.length ? this.farmCrowsPub(farm, today) : undefined;
     const machines = machinesChanged ? this.farmMachinesPub(conversationId, scale) : undefined;
     const build = buildChanged ? this.farmBuildPub(farm) : undefined;
@@ -4215,10 +4344,10 @@ export class ChatServer {
     this.sendToFarm(conversationId, {
       type: 'farm-update', by: me.id, action, tiles, money, items, animals, town, rocks, dex, machines, build, pets,
       achievements, newAchievements, trees, hives, beauty, seasonHarvest, cave: caveOut || undefined, caveBest, forage,
-      projects: projects ? { done: projects.done, given: projects.given } : undefined, decos, gear, crows, notes, now,
+      projects: projects ? { done: projects.done, given: projects.given } : undefined, decos, gear, crows, notes, graze, horse, now,
     });
     return json({ ok: true, energy: p.energy, energyMax: energyMaxOf(farm.house_level), tile: tileOut, tiles, money, items,
-      animals, town, rocks, dex, machines, build, pets, achievements, newAchievements, trees, hives, market, beauty, seasonHarvest, cave: caveOut || undefined, caveBest, forage, projects, decos, gear, crows, notes, gained, now });
+      animals, town, rocks, dex, machines, build, pets, achievements, newAchievements, trees, hives, market, beauty, seasonHarvest, cave: caveOut || undefined, caveBest, forage, projects, decos, gear, crows, notes, graze, horse, gained, now });
   }
 
   farmSpend(conversationId, cost) {

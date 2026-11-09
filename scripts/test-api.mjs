@@ -304,6 +304,13 @@ for (let i = 0; i < 20; i++) r = await farmDo(groupId, { action: 'note_add', tex
 check('留言板最多留 20 張，最舊的拿掉', r.data.notes.length === 20 && r.data.notes[0].text === '第 20 張' && r.data.notes.at(-1).text === '第 1 張');
 check('不是成員不能留言（404）', (await farmDo(dmAdminA.id, { action: 'note_add', text: '嗨' }, TB)).status === 404);
 
+// 騎馬與放牧（第二十二期）：不花錢的部分
+check('還沒有馬、還沒放牧；可以騎馬的地方', fs0.horse === null && fs0.graze?.out === false && fs0.horseInfo?.price === 3000 && fs0.rideAreas?.includes('hill') && !fs0.rideAreas.includes('home'));
+check('沒放牧不能趕回來、沒有馬不能騎也不能摸', /都在小屋/.test((await farmDo(groupId, { action: 'graze_in' }, TA)).data.error || '')
+  && /還沒有馬/.test((await farmDo(groupId, { action: 'ride', area: 'farm' }, TA)).data.error || '')
+  && (await farmDo(groupId, { action: 'horse_pet' }, TA)).status === 400 && (await farmDo(groupId, { action: 'dismount' }, TA)).status === 400);
+check('買馬要取名字', /取個名字/.test((await farmDo(groupId, { action: 'buy_horse', name: '  ' }, TA)).data.error || ''));
+
 // 動物：在動物小屋買、取名字、每天摸摸和餵飯，過幾個小時收雞蛋
 check('一開始沒有動物，有雞和牛可以買', fs0.animals?.length === 0 && !!fs0.animalKinds?.chicken && !!fs0.animalKinds?.cow);
 check('買動物要取名字', (await farmDo(groupId, { action: 'buy_animal', kind: 'chicken', name: '  ' }, TA)).status === 400);
@@ -404,7 +411,7 @@ if (fs0.villagersOut) {
 
 // 料理
 // 村民的故事、成就、週報
-check('有村民的故事、42 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 42
+check('有村民的故事、44 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 44
   && JSON.stringify(fs0.achievements) === '{}' && /^\d{4}-\d{2}-\d{2}$/.test(fs0.thisWeek?.week || ''));
 check('有 47 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 47 && !!fs0.ingredientGroups?.egg);
 check('沒有這道菜', (await farmDo(groupId, { action: 'cook', dish: 'steak' }, TA)).status === 400
@@ -769,6 +776,30 @@ if (fs0.scale >= 3600) {
     r = await farmDo(groupId, { action: 'ship', item: 'ore:gold', qty: 95 }, TA);
     money += 95 * fs0.ores.gold.sell;
     check(`（加速模式）賣 95 個金礦湊錢 → ${money}`, r.status === 200 && r.data.money === money, `實際 ${r.data.money}`);
+    // 騎馬（第二十二期）
+    r = await farmDo(groupId, { action: 'buy_horse', name: '小黑' }, TA);
+    money -= fs0.horseInfo.price;
+    check(`（加速模式）買一匹馬「小黑」→ ${money}`, r.status === 200 && r.data.horse?.name === '小黑' && r.data.horse.love === 0 && r.data.money === money);
+    check('（加速模式）只能有一匹馬', /已經有一匹馬/.test((await farmDo(groupId, { action: 'buy_horse', name: '小白' }, TA)).data.error || ''));
+    r = await farmDo(groupId, { action: 'horse_pet' }, TB);
+    check('（加速模式）摸摸小黑：愛心 +1，一天一次', r.status === 200 && r.data.horse.love === 1 && r.data.horse.pettedToday
+      && (await farmDo(groupId, { action: 'horse_pet' }, TA)).status === 400);
+    check('（加速模式）屋子裡、溫室裡不能騎', (await farmDo(groupId, { action: 'ride', area: 'home' }, TA)).status === 400
+      && (await farmDo(groupId, { action: 'ride', area: 'gh' }, TA)).status === 400);
+    r = await farmDo(groupId, { action: 'ride', area: 'farm' }, TA);
+    check('（加速模式）騎上去（沒開著牧場畫面的人不算在騎）', r.status === 200 && r.data.horse.rider === null);
+    check('（加速模式）聊天室說買了一匹馬', (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('買了一匹馬，取名叫「小黑」')));
+    // 放牧（第二十二期，本機測試用 FARM_GRAZE=open 不管幾點都能放；下雨天不能放）
+    if (['sun', 'cloud'].includes((await farmGet(groupId, TA)).data.weather.today)) {
+      const before = (await farmGet(groupId, TA)).data.animals.filter((a) => a.kind !== 'duck');
+      r = await farmDo(groupId, { action: 'graze_out' }, TA);
+      check(`（加速模式）放牧：${before.length} 隻雞、牛、羊到後山吃草，愛心都有變多`, r.status === 200 && r.data.graze.out && r.data.gained.grazed === before.length
+        && before.every((b) => (r.data.animals.find((a) => a.id === b.id) || {}).love > b.love));
+      check('（加速模式）已經在吃草了不能再放', /已經在後山/.test((await farmDo(groupId, { action: 'graze_out' }, TB)).data.error || ''));
+      check('（加速模式）聊天室說動物去後山吃草了', (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('放到後山的草地上吃草了')));
+      r = await farmDo(groupId, { action: 'graze_in' }, TB);
+      check('（加速模式）趕回小屋；今天不能再放一次', r.status === 200 && !r.data.graze.out && /今天已經放牧過/.test((await farmDo(groupId, { action: 'graze_out' }, TA)).data.error || ''));
+    }
     // 肥料（第十九期）
     r = await farmDo(groupId, { action: 'buy', item: 'fert:speed', qty: 2 }, TA);
     money -= 2 * fs0.ferts.speed.price;

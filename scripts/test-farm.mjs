@@ -27,6 +27,7 @@ import {
   HOME_MAP, DECOS, DECO_MAX, decoCheck, LAND_FINDS,
   FERTS, growRate, QUALITY, QUALITY_PCT, harvestQuality, baseItem, qualityOf, withQuality, itemName,
   TERRACE_MAP, plantableIn, EMOTES, NOTE_LEN, NOTE_MAX, cleanNote,
+  GRAZE_HOURS, GRAZE_ZONE, grazes, grazeWeatherOk, grazePenaltyDue, grazeTiles, HORSE, HORSE_ZONE, RIDE_AREAS, horseSpeed,
   GEAR, GEAR_MAX, SCARE_R, isSprinkler, gearCovers, sprinkledSet, scaredAt, gearCheck, crowsOf, CROW_MIN, CROW_PCT, ALWAYS_WET,
 } from '../src/farm.js';
 import { forageSprite, projectSprite, decoSprite, homeTileSprite } from '../public/farm-sprites.js';
@@ -416,7 +417,7 @@ check('感情很好但還沒聽過：從第一段開始說', storyDue(100, 0), 0
 const zero = { harvest: 0, shipped: 0, requests: 0, babies: 0, animals: 0, pets: 0, machines: 0, fishKinds: 0, dishKinds: 0, goodKinds: 0, amethyst: false, maxHearts: 0, minHearts: 0, stories: 0, gh: 0, house: 1 };
 check('什麼都還沒做：沒有成就', achievementsMet(zero), []);
 check('收成一次、領養寵物：兩個成就', achievementsMet({ ...zero, harvest: 1, pets: 1 }), ['harvest1', 'pet']);
-const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: Object.keys(MACHINES).length, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: Object.keys(FORAGE).length, beachKinds: 7, mushrooms: 3, projects: 4, decoFarm: 5, decoHome: 5, goldHarvest: 1, sprinklers: 4, whiteRice: true, teaKinds: 2, notes: 5 };
+const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: Object.keys(MACHINES).length, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: Object.keys(FORAGE).length, beachKinds: 7, mushrooms: 3, projects: 4, decoFarm: 5, decoHome: 5, goldHarvest: 1, sprinklers: 4, whiteRice: true, teaKinds: 2, notes: 5, horse: true, graze: 10 };
 check('全部做完：每個成就都達成', achievementsMet(full).length, ACHIEVEMENTS.length);
 check('成就的編號不重複、都有名字說明和獎金', new Set(ACHIEVEMENTS.map((a) => a.id)).size === ACHIEVEMENTS.length && ACHIEVEMENTS.every((a) => a.name && a.desc && a.reward > 0), true);
 check('「聽完所有故事」要 18 段', [achievementsMet({ ...full, stories: 17 }).includes('stories'), achievementsMet(full).includes('stories')], [false, true]);
@@ -788,6 +789,20 @@ check('留言：去掉前後空白、換行和看不見的字元，最多 60 個
   cleanNote(''), cleanNote(null), cleanNote('   '), cleanNote('😀'.repeat(70)).length, NOTE_LEN, NOTE_MAX],
   ['晚上 回家 吃飯', 'a b c', 60, '', '', '', 120, 60, 20]);
 check('成就：家人的小紙條', [achievementsMet({ ...zero, notes: 5 }), achievementsMet({ ...zero, notes: 4 })], [['notes5'], []]);
+
+console.log('\n--- 騎馬與放牧 ---');
+const gt = grazeTiles();
+check(`放牧的草地在後山南邊（${gt.length} 格），都是草地、走得到`, [gt.length >= 60, gt.every((p) => terrainAt(p.x, p.y, 'hill') === '.' && p.y >= GRAZE_ZONE.y0 && hillSeen.has(`${p.x},${p.y}`))], [true, true]);
+check('雞、牛、羊可以放牧，鴨子留在池塘', [grazes('chicken'), grazes('cow'), grazes('sheep'), grazes('duck'), grazes('dragon')], [true, true, true, false, false]);
+check('晴天、多雲才能放牧；白天 6～16 點出門', [['sun', 'cloud', 'rain', 'typhoon', 'cold'].map(grazeWeatherOk), GRAZE_HOURS], [[true, true, false, false, false], [6, 16]]);
+check('晚上 8 點還沒趕回來（或已經隔天）才算待了一整晚', [grazePenaltyDue(null, 0, '2026-11-08', 22), grazePenaltyDue('2026-11-08', 0, '2026-11-08', 19),
+  grazePenaltyDue('2026-11-08', 0, '2026-11-08', 20), grazePenaltyDue('2026-11-07', 0, '2026-11-08', 7), grazePenaltyDue('2026-11-08', 1, '2026-11-08', 23)],
+  [false, false, true, true, false]);
+check('馬走的路（動物小屋和池塘中間）都能走', (() => { for (let x = HORSE_ZONE.x0; x <= HORSE_ZONE.x1; x++) if (!isWalkable(x, HORSE_ZONE.y0)) return false; return true; })(), true);
+check('騎馬：愛心越多越快（1.6～2.1 倍），屋子、溫室、洞窟裡不能騎', [horseSpeed(0), horseSpeed(4), horseSpeed(20), horseSpeed(99), HORSE.price,
+  RIDE_AREAS.includes('farm'), ['home', 'gh', 'cave'].some((a) => RIDE_AREAS.includes(a))], [1.6, 1.7, 2.1, 2.1, 3000, true, false]);
+check('成就：我的愛駒、青青草原', [achievementsMet({ ...zero, horse: true }), achievementsMet({ ...zero, graze: 10 }), achievementsMet({ ...zero, graze: 9 })],
+  [['horse'], ['graze10'], []]);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

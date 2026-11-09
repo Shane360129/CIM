@@ -1340,6 +1340,7 @@ export function sprite(name, shirt = '#d9544d', flip = false, season = '') {
   if (name.startsWith('fertdots_')) return fertDotsSprite(name.slice(9));
   if (name.startsWith('gear_')) return gearSprite(name.slice(5));
   if (name === 'crow') return crowSprite();
+  if (name === 'horse_0' || name === 'horse_1') return horseSprite(Number(name.slice(6)), flip);
   if (name.startsWith('familyboard_')) return familyBoardSprite(Number(name.slice(12)) || 0);
   if (/^rice_[0-3]$/.test(name)) return riceSprite(Number(name.slice(5))); // 稻子用程式畫（倉庫、商店的圖示）
   if (name === 'spray') return spraySprite();
@@ -2075,3 +2076,23 @@ export const familyBoardSprite = (n = 0) => building('familyboard_' + n, 16, 16,
   const spots = [[3, 3], [7, 3], [11, 3], [4, 7], [8, 7], [11, 7]], cols = ['#f6e08a', '#f6b6c9', '#a8d8f0', '#c8f0a8', '#f2c8a0', '#e0c8f0'];
   for (let i = 0; i < Math.min(6, n); i++) { const [x, y] = spots[i]; r(cols[i], x, y, 3, 3); r('#d9344a', x + 1, y, 1, 1); }
 });
+
+// ---------------- 馬（第二十二期） ----------------
+// 咖啡色的馬，黑色的鬃毛和尾巴；frame 1 腳換一下（走路）；flip 往左看
+export const horseSprite = (frame = 0, flip = false) => {
+  const c = building(`horse_${frame}`, 16, 16, (r) => {
+    r('#8a5a32', 3, 7, 9, 5); r('#a8743f', 4, 7, 7, 2);                         // 身體
+    r('#8a5a32', 10, 3, 3, 6); r('#8a5a32', 12, 2, 3, 3); r('#f4efe0', 14, 3, 1, 1); r('#2a1e18', 13, 3, 1, 1); // 脖子、頭、眼睛
+    r('#2a1e18', 10, 2, 2, 5); r('#2a1e18', 1, 7, 2, 5);                        // 鬃毛、尾巴
+    r('#c84a3a', 6, 6, 4, 2);                                                    // 紅色的馬鞍
+    const legs = frame ? [[4, 0], [6, 1], [9, 1], [11, 0]] : [[4, 1], [6, 0], [9, 0], [11, 1]];
+    for (const [x, d] of legs) { r('#6b4428', x, 12, 1, 3 - d); r('#2a1e18', x, 15 - d, 1, 1); }
+  });
+  if (!flip) return c;
+  const key = `horse_${frame}_flip`;
+  if (cache.has(key)) return cache.get(key);
+  const f = document.createElement('canvas'); f.width = 16; f.height = 16;
+  const g = f.getContext('2d'); g.translate(16, 0); g.scale(-1, 1); g.drawImage(c, 0, 0);
+  cache.set(key, f);
+  return f;
+};
