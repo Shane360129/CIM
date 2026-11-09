@@ -3,6 +3,9 @@
 // 家庭／親友規模（數十人）用單一實例最簡單也最一致：所有資料與連線都在同一處，
 // 不需要 D1、不需要設定任何密鑰，`wrangler deploy` 完即可使用。
 
+// ▼ 小遊戲（只有 CIM 有；搬到朋友的版本時整段拿掉）
+import { GAME_KINDS, GameError, newGameState, publicGame, applyGameAction } from './games.js';
+// ▲ 小遊戲
 import {
   FARM_MAP, FARM_W, FARM_H, FARM_SPAWN, CROPS, ENERGY_MAX, ENERGY_COST, WATER_HOURS,
   START_MONEY, START_ITEMS, grownMs, cropStage, cropTotalMs, waterUntil,
@@ -618,6 +621,24 @@ CREATE TABLE IF NOT EXISTS farm_mail_read (
 );
 `;
 
+// ▼ 小遊戲（只有 CIM 有；搬到朋友的版本時整段拿掉）
+// 小遊戲頁面：一個聊天室可以同時開好幾桌，每一桌一列，盤面整包存成 JSON（以前放在聊天訊息裡的 games 表留著不動）
+const SCHEMA_V30 = `
+CREATE TABLE IF NOT EXISTS game_tables (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  conversation_id INTEGER NOT NULL,
+  kind TEXT NOT NULL,
+  state TEXT NOT NULL,
+  created_by INTEGER NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  invited_at INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_game_tables_conv ON game_tables (conversation_id, updated_at);
+`;
+const GAME_TABLES_MAX = 30;      // 一個聊天室最多留 30 桌，太久沒人玩的自動收起來
+const GAME_INVITE_GAP = 120000;  // 同一桌「在聊天室邀請大家」至少隔 2 分鐘
+// ▲ 小遊戲
 // 巨大作物（左上角那一格、什麼作物）、今天看過了沒；冬天的雪人（每天一個：堆了幾段、有沒有鼻子）；流星雨的晚上誰許了什麼願
 const SCHEMA_V29 = `
 ALTER TABLE farms ADD COLUMN giant_day TEXT;
@@ -958,6 +979,12 @@ export class ChatServer {
         this.sql.exec(SCHEMA_V29);
         this.setSetting('schema_version', '29');
       }
+      // ▼ 小遊戲（只有 CIM 有；搬到朋友的版本時整段拿掉）
+      if (v < 30) {
+        this.sql.exec(SCHEMA_V30);
+        this.setSetting('schema_version', '30');
+      }
+      // ▲ 小遊戲
     });
     // 心跳不喚醒 DO：客戶端送 "ping"，執行環境自動回 "pong"
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
@@ -1024,6 +1051,16 @@ export class ChatServer {
       if (method === 'GET') return this.farmState(me, +m[1]);
       if (method === 'POST') return this.farmAction(request, me, +m[1]);
     }
+    // ▼ 小遊戲（只有 CIM 有；搬到朋友的版本時整段拿掉）
+    if ((m = pathname.match(/^\/api\/games\/(\d+)$/))) {
+      if (method === 'GET') return this.gameList(me, +m[1]);
+      if (method === 'POST') return this.gameCreate(request, me, +m[1]);
+    }
+    if ((m = pathname.match(/^\/api\/games\/(\d+)\/(\d+)$/))) {
+      if (method === 'POST') return this.gameTableAction(request, me, +m[1], +m[2]);
+      if (method === 'DELETE') return this.gameTableDelete(me, +m[1], +m[2]);
+    }
+    // ▲ 小遊戲
     if (pathname === '/api/shopping') {
       if (method === 'GET') return this.listShopping();
       if (method === 'POST') return this.addShopping(request, me);
@@ -2086,11 +2123,17 @@ export class ChatServer {
       `DELETE FROM members WHERE conversation_id = ? AND user_id = ?`, conversationId, me.id);
     const remaining = this.memberIds(conversationId);
     this.closeFarmSockets(me.id, conversationId);
+    // ▼ 小遊戲（只有 CIM 有；搬到朋友的版本時整段拿掉）
+    this.closeGameSockets(me.id, conversationId);
+    // ▲ 小遊戲
     if (remaining.length === 0) {
       this.sql.exec(`DELETE FROM messages WHERE conversation_id = ?`, conversationId);
       this.sql.exec(`DELETE FROM conversations WHERE id = ?`, conversationId);
       for (const t of ['farms', 'farm_tiles', 'farm_items', 'farm_players', 'farm_animals', 'farm_friends', 'farm_mined', 'farm_dex', 'farm_machines', 'farm_pets', 'farm_stats', 'farm_weekly', 'farm_achievements', 'farm_festival_play', 'farm_trees', 'farm_hives', 'farm_market_play', 'farm_beauty', 'farm_cave_mined', 'farm_cave_chests', 'farm_foraged', 'farm_bundles', 'farm_projects', 'farm_daily', 'farm_decos', 'farm_gear', 'farm_notes', 'farm_bugs', 'farm_mail', 'farm_mail_read', 'farm_giants', 'farm_snowman', 'farm_wishes'])
         this.sql.exec(`DELETE FROM ${t} WHERE conversation_id = ?`, conversationId);
+      // ▼ 小遊戲（只有 CIM 有；搬到朋友的版本時整段拿掉）
+      this.sql.exec(`DELETE FROM game_tables WHERE conversation_id = ?`, conversationId);
+      // ▲ 小遊戲
     } else {
       this.addSystemMessage(conversationId, `${me.display_name} 離開了群組`);
       this.sendToUsers(remaining, { type: 'conversations-changed' });
@@ -2476,6 +2519,9 @@ export class ChatServer {
       try { ws.close(4003, 'removed'); } catch {}
     }
     this.closeFarmSockets(userId);
+    // ▼ 小遊戲（只有 CIM 有；搬到朋友的版本時整段拿掉）
+    this.closeGameSockets(userId);
+    // ▲ 小遊戲
     this.sendToUsers(this.audienceOf(updated), { type: 'user', user: pubUser(updated) });
     return json({ ok: true });
   }
@@ -2497,6 +2543,9 @@ export class ChatServer {
       try { ws.close(1000, 'password reset'); } catch {}
     }
     this.closeFarmSockets(userId);
+    // ▼ 小遊戲（只有 CIM 有；搬到朋友的版本時整段拿掉）
+    this.closeGameSockets(userId);
+    // ▲ 小遊戲
     return json({ tempPassword });
   }
 
@@ -2620,6 +2669,17 @@ export class ChatServer {
     const [client, server] = Object.values(pair);
     // 牧場視窗：只收這座牧場的事件（大家走來走去、田地變化），不收聊天訊息
     const farmId = Number(new URL(request.url).searchParams.get('farm')) || 0;
+    // ▼ 小遊戲（只有 CIM 有；搬到朋友的版本時整段拿掉）
+    const gamesId = Number(new URL(request.url).searchParams.get('games')) || 0;
+    if (gamesId) {
+      if (!this.memberOf(gamesId, user.id)) return new Response('Forbidden', { status: 403 });
+      this.ctx.acceptWebSocket(server, [`g:${gamesId}`, `gu:${user.id}`]);
+      server.serializeAttachment({ userId: user.id, games: gamesId });
+      const headers = {};
+      if (protocols.includes('cim.v1')) headers['Sec-WebSocket-Protocol'] = 'cim.v1';
+      return new Response(null, { status: 101, webSocket: client, headers });
+    }
+    // ▲ 小遊戲
     if (farmId) {
       if (!this.memberOf(farmId, user.id)) return new Response('Forbidden', { status: 403 });
       this.ctx.acceptWebSocket(server, [`f:${farmId}`, `fu:${user.id}`]);
@@ -3481,6 +3541,134 @@ export class ChatServer {
     }
   }
 
+  // ▼ 小遊戲（只有 CIM 有；搬到朋友的版本時整段拿掉）
+  // 小遊戲頁面：一個聊天室同時可以開好幾桌（每一桌一列 game_tables），規則在 src/games.js
+  gameTableOf(conversationId, tableId) {
+    const row = this.sql.exec(`SELECT * FROM game_tables WHERE id = ? AND conversation_id = ?`, tableId, conversationId).toArray()[0];
+    if (!row) throw new HttpError(404, '找不到這一桌，可能已經收起來了');
+    return row;
+  }
+
+  // 送給瀏覽器的一桌：單人題只看得到自己的盤面，記憶翻翻樂的牌面、踩地雷的雷區、猜數字的答案都先拿掉
+  pubTable(row, g, viewerId) {
+    return { id: row.id, kind: row.kind, createdBy: row.created_by, createdAt: row.created_at, updatedAt: row.updated_at, game: publicGame(g, viewerId) };
+  }
+
+  // 打開小遊戲頁面的家人：每個人收到自己看得到的那一份
+  broadcastTable(conversationId, row, g) {
+    for (const ws of this.ctx.getWebSockets(`g:${conversationId}`)) {
+      const a = ws.deserializeAttachment();
+      if (!a) continue;
+      try { ws.send(JSON.stringify({ type: 'gametable', conversationId, table: this.pubTable(row, g, a.userId) })); } catch {}
+    }
+  }
+
+  sendToGames(conversationId, event) {
+    const str = JSON.stringify(event);
+    for (const ws of this.ctx.getWebSockets(`g:${conversationId}`)) { try { ws.send(str); } catch {} }
+  }
+
+  closeGameSockets(userId, conversationId = null) {
+    for (const ws of this.ctx.getWebSockets(`gu:${userId}`)) {
+      const a = ws.deserializeAttachment() || {};
+      if (conversationId === null || a.games === conversationId) {
+        try { ws.close(4003, 'games access revoked'); } catch {}
+      }
+    }
+  }
+
+  gameList(me, conversationId) {
+    const conv = this.requireMember(conversationId, me.id);
+    const memberRows = this.sql
+      .exec(`SELECT u.id, u.display_name, u.avatar_color FROM members m JOIN users u ON u.id = m.user_id WHERE m.conversation_id = ?`, conversationId)
+      .toArray();
+    let title = conv.name || '';
+    if (conv.type === 'dm') {
+      const other = memberRows.find((r) => r.id !== me.id);
+      title = other ? `${me.display_name} 和 ${other.display_name}` : me.display_name;
+    }
+    // 已經離開聊天室的人，名字也要找得到（他們開過的桌、坐過的位子還在）
+    const ids = new Set(memberRows.map((r) => r.id));
+    const rows = this.sql
+      .exec(`SELECT * FROM game_tables WHERE conversation_id = ? ORDER BY updated_at DESC, id DESC LIMIT ?`, conversationId, GAME_TABLES_MAX)
+      .toArray();
+    const tables = rows.map((r) => this.pubTable(r, JSON.parse(r.state), me.id));
+    const names = this.userNames();
+    const extra = new Set();
+    const walk = (v, k) => {
+      if (Array.isArray(v)) { if (k === 'seats') v.forEach((x) => typeof x === 'number' && extra.add(x)); else v.forEach((x) => walk(x)); }
+      else if (v && typeof v === 'object') for (const [kk, vv] of Object.entries(v)) {
+        if ((kk === 'userId' || kk === 'holder' || kk === 'createdBy') && typeof vv === 'number') extra.add(vv);
+        else if (kk === 'contrib' && vv) Object.keys(vv).forEach((x) => extra.add(Number(x)));
+        else walk(vv, kk);
+      }
+    };
+    walk(tables);
+    const members = memberRows.map((r) => ({ id: r.id, name: r.display_name, color: r.avatar_color }));
+    for (const id of extra) if (!ids.has(id) && names.has(id)) members.push({ id, name: names.get(id), color: null, left: true });
+    return json({ me: me.id, title, members, kinds: Object.keys(GAME_KINDS), tables });
+  }
+
+  async gameCreate(request, me, conversationId) {
+    this.requireMember(conversationId, me.id);
+    const body = await this.readJson(request, 2000);
+    const kind = String(body.kind || '');
+    if (!Object.hasOwn(GAME_KINDS, kind)) throw new HttpError(400, '沒有這款遊戲');
+    const now = Date.now();
+    const g = newGameState(kind, me.id);
+    const row = this.sql
+      .exec(`INSERT INTO game_tables (conversation_id, kind, state, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?) RETURNING *`,
+        conversationId, kind, JSON.stringify(g), me.id, now, now)
+      .one();
+    // 超過 30 桌：最久沒人玩的那幾桌自動收起來
+    const old = this.sql
+      .exec(`SELECT id FROM game_tables WHERE conversation_id = ? ORDER BY updated_at DESC, id DESC LIMIT -1 OFFSET ?`, conversationId, GAME_TABLES_MAX)
+      .toArray();
+    for (const o of old) {
+      this.sql.exec(`DELETE FROM game_tables WHERE id = ?`, o.id);
+      this.sendToGames(conversationId, { type: 'gametable-removed', conversationId, tableId: o.id });
+    }
+    this.broadcastTable(conversationId, row, g);
+    return json({ table: this.pubTable(row, g, me.id) });
+  }
+
+  // 加入座位／落子／滑動／接手／重來（規則在 games.js），還有「在聊天室邀請大家」
+  async gameTableAction(request, me, conversationId, tableId) {
+    this.requireMember(conversationId, me.id);
+    const row = this.gameTableOf(conversationId, tableId);
+    const body = await this.readJson(request, 5000);
+    const now = Date.now();
+    if (body.action === 'invite') {
+      if (now - row.invited_at < GAME_INVITE_GAP) throw new HttpError(429, '剛剛才邀請過，等一下再邀請吧');
+      this.sql.exec(`UPDATE game_tables SET invited_at = ? WHERE id = ?`, now, tableId);
+      this.addSystemMessage(conversationId, `🎮 ${me.display_name} 邀請大家一起玩${GAME_KINDS[row.kind].title}，打開聊天室選單的「小遊戲」就看得到這一桌`);
+      return json({ ok: true });
+    }
+    let g;
+    try { g = JSON.parse(row.state); } catch { throw new HttpError(404, '找不到這一桌，可能已經收起來了'); }
+    try {
+      applyGameAction(g, me, body, now);
+    } catch (e) {
+      if (e instanceof GameError) throw new HttpError(e.status, e.message);
+      throw e;
+    }
+    this.sql.exec(`UPDATE game_tables SET state = ?, updated_at = ? WHERE id = ?`, JSON.stringify(g), now, tableId);
+    const next = { ...row, updated_at: now };
+    this.broadcastTable(conversationId, next, g);
+    return json({ table: this.pubTable(next, g, me.id) });
+  }
+
+  // 收起這一桌：開桌的人隨時可以收；一天沒人動之後，聊天室裡誰都可以收
+  gameTableDelete(me, conversationId, tableId) {
+    this.requireMember(conversationId, me.id);
+    const row = this.gameTableOf(conversationId, tableId);
+    if (row.created_by !== me.id && Date.now() - row.updated_at < DAY)
+      throw new HttpError(403, '只有開這一桌的人可以收起來（一天沒人玩之後大家都可以收）');
+    this.sql.exec(`DELETE FROM game_tables WHERE id = ?`, tableId);
+    this.sendToGames(conversationId, { type: 'gametable-removed', conversationId, tableId });
+    return json({ ok: true });
+  }
+  // ▲ 小遊戲
   // 被移出聊天室、停用或重設密碼時，牧場視窗的連線也要斷掉
   closeFarmSockets(userId, conversationId = null) {
     for (const ws of this.ctx.getWebSockets(`fu:${userId}`)) {

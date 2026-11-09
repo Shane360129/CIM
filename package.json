@@ -9,7 +9,8 @@
     "icons": "node scripts/gen-icons.mjs",
     "test": "node scripts/test-api.mjs",
     "test:security": "node scripts/test-security.mjs",
-    "test:farm": "node --no-warnings=MODULE_TYPELESS_PACKAGE_JSON scripts/test-farm.mjs"
+    "test:farm": "node --no-warnings=MODULE_TYPELESS_PACKAGE_JSON scripts/test-farm.mjs",
+    "test:games": "node --no-warnings=MODULE_TYPELESS_PACKAGE_JSON scripts/test-games.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"

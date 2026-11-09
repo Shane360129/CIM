@@ -109,6 +109,51 @@ fw = await farmWs(dm.id, 'f'.repeat(64));
 check('假 token 連不上牧場即時連線', !fw.ok);
 fw = await farmWs(dm.id, TA);
 check('自己連得上，並收到「誰在牧場」', fw.ok && fw.msg?.type === 'farm-presence');
+// ▼ 小遊戲（只有 CIM 有；搬到朋友的版本時整段拿掉）
+console.log('\n--- 小遊戲：藏起來的資訊、別人的聊天室 ---');
+const newT = (kind, tok, cid = dm.id) => j(`/api/games/${cid}`, { method: 'POST', body: { kind } }, tok);
+const sk = (await newT('sudoku', TA)).data.table;
+check('數獨：答案、每個人的盤面不在封包裡', !!sk && sk.game.solution === undefined && sk.game.players === undefined && sk.game.board === null);
+const ms = (await newT('mine', TA)).data.table;
+await j(`/api/games/${dm.id}/${ms.id}`, { method: 'POST', body: { action: 'move', i: 40 } }, TA);
+const msSeen = ((await j(`/api/games/${dm.id}`, {}, ADMIN)).data.tables || []).find((t) => t.id === ms.id);
+check('踩地雷：翻開之後雷區也不在封包裡（別人看的也一樣）', !!msSeen && !JSON.stringify(msSeen).includes('layout') && msSeen.game.view.length === 81);
+check('猜數字：答案不在封包裡', (await newT('guess', TA)).data.table?.game?.secret === null);
+const mem = (await newT('memory', TA)).data.table;
+check('記憶翻翻樂：蓋著的牌面不在封包裡', mem.game.cards.every((c) => c === null));
+check('別人打不開我聊天室的小遊戲（404）', (await j(`/api/games/${dm.id}`, {}, TC)).status === 404);
+check('別人不能在我的聊天室開桌、下棋、收桌（404）', (await newT('ooxx', TC)).status === 404
+  && (await j(`/api/games/${dm.id}/${mem.id}`, { method: 'POST', body: { action: 'join' } }, TC)).status === 404
+  && (await j(`/api/games/${dm.id}/${mem.id}`, { method: 'DELETE' }, TC)).status === 404);
+const dmCg = (await j('/api/conversations', { method: 'POST', body: { type: 'dm', userId: adminUser.id } }, TC)).data.conversation;
+check('拿自己聊天室的網址、別人的桌號也動不了（404）', (await j(`/api/games/${dmCg.id}/${mem.id}`, { method: 'POST', body: { action: 'join' } }, TC)).status === 404);
+check('奇怪的遊戲名稱被擋（__proto__、constructor、toString）', (await newT('__proto__', TA)).status === 400 && (await newT('constructor', TA)).status === 400 && (await newT('toString', TA)).status === 400);
+check('沒登入打不開小遊戲', (await j(`/api/games/${dm.id}`)).status === 401);
+const gameWs = (cid, tok) => new Promise((done) => {
+  let ws, opened = false;
+  try { ws = new WebSocket(`${WSB}/ws?games=${cid}`, ['cim.v1', 'token.' + tok]); } catch { return done({ ok: false }); }
+  const timer = setTimeout(() => { try { ws.close(); } catch {} done({ ok: opened }); }, 400);
+  ws.onopen = () => { opened = true; };
+  ws.onclose = () => { clearTimeout(timer); done({ ok: opened }); };
+  ws.onerror = () => {};
+});
+check('別人連不上我聊天室的小遊戲即時連線', !(await gameWs(dm.id, TC)).ok);
+// 管理員開著小遊戲頁面，A 開始解數獨：管理員收到的那一份一樣沒有答案、也看不到 A 的盤面
+const gameEvs = await new Promise((done) => {
+  const evs = [];
+  const ws = new WebSocket(`${WSB}/ws?games=${dm.id}`, ['cim.v1', 'token.' + ADMIN]);
+  ws.onmessage = (e) => evs.push(JSON.parse(e.data));
+  ws.onopen = async () => {
+    await j(`/api/games/${dm.id}/${sk.id}`, { method: 'POST', body: { action: 'start' } }, TA);
+    setTimeout(() => { try { ws.close(); } catch {} done(evs); }, 400);
+  };
+  ws.onerror = () => {};
+  setTimeout(() => done(evs), 3000);
+});
+const skEv = gameEvs.find((e) => e.type === 'gametable' && e.table?.id === sk.id);
+check('即時連線送來的數獨也沒有答案、看不到 A 的盤面', !!skEv && skEv.table.game.solution === undefined && skEv.table.game.board === null && skEv.table.game.playing === 1,
+  JSON.stringify(gameEvs.map((e) => e.type)));
+// ▲ 小遊戲
 // 表情泡泡（第二十一期）：只轉給同一座牧場的人，亂填的不轉，一秒最多一個
 const emotesGot = await new Promise((done) => {
   const got = [];
@@ -220,7 +265,8 @@ check('訊息清單不再夾帶圖片內容', imgMsg.content === '' && typeof me
 const good = await raw(mediaUrl);
 check('簽章正確就拿得到圖（而且是二進位、不是 base64）', good.status === 200 && good.ctype === 'image/jpeg' && good.len > 0 && good.len < TINY_JPG.length);
 check('沒有簽章不給拿', (await raw(`/api/media/${imgMsg.id}`)).status === 403);
-check('竄改簽章不給拿', (await raw(mediaUrl.replace(/&s=./, '&s=A'))).status === 403);
+// 把簽章第一個字換掉（本來就是 A 的話換成 B，不然網址根本沒變）
+check('竄改簽章不給拿', (await raw(mediaUrl.replace(/&s=(.)/, (m, c) => '&s=' + (c === 'A' ? 'B' : 'A')))).status === 403);
 check('改成別人的 id 不給拿（簽章綁了收件者）',
   (await raw(mediaUrl.replace(/u=\d+/, `u=${IC}`))).status === 403);
 check('把到期日改長一點不給拿', (await raw(mediaUrl.replace(/e=\d+/, 'e=99999999999999'))).status === 403);

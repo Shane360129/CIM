@@ -216,7 +216,7 @@ function msgPreview(m) {
   if (m.type === 'poll') {
     try { return '[投票] ' + JSON.parse(m.content).q; } catch { return '[投票]'; }
   }
-  if (m.type === 'game') return '[小遊戲]'; // 小遊戲已移除，舊訊息還在
+  if (m.type === 'game') return '[小遊戲]'; // 以前放在聊天訊息裡的小遊戲（現在搬到小遊戲頁面），舊訊息還在
   return m.content.replace(/\n/g, ' ');
 }
 
@@ -1039,7 +1039,7 @@ function buildMessageContent(m) {
   }
   if (m.type === 'audio') return buildAudioMsg(m);
   if (m.type === 'poll') return buildPollCard(m);
-  if (m.type === 'game') return el('div', { class: 'bubble deleted', text: '（小遊戲已移除）' });
+  if (m.type === 'game') return el('div', { class: 'bubble deleted', text: '（以前的小遊戲：現在改到右上角 ☰ 的「🎮 小遊戲」開新的一桌）' });
   const frag = document.createDocumentFragment();
   frag.append(el('div', { class: 'bubble' }, renderText(m.content)));
   if (m.meta && m.meta.link && m.meta.link.title) frag.append(buildLinkCard(m.meta.link));
@@ -1592,6 +1592,7 @@ function chatFeatureItems(conv, close) {
     el('div', { class: 'list-section', text: '聊天室功能' }),
     item('🍽️', '今天吃什麼', '隨機抽一個類別，省得想破頭', () => foodPickModal(conv)),
     item('🌾', '家族牧場', '全家一起種田、收成、出貨，跟著現實時間長大', () => openFarm(conv)),
+    item('🎮', '小遊戲', '圈圈叉叉、五子棋、2048、數獨…開在另一個頁面，大家一起玩', () => openGames(conv)),
     item('✅', '待辦清單', '要做的、要買的，成員都看得到', () => openToolsModal('shopping')),
     item('📅', '行事曆', '生日、聚餐、提醒，到時通知大家', () => openToolsModal('calendar')),
   ];
@@ -1603,6 +1604,14 @@ function openFarm(conv) {
   const wide = matchMedia('(min-width: 900px) and (pointer: fine)').matches;
   const w = window.open(url, `farm-${conv.id}`, wide ? 'width=1000,height=760' : '');
   if (!w) location.href = url; // 被擋下彈出視窗的話，就在原本的分頁打開
+}
+
+// 小遊戲也開在另一個頁面：一個聊天室可以同時開好幾桌，不會洗版
+function openGames(conv) {
+  const url = `/games.html?c=${conv.id}`;
+  const wide = matchMedia('(min-width: 900px) and (pointer: fine)').matches;
+  const w = window.open(url, `games-${conv.id}`, wide ? 'width=480,height=820' : '');
+  if (!w) location.href = url;
 }
 
 function chatInfoModal() {
