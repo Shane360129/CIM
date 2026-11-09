@@ -27,6 +27,7 @@ import {
   TERRACE_MAP, plantableIn, EMOTES, NOTE_MAX, cleanNote,
   GRAZE_HOURS, grazes, grazeWeatherOk, grazePenaltyDue, HORSE, RIDE_AREAS,
   SMITH_TOOLS, SMITH_TIERS, toolSize, toolEnergy, toolArea, areaEnergy, smithCheck, toolTitle,
+  NET, BUGS, BUG_AREAS, BUG_SLOT_H, bugSlotOf, bugTimeOf, bugsOf, bugCaught,
   FERTS, growRate, QUALITY, harvestQuality, withQuality, GEAR, isSprinkler, gearCovers, sprinkledSet, scaredAt, gearCheck, crowsOf, ALWAYS_WET,
 } from './farm.js';
 const ANIMAL_EMOJI = { chicken: '🐔', duck: '🦆', cow: '🐄', sheep: '🐑' };
@@ -573,6 +574,19 @@ ALTER TABLE farms ADD COLUMN smith_tool TEXT;
 ALTER TABLE farms ADD COLUMN smith_day TEXT;
 `;
 
+// 捕蟲：有沒有捕蟲網；每一批（今天第幾個 2 小時）哪幾隻蟲已經被抓走（或飛走）了
+const SCHEMA_V27 = `
+ALTER TABLE farms ADD COLUMN net INTEGER NOT NULL DEFAULT 0;
+CREATE TABLE IF NOT EXISTS farm_bugs (
+  conversation_id INTEGER NOT NULL,
+  day TEXT NOT NULL,
+  slot INTEGER NOT NULL,
+  area TEXT NOT NULL,
+  idx INTEGER NOT NULL,
+  PRIMARY KEY (conversation_id, day, slot, area, idx)
+);
+`;
+
 // 訊息中的網址：http(s):// 或 www. 開頭，遇到空白、引號或中文標點即結束
 // （與前端 public/app.js 的 URL_RE / trimUrlTail 保持一致）
 const URL_RE = /(?:https?:\/\/|www\.)[^\s<>"'`\u3000、，。！？：；（）「」『』【】《》〈〉…]+/i;
@@ -873,6 +887,10 @@ export class ChatServer {
       if (v < 26) {
         this.sql.exec(SCHEMA_V26);
         this.setSetting('schema_version', '26');
+      }
+      if (v < 27) {
+        this.sql.exec(SCHEMA_V27);
+        this.setSetting('schema_version', '27');
       }
     });
     // 心跳不喚醒 DO：客戶端送 "ping"，執行環境自動回 "pong"
@@ -2005,7 +2023,7 @@ export class ChatServer {
     if (remaining.length === 0) {
       this.sql.exec(`DELETE FROM messages WHERE conversation_id = ?`, conversationId);
       this.sql.exec(`DELETE FROM conversations WHERE id = ?`, conversationId);
-      for (const t of ['farms', 'farm_tiles', 'farm_items', 'farm_players', 'farm_animals', 'farm_friends', 'farm_mined', 'farm_dex', 'farm_machines', 'farm_pets', 'farm_stats', 'farm_weekly', 'farm_achievements', 'farm_festival_play', 'farm_trees', 'farm_hives', 'farm_market_play', 'farm_beauty', 'farm_cave_mined', 'farm_cave_chests', 'farm_foraged', 'farm_bundles', 'farm_projects', 'farm_daily', 'farm_decos', 'farm_gear', 'farm_notes'])
+      for (const t of ['farms', 'farm_tiles', 'farm_items', 'farm_players', 'farm_animals', 'farm_friends', 'farm_mined', 'farm_dex', 'farm_machines', 'farm_pets', 'farm_stats', 'farm_weekly', 'farm_achievements', 'farm_festival_play', 'farm_trees', 'farm_hives', 'farm_market_play', 'farm_beauty', 'farm_cave_mined', 'farm_cave_chests', 'farm_foraged', 'farm_bundles', 'farm_projects', 'farm_daily', 'farm_decos', 'farm_gear', 'farm_notes', 'farm_bugs'])
         this.sql.exec(`DELETE FROM ${t} WHERE conversation_id = ?`, conversationId);
     } else {
       this.addSystemMessage(conversationId, `${me.display_name} 離開了群組`);
@@ -2688,6 +2706,22 @@ export class ChatServer {
     const n = Number(this.env && this.env.FARM_FAST_TREES);
     return Number.isFinite(n) && n > 0 ? n : null;
   }
+  // FARM_BUGS=day／night 只給本機測試用：不管現在幾點，出來的都是白天／晚上的蟲
+  farmBugTime(slot) {
+    const o = this.env && this.env.FARM_BUGS;
+    return o === 'day' || o === 'night' ? o : bugTimeOf(slot);
+  }
+  // 現在這一批蟲：每張地圖還沒被抓走的；until 是下一批出來的時間
+  farmBugsPub(conversationId, now) {
+    const today = taiwanDay(now), slot = bugSlotOf(now), season = this.farmSeason(now), weather = this.farmWeather(today);
+    const gone = new Set(this.sql.exec(`SELECT area, idx FROM farm_bugs WHERE conversation_id = ? AND day = ? AND slot = ?`, conversationId, today, slot)
+      .toArray().map((r) => `${r.area}|${r.idx}`));
+    const areas = {};
+    for (const area of BUG_AREAS) areas[area] = bugsOf(conversationId, today, slot, area, season, weather, this.farmBugTime(slot)).filter((b) => !gone.has(`${area}|${b.idx}`));
+    const h = new Date(now + 8 * 3600000).getUTCHours();
+    const until = now - ((now + 8 * 3600000) % 3600000) + ((slot + 1) * BUG_SLOT_H - h) * 3600000;
+    return { slot, until, areas };
+  }
   // FARM_SMITH=now 只給本機測試用：交給師傅馬上就打好（不用等到明天）
   farmSmithNow() {
     return this.env && this.env.FARM_SMITH === 'now';
@@ -3002,6 +3036,7 @@ export class ChatServer {
       gems: ['ore:ruby', 'ore:sapphire', 'ore:diamond'].filter((i) => dex.includes(i)).length,
       seaFishKinds: dex.filter((i) => i.startsWith('fish:') && FISH[i.slice(5)]?.sea).length, tuna: dex.includes('fish:tuna'),
       forageKinds: dex.filter((i) => i.startsWith('forage:')).length,
+      bugKinds: dex.filter((i) => i.startsWith('bug:')).length, broadtail: dex.includes('bug:broadtail'),
       beachKinds: dex.filter((i) => i.startsWith('forage:') && ['sand', 'tide'].includes(FORAGE[i.slice(7)]?.where)).length,
       mushrooms: dex.filter((i) => i.startsWith('forage:') && FORAGE[i.slice(7)]?.mushroom).length,
       projects: one(`SELECT COUNT(*) AS n FROM farm_projects WHERE conversation_id = ?`, conversationId),
@@ -3243,6 +3278,8 @@ export class ChatServer {
       this.addSystemMessage(conversationId, `🌳 ${me.display_name} 摘到了第一批${itemName(item)}！`);
     } else if (item.startsWith('forage:')) {
       this.addSystemMessage(conversationId, `🐚 ${me.display_name} 第一次撿到了${itemName(item)}！`);
+    } else if (item.startsWith('bug:')) {
+      this.addSystemMessage(conversationId, `🦋 ${me.display_name} 第一次抓到了${itemName(item)}！${item === 'bug:broadtail' ? '台灣的國寶蝴蝶耶！' : ''}`);
     } else if (item.startsWith('prod:honey')) {
       this.addSystemMessage(conversationId, `🍯 ${me.display_name} 收到了第一罐${itemName(item)}！`);
     } else if (item !== 'fish:junk' && item !== 'ore:stone') {
@@ -3403,6 +3440,7 @@ export class ChatServer {
       notes: this.farmNotesPub(conversationId), emotes: EMOTES,
       graze: this.farmGrazePub(farm, today), horse: this.farmHorsePub(conversationId, farm, today), horseInfo: HORSE, rideAreas: RIDE_AREAS,
       smithTools: SMITH_TOOLS, smithTiers: SMITH_TIERS,
+      bugs: this.farmBugsPub(conversationId, now), bugKinds: BUGS, net: !!farm.net, netInfo: NET,
       gear: this.farmGearPub(conversationId), gearKinds: GEAR, ferts: FERTS, quality: QUALITY, crows: this.farmCrowsPub(farm, today),
       harvestContest: { count: this.sql.exec(`SELECT value FROM farm_stats WHERE conversation_id = ? AND key = 'season_harvest'`, conversationId).toArray()[0]?.value || 0, rivals: HARVEST_RIVALS },
       treeSpots: TREE_SPOTS, hiveSpots: HIVE_SPOTS, treeKinds: TREES, fruits: FRUITS, hive: HIVE,
@@ -3446,6 +3484,7 @@ export class ChatServer {
     let gained = null;
     let animalsChanged = false;
     let townChanged = smithDone;
+    let bugsChanged = false;
     let rocksChanged = false;
     let dexChanged = false;
     let machinesChanged = false;
@@ -3649,6 +3688,35 @@ export class ChatServer {
       farm.graze_back = 1;
       gained = { back: true };
       grazeChanged = true;
+    } else if (action === 'buy_net') {
+      // 雜貨店的捕蟲網：全家一支
+      if (farm.net) throw new HttpError(400, '已經有捕蟲網了');
+      this.farmSpend(conversationId, NET.price);
+      this.sql.exec(`UPDATE farms SET net = 1 WHERE conversation_id = ?`, conversationId);
+      farm.net = 1;
+      gained = { net: true };
+    } else if (action === 'catch') {
+      // 揮網抓蟲：這一批的蟲還在、有捕蟲網、1 點體力；稀有的有機會飛走
+      if (!farm.net) throw new HttpError(400, '要先到阿福伯的雜貨店買捕蟲網');
+      const area = String(body.area || '');
+      if (!BUG_AREAS.includes(area)) throw new HttpError(400, '這裡沒有蟲');
+      const idx = Number(body.idx), slot = bugSlotOf(now);
+      const bug = Number.isInteger(idx) && bugsOf(conversationId, today, slot, area, season, weatherToday, this.farmBugTime(slot)).find((b) => b.idx === idx);
+      if (!bug || this.sql.exec(`SELECT 1 FROM farm_bugs WHERE conversation_id = ? AND day = ? AND slot = ? AND area = ? AND idx = ?`,
+        conversationId, today, slot, area, idx).toArray().length) throw new HttpError(400, '蟲已經飛走了');
+      spend(NET.energy);
+      this.sql.exec(`DELETE FROM farm_bugs WHERE conversation_id = ? AND day <> ?`, conversationId, today);
+      this.sql.exec(`INSERT INTO farm_bugs (conversation_id, day, slot, area, idx) VALUES (?, ?, ?, ?, ?)`, conversationId, today, slot, area, idx);
+      if (bugCaught(conversationId, today, slot, area, idx, bug.kind)) {
+        const item = `bug:${bug.kind}`;
+        this.farmAddItem(conversationId, item, 1);
+        this.farmStat(conversationId, 'bugs', 1);
+        gained = { item, qty: 1, first: this.farmDexAdd(conversationId, item, me, now) };
+        dexChanged = true;
+      } else {
+        gained = { escaped: true, kind: bug.kind };
+      }
+      bugsChanged = true;
     } else if (action === 'smith') {
       // 把工具交給阿鐵師傅打成下一級（明天來拿），同時只能打一把
       const tool = String(body.tool || '');
@@ -4420,6 +4488,8 @@ export class ChatServer {
       ...crowEaten.map((c) => this.farmTilePub(this.farmTileRow(conversationId, c.x, c.y, now), now, scale, rainy, wetNow))];
     const gear = gearChanged ? this.farmGearPub(conversationId) : undefined;
     const notes = notesChanged ? this.farmNotesPub(conversationId) : undefined;
+    const bugs = bugsChanged ? this.farmBugsPub(conversationId, now) : undefined;
+    const net = action === 'buy_net' ? true : undefined;
     const graze = grazeChanged ? this.farmGrazePub(farm, today) : undefined;
     const horse = horseChanged ? this.farmHorsePub(conversationId, farm, today) : undefined;
     const crows = crowEaten.length ? this.farmCrowsPub(farm, today) : undefined;
@@ -4441,10 +4511,10 @@ export class ChatServer {
     this.sendToFarm(conversationId, {
       type: 'farm-update', by: me.id, action, tiles, money, items, animals, town, rocks, dex, machines, build, pets,
       achievements, newAchievements, trees, hives, beauty, seasonHarvest, cave: caveOut || undefined, caveBest, forage,
-      projects: projects ? { done: projects.done, given: projects.given } : undefined, decos, gear, crows, notes, graze, horse, now,
+      projects: projects ? { done: projects.done, given: projects.given } : undefined, decos, gear, crows, notes, graze, horse, bugs, net, now,
     });
     return json({ ok: true, energy: p.energy, energyMax: energyMaxOf(farm.house_level), tile: tileOut, tiles, money, items,
-      animals, town, rocks, dex, machines, build, pets, achievements, newAchievements, trees, hives, market, beauty, seasonHarvest, cave: caveOut || undefined, caveBest, forage, projects, decos, gear, crows, notes, graze, horse, gained, now });
+      animals, town, rocks, dex, machines, build, pets, achievements, newAchievements, trees, hives, market, beauty, seasonHarvest, cave: caveOut || undefined, caveBest, forage, projects, decos, gear, crows, notes, graze, horse, bugs, net, gained, now });
   }
 
   farmSpend(conversationId, cost) {

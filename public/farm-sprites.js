@@ -1350,6 +1350,7 @@ export function sprite(name, shirt = '#d9544d', flip = false, season = '') {
   if (name.startsWith('good_')) return goodSprite(name.slice(5));
   if (name.startsWith('fruit_')) return fruitSprite(name.slice(6));
   if (name.startsWith('forage_')) return forageSprite(name.slice(7));
+  if (name.startsWith('bug_')) return bugSprite(name.slice(4), 0);
   if (name.startsWith('deco_')) return decoSprite(name.slice(5));
   if (name.startsWith('tree_')) { const [, kind, stage, ripe] = name.split('_'); return fruitTreeSprite(kind, Number(stage), ripe === 'r'); }
   if (name === 'honey' || name === 'honey_l') return honeySprite(name);
@@ -1510,6 +1511,59 @@ function building(key, w, h, draw) {
   cache.set(key, c);
   return c;
 }
+// ---------------- 昆蟲（第二十四期） ----------------
+// 蝴蝶：翅膀上半 c1、下半 c2，張開（f=0）、收一半（f=1）；deco 畫翅膀上的花紋
+const butterfly = (c1, c2, deco, tail) => (r, f) => {
+  const w = f ? 3 : 5, l = 7 - w, rr = 9;
+  r(c1, l, 4, w, 4); r(c1, rr, 4, w, 4); r(c2, l + 1, 8, w - 1, 3); r(c2, rr, 8, w - 1, 3);
+  if (tail) { r(c2, l + 1, 11, 1, 2); r(c2, rr + w - 2, 11, 1, 2); }
+  if (deco) deco(r, l, rr, w);
+  r('#2b2421', 7, 4, 2, 8); r('#2b2421', 6, 2, 1, 2); r('#2b2421', 9, 2, 1, 2);
+};
+const dragonfly = (c) => (r, f) => {
+  const wy = f ? 1 : 0, wing = '#cfe8f6';
+  r(wing, 1, 4 + wy, 6, 2); r(wing, 9, 4 + wy, 6, 2); r(wing, 2, 7 - wy, 5, 2); r(wing, 9, 7 - wy, 5, 2);
+  r(c, 7, 3, 2, 11); r(c, 6, 2, 4, 2); r('#2b2421', 6, 2, 1, 1); r('#2b2421', 9, 2, 1, 1);
+};
+const legs = (r, f, c = '#2b2421', y = 8) => { const d = f ? 1 : 0; r(c, 3, y + d, 2, 1); r(c, 11, y + d, 2, 1); r(c, 3, y + 3 - d, 2, 1); r(c, 11, y + 3 - d, 2, 1); };
+const BUG_ART = {
+  cabbage_white: butterfly('#f4f1e8', '#e8e4dc', (r, l, rr, w) => { r('#2b2421', l + 1, 5, 1, 1); r('#2b2421', rr + w - 2, 5, 1, 1); }),
+  yellow_butterfly: butterfly('#f6d34a', '#f2c94a', (r, l, rr, w) => { r('#c98a2a', l, 4, 1, 1); r('#c98a2a', rr + w - 1, 4, 1, 1); }),
+  swallowtail: butterfly('#2b2421', '#2b2421', (r, l, rr, w) => { r('#f6d34a', l + 1, 5, w - 2, 1); r('#f6d34a', rr + 1, 5, w - 2, 1); r('#4aa3df', l + 1, 9, 1, 1); r('#4aa3df', rr + w - 2, 9, 1, 1); }, true),
+  broadtail: butterfly('#1e1a18', '#1e1a18', (r, l, rr, w) => { r('#f4f1e8', l + 1, 8, w - 2, 2); r('#f4f1e8', rr, 8, w - 2, 2); r('#e0393e', l + 1, 10, 1, 1); r('#e0393e', rr + w - 3, 10, 1, 1); }, true),
+  leaf_butterfly: butterfly('#a8743f', '#8d5d32', (r, l, rr, w) => { r('#e0763a', l + 1, 5, w - 1, 1); r('#e0763a', rr, 5, w - 1, 1); r('#5e3b20', l, 9, w, 1); r('#5e3b20', rr, 9, w - 1, 1); }),
+  purple_crow: butterfly('#4a2f6e', '#3a2358', (r, l, rr, w) => { r('#9a7ad6', l + 1, 5, 2, 1); r('#9a7ad6', rr + 1, 5, 2, 1); r('#f4f1e8', l, 9, 1, 1); r('#f4f1e8', rr + w - 2, 9, 1, 1); }),
+  atlas_moth: (r, f) => {
+    const w = f ? 5 : 7;
+    r('#b5532e', 8 - w - 1, 3, w, 5); r('#b5532e', 9, 3, w, 5); r('#8d3a1e', 8 - w, 8, w - 1, 5); r('#8d3a1e', 9, 8, w - 1, 5);
+    r('#f4f1e8', 8 - w + 1, 5, 2, 2); r('#f4f1e8', 9 + w - 3, 5, 2, 2); r('#f6d34a', 8 - w - 1, 3, 1, 1); r('#f6d34a', 9 + w - 1, 3, 1, 1);
+    r('#5e3b20', 7, 4, 2, 8); r('#c9a96a', 6, 2, 1, 2); r('#c9a96a', 9, 2, 1, 2);
+  },
+  dragonfly: dragonfly('#3f8ad6'),
+  red_dragonfly: dragonfly('#e0393e'),
+  ladybug: (r, f) => { legs(r, f, '#2b2421', 7); r('#e0393e', 4, 5, 8, 7); r('#c8302e', 4, 11, 8, 1); r('#2b2421', 7, 5, 2, 7); r('#2b2421', 5, 7, 2, 2); r('#2b2421', 10, 8, 1, 2); r('#2b2421', 5, 10, 1, 1); r('#2b2421', 5, 3, 6, 2); r('#f4f1e8', 6, 3, 1, 1); },
+  cicada: (r, f) => { r('#cfe8f6', 3, 6, 4, 8); r('#cfe8f6', 9, 6, 4, 8); r('#8a9a9a', 3, 6, 1, 8); r('#8a9a9a', 12, 6, 1, 8); r('#5e5a3a', 6, 4, 4, 9); r('#3a3826', 5, 3, 6, 2); r('#c9302e', 5, 3, 1, 1); r('#c9302e', 10, 3, 1, 1); if (f) r('#f4f1e8', 4, 7, 1, 1); },
+  longhorn: (r, f) => { legs(r, f); r('#1e1a18', 6, 5, 4, 8); r('#f4f1e8', 7, 7, 1, 1); r('#f4f1e8', 8, 10, 1, 1); r('#1e1a18', 6, 3, 4, 2);
+    r('#1e1a18', 5, 2, 1, 1); r('#1e1a18', 4, 1, 1, 1); r('#1e1a18', 3, 0, 1, 1); r('#1e1a18', 10, 2, 1, 1); r('#1e1a18', 11, 1, 1, 1); r('#1e1a18', 12, 0, 1, 1); },
+  mantis: (r, f) => { r('#5fae3f', 7, 4, 2, 10); r('#5fae3f', 6, 2, 4, 2); r('#2b2421', 6, 2, 1, 1); r('#2b2421', 9, 2, 1, 1);
+    r('#4a8f2f', f ? 4 : 5, 5, 3, 1); r('#4a8f2f', 9, 5, f ? 3 : 2, 1); r('#4a8f2f', 5, 6, 1, 2); r('#4a8f2f', 10, 6, 1, 2); r('#4a8f2f', 5, 11, 2, 1); r('#4a8f2f', 9, 11, 2, 1); r('#8fd06a', 7, 8, 2, 4); },
+  firefly: (r, f) => { r('#2b2421', 7, 5, 2, 5); r('#c9302e', 7, 4, 2, 1); r('#cfe8f6', f ? 5 : 4, 6, 2, 3); r('#cfe8f6', f ? 9 : 10, 6, 2, 3); r(f ? '#f6ff8a' : '#e8f67a', 7, 10, 2, 3); },
+  rhino_beetle: (r, f) => { legs(r, f, '#2b2421', 8); r('#5e3b20', 4, 6, 8, 8); r('#7a4e2d', 5, 7, 2, 4); r('#3a2818', 7, 6, 1, 8);
+    r('#3a2818', 5, 3, 6, 3); r('#3a2818', 7, 0, 2, 4); r('#3a2818', 6, 0, 1, 1); r('#3a2818', 9, 0, 1, 1); },
+  stag_beetle: (r, f) => { legs(r, f, '#2b2421', 8); r('#2b2421', 4, 6, 8, 8); r('#4a3a30', 5, 7, 2, 4); r('#1e1a18', 7, 6, 1, 8);
+    r('#2b2421', 5, 4, 6, 2); r('#2b2421', 4, 1, 1, 4); r('#2b2421', 11, 1, 1, 4); r('#2b2421', 5, 1, 1, 1); r('#2b2421', 10, 1, 1, 1); },
+  katydid: (r, f) => { r('#7ab83f', 5, 4, 6, 9); r('#5e9a2a', 5, 4, 1, 9); r('#5e9a2a', 6, 3, 4, 2); r('#2b2421', 6, 3, 1, 1); r('#2b2421', 9, 3, 1, 1);
+    r('#4a8f2f', 3, f ? 10 : 11, 2, 3); r('#4a8f2f', 11, f ? 10 : 11, 2, 3); r('#5e9a2a', 6, 0, 1, 3); r('#5e9a2a', 9, 0, 1, 3); },
+  cricket: (r, f) => { r('#3a2818', 5, 5, 6, 8); r('#5e3b20', 6, 6, 4, 6); r('#2b2421', 6, 3, 4, 2); r('#2b2421', 5, 1, 1, 3); r('#2b2421', 10, 1, 1, 3);
+    r('#2b2421', 3, f ? 10 : 11, 2, 3); r('#2b2421', 11, f ? 10 : 11, 2, 3); },
+  hermit_crab: (r, f) => { r('#e8d29a', 6, 4, 7, 7); r('#c9a96a', 7, 5, 4, 4); r('#e8d29a', 8, 6, 2, 2); r('#a8743f', 6, 10, 7, 1);
+    r('#e0763a', 3, f ? 7 : 8, 3, 3); r('#e0763a', 4, 11, 1, 2); r('#e0763a', 6, 11, 1, 2); r('#2b2421', 4, f ? 6 : 7, 1, 1); },
+  snail: (r, f) => { r('#d8c8a8', 2 + (f ? 1 : 0), 11, 11, 2); r('#d8c8a8', 2 + (f ? 1 : 0), 8, 2, 3); r('#2b2421', 2 + (f ? 1 : 0), 7, 1, 1);
+    r('#c98a3a', 6, 4, 7, 7); r('#8d5d32', 8, 6, 3, 3); r('#c98a3a', 9, 7, 1, 1); r('#8d5d32', 6, 4, 7, 1); },
+};
+export const BUG_IDS = Object.keys(BUG_ART);
+export const bugSprite = (id, f = 0) => building(`bug_${id}_${f ? 1 : 0}`, 16, 16, (r) => (BUG_ART[id] || BUG_ART.cabbage_white)(r, f ? 1 : 0));
+
 // 阿鐵師傅的鐵匠鋪（2×2 格）：石頭牆、深紅瓦屋頂、冒煙的煙囪、門裡的爐火一閃一閃、門口的鐵砧
 export const smithSprite = (f = 0) => building('smith_' + f, 32, 32, (r) => {
   r('#5e5a54', 23, 2, 5, 6); r('#46423e', 22, 2, 7, 1);                                   // 煙囪

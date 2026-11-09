@@ -29,9 +29,10 @@ import {
   TERRACE_MAP, plantableIn, EMOTES, NOTE_LEN, NOTE_MAX, cleanNote,
   GRAZE_HOURS, GRAZE_ZONE, grazes, grazeWeatherOk, grazePenaltyDue, grazeTiles, HORSE, HORSE_ZONE, RIDE_AREAS, horseSpeed,
   SMITH_TOOLS, SMITH_TIERS, TIER_MAX, toolSize, toolEnergy, toolArea, areaEnergy, smithCheck, toolTitle,
+  NET, BUGS, BUG_SLOT_H, BUG_COUNT, BUG_AREAS, bugSlotOf, bugTimeOf, bugKinds, bugsOf, bugCaught,
   GEAR, GEAR_MAX, SCARE_R, isSprinkler, gearCovers, sprinkledSet, scaredAt, gearCheck, crowsOf, CROW_MIN, CROW_PCT, ALWAYS_WET,
 } from '../src/farm.js';
-import { forageSprite, projectSprite, decoSprite, homeTileSprite } from '../public/farm-sprites.js';
+import { forageSprite, projectSprite, decoSprite, homeTileSprite, BUG_IDS } from '../public/farm-sprites.js';
 import { SPRITES, PALETTE, FISH_SHAPE, BOOT_SHAPE, ROCK_SHAPE, FISH_COLORS, ORE_COLORS, DISH_SHAPES, DISH_COLORS, GOOD_ART, FRUIT_COLORS, honeySprite, fruitTreeSprite } from '../public/farm-sprites.js';
 
 let pass = 0, fail = 0;
@@ -418,7 +419,7 @@ check('感情很好但還沒聽過：從第一段開始說', storyDue(100, 0), 0
 const zero = { harvest: 0, shipped: 0, requests: 0, babies: 0, animals: 0, pets: 0, machines: 0, fishKinds: 0, dishKinds: 0, goodKinds: 0, amethyst: false, maxHearts: 0, minHearts: 0, stories: 0, gh: 0, house: 1 };
 check('什麼都還沒做：沒有成就', achievementsMet(zero), []);
 check('收成一次、領養寵物：兩個成就', achievementsMet({ ...zero, harvest: 1, pets: 1 }), ['harvest1', 'pet']);
-const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: Object.keys(MACHINES).length, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: Object.keys(FORAGE).length, beachKinds: 7, mushrooms: 3, projects: 4, decoFarm: 5, decoHome: 5, goldHarvest: 1, sprinklers: 4, whiteRice: true, teaKinds: 2, notes: 5, horse: true, graze: 10, smithTiers: 9, goldTools: 3 };
+const full = { harvest: 999, shipped: 1e6, requests: 99, babies: 9, animals: 20, pets: 2, machines: Object.keys(MACHINES).length, fishKinds: Object.keys(FISH).length, dishKinds: 28, goodKinds: 11, amethyst: true, maxHearts: 10, minHearts: 10, stories: 18, gh: 1, house: 3, trees: 10, honey: true, goldfish3: 1, beautyWin: 1, harvestGold: 1, caveBest: 20, caveBottom: 1, gems: 3, seaFishKinds: 10, tuna: true, forageKinds: Object.keys(FORAGE).length, beachKinds: 7, mushrooms: 3, projects: 4, decoFarm: 5, decoHome: 5, goldHarvest: 1, sprinklers: 4, whiteRice: true, teaKinds: 2, notes: 5, horse: true, graze: 10, smithTiers: 9, goldTools: 3, bugKinds: 20, broadtail: true };
 check('全部做完：每個成就都達成', achievementsMet(full).length, ACHIEVEMENTS.length);
 check('成就的編號不重複、都有名字說明和獎金', new Set(ACHIEVEMENTS.map((a) => a.id)).size === ACHIEVEMENTS.length && ACHIEVEMENTS.every((a) => a.name && a.desc && a.reward > 0), true);
 check('「聽完所有故事」要 18 段', [achievementsMet({ ...full, stories: 17 }).includes('stories'), achievementsMet(full).includes('stories')], [false, true]);
@@ -833,6 +834,37 @@ check('東西夠了就能打', [smithCheck('sickle', 0, { 'ore:copper': 5 }, 150
 check('工具的名字', [toolTitle('hoe', 0, false), toolTitle('hoe', 0, true), toolTitle('can', 1, true), toolTitle('sickle', 3, false)], ['鋤頭', '大鋤頭', '銅澆水壺', '金鐮刀']);
 check('成就：打鐵趁熱、金光閃閃', [achievementsMet({ ...zero, smithTiers: 1 }), achievementsMet({ ...zero, smithTiers: 8, goldTools: 2 }), achievementsMet({ ...zero, smithTiers: 9, goldTools: 3 })],
   [['smith'], ['smith'], ['smith', 'goldtools']]);
+
+console.log('\n--- 捕蟲、昆蟲圖鑑（第二十四期） ---');
+const SEASONS4 = ['spring', 'summer', 'autumn', 'winter'];
+check('20 種昆蟲，都有名字、價錢、季節、地方、白天晚上', [Object.keys(BUGS).length, Object.values(BUGS).every((b) => b.name && b.sell > 0 && b.seasons.length
+  && b.seasons.every((x) => SEASONS4.includes(x)) && b.where.length && b.where.every((a) => BUG_AREAS.includes(a)) && ['day', 'night', 'any'].includes(b.time) && b.weight > 0)], [20, true]);
+check('每一種昆蟲都有圖', Object.keys(BUGS).every((id) => BUG_IDS.includes(id)), true);
+check('捕蟲網 500 元、揮一次 1 點體力；每 2 小時換一批', [NET.price, NET.energy, BUG_SLOT_H, BUG_AREAS], [500, 1, 2, ['farm', 'hill', 'town', 'beach', 'terrace']]);
+check('白天、晚上：6～18 點是白天', [0, 2, 3, 8, 9, 11].map(bugTimeOf), ['night', 'night', 'day', 'day', 'night', 'night']);
+check('台灣時間 7:30 是第 3 批、23:59 是第 11 批', [bugSlotOf(Date.UTC(2026, 6, 1, 23, 30)), bugSlotOf(Date.UTC(2026, 6, 1, 15, 59))], [3, 11]);
+check('每一季的白天都抓得到蟲', SEASONS4.map((se) => BUG_AREAS.some((a) => bugKinds(a, se, 'day', 'sun').length > 0)), [true, true, true, true]);
+check('夏天晚上的後山：螢火蟲、獨角仙、鍬形蟲、紡織娘、皇蛾', bugKinds('hill', 'summer', 'night', 'sun').map((k) => k.id).sort(),
+  ['atlas_moth', 'firefly', 'katydid', 'rhino_beetle', 'stag_beetle']);
+check('颱風、寒流天沒有蟲；下雨天只有蝸牛（冬天連蝸牛都沒有）', [bugKinds('farm', 'summer', 'day', 'typhoon'), bugKinds('hill', 'summer', 'day', 'cold'),
+  bugKinds('farm', 'summer', 'day', 'rain').map((k) => k.id), bugKinds('farm', 'winter', 'day', 'rain')], [[], [], ['snail'], []]);
+check('寄居蟹一年四季都在海邊（白天晚上都有）', [bugKinds('beach', 'winter', 'night', 'sun').map((k) => k.id), bugKinds('beach', 'summer', 'day', 'cloud').map((k) => k.id)], [['hermit_crab'], ['hermit_crab']]);
+const bugsAll = BUG_AREAS.flatMap((a) => bugsOf(77, '2026-07-15', 4, a, 'summer', 'sun', 'day').map((b) => ({ ...b, a })));
+check('每張地圖一批幾隻：牧場 3、後山 5、小鎮 3、海邊 2、梯田 3', BUG_AREAS.map((a) => bugsAll.filter((b) => b.a === a).length), [3, 5, 3, 2, 3]);
+check('同一天同一批，全家看到的一樣', JSON.stringify(bugsOf(77, '2026-07-15', 4, 'hill', 'summer', 'sun', 'day')) === JSON.stringify(bugsOf(77, '2026-07-15', 4, 'hill', 'summer', 'sun', 'day')), true);
+check('下一批換位置', JSON.stringify(bugsOf(77, '2026-07-15', 4, 'hill', 'summer', 'sun', 'day')) !== JSON.stringify(bugsOf(77, '2026-07-15', 5, 'hill', 'summer', 'sun', 'day')), true);
+check('蟲都在走得到的草地（海邊在沙灘），不在最上面兩排、不跟撿得到的東西重疊', bugsAll.every((b) => isWalkable(b.x, b.y, b.a) && b.y > 2
+  && terrainAt(b.x, b.y, b.a) === (b.a === 'beach' ? 's' : '.') && !forageOf(77, '2026-07-15', b.a, 'summer').some((f) => f.x === b.x && f.y === b.y)), true);
+check('牧場的蟲不在動物小屋的圍欄裡', bugsAll.filter((b) => b.a === 'farm').every((b) => !(b.x >= 21 && b.y >= 8)), true);
+check('出來的都是這個季節、這個地方、這個時間的蟲', bugsAll.every((b) => BUGS[b.kind].where.includes(b.a) && BUGS[b.kind].seasons.includes('summer') && BUGS[b.kind].time !== 'night'), true);
+check('普通的蟲一定抓得到；稀有的有時候飛走，同一隻結果一樣', [bugCaught(1, 'd', 1, 'farm', 0, 'cabbage_white'),
+  bugCaught(1, 'd', 1, 'hill', 2, 'broadtail') === bugCaught(1, 'd', 1, 'hill', 2, 'broadtail'),
+  Array.from({ length: 200 }, (_, i) => bugCaught(i, 'd', 1, 'hill', 0, 'atlas_moth')).filter(Boolean).length > 60,
+  Array.from({ length: 200 }, (_, i) => bugCaught(i, 'd', 1, 'hill', 0, 'atlas_moth')).filter(Boolean).length < 140], [true, true, true, true]);
+check('昆蟲可以賣、有名字', [itemPrice('bug:broadtail'), itemPrice('bug:snail'), itemName('bug:firefly'), itemPrice('bug:constructor')], [800, 20, '螢火蟲', 0]);
+check('小傑最愛獨角仙、喜歡蟬', [giftReaction('jie', 'bug:rhino_beetle'), giftReaction('jie', 'bug:cicada')], ['love', 'like']);
+check('成就：小小昆蟲學家、國寶蝴蝶', [achievementsMet({ ...zero, bugKinds: 10 }), achievementsMet({ ...zero, bugKinds: 9 }), achievementsMet({ ...zero, broadtail: true })],
+  [['bugs10'], [], ['broadtail']]);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

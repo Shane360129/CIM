@@ -385,6 +385,11 @@ check('打工具：沒這種工具、還沒換大鋤頭、沒有銅礦都被擋'
   && /錢不夠|銅礦不夠/.test((await farmDo(groupId, { action: 'smith', tool: 'sickle' }, TA)).data.error || ''));
 r = await farmDo(groupId, { action: 'harvest', ...f1, area: true }, TA);
 check('還沒有鐮刀不能一次收成一片', r.status === 400 && /鐵匠鋪/.test(r.data.error || ''), r.data.error);
+// 捕蟲（第二十四期）
+check('捕蟲：每張地圖這一批的蟲、20 種昆蟲、還沒有捕蟲網', ['farm', 'hill', 'town', 'beach', 'terrace'].every((a) => Array.isArray(fs0.bugs?.areas?.[a]))
+  && Object.keys(fs0.bugKinds || {}).length === 20 && fs0.net === false && fs0.netInfo?.price === 500 && fs0.bugs.until > Date.now());
+check('沒有捕蟲網不能抓；亂填的地方、蟲被擋', /雜貨店/.test((await farmDo(groupId, { action: 'catch', area: 'farm', idx: 0 }, TA)).data.error || '')
+  && (await farmDo(groupId, { action: 'catch', area: '__proto__', idx: 0 }, TA)).status === 400);
 
 // 後山：釣魚、挖礦、圖鑑
 check('有後山地圖、出口、今天的 20 顆石頭、魚和礦石的資料', fs0.hill?.length === 20 && fs0.exits?.farm?.length === 2
@@ -419,7 +424,7 @@ if (fs0.villagersOut) {
 
 // 料理
 // 村民的故事、成就、週報
-check('有村民的故事、46 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 46
+check('有村民的故事、48 個成就、這一週的紀錄', Object.keys(fs0.stories || {}).length === 6 && fs0.achievementList?.length === 48
   && JSON.stringify(fs0.achievements) === '{}' && /^\d{4}-\d{2}-\d{2}$/.test(fs0.thisWeek?.week || ''));
 check('有 47 道菜的食譜', Object.values(fs0.dishes || {}).filter((d) => d.need).length === 47 && !!fs0.ingredientGroups?.egg);
 check('沒有這道菜', (await farmDo(groupId, { action: 'cook', dish: 'steak' }, TA)).status === 400
@@ -807,6 +812,26 @@ if (fs0.scale >= 3600) {
       check('（加速模式）聊天室說動物去後山吃草了', (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('放到後山的草地上吃草了')));
       r = await farmDo(groupId, { action: 'graze_in' }, TB);
       check('（加速模式）趕回小屋；今天不能再放一次', r.status === 200 && !r.data.graze.out && /今天已經放牧過/.test((await farmDo(groupId, { action: 'graze_out' }, TA)).data.error || ''));
+    }
+    // 捕蟲（第二十四期）：買捕蟲網，抓一隻這一批的蟲（颱風、寒流天沒有蟲就跳過）
+    {
+      r = await farmDo(groupId, { action: 'buy_net' }, TA);
+      money -= 500;
+      check(`（加速模式）買捕蟲網 → ${money}`, r.status === 200 && r.data.net === true && r.data.money === money, r.data.error);
+      check('（加速模式）全家一支，不能再買', /已經有捕蟲網/.test((await farmDo(groupId, { action: 'buy_net' }, TB)).data.error || ''));
+      check('（加速模式）不存在的蟲抓不到', /飛走了/.test((await farmDo(groupId, { action: 'catch', area: 'hill', idx: 99 }, TA)).data.error || ''));
+      const bs = (await farmGet(groupId, TA)).data.bugs;
+      const area = Object.keys(bs.areas).find((a) => bs.areas[a].length);
+      if (area) {
+        const b = bs.areas[area][0], e0 = (await farmGet(groupId, TA)).data.energy.now;
+        r = await farmDo(groupId, { action: 'catch', area, idx: b.idx }, TA);
+        const ok = r.status === 200 && (r.data.gained?.item === `bug:${b.kind}` ? r.data.items[`bug:${b.kind}`] >= 1 : r.data.gained?.escaped === true);
+        check(`（加速模式）在${area}揮網抓${b.kind}：${r.data.gained?.escaped ? '飛走了' : '抓到了'}，用掉 1 點體力，那一隻不見了`, ok && r.data.energy === e0 - 1
+          && !r.data.bugs.areas[area].some((x) => x.idx === b.idx), r.data.error || JSON.stringify(r.data.gained));
+        check('（加速模式）同一隻不能再抓', /飛走了/.test((await farmDo(groupId, { action: 'catch', area, idx: b.idx }, TB)).data.error || ''));
+        check('（加速模式）家人也看到那一隻不見了', !(await farmGet(groupId, TB)).data.bugs.areas[area].some((x) => x.idx === b.idx));
+        if (r.data.gained?.first) check('（加速模式）聊天室說第一次抓到', (await listIn(groupId, TA)).some((m) => m.type === 'system' && m.content.includes('第一次抓到了')));
+      } else console.log('（今天的天氣沒有蟲，跳過抓蟲）');
     }
     // 鐵匠鋪（第二十三期，本機測試用 FARM_SMITH=now 交給師傅馬上就打好）
     {

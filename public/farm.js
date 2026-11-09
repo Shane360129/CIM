@@ -5,7 +5,7 @@ import {
   sprite, cropSprite, houseSprite, shopSprite, barnSprite, storeSprite, eaterySprite, homeSprite, fountainSprite, SEASON_GROUND,
   greenhouseSprite, machineSprite, machineSpotSprite, ghTileSprite, fruitTreeSprite, treeSpotSprite, hiveSprite, hiveSpotSprite,
   stallSprite, caveMouthSprite, caveTileSprite, caveLadderSprite, chestSprite, beachTileSprite, forageSprite, projectSprite, decoSprite, homeTileSprite,
-  gearSprite, crowSprite, paddySprite, teaBushSprite, teaBudsSprite, smithSprite,
+  gearSprite, crowSprite, paddySprite, teaBushSprite, teaBudsSprite, smithSprite, bugSprite,
 } from '/farm-sprites.js';
 
 const T = 16;            // 一格 16 像素
@@ -52,6 +52,7 @@ const S = {
   notes: [], emoteList: [], emotes: new Map(),
   graze: { day: null, out: false }, grazeTiles: [], horse: null, horseInfo: {}, rideAreas: [],
   smithTools: {}, smithTiers: [],
+  bugs: { areas: {} }, bugKinds: {}, net: false, netInfo: {},
   pondTiles: [], pets: {}, petKinds: {}, petZoneTiles: [], petPos: {}, trails: new Map(),
   stories: {}, storyHearts: [2, 5, 8], achievementList: [], achievements: {}, thisWeek: null, activity: null, game: null,
   trees: [], hives: [], treeKinds: {}, fruits: {}, treeSpots: [], hiveSpots: [], hive: { price: 1500, max: 3, days: 3 },
@@ -140,6 +141,7 @@ function itemInfo(item) {
   if (kind === 'fruit' && S.fruits[id]) return { name: S.fruits[id].name, icon: 'fruit_' + id, sell: S.fruits[id].sell };
   if (kind === 'deco' && S.decoKinds[id]) return { name: S.decoKinds[id].name, icon: 'deco_' + id, sell: 0, deco: id };
   if (kind === 'forage' && S.forageKinds[id]) return { name: S.forageKinds[id].name, icon: 'forage_' + id, sell: S.forageKinds[id].sell };
+  if (kind === 'bug' && S.bugKinds[id]) return { name: S.bugKinds[id].name, icon: 'bug_' + id, sell: S.bugKinds[id].sell };
   if (kind === 'sapling' && S.treeKinds[id]) return { name: `${S.treeKinds[id].name}苗`, icon: `tree_${id}_0`, sell: 0, sapling: id };
   return null;
 }
@@ -244,6 +246,7 @@ function applyState(st) {
   // 手上的種子不是這一季的，就換成這一季有的（優先選倉庫裡有的）；在溫室裡什麼種子都能種，不用換
   S.notes = st.notes || []; S.emoteList = st.emotes || [];
   S.smithTools = st.smithTools || {}; S.smithTiers = st.smithTiers || [];
+  S.bugs = st.bugs || { areas: {} }; S.bugKinds = st.bugKinds || {}; S.net = !!st.net; S.netInfo = st.netInfo || {};
   S.graze = st.graze || { day: null, out: false }; S.horse = st.horse || null; S.horseInfo = st.horseInfo || {}; S.rideAreas = st.rideAreas || [];
   // 放牧的草地：後山南邊（跟伺服器的 grazeTiles 一樣）
   S.grazeTiles = [];
@@ -901,6 +904,13 @@ function openDex() {
             : d.where === 'tea' ? `提示：梯田的茶園（後山往下走）・${d.seasons.map((x) => SEASON[x]).join('')}天`
             : `提示：${d.where === 'hill' ? '後山' : '小鎮'}的草地・${d.seasons.length === 4 ? '一年四季（很少見）' : d.seasons.map((x) => SEASON[x]).join('') + '天'}` })));
     }),
+    el('h2', { class: 'section', text: `🦋 昆蟲 ${Object.keys(S.bugKinds).filter((id) => have.has('bug:' + id)).length}/${Object.keys(S.bugKinds).length}` }),
+    ...Object.entries(S.bugKinds).map(([id, d]) => {
+      const got = have.has('bug:' + id);
+      return el('div', { class: 'row' + (got ? '' : ' off') }, got ? icon('bug_' + id) : el('span', { class: 'big', text: '❔' }),
+        el('div', { class: 'grow' }, el('div', { class: 'name', text: got ? d.name : '？？？' }),
+          el('div', { class: 'meta', text: got ? `賣 ${d.sell} 元・${bugHint(d)}` : `提示：${bugHint(d)}${d.catch && d.catch < 0.7 ? '（很少見）' : ''}` })));
+    }),
     el('h2', { class: 'section', text: `🌳 水果 ${Object.keys(S.fruits).filter((id) => have.has('fruit:' + id)).length}/${Object.keys(S.fruits).length}` }),
     ...Object.entries(S.fruits).map(([id, d]) => {
       const got = have.has('fruit:' + id);
@@ -1221,7 +1231,7 @@ function openStore() {
   };
   openModal(el('h2', { text: '🏪 阿福伯的雜貨店' }),
     el('p', { class: 'sub', text: `錢包 ${S.money.toLocaleString()} 元。工具、建築、加工機都是全家共用的。礦石在後山的採石場挖。` }),
-    ...rows,
+    ...rows, netRow(),
     el('h2', { class: 'section', text: '🏗️ 建築' }), ...Object.keys(S.builds).map(buildRow),
     el('h2', { class: 'section', text: '⚙️ 加工機' }), ...Object.keys(S.machineKinds).map(machineRow),
     el('h2', { class: 'section', text: '🚿 灑水器、稻草人' }), ...Object.keys(S.gearKinds).map(gearRow),
@@ -1353,6 +1363,8 @@ async function doAct(body) {
     if (r.decos) S.decos = r.decos;
     if (r.gear) S.gear = r.gear;
     if (r.notes) S.notes = r.notes;
+    if (r.bugs) S.bugs = r.bugs;
+    if (r.net) S.net = true;
     if (r.graze) S.graze = r.graze;
     if (r.horse !== undefined) { S.horse = r.horse; renderRide(); }
     if (r.crows) S.crows = r.crows;
@@ -1536,6 +1548,35 @@ function openNotes() {
     ...(rows.length ? rows : [el('div', { class: 'empty', text: '還沒有人留言，寫第一張吧' })]),
     el('div', { class: 'actions' }, el('button', { class: 'btn', type: 'button', text: '關閉', onclick: closeModal })));
   setTimeout(() => input.focus(), 50);
+}
+
+// ---------- 捕蟲（第二十四期） ----------
+const BUG_AREA_NAME = { farm: '牧場', town: '小鎮', hill: '後山', beach: '海邊', terrace: '梯田' };
+const bugsHere = () => ((S.bugs && S.bugs.areas) || {})[S.area] || [];
+const bugAt = (x, y) => bugsHere().find((b) => b.x === x && b.y === y) || null;
+// 圖鑑上的提示：在哪裡、什麼季節、白天還是晚上
+const bugHint = (B) => `${B.where.map((a) => BUG_AREA_NAME[a]).join('、')}・${B.seasons.length === 4 ? '一年四季' : B.seasons.map((x) => SEASON[x]).join('') + '天'}`
+  + (B.rain ? '・下雨天' : B.time === 'day' ? '・白天' : B.time === 'night' ? '・晚上' : '');
+async function catchBug(idx) {
+  const b = bugsHere().find((x) => x.idx === idx);
+  if (!b) return toast('蟲飛走了');
+  if (!S.net) return toast(`要先到阿福伯的雜貨店買一支捕蟲網（${S.netInfo.price || 500} 元）`);
+  const B = S.bugKinds[b.kind] || { name: '蟲' };
+  try {
+    const r = await doAct({ action: 'catch', area: S.area, idx });
+    if (r.gained.escaped) toast(`💨 ${B.name}飛走了……下一批 2 小時後出來`);
+    else toast(r.gained.first ? `🎉 第一次抓到${B.name}！圖鑑新增一種` : `🦋 抓到${B.name}了！賣 ${B.sell} 元`);
+  } catch {}
+}
+function netRow() {
+  const price = S.netInfo.price || 500;
+  return el('div', { class: 'row' }, el('span', { class: 'big', text: '🦋' }),
+    el('div', { class: 'grow' }, el('div', { class: 'name', text: '捕蟲網' }),
+      el('div', { class: 'meta', text: '看到蟲就點牠，走過去揮網（1 點體力）。牧場、後山、小鎮、海邊、梯田每 2 小時換一批，白天晚上、季節、天氣不一樣' })),
+    el('button', {
+      class: 'btn primary', type: 'button', text: S.net ? '已經有了' : `買 ${price}`, disabled: S.net || S.money < price,
+      onclick: async () => { try { await doAct({ action: 'buy_net' }); toast('🦋 買了捕蟲網！看到蟲就點牠'); openStore(); } catch {} },
+    }));
 }
 
 // ---------- 阿鐵師傅的鐵匠鋪（第二十三期） ----------
@@ -2392,6 +2433,16 @@ function tapTile(tx, ty, fx = tx + 0.5, fy = ty + 0.5) {
     if (!path.length && !me.step) arrive();
     return;
   }
+  // 蟲：走到旁邊揮網
+  const bug = bugAt(tx, ty);
+  if (bug) {
+    const path = findPath(cx, cy, (x, y) => Math.abs(x - bug.x) + Math.abs(y - bug.y) <= 1);
+    if (!path) return toast('走不過去');
+    me.path = path;
+    me.pending = { bug: bug.idx };
+    if (!path.length && !me.step) arrive();
+    return;
+  }
   // 小鎮的村民：跟動物一樣，走到旁邊再聊天
   const vi = S.area === 'town' && villagerAt(fx - 0.5, fy - 0.5);
   if (vi) {
@@ -2481,6 +2532,7 @@ function arrive() {
   me.pending = null;
   if (!p) return;
   if (p.horse) return openHorse();
+  if (p.bug !== undefined) return catchBug(p.bug);
   if (p.villager) {
     const vp = villagerPos(p.villager, serverNow());
     if (!S.villagersOut) return toast('大家都回家睡覺了');
@@ -2644,6 +2696,8 @@ function connectWs() {
       if (ev.decos) S.decos = ev.decos;
       if (ev.gear) S.gear = ev.gear;
       if (ev.notes) S.notes = ev.notes;
+      if (ev.bugs) S.bugs = ev.bugs;
+      if (ev.net) S.net = true;
       if (ev.graze) S.graze = ev.graze;
       if (ev.horse !== undefined) { S.horse = ev.horse; renderRide(); }
       if (ev.crows) S.crows = ev.crows;
@@ -2881,6 +2935,16 @@ function draw() {
   if (S.area === 'farm') for (const c of S.crows) g.drawImage(crowSprite(blink), c.x * T, c.y * T - 2);
   // 地毯平平的，畫在地上
   for (const d of S.decos) if (d.area === S.area && (S.decoKinds[d.kind] || {}).flat) g.drawImage(decoSprite(d.kind), d.x * T, d.y * T);
+  // 蟲：會飛的飄來飄去、在地上的腳動一動；螢火蟲會發光（光畫在夜色上面）
+  const bt = Date.now(), bugGlow = [];
+  for (const b of bugsHere()) {
+    const B = S.bugKinds[b.kind] || {};
+    const ph = (b.x * 7 + b.y * 13 + b.idx * 5) % 10;
+    const ox = B.fly ? Math.sin(bt / 700 + ph) * 3 : 0, oy = B.fly ? Math.cos(bt / 500 + ph) * 2 - 3 : 0;
+    const fr = Math.floor(bt / (B.fly ? 160 : 450) + ph) % 2;
+    if (B.glow) bugGlow.push({ x: b.x * T + 7 + ox, y: b.y * T + 10 + oy, c: '#e8f67a', r: 6 + 2.5 * Math.sin(bt / 300 + ph) });
+    g.drawImage(bugSprite(b.kind, fr), Math.round(b.x * T + ox), Math.round(b.y * T + oy));
+  }
   // 撿得到的東西（海邊、後山、小鎮）
   for (const f of S.forage[S.area] || []) {
     if (f.tidal && !S.lowTide) continue;
@@ -2995,7 +3059,7 @@ function draw() {
 
   // 攤位之間拉一條電線，掛著紅黃綠的小燈泡（晚上會亮）
   const bulbs = [...(stalls.length ? marketBulbs() : []),
-    ...decosHere.filter((d) => (S.decoKinds[d.kind] || {}).light && (S.area === 'home' || isEvening(now))).map((d) => ({ x: d.x * T + 7, y: d.y * T + 3, c: '#ffd884' }))];
+    ...decosHere.filter((d) => (S.decoKinds[d.kind] || {}).light && (S.area === 'home' || isEvening(now))).map((d) => ({ x: d.x * T + 7, y: d.y * T + 3, c: '#ffd884' })), ...bugGlow];
   if (stalls.length) {
     const mb = marketBulbs();
     g.fillStyle = '#2b2421';
@@ -3140,7 +3204,7 @@ function draw() {
   if (bulbs.length) {
     g.globalCompositeOperation = 'lighter';
     for (const b of bulbs) {
-      const sx = (b.x + 1) * k - camX, sy = (b.y + 1) * k - camY, rr = 6 * k;
+      const sx = (b.x + 1) * k - camX, sy = (b.y + 1) * k - camY, rr = (b.r || 6) * k;
       const grad = g.createRadialGradient(sx, sy, 0, sx, sy, rr);
       grad.addColorStop(0, b.c + '88'); grad.addColorStop(1, b.c + '00');
       g.fillStyle = grad; g.fillRect(sx - rr, sy - rr, rr * 2, rr * 2);

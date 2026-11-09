@@ -476,7 +476,7 @@ export const VILLAGERS = {
   jie: {
     name: '小傑', role: '國小三年級', color: '#f2b33d', hair: 'black', birthday: '08-08',
     zone: { x0: 9, y0: 7, x1: 20, y1: 11 },
-    loves: ['crop:watermelon', 'dish:pudding', 'dish:pancake'], likes: ['crop:strawberry', 'crop:corn', 'crop:tomato', 'fish:goldfish', 'ore:amethyst', 'dish:watermelon_juice', 'dish:strawberry_milk', 'dish:fries', 'good:jam_strawberry', 'good:ketchup', 'dish:mango_ice', 'fruit:mango'], dislikes: ['crop:spinach', 'crop:eggplant', 'dish:eggplant', 'good:kimchi'],
+    loves: ['crop:watermelon', 'dish:pudding', 'dish:pancake', 'bug:rhino_beetle', 'bug:stag_beetle'], likes: ['bug:cicada', 'bug:mantis', 'bug:firefly', 'crop:strawberry', 'crop:corn', 'crop:tomato', 'fish:goldfish', 'ore:amethyst', 'dish:watermelon_juice', 'dish:strawberry_milk', 'dish:fries', 'good:jam_strawberry', 'good:ketchup', 'dish:mango_ice', 'fruit:mango'], dislikes: ['crop:spinach', 'crop:eggplant', 'dish:eggplant', 'good:kimchi'],
     lines: {
       any: ['你好！我今天考試考一百分喔！', '噴水池裡面有硬幣，是誰丟的啊？', '我長大也要當農夫，種好大的西瓜！',
         '你們家的雞會不會咬人？', '老師說要多吃青菜……可是菠菜好難吃。'],
@@ -734,7 +734,7 @@ export const BUILDS = {
 
 // 倉庫裡的東西能賣多少（賣不了的回傳 0）：作物、雞蛋牛奶、魚、礦石、料理、加工品
 // 有星級的作物寫成 crop:番茄@3（1 銅星、2 銀星、3 金星），只有作物有星級
-const ITEM_TABLES = () => ({ crop: CROPS, prod: PRODUCTS, fish: FISH, ore: ORES, dish: DISHES, good: GOODS, fruit: FRUITS, forage: FORAGE });
+const ITEM_TABLES = () => ({ crop: CROPS, prod: PRODUCTS, fish: FISH, ore: ORES, dish: DISHES, good: GOODS, fruit: FRUITS, forage: FORAGE, bug: BUGS });
 const ITEM_RE = /^([a-z]+):([a-z0-9_]+)(?:@([123]))?$/;
 export function itemPrice(item) {
   const m = ITEM_RE.exec(String(item));
@@ -982,6 +982,8 @@ export const ACHIEVEMENTS = [
   { id: 'graze10', name: '青青草原', desc: '放牧 10 天', reward: 800, test: (s) => (s.graze || 0) >= 10 },
   { id: 'smith', name: '打鐵趁熱', desc: '在鐵匠鋪打好第一把工具', reward: 300, test: (s) => (s.smithTiers || 0) >= 1 },
   { id: 'goldtools', name: '金光閃閃', desc: '鋤頭、澆水壺、鐮刀都打成金的', reward: 2000, test: (s) => (s.goldTools || 0) >= 3 },
+  { id: 'bugs10', name: '小小昆蟲學家', desc: '抓到 10 種昆蟲', reward: 500, test: (s) => (s.bugKinds || 0) >= 10 },
+  { id: 'broadtail', name: '國寶蝴蝶', desc: '抓到寬尾鳳蝶', reward: 1000, test: (s) => !!s.broadtail },
   { id: 'stories', name: '說故事的人', desc: '聽完所有村民的故事', reward: 2000, test: (s) => s.stories >= Object.keys(STORIES).length * STORY_HEARTS.length },
 ];
 export const achievementsMet = (stats) => ACHIEVEMENTS.filter((a) => a.test(stats)).map((a) => a.id);
@@ -1619,3 +1621,70 @@ export function smithCheck(tool, tier, have, money, bigLevel) {
 }
 // 工具現在叫什麼：金鋤頭、大澆水壺、鐮刀（還沒打）
 export const toolTitle = (tool, tier, big) => (tier > 0 ? SMITH_TIERS[Math.min(tier, TIER_MAX)].name : big ? '大' : '') + SMITH_TOOLS[tool].name;
+
+// ---------------- 捕蟲、昆蟲圖鑑（第二十四期） ----------------
+// 雜貨店買一支捕蟲網（全家共用）。牧場、後山、小鎮、海邊、梯田每 2 小時換一批蟲，全家看到的一樣；
+// 點蟲走過去揮網（1 點體力），稀有的有機會飛走（飛走了就等下一批）
+export const NET = { price: 500, energy: 1 };
+// where：在哪幾張地圖；time：day（6～18 點）／night（18～6 點）／any；rain：下雨天才出來；catch：揮網抓得到的機會（沒寫就是一定抓得到）
+export const BUGS = {
+  cabbage_white: { name: '紋白蝶', sell: 30, seasons: ['spring', 'autumn'], where: ['farm', 'town'], time: 'day', weight: 30, fly: true },
+  yellow_butterfly: { name: '黃蝶', sell: 40, seasons: ['spring', 'summer'], where: ['farm', 'hill'], time: 'day', weight: 25, fly: true },
+  ladybug: { name: '瓢蟲', sell: 50, seasons: ['spring', 'winter'], where: ['farm', 'terrace'], time: 'day', weight: 20 },
+  swallowtail: { name: '鳳蝶', sell: 120, seasons: ['spring', 'summer'], where: ['hill', 'town'], time: 'day', weight: 12, fly: true, catch: 0.8 },
+  broadtail: { name: '寬尾鳳蝶', sell: 800, seasons: ['summer'], where: ['hill'], time: 'day', weight: 2, fly: true, catch: 0.5 },
+  cicada: { name: '蟬', sell: 60, seasons: ['summer'], where: ['hill', 'town'], time: 'day', weight: 25 },
+  longhorn: { name: '天牛', sell: 110, seasons: ['spring', 'summer'], where: ['hill'], time: 'day', weight: 12 },
+  dragonfly: { name: '蜻蜓', sell: 70, seasons: ['summer', 'autumn'], where: ['farm', 'terrace'], time: 'day', weight: 20, fly: true },
+  red_dragonfly: { name: '紅蜻蜓', sell: 100, seasons: ['autumn'], where: ['terrace', 'farm'], time: 'day', weight: 15, fly: true },
+  mantis: { name: '螳螂', sell: 120, seasons: ['autumn'], where: ['farm', 'hill'], time: 'day', weight: 15, catch: 0.8 },
+  leaf_butterfly: { name: '枯葉蝶', sell: 300, seasons: ['autumn', 'winter'], where: ['hill'], time: 'day', weight: 5, fly: true, catch: 0.6 },
+  purple_crow: { name: '紫斑蝶', sell: 200, seasons: ['winter'], where: ['hill', 'town'], time: 'day', weight: 15, fly: true, catch: 0.8 },
+  firefly: { name: '螢火蟲', sell: 150, seasons: ['spring', 'summer'], where: ['hill', 'terrace'], time: 'night', weight: 25, fly: true, glow: true },
+  rhino_beetle: { name: '獨角仙', sell: 250, seasons: ['summer'], where: ['hill'], time: 'night', weight: 10, catch: 0.8 },
+  stag_beetle: { name: '鍬形蟲', sell: 300, seasons: ['summer'], where: ['hill'], time: 'night', weight: 8, catch: 0.8 },
+  katydid: { name: '紡織娘', sell: 90, seasons: ['summer', 'autumn'], where: ['hill'], time: 'night', weight: 15 },
+  cricket: { name: '蟋蟀', sell: 60, seasons: ['autumn'], where: ['farm', 'town'], time: 'night', weight: 25 },
+  atlas_moth: { name: '皇蛾', sell: 1000, seasons: ['summer'], where: ['hill'], time: 'night', weight: 2, fly: true, catch: 0.5 },
+  hermit_crab: { name: '寄居蟹', sell: 80, seasons: ALL, where: ['beach'], time: 'any', weight: 20 },
+  snail: { name: '蝸牛', sell: 20, seasons: ['spring', 'summer', 'autumn'], where: ['farm', 'town', 'hill'], time: 'any', weight: 20, rain: true },
+};
+export const BUG_SLOT_H = 2; // 每 2 小時換一批
+export const BUG_COUNT = { farm: 3, hill: 5, town: 3, beach: 2, terrace: 3 };
+export const BUG_AREAS = Object.keys(BUG_COUNT);
+export const bugSlotOf = (now) => Math.floor(new Date(now + 8 * 3600000).getUTCHours() / BUG_SLOT_H);
+// 這一批是白天還是晚上的蟲（看這一批開始的時間）
+export const bugTimeOf = (slot) => { const h = slot * BUG_SLOT_H; return h >= 6 && h < 18 ? 'day' : 'night'; };
+// 現在這張地圖會出現哪些蟲：颱風、寒流天都躲起來了；下雨天只有蝸牛
+export function bugKinds(area, season, time, weather) {
+  if (weather === 'typhoon' || weather === 'cold') return [];
+  const wet = weather === 'rain';
+  return Object.entries(BUGS).filter(([, b]) => b.where.includes(area) && b.seasons.includes(season)
+    && (b.time === 'any' || b.time === time) && (wet ? !!b.rain : !b.rain)).map(([id, b]) => ({ id, w: b.weight }));
+}
+// 這一批蟲在哪裡（全家看到的一樣）：草地上（海邊是沙灘），避開撿得到的東西、動物小屋的圍欄、最上面兩排、採石場、夜市
+export function bugsOf(farmId, day, slot, area, season, weather, time = bugTimeOf(slot)) {
+  const kinds = bugKinds(area, season, time, weather);
+  const map = MAPS[area];
+  if (!kinds.length || !map || !BUG_COUNT[area]) return [];
+  const busy = new Set(forageOf(farmId, day, area, season).map((f) => `${f.x},${f.y}`));
+  const ground = area === 'beach' ? 's' : '.';
+  const spots = [];
+  map.forEach((row, y) => [...row].forEach((c, x) => {
+    if (c !== ground || y <= 2 || busy.has(`${x},${y}`)) return;
+    if (area === 'farm' && x >= 21 && y >= 8) return;
+    if (area === 'town' && y >= 15) return;
+    if (area === 'hill' && x >= QUARRY.x0 - 1 && x <= QUARRY.x1 + 1 && y >= QUARRY.y0 && y <= QUARRY.y1 + 1) return;
+    spots.push({ x, y });
+  }));
+  const rnd = seededRandom(`${farmId}|${day}|bugs|${slot}|${area}`);
+  const out = [];
+  for (let i = 0; i < BUG_COUNT[area] && spots.length; i++) {
+    const p = spots.splice(Math.floor(rnd() * spots.length), 1)[0];
+    out.push({ idx: i, x: p.x, y: p.y, kind: pickWeighted(kinds, rnd()) });
+  }
+  return out;
+}
+// 揮網抓不抓得到：同一隻蟲結果一樣（稀有的有機會飛走）
+export const bugCaught = (farmId, day, slot, area, idx, kind) =>
+  seededRandom(`${farmId}|${day}|net|${slot}|${area}|${idx}`)() < ((BUGS[kind] || {}).catch || 1);
