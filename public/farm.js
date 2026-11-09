@@ -6,7 +6,7 @@ import {
   greenhouseSprite, machineSprite, machineSpotSprite, ghTileSprite, fruitTreeSprite, treeSpotSprite, hiveSprite, hiveSpotSprite,
   stallSprite, caveMouthSprite, caveTileSprite, caveLadderSprite, chestSprite, beachTileSprite, forageSprite, projectSprite, decoSprite, homeTileSprite,
   gearSprite, crowSprite, paddySprite, teaBushSprite, teaBudsSprite, smithSprite, bugSprite, mailboxSprite,
-  snowCoverSprite, snowCapSprite, snowmanSprite,
+  snowCoverSprite, snowmanSprite,
 } from '/farm-sprites.js';
 
 const T = 16;            // 一格 16 像素
@@ -380,8 +380,9 @@ function openModal(...kids) {
   return box;
 }
 function icon(name, shirt, tint) {
-  const c = el('canvas', { width: 16, height: 16 });
-  c.getContext('2d').drawImage(sprite(name, shirt, false, tint || ''), 0, 0);
+  const src = sprite(name, shirt, false, tint || ''); // 32×32 的新圖就用 32×32 的畫布，比較清楚
+  const c = el('canvas', { width: src.width, height: src.height });
+  c.getContext('2d').drawImage(src, 0, 0);
   return c;
 }
 
@@ -2879,6 +2880,11 @@ setInterval(() => { if (ws && ws.readyState === 1) ws.send('ping'); }, 25000);
 
 const canvas = $('world');
 const g = canvas.getContext('2d');
+// 32×32 的新圖（img.hd = 2）畫在地圖上一樣佔一格：兩個像素算一個單位；比較高的圖（樹）往上多畫 img.oy 個像素
+const rawDraw = g.drawImage.bind(g);
+g.drawImage = (img, ...a) => (img && img.hd && a.length === 2
+  ? rawDraw(img, a[0], a[1] - (img.oy || 0) / img.hd, img.width / img.hd, img.height / img.hd)
+  : rawDraw(img, ...a));
 let dpr = 1;
 
 function resize() {
@@ -2919,6 +2925,10 @@ function baseSprite(x, y, ch) {
   }
   return sprite('grass' + ((x * 7 + y * 13) % 3), undefined, false, S.season);
 }
+// 小路旁邊的草地（草尖垂到路上）：哪些格子算草地、四個方向、哪些地方有草地
+const GRASSY = ['.', ',', 'T'];
+const FRINGE = [[0, -1, 'top'], [0, 1, 'bottom'], [-1, 0, 'left'], [1, 0, 'right']];
+const OUTDOOR_GRASS = (area) => area !== 'cave' && area !== 'home' && area !== 'beach' && area !== 'gh';
 // 樹：依位置挑一些變成櫻花（春）或紅楓（秋），其他照季節變色
 function treeSprite(x, y) {
   const alt = TREE_ALT[S.season];
@@ -3047,13 +3057,16 @@ function draw() {
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const ch0 = terrain(x, y);
     g.drawImage(baseSprite(x, y, ch0), x * T, y * T);
+    if ((ch0 === '=' || ch0 === 'E') && OUTDOOR_GRASS(S.area)) { // 小路旁邊是草地：草尖垂到路上，不會切得方方正正
+      for (const [dx, dy, side] of FRINGE) if (GRASSY.includes(terrain(x + dx, y + dy))) g.drawImage(sprite('fringe_' + side, undefined, false, snowy ? 'snow' : S.season), x * T, y * T);
+    }
     if (snowy && (ch0 === '.' || ch0 === ',' || ch0 === 'T' || ch0 === 'w')) g.drawImage(snowCoverSprite((x * 7 + y * 3) % 3), x * T, y * T); // 下雪的山上白白一片
   }
   // 作物與物件
   for (let y = y0; y <= y1; y++) {
     for (let x = x0; x <= x1; x++) {
       const ch = terrain(x, y);
-      if (ch === 'T') { g.drawImage(treeSprite(x, y), x * T, y * T); if (snowy) g.drawImage(snowCapSprite(), x * T, y * T); }
+      if (ch === 'T') g.drawImage(snowy ? sprite('tree', undefined, false, 'snow') : treeSprite(x, y), x * T, y * T); // 下雪的山上：樹頂積雪
       else if (ch === 'w') g.drawImage(snowmanSprite(S.snow.day, S.snow.parts, S.snow.nose), x * T, y * T - 8);
       else if (ch === 'e') g.drawImage(teaBushSprite(S.season), x * T, y * T);
       else if (ch === 'n') g.drawImage(sprite('familyboard_' + Math.min(6, S.notes.length)), x * T, y * T);

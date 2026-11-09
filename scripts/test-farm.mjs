@@ -35,6 +35,7 @@ import {
   GEAR, GEAR_MAX, SCARE_R, isSprinkler, gearCovers, sprinkledSet, scaredAt, gearCheck, crowsOf, CROW_MIN, CROW_PCT, ALWAYS_WET,
 } from '../src/farm.js';
 import { forageSprite, projectSprite, decoSprite, homeTileSprite, BUG_IDS } from '../public/farm-sprites.js';
+import { ART_NAMES, shade } from '../public/farm-art.js';
 import { SPRITES, PALETTE, FISH_SHAPE, BOOT_SHAPE, ROCK_SHAPE, FISH_COLORS, ORE_COLORS, DISH_SHAPES, DISH_COLORS, GOOD_ART, FRUIT_COLORS, honeySprite, fruitTreeSprite } from '../public/farm-sprites.js';
 
 let pass = 0, fail = 0;
@@ -918,6 +919,13 @@ check('冬天晴朗的晚上常常有流星', (() => { let n = 0; for (const m o
 check('四個願望', Object.keys(WISHES), ['health', 'wealth', 'harvest', 'friends']);
 check('成就：巨無霸、堆雪人、對流星許願', [achievementsMet({ ...zero, giants: 1 }), achievementsMet({ ...zero, snowmen: 1 }), achievementsMet({ ...zero, wishes: 1 })],
   [['giant'], ['snowman'], ['wish']]);
+
+// 美術第一期：32×32 的新圖
+check('除了稻子（梯田另外畫），每種作物都有 32×32 的新圖', Object.keys(CROPS).filter((c) => c !== 'rice' && !ART_NAMES.crops.includes(c)), []);
+check('雞、鴨、牛、羊、狗、貓都有 32×32 的新圖', ['chicken', 'duck', 'cow', 'sheep', 'dog', 'cat'].filter((a) => !ART_NAMES.animals.includes(a)), []);
+const lum = (c) => [1, 3, 5].reduce((n, i) => n + parseInt(c.slice(i, i + 2), 16), 0);
+check('明暗：亮一階比較亮、暗一階比較暗、0 不變', [lum(shade('#62ad4b', 0.1)) > lum('#62ad4b'), lum(shade('#62ad4b', -0.1)) < lum('#62ad4b'), shade('#62ad4b', 0)],
+  [true, true, '#62ad4b']);
 
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

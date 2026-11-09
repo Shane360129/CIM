@@ -211,6 +211,7 @@ public/style.css      LINE 風格樣式（全尺寸響應式：小手機／手�
 src/farm.js           家族牧場的規則（地圖、作物、體力、成長計算）
 public/farm.html + farm.js + farm.css   家族牧場視窗（像素畫面、走路、工具、商店）
 public/farm-sprites.js  牧場的像素圖（全部用程式畫，沒有外部圖檔）
+public/farm-art.js      32×32 的精細像素圖（地面、作物、人物、動物、樹；一樣用程式畫，自動補明暗和外框）
 public/manifest.webmanifest + sw.js + icons/   PWA（加到主畫面）
 scripts/gen-icons.mjs 產生 PNG 圖示的小工具（零相依）
 scripts/test-api.mjs  API 煙霧測試（成員可見性、權限、聊天功能、管理員、速度與備份上限）

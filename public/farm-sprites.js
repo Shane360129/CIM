@@ -3,6 +3,8 @@
 // 'S' 是衣服顏色，畫角色時換成每位家人的頭像顏色。
 // 改圖直接改下面的字串即可：每行 16 個字元、每張 16 行。
 
+import { artSprite } from './farm-art.js';
+
 export const PALETTE = {
  "o": "#2b2421",
  "h": "#5a3a22",
@@ -1354,6 +1356,8 @@ export function sprite(name, shirt = '#d9544d', flip = false, season = '') {
   if (name.startsWith('deco_')) return decoSprite(name.slice(5));
   if (name.startsWith('tree_')) { const [, kind, stage, ripe] = name.split('_'); return fruitTreeSprite(kind, Number(stage), ripe === 'r'); }
   if (name === 'honey' || name === 'honey_l') return honeySprite(name);
+  const art = artSprite(name, shirt, flip, season); // 已經換成 32×32 的圖（地面、田、作物、人物、動物、樹）
+  if (art) return art;
   const key = name + '|' + shirt + '|' + (flip ? 1 : 0) + '|' + season;
   if (cache.has(key)) return cache.get(key);
   const rows = SPRITES[name];
@@ -2120,16 +2124,18 @@ const STAR_COLORS = { 1: '#d08a3a', 2: '#dfe5ec', 3: '#f6c83a' };
 export function qualitySprite(base, q) {
   const key = `q_${base}_${q}`;
   if (cache.has(key)) return cache.get(key);
+  const src = sprite(base), u = src.hd || 1; // 32×32 的圖：星星也放大兩倍
   const c = document.createElement('canvas');
-  c.width = 16; c.height = 16;
+  c.width = src.width; c.height = src.height;
+  if (src.hd) { c.hd = src.hd; c.oy = src.oy || 0; }
   const g = c.getContext('2d');
-  g.drawImage(sprite(base), 0, 0);
+  g.drawImage(src, 0, 0);
   // 先在星星的四周描一圈深色的邊，放在白色的菜上面也看得清楚
   g.fillStyle = '#2a1c10';
   STAR.forEach((row, y) => [...row].forEach((ch, x) => {
-    if (ch === '#') for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) g.fillRect(x + 1 + dx, y + 8 + dy, 1, 1);
+    if (ch === '#') for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) g.fillRect((x + 1 + dx) * u, (y + 8 + dy) * u, u, u);
   }));
-  STAR.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === '#') { g.fillStyle = STAR_COLORS[q] || STAR_COLORS[3]; g.fillRect(x + 1, y + 8, 1, 1); } }));
+  STAR.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === '#') { g.fillStyle = STAR_COLORS[q] || STAR_COLORS[3]; g.fillRect((x + 1) * u, (y + 8) * u, u, u); } }));
   cache.set(key, c);
   return c;
 }
