@@ -1,9 +1,48 @@
 {
   "tile": 64,
-  "viewTilesWide": { "phone": 9, "desktop": 16 },
+  "viewTilesWide": {
+    "phone": 9,
+    "desktop": 16
+  },
   "viewTilesMin": 7,
   "walkSpeed": 4.2,
   "playerRadius": 0.3,
   "hotbarSlots": 10,
-  "dayMinutesReal": 15
+  "dayMinutesReal": 15,
+  "dayStartMinute": 360,
+  "dayEndMinute": 1560,
+  "reach": 2.6,
+  "moveSendMs": 120,
+  "moveKeepaliveMs": 900,
+  "bubbleMaxChars": 40,
+  "bubbleSeconds": 4,
+  "emotes": [
+    "😊",
+    "❤️",
+    "👍",
+    "😴",
+    "❗",
+    "🎵"
+  ],
+  "hotbar": [
+    {
+      "kind": "till",
+      "name": "鋤頭"
+    },
+    {
+      "kind": "water",
+      "name": "澆水"
+    },
+    {
+      "kind": "clear",
+      "name": "鏟平"
+    }
+  ],
+  "seasons": [
+    "春",
+    "夏",
+    "秋",
+    "冬"
+  ],
+  "seasonDays": 28
 }

@@ -16,9 +16,16 @@
 
   // 聊天伺服器：單一 Durable Object 實例（SQLite 儲存 + WebSocket）
   "durable_objects": {
-    "bindings": [{ "name": "CHAT", "class_name": "ChatServer" }]
+    "bindings": [
+      { "name": "CHAT", "class_name": "ChatServer" },
+      // 晴耕谷：每個一對一對話一座農場，各自一個實例，資料跟聊天室完全分開
+      { "name": "FARM", "class_name": "FarmRoom" }
+    ]
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ChatServer"] }],
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["ChatServer"] },
+    { "tag": "v2", "new_sqlite_classes": ["FarmRoom"] } // 只新增類別，不動 ChatServer 的資料
+  ],
 
   "observability": { "enabled": true }
 }

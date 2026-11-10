@@ -8,6 +8,24 @@ function label(g, text, x, y, size) {
   g.lineWidth = size * 0.28; g.strokeStyle = 'rgba(255,255,255,.85)'; g.strokeText(text, x, y);
   g.fillStyle = OUTLINE; g.fillText(text, x, y);
 }
+// 頭上的泡泡（聊天的一句話或表情）
+export function drawBubble(g, text, x, y, T, big = false) {
+  const size = T * (big ? 0.5 : 0.22);
+  g.font = `700 ${size}px "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif`;
+  const w = Math.max(T * 0.6, g.measureText(text).width + size * 1.1), h = size * 1.9;
+  g.fillStyle = '#fff'; g.strokeStyle = OUTLINE; g.lineWidth = Math.max(2, T * 0.04); g.lineJoin = 'round';
+  g.beginPath(); g.roundRect(x - w / 2, y - h, w, h, h * 0.45); g.fill(); g.stroke();
+  g.beginPath(); g.moveTo(x - size * 0.3, y - 1); g.lineTo(x, y + size * 0.45); g.lineTo(x + size * 0.3, y - 1); g.fill(); g.stroke();
+  g.fillStyle = '#fff'; g.fillRect(x - size * 0.3 + 1, y - 4, size * 0.6 - 2, 4);
+  g.fillStyle = OUTLINE; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, x, y - h / 2 + size * 0.05);
+}
+// 翻過的田：深一點的土加幾道犁溝；澆過水顏色更深
+export function drawTilled(g, x, y, T, wet) {
+  g.fillStyle = wet ? '#6b4526' : '#8a5a34'; g.beginPath(); g.roundRect(x * T + 3, y * T + 3, T - 6, T - 6, T * 0.14); g.fill();
+  g.strokeStyle = wet ? '#523218' : '#734828'; g.lineWidth = T * 0.05; g.lineCap = 'round';
+  for (let i = 1; i <= 3; i++) { g.beginPath(); g.moveTo(x * T + T * 0.18, y * T + T * i / 4); g.lineTo(x * T + T * 0.82, y * T + T * i / 4); g.stroke(); }
+  if (wet) { g.fillStyle = 'rgba(160, 215, 255, .5)'; g.beginPath(); g.ellipse(x * T + T * 0.68, y * T + T * 0.3, T * 0.09, T * 0.05, 0, 0, 7); g.fill(); }
+}
 export function drawShadow(g, x, y, w) {
   g.fillStyle = 'rgba(40, 60, 30, .22)';
   g.beginPath(); g.ellipse(x, y, w * 0.5, w * 0.17, 0, 0, 7); g.fill();
@@ -47,5 +65,6 @@ export function drawPlayer(g, p, T, color = '#f0a04a') {
     const ex = p.dir === 'left' ? -0.3 : p.dir === 'right' ? 0.3 : 0, ey = y - r * 2.3 - bob;
     for (const s of p.dir === 'down' ? [-0.34, 0.34] : [0.12]) { g.beginPath(); g.ellipse(x + (ex + s * (p.dir === 'left' ? -1 : 1)) * r, ey, r * 0.1, r * 0.15, 0, 0, 7); g.fill(); }
   }
+  if (p.asleep) label(g, 'Zzz', x + r * 1.3, y - r * 3.3 - bob, T * 0.24);
   if (p.name) label(g, p.name, x, y - r * 3.75 - bob, T * 0.2);
 }

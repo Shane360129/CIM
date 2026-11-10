@@ -8,10 +8,12 @@ export function createInput(canvas, ui) {
 
   window.addEventListener('keydown', (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return; // 正在打字（聊天泡泡）：按鍵不算遊戲操作
     if (KEY_DIR[e.code]) { keys.add(e.code); e.preventDefault(); return; }
     if (e.repeat) return;
     if (e.code === 'Space' || e.code === 'Enter') { emit('action'); e.preventDefault(); }
     else if (e.code === 'KeyE') emit('bag');
+    else if (e.code === 'KeyT') { emit('say'); e.preventDefault(); }
     else if (e.code === 'Escape') emit('esc');
     else if (/^Digit[0-9]$/.test(e.code)) emit('slot', (Number(e.code.slice(5)) + 9) % 10); // 1～9 是第 1～9 格，0 是第 10 格
   });

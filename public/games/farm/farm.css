@@ -30,3 +30,22 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #1d2a1f; col
 
 .toast { position: absolute; left: 50%; top: 18%; transform: translateX(-50%); padding: 8px 16px; border-radius: 999px;
   background: rgba(50, 38, 26, .86); color: #fff; font-size: 14px; pointer-events: none; }
+
+/* 階段 2：時鐘、連線狀態、聊天泡泡與表情、摘要面板 */
+.clock { position: absolute; left: calc(10px + env(safe-area-inset-left)); top: calc(10px + env(safe-area-inset-top)); padding: 6px 12px; border-radius: 12px;
+  background: #f3e6c8; border: 2px solid #5a3d22; font-size: 14px; font-weight: 700; line-height: 1.35; }
+.clock small { display: block; font-weight: 400; font-size: 12px; color: #8a6a44; }
+.clock .net { color: #c0392b; }
+@media (pointer: coarse) { .hotbar { top: calc(64px + env(safe-area-inset-top)); } }
+.side { position: absolute; right: calc(10px + env(safe-area-inset-right)); top: calc(56px + env(safe-area-inset-top)); display: flex; flex-direction: column; gap: 6px; }
+.side button, .emotes button { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #5a3d22; background: #f3e6c8; font-size: 18px; cursor: pointer; }
+.emotes { position: absolute; right: calc(58px + env(safe-area-inset-right)); top: calc(56px + env(safe-area-inset-top)); display: flex; gap: 4px; padding: 5px; border-radius: 24px; background: rgba(120, 84, 50, .9); }
+.say { position: absolute; left: 50%; bottom: calc(70px + env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; gap: 6px; width: min(420px, calc(100% - 24px)); }
+.say input { flex: 1; min-width: 0; font: inherit; font-size: 16px; padding: 9px 12px; border-radius: 12px; border: 2px solid #5a3d22; background: #fffaf0; -webkit-user-select: text; user-select: text; }
+.say button, .card button { font: inherit; font-weight: 700; padding: 8px 16px; border-radius: 12px; border: 2px solid #5a3d22; background: #e8872e; color: #fff; cursor: pointer; }
+.card { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(360px, calc(100% - 32px)); padding: 16px 18px; border-radius: 16px;
+  background: #f3e6c8; border: 3px solid #5a3d22; box-shadow: 0 8px 0 rgba(60, 40, 20, .25); }
+.card h2 { margin: 0 0 8px; font-size: 18px; }
+.card p { margin: 4px 0; font-size: 15px; line-height: 1.6; }
+.card .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+.card button.ghost { background: #f3e6c8; color: #5a3d22; }
