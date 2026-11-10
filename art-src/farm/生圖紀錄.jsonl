@@ -1,0 +1,7 @@
+{"id":"0-01","name":"畫風基準圖（A）","batch":0,"status":"ok","media_id":"MAHahcQnoJc","link":"https://www.canva.com/M/MAHahcQnoJc","attempts":1,"note":"使用者選定的畫風基準"}
+{"id":"2-01","name":"作物：紅蘿蔔、白蘿蔔","batch":2,"status":"ok","media_id":"MAHahT3gojU","link":"https://www.canva.com/M/MAHahT3gojU?utm_source=OC-AaBlKuT9h240&utm_campaign=agent_connector_create_image_asset_opened","attempts":1,"note":"符合"}
+{"id": "1-01", "name": "紙娃娃素體", "batch": 1, "status": "ok", "media_id": "MAHaha6HG3o", "link": "https://www.canva.com/M/MAHaha6HG3o?utm_source=OC-AaBlKuT9h240&utm_campaign=agent_connector_create_image_asset_opened", "attempts": 1, "note": "光頭無五官、零件分開；但正面/背面/側面是排成 3 欄（由上到下：頭、軀幹、手臂、腳）而不是 3 列"}
+{"id": "1-02", "name": "手臂與袖子", "batch": 1, "status": "quota", "media_id": "", "link": "", "attempts": 1, "note": "Canva 回報 quota_exceeded：You have exceeded your credit quota.，停止本批"}
+{"id":"2-02","name":"作物：高麗菜、馬鈴薯","batch":2,"status":"ok","media_id":"MAHahUz8TME","link":"https://www.canva.com/M/MAHahUz8TME?utm_source=OC-AaBlKuT9h240&utm_campaign=agent_connector_create_image_asset_opened","attempts":1,"note":"符合"}
+{"id":"2-03","name":"作物：草莓、菠菜","batch":2,"status":"ok","media_id":"MAHahbpYk4M","link":"https://www.canva.com/M/MAHahbpYk4M?utm_source=OC-AaBlKuT9h240&utm_campaign=agent_connector_create_image_asset_opened","attempts":1,"note":"符合"}
+{"id":"2-04","name":"作物：萵苣、豌豆","batch":2,"status":"quota","attempts":1,"note":"Canva 回報 quota_exceeded（You have exceeded your credit quota.），額度用完，停止本批"}
