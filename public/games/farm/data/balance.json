@@ -1,0 +1,9 @@
+{
+  "tile": 64,
+  "viewTilesWide": { "phone": 9, "desktop": 16 },
+  "viewTilesMin": 7,
+  "walkSpeed": 4.2,
+  "playerRadius": 0.3,
+  "hotbarSlots": 10,
+  "dayMinutesReal": 15
+}

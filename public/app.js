@@ -913,6 +913,7 @@ function changePasswordModal() {
 function openConv(convId) {
   const conv = convById(convId);
   if (!conv) return;
+  if (farmPanel && farmPanel.convId !== convId) closeFarmPanel(); // 換到別的聊天室：農場面板跟著關
   state.currentConv = convId;
   document.body.classList.add('chat-open');
   $('chat-empty').classList.add('hidden');
@@ -938,6 +939,7 @@ function openConv(convId) {
 }
 
 function closeChat() {
+  closeFarmPanel();
   state.currentConv = null;
   state.unreadMarker = null;
   applyWallpaper(null);
@@ -1591,7 +1593,10 @@ function chatFeatureItems(conv, close) {
   return [
     el('div', { class: 'list-section', text: '聊天室功能' }),
     item('🍽️', '今天吃什麼', '隨機抽一個類別，省得想破頭', () => foodPickModal(conv)),
-    item('🌾', '家族牧場', '全家一起種田、收成、出貨，跟著現實時間長大', () => openFarm(conv)),
+    // 一對一聊天是兩個人的「晴耕谷」（開在聊天區上面的面板）；群組和記事本是家族牧場（開在另一個視窗）
+    conv.type === 'dm' && !isMemo(conv)
+      ? item('🌱', '我們的農場', '兩個人一起經營的農場', () => openFarmPanel(conv))
+      : item('🌾', '家族牧場', '全家一起種田、收成、出貨，跟著現實時間長大', () => openFarm(conv)),
     item('🎮', '小遊戲', '圈圈叉叉、五子棋、2048、數獨…開在另一個頁面，大家一起玩', () => openGames(conv)),
     item('✅', '待辦清單', '要做的、要買的，成員都看得到', () => openToolsModal('shopping')),
     item('📅', '行事曆', '生日、聚餐、提醒，到時通知大家', () => openToolsModal('calendar')),
@@ -1604,6 +1609,53 @@ function openFarm(conv) {
   const wide = matchMedia('(min-width: 900px) and (pointer: fine)').matches;
   const w = window.open(url, `farm-${conv.id}`, wide ? 'width=1000,height=760' : '');
   if (!w) location.href = url; // 被擋下彈出視窗的話，就在原本的分頁打開
+}
+
+// ---------- 晴耕谷（一對一聊天的雙人農場）----------
+// 遊戲本體在 /games/farm/，用同源 iframe 開在聊天區上面：電腦蓋住聊天區（可切全螢幕），手機全螢幕。
+// 聊天室照常在背後收訊息；這個對話有新訊息時，面板上的紅點亮起來。
+let farmPanel = null; // { convId, node, close }
+function openFarmPanel(conv) {
+  if (farmPanel) closeFarmPanel();
+  const frame = el('iframe', { class: 'farm-frame', src: `/games/farm/?conv=${conv.id}${location.search.includes('test') ? '&test' : ''}`, title: '我們的農場', allow: 'fullscreen' });
+  const dot = el('span', { class: 'farm-dot hidden', title: '聊天室有新訊息' });
+  const btnFull = el('button', { class: 'farm-btn', type: 'button', text: '⛶', title: '全螢幕', 'aria-label': '全螢幕' });
+  const btnClose = el('button', { class: 'farm-btn', type: 'button', text: '✕', title: '關閉，回到聊天', 'aria-label': '關閉農場' });
+  const node = el('div', { class: 'farm-panel' }, frame, el('div', { class: 'farm-bar' }, dot, btnFull, btnClose));
+  let closed = false;
+  const close = (fromPop = false) => {
+    if (closed) return;
+    closed = true; farmPanel = null;
+    node.remove();
+    document.body.classList.remove('farm-open');
+    document.removeEventListener('keydown', onKey);
+    window.removeEventListener('popstate', onPop);
+    window.removeEventListener('message', onMsg);
+    if (!fromPop && history.state && history.state.farmPanel) history.back(); // 把開面板時多放的那一筆紀錄拿掉
+  };
+  const onKey = (e) => { if (e.key === 'Escape' && !openModals) close(); };
+  const onPop = () => close(true);                 // 手機按返回鍵：關掉遊戲，不是離開聊天
+  const onMsg = (e) => {                           // 遊戲裡按 Esc、按關閉：由遊戲通知外面
+    if (e.origin !== location.origin || e.source !== frame.contentWindow) return;
+    if (e.data && e.data.type === 'farm-close') close();
+  };
+  btnClose.addEventListener('click', () => close());
+  btnFull.addEventListener('click', () => node.classList.toggle('full'));
+  document.addEventListener('keydown', onKey);
+  window.addEventListener('popstate', onPop);
+  window.addEventListener('message', onMsg);
+  history.pushState({ farmPanel: true }, '');
+  document.body.classList.add('farm-open');
+  $('chat').append(node);
+  farmPanel = { convId: conv.id, node, dot, close };
+  frame.addEventListener('load', () => { try { frame.contentWindow.focus(); } catch {} });
+}
+function closeFarmPanel() { if (farmPanel) farmPanel.close(); }
+// 面板開著的時候，這個對話收到別人的訊息：亮紅點（點一下紅點就關掉遊戲回去看）
+function farmPanelNotify(m) {
+  if (!farmPanel || !m || m.conversationId !== farmPanel.convId || m.type === 'system' || (state.me && m.senderId === state.me.id)) return;
+  farmPanel.dot.classList.remove('hidden');
+  farmPanel.dot.onclick = () => closeFarmPanel();
 }
 
 // 小遊戲也開在另一個頁面：一個聊天室可以同時開好幾桌，不會洗版
@@ -1918,7 +1970,7 @@ async function resync() {
 
 function handleWsEvent(ev) {
   switch (ev.type) {
-    case 'message': handleIncomingMessage(ev.message, false); break;
+    case 'message': handleIncomingMessage(ev.message, false); farmPanelNotify(ev.message); break;
     case 'read': handleRead(ev); break;
     case 'typing': handleTyping(ev); break;
     case 'unsend': handleUnsend(ev); break;
@@ -3079,6 +3131,7 @@ async function openConvAt(convId, mid) {
   const conv = convById(convId);
   if (!conv) { toast('找不到這個聊天室'); return; }
   toggleSearch(false);
+  closeFarmPanel();
   state.currentConv = convId;
   document.body.classList.add('chat-open');
   $('chat-empty').classList.add('hidden');

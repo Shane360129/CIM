@@ -1,0 +1,32 @@
+/* 晴耕谷：遊戲頁面的樣式（跟聊天室的樣式完全分開） */
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #1d2a1f; color: #3b2f22;
+  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: none; overscroll-behavior: none; }
+#stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+#ui { position: fixed; inset: 0; pointer-events: none; }
+#ui > * { pointer-events: auto; }
+.hidden { display: none !important; }
+
+/* 手機的虛擬搖桿和動作鈕（碰到螢幕才出現） */
+.stick { position: absolute; left: calc(22px + env(safe-area-inset-left)); bottom: calc(26px + env(safe-area-inset-bottom));
+  width: 124px; height: 124px; border-radius: 50%; background: rgba(255, 255, 255, .22); border: 2px solid rgba(255, 255, 255, .55); }
+.stick-knob { position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%;
+  background: rgba(255, 255, 255, .8); border: 2px solid rgba(90, 70, 50, .5); will-change: transform; }
+.act-btn { position: absolute; right: calc(26px + env(safe-area-inset-right)); bottom: calc(40px + env(safe-area-inset-bottom));
+  width: 84px; height: 84px; border-radius: 50%; border: 3px solid #fff; background: rgba(240, 150, 60, .88); color: #fff;
+  font: inherit; font-size: 18px; font-weight: 700; }
+.act-btn:active, .act-btn.down { background: rgba(200, 110, 30, .95); transform: scale(.95); }
+
+/* 快捷列（階段 1 只是空格子，數字鍵可以切換） */
+.hotbar { position: absolute; left: 50%; bottom: calc(10px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+  display: flex; gap: 4px; padding: 5px; border-radius: 12px; background: rgba(120, 84, 50, .9); border: 2px solid #5a3d22;
+  max-width: calc(100% - 16px); overflow-x: auto; scrollbar-width: none; }
+.hotbar::-webkit-scrollbar { display: none; }
+.slot { flex: none; width: 42px; height: 42px; border-radius: 8px; background: #f3e6c8; border: 2px solid #c9a877; position: relative;
+  font-size: 11px; color: #9a7a4c; padding: 1px 4px; }
+.slot.on { border-color: #e8872e; box-shadow: 0 0 0 2px rgba(255, 220, 120, .9); }
+@media (pointer: coarse) { .hotbar { bottom: auto; top: calc(10px + env(safe-area-inset-top)); left: calc(8px + env(safe-area-inset-left)); transform: none; max-width: calc(100% - 110px); } }
+
+.toast { position: absolute; left: 50%; top: 18%; transform: translateX(-50%); padding: 8px 16px; border-radius: 999px;
+  background: rgba(50, 38, 26, .86); color: #fff; font-size: 14px; pointer-events: none; }

@@ -21,6 +21,8 @@ export default {
       const resp = await env.ASSETS.fetch(request);
       const headers = new Headers(resp.headers);
       for (const [k, v] of Object.entries(SECURITY_HEADERS)) headers.set(k, v);
+      // 晴耕谷（/games/farm/）是用同源 iframe 開在聊天室裡的：只有這個路徑允許被自己的網域嵌入，其他頁面照舊完全禁止
+      if (url.pathname.startsWith('/games/farm/')) headers.set('X-Frame-Options', 'SAMEORIGIN');
       return new Response(resp.body, { status: resp.status, statusText: resp.statusText, headers });
     }
     return new Response('Not found', { status: 404 });

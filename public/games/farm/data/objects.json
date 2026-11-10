@@ -1,0 +1,7 @@
+{
+  "tree":  { "name": "樹",   "shape": "tree",  "solid": true,  "w": 1.7, "h": 2.4, "color": "#4f9a4a", "trunk": "#8a5a36" },
+  "rock":  { "name": "石頭", "shape": "blob",  "solid": true,  "w": 0.9, "h": 0.7, "color": "#a9a59c" },
+  "bush":  { "name": "草叢", "shape": "blob",  "solid": false, "w": 0.9, "h": 0.6, "color": "#6fb357" },
+  "house": { "name": "農舍", "shape": "block", "solid": true,  "w": 4,   "h": 3.4, "color": "#d9b98a", "roof": "#c8553d", "tiles": [4, 2] },
+  "bin":   { "name": "出貨箱", "shape": "block", "solid": true, "w": 1,  "h": 1,   "color": "#b98a5a" }
+}
