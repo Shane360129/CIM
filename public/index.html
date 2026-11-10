@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
   <title>CHAT</title>
   <meta name="description" content="CHAT — 親友專屬聊天室">
-  <meta name="theme-color" content="#F4F7FA">
+  <meta name="theme-color" content="#F6F1E3">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
@@ -53,9 +53,6 @@
       <button class="nav-btn" data-tab="friends" aria-label="好友">
         <span class="ic" data-icon="users"></span><span class="nav-label">好友</span>
       </button>
-      <button class="nav-btn" data-tab="tools" aria-label="小工具">
-        <span class="ic" data-icon="tools"></span><span class="nav-label">小工具</span>
-      </button>
       <button class="nav-btn" data-tab="settings" aria-label="設定">
         <span class="ic" data-icon="gear"></span><span class="nav-label">設定</span>
       </button>
@@ -81,33 +78,22 @@
           <button id="btn-notif-on" class="btn btn-small btn-primary">開啟</button>
           <button id="btn-notif-dismiss" class="icon-btn" data-icon="x" aria-label="關閉"></button>
         </div>
+        <div id="install-banner" class="notif-banner hidden">
+          <span>把 CHAT 加到主畫面，之後像 App 一樣一鍵開啟</span>
+          <button id="btn-install" class="btn btn-small btn-primary">加入</button>
+          <button id="btn-install-dismiss" class="icon-btn" data-icon="x" aria-label="關閉"></button>
+        </div>
         <div id="chat-list" class="list"></div>
       </div>
 
       <div id="tab-friends" class="tab hidden">
-        <header class="panel-header"><h1>好友</h1></header>
-        <div id="friend-list" class="list"></div>
-      </div>
-
-      <div id="tab-tools" class="tab hidden">
-        <header class="panel-header"><h1>小工具</h1></header>
-        <div class="tool-tabs">
-          <button id="tool-tab-shopping" class="active">購物清單</button>
-          <button id="tool-tab-calendar">行事曆</button>
-        </div>
-        <div id="tool-shopping" class="tool-body">
-          <form id="shopping-form" class="tool-add">
-            <input id="shopping-input" placeholder="要買什麼？全家人都看得到" maxlength="60" autocomplete="off">
-            <button type="submit" class="btn btn-small btn-primary">加入</button>
-          </form>
-          <div id="shopping-list" class="list"></div>
-        </div>
-        <div id="tool-calendar" class="tool-body hidden">
-          <div class="tool-add">
-            <button id="btn-add-event" class="btn btn-primary btn-block">＋ 新增事項（生日、聚餐、提醒…）</button>
+        <header class="panel-header">
+          <h1>好友</h1>
+          <div class="header-actions">
+            <button id="btn-add-friend" class="icon-btn hidden" data-icon="plus" aria-label="加好友" title="加好友"></button>
           </div>
-          <div id="event-list" class="list"></div>
-        </div>
+        </header>
+        <div id="friend-list" class="list"></div>
       </div>
 
       <div id="tab-settings" class="tab hidden">
@@ -174,6 +160,29 @@
         </footer>
       </div>
     </main>
+  </div>
+
+  <!-- 待辦清單與行事曆：平常收在這裡，從聊天室選單開啟時整塊搬進彈窗 -->
+  <div id="tools-holder" hidden>
+    <div id="tools-panel" class="tools-panel">
+      <div class="tool-tabs">
+        <button id="tool-tab-shopping" class="active">待辦清單</button>
+        <button id="tool-tab-calendar">行事曆</button>
+      </div>
+      <div id="tool-shopping" class="tool-body">
+        <form id="shopping-form" class="tool-add">
+          <input id="shopping-input" placeholder="要做什麼、要買什麼？" maxlength="60" autocomplete="off">
+          <button type="submit" class="btn btn-small btn-primary">加入</button>
+        </form>
+        <div id="shopping-list" class="list"></div>
+      </div>
+      <div id="tool-calendar" class="tool-body hidden">
+        <div class="tool-add">
+          <button id="btn-add-event" class="btn btn-primary btn-block">＋ 新增事項（生日、聚餐、提醒…）</button>
+        </div>
+        <div id="event-list" class="list"></div>
+      </div>
+    </div>
   </div>
 
   <div id="modal-root"></div>

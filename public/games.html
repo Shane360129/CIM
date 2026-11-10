@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
+  <meta name="theme-color" content="#FBFAF6">
+  <title>小遊戲</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/games.css">
+</head>
+<body>
+  <header class="top">
+    <button id="btn-back" class="top-btn hidden" type="button">← 所有遊戲</button>
+    <h1 id="title">🎮 小遊戲</h1>
+    <button id="btn-close" class="top-btn" type="button" aria-label="回聊天室">✕</button>
+  </header>
+  <main id="main"><div class="boot">🎮 載入中…</div></main>
+  <div id="toast-root"></div>
+  <script type="module" src="/games.js"></script>
+</body>
+</html>
