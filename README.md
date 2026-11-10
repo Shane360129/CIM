@@ -213,8 +213,6 @@ public/style.css      LINE 風格樣式（全尺寸響應式：小手機／手�
 src/farm.js           家族牧場的規則（地圖、作物、體力、成長計算）
 src/games.js          小遊戲的規則（11 款：盤面、輪到誰、輸贏、藏起來的牌面和答案）
 public/farm.html + farm.js + farm.css   家族牧場視窗（像素畫面、走路、工具、商店）
-public/farm-pack.js + farm-pack/       家族牧場的外掛圖包（繪圖程式畫的圖蓋過程式畫的，見 docs/05-牧場圖包.md）
-art-src/farm-pack/ + scripts/farm-pack.mjs   圖包的原圖與切圖工具（npm run farm:pack）
 public/farm-sprites.js  牧場的像素圖（全部用程式畫，沒有外部圖檔）
 public/farm-art.js      32×32 的精細像素圖（地面、作物、人物、動物、樹；一樣用程式畫，自動補明暗和外框）
 public/farm-art-town.js 兩倍解析度的建築與小鎮（房子、動物小屋、商店、溫室、小鎮的店、柵欄、石板路、池塘）

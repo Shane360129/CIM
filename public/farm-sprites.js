@@ -4,7 +4,6 @@
 // 改圖直接改下面的字串即可：每行 16 個字元、每張 16 行。
 
 import { artSprite } from './farm-art.js';
-import { packSprite } from './farm-pack.js';
 import { townSprite, houseArt, barnArt, shopArt, greenhouseArt, storeArt, eateryArt, homeArt, smithArt, fountainArt, projectArt, caveMouthArt, stallArt,
   mailboxArt, familyBoardArt } from './farm-art-town.js';
 
@@ -1340,8 +1339,6 @@ const cache = new Map();
 
 // 把一張字串圖畫成 16×16 的小畫布（同一張圖、同一件衣服顏色、同一季只畫一次）
 export function sprite(name, shirt = '#d9544d', flip = false, season = '') {
-  const packed = packSprite(name, flip, season); // 外掛圖包裡有這張圖就用圖包的（farm-pack.js）
-  if (packed) return packed;
   if (/@q[123]$/.test(name)) return qualitySprite(name.slice(0, -3), Number(name.slice(-1)));
   if (name.startsWith('fert_')) return fertSprite(name.slice(5));
   if (name.startsWith('fertdots_')) return fertDotsSprite(name.slice(9));
@@ -1456,10 +1453,10 @@ export const hasCropArt = (crop) => crop === 'rice' || !!SPRITES[`${crop}_3`];
 
 // 房子（4×3 格 = 64×48）：紅屋頂、米色牆、木門、兩扇窗、煙囪。
 // 擴建過的房子：大臥室（窗台多了花箱、門口有燈），二樓（屋頂上多一扇老虎窗、門變成藍色）
-export const houseSprite = (ground = '#62ad4b', level = 1) => packSprite('house' + level) || houseArt(level);
+export const houseSprite = (ground = '#62ad4b', level = 1) => houseArt(level);
 
 // 動物小屋（4×3 格 = 64×48）：紅色穀倉、白邊、大門上有白色 X、上面有放乾草的小窗
-export const barnSprite = () => packSprite('barn') || barnArt();
+export const barnSprite = () => barnArt();
 
 // 小鎮的大建築都用程式畫：雜貨店、小吃店（4×3 格）、民宅（3×2 格）、噴水池（2×2 格）
 function building(key, w, h, draw) {
@@ -1563,7 +1560,7 @@ export const homeSprite = (i = 0) => homeArt(i);
 export const fountainSprite = (frame = 0) => fountainArt(frame);
 
 // 商店攤位（2×2 格 = 32×32）：紅白條紋遮陽棚、木櫃台、招牌
-export const shopSprite = () => packSprite('shop') || shopArt();
+export const shopSprite = () => shopArt();
 
 // ---------------- 加工品、加工機、溫室 ----------------
 // 加工品的圖：瓶子（美乃滋、番茄醬）、罐子（果醬、菜脯、泡菜、鹹菜）、起司塊。[樣子, 內容物顏色, 亮面／蓋子顏色]
