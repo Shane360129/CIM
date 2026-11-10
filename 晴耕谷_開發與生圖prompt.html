@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>晴耕谷 prompt 集</title>
+<style>
+:root{
+  --bg:#f6f3ea; --panel:#ffffff; --ink:#2b2a27; --muted:#6b675e; --line:#e1dacb;
+  --accent:#4f7a3a; --accent-soft:#e5eedb; --code:#fbfaf5; --warn:#9a4f17; --warn-soft:#fbeee2;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1c1b18; --panel:#25231e; --ink:#ebe7dc; --muted:#a7a193; --line:#3a372f;
+    --accent:#9cc57f; --accent-soft:#2b3824; --code:#201f1b; --warn:#e3a46e; --warn-soft:#3a2b1f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1c1b18; --panel:#25231e; --ink:#ebe7dc; --muted:#a7a193; --line:#3a372f;
+  --accent:#9cc57f; --accent-soft:#2b3824; --code:#201f1b; --warn:#e3a46e; --warn-soft:#3a2b1f;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",system-ui,sans-serif;line-height:1.75;font-size:15.5px}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 16px 96px;display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px}
+nav{position:sticky;top:16px;align-self:start;max-height:calc(100vh - 32px);overflow:auto;font-size:14px;
+  border-right:1px solid var(--line);padding-right:16px}
+nav a{display:block;color:var(--muted);text-decoration:none;padding:2px 0}
+nav a:hover{color:var(--accent)}
+nav .g{margin-top:12px;font-weight:700;color:var(--ink)}
+nav .sub{padding-left:12px;font-size:13px}
+@media (max-width:880px){.wrap{grid-template-columns:1fr}nav{position:static;max-height:none;border-right:0;border-bottom:1px solid var(--line);padding:0 0 12px}}
+h1{font-size:28px;margin:0 0 6px}
+h2{font-size:22px;margin:48px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--accent)}
+h3{font-size:18px;margin:30px 0 8px}
+p,li{margin:6px 0}
+.lead{color:var(--muted);margin:0 0 18px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin:14px 0}
+.box.warn{background:var(--warn-soft);border-color:transparent}
+.box.ok{background:var(--accent-soft);border-color:transparent}
+.box h4{margin:0 0 6px;font-size:15.5px}
+code{font-family:Consolas,"Cascadia Mono",monospace;font-size:.92em;background:var(--code);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+table{border-collapse:collapse;width:100%;margin:10px 0 18px;font-size:14.5px;background:var(--panel)}
+th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft)}
+.tablewrap{overflow-x:auto}
+.pbox{margin:12px 0 22px;border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow:hidden}
+.pbox .bar{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
+.pbox .bar .t{font-weight:700}
+.pbox .bar .tag{font-size:12.5px;color:var(--muted);font-weight:400;margin-left:6px}
+.pbox .ctl{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--muted)}
+.pbox.done{opacity:.6}
+button.copy{font:inherit;font-size:13px;padding:3px 12px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
+button.copy:active{transform:translateY(1px)}
+pre.prompt{white-space:pre-wrap;word-break:break-word;margin:0;padding:14px 16px;background:var(--code);
+  font-family:Consolas,"Cascadia Mono","Microsoft JhengHei",monospace;font-size:13.5px;line-height:1.7}
+.muted{color:var(--muted)}
+.small{font-size:13.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav>
+  <a class="g" href="#s-now">專案現況</a>
+  <a class="g" href="#s-flow">使用流程</a>
+  <a class="g" href="#s-claude">給 Claude Code</a>
+  <a class="sub" href="#c0">0 總規格（第一個貼）</a>
+  <a class="sub" href="#c1">1 入口與遊戲骨架</a>
+  <a class="sub" href="#c2">2 伺服器與雙人同步</a>
+  <a class="sub" href="#c3">3 素材工具與紙娃娃</a>
+  <a class="sub" href="#c4">4 核心農場玩法</a>
+  <a class="sub" href="#c5">5 生活系統</a>
+  <a class="sub" href="#c6">6 小鎮與居民</a>
+  <a class="sub" href="#c7">7 長期目標</a>
+  <a class="sub" href="#c8">8 雙人特色與聊天室</a>
+  <a class="sub" href="#c9">9 打磨與上線</a>
+  <a class="sub" href="#c-more">接續／素材／擴充／修 bug</a>
+  <a class="g" href="#s-gpt">給 ChatGPT 生圖</a>
+  <a class="sub" href="#g-flow">生圖工作流程</a>
+  <a class="sub" href="#g-style">共同畫風設定</a>
+  <a class="sub" href="#g-0">第 0 批 畫風基準圖</a>
+  <a class="sub" href="#g-1">第 1 批 紙娃娃</a>
+  <a class="sub" href="#g-tpl">通用模板 T1～T9</a>
+  <a class="sub" href="#g-2">第 2 批 農場基本</a>
+  <a class="sub" href="#g-3">第 3 批 生活系統</a>
+  <a class="sub" href="#g-4">第 4 批 小鎮</a>
+  <a class="sub" href="#g-5">第 5 批以後</a>
+  <a class="g" href="#s-note">注意事項</a>
+</nav>
+
+<main>
+<h1>晴耕谷：雙人農場遊戲 prompt 集</h1>
+<p class="lead">給 Claude Code 的開發 prompt ＋ 給 ChatGPT 的生圖 prompt。「晴耕谷」是暫名，可以整份取代。2026-11-10 整理。每個 prompt 右上有「複製」；ChatGPT 的 prompt 複製時會自動在前面加上「共同畫風設定」。勾「做完了」會記在這台電腦的瀏覽器裡。</p>
+
+<!-- ============ 專案現況 ============ -->
+<h2 id="s-now">專案現況（讀 GitHub 得到的）</h2>
+<div class="box">
+<ul>
+<li><b>分支</b>：實際在用的程式在 <code>claude/bypass-corporate-chat-dg8d38</code>（main 上讀不到 package.json），還有 1 個未合併的 PR。回家先決定：合併 PR 後從 main 開分支，或直接從那個分支開 <code>feature/farm-game</code>。</li>
+<li><b>前端</b>：純 HTML/JS，沒有框架和打包工具（<code>public/index.html</code>、<code>public/app.js</code>、<code>public/style.css</code>）。</li>
+<li><b>後端</b>：Cloudflare Worker（<code>src/index.js</code>）＋ Durable Object <code>ChatServer</code>（<code>src/chatserver.js</code>），資料存在 Durable Object 內建的 SQLite。部署用 <code>wrangler deploy</code> 或 GitHub Actions。</li>
+<li><b>即時通訊</b>：原生 WebSocket <code>/ws</code>（Hibernation API），伺服器用 <code>sendToUsers()</code> 推事件。</li>
+<li><b>三條槓</b>：就是 <code>#btn-chat-info</code>（menu 圖示）。目前一對一聊天按下去直接開對方個人資料（<code>chatInfoModal()</code> → <code>showProfile()</code>）。現成的 <code>openSheet()</code>、<code>openModal()</code> 可以直接拿來做選單。</li>
+<li><b>CSP</b>（index.html 的 meta）：不能用 inline script、不能載入 CDN、HTML 裡不能寫 <code>style=""</code>、連線只能連自己網域。所以遊戲要放在 <code>public/</code> 裡，用同源 iframe 開。</li>
+<li><b>Service Worker</b>（<code>sw.js</code>）：要確認快取不會讓遊戲更新後還在讀舊版。</li>
+<li><b>訊息類型白名單</b>：伺服器只收 text/image/sticker/audio/poll，遊戲如果要發「系統訊息」到聊天室，需要改伺服器。</li>
+</ul>
+<p class="small muted">以上是從網頁讀到的摘要，其中幾項是讀取工具整理的，不是逐字原文。Claude Code 回家會自己再讀一次程式碼確認（Prompt 0 有要求）。</p>
+</div>
+
+<!-- ============ 使用流程 ============ -->
+<h2 id="s-flow">使用流程</h2>
+<ol>
+<li>把這個 HTML 帶回家，放進專案的 <code>docs/farm-game/</code>（Claude Code 之後會讀裡面的生圖批次清單）。</li>
+<li>ChatGPT 先做 <a href="#g-0">第 0 批 畫風基準圖</a>，重畫到滿意為止，之後所有圖都以它為準。生圖可以和開發同時進行。</li>
+<li>Claude Code：貼 <a href="#c0">Prompt 0</a> → 它讀專案、寫規格和計畫 → 你看過、回答它的問題、確認。</li>
+<li>依序貼階段 1～9，一次一個階段。每個階段做完：照它說的方法測（兩個瀏覽器、兩個互為好友的帳號）→ 沒問題才讓它 commit。</li>
+<li>素材：ChatGPT 的原圖下載後放到 <code>art-src/farm/第N批/</code>，檔名用編號（例如 <code>1-01.png</code>），並把當時用的 prompt 存成同名 <code>1-01.txt</code>，再貼 <a href="#c-more">素材處理 prompt</a>。</li>
+<li>隔天或對話太長：開新對話貼 <a href="#c-more">接續 prompt</a>。要加內容：用 <a href="#c-more">內容擴充 prompt</a>。</li>
+<li>要部署上線前，先讓 Claude Code 列出變更和風險，你自己確認後再部署。</li>
+</ol>
+
+<div class="tablewrap"><table>
+<tr><th>開發階段</th><th>需要的圖</th><th>大約張數</th></tr>
+<tr><td>開工前</td><td>第 0 批 畫風基準圖</td><td>1</td></tr>
+<tr><td>1、2（入口、同步）</td><td>不用圖，用暫代色塊</td><td>0</td></tr>
+<tr><td>3 紙娃娃</td><td>第 1 批 素體、五官、少量髮型和服裝</td><td>13</td></tr>
+<tr><td>4 核心農場</td><td>第 2 批 春季作物、樹、地圖物件、農舍、工具、UI</td><td>22</td></tr>
+<tr><td>5 生活系統</td><td>第 3 批 動物、魚、礦坑、料理、加工機</td><td>21</td></tr>
+<tr><td>6 小鎮居民</td><td>第 4 批 居民頭像與服裝、小鎮建築</td><td>22</td></tr>
+<tr><td>7～9 與之後的內容擴充</td><td>第 5 批以後：其餘全部</td><td>250～300</td></tr>
+</table></div>
+
+<!-- ============ Claude Code ============ -->
+<h2 id="s-claude">給 Claude Code 的 prompt</h2>
+<p>在家裡的專案資料夾開 Claude Code，依序貼。每段結尾都要求它「等我確認」，不會一次衝到底。</p>
+
+<div class="pbox" id="c0" data-id="c0"><div class="bar"><span class="t">Prompt 0　總規格（第一個貼）<span class="tag">讀專案、寫規格、提計畫，不寫程式</span></span><span class="ctl"><label><input type="checkbox" class="done-cb"> 做完了</label><button class="copy">複製</button></span></div>
+<pre class="prompt">你是這個聊天室專案的開發者。這次要在聊天室裡加一款「兩個人共同經營的 2D 農場生活遊戲」。這一輪先不要寫程式，請照下面步驟做：
+
+1. 先讀懂現有專案：README.md、wrangler.jsonc、package.json、src/index.js、src/chatserver.js、public/index.html、public/app.js、public/style.css、public/sw.js，以及 docs/farm-game/ 裡我放的 prompt 集 HTML（裡面有 ChatGPT 生圖的批次和名稱清單）。
+2. 確認目前實際在用的分支（Cloudflare Workers + Durable Object 版本），告訴我要從哪個分支開新分支 feature/farm-game，我確認後再開。
+3. 把下面的【遊戲規格】存成 docs/farm-game/規格.md，【內容量表】存成 docs/farm-game/內容量表.md，再建立 docs/farm-game/進度.md（記錄每個階段做了什麼、怎麼測、已知問題、下一步）。
+4. 把下面的【開發規則】寫進專案根目錄的 CLAUDE.md（有就加一段「農場遊戲」，沒有就新建）。
+5. 根據你讀到的實際程式碼，寫 docs/farm-game/架構計畫.md：檔案放哪裡、要改哪些既有檔案（列出函式名稱）、伺服器要加什麼、資料怎麼存、雙人同步協定大綱、CSP 和 Service Worker 要注意什麼、九個階段的計畫。規格和實際程式碼衝突的地方，列出選項和你的建議問我。
+6. 做完停下來給我看，我確認後才開始寫程式。
+
+【遊戲規格】
+■ 基本
+- 暫名「晴耕谷」（之後可改）。類型：2D 農場生活模擬（種田、畜牧、釣魚、採礦、和小鎮居民交流）。所有名稱、角色、劇情、美術都是原創，不使用任何現有遊戲的名稱、角色、地名、美術或音樂。
+- 畫面：手繪卡通風，不是像素風。正面俯視 3/4 視角（看得到物件正面和一點頂部，不是斜 45 度等角）。
+- 美術由我用 ChatGPT 生成「多個元素」的圖，你寫工具去背、切圖、縮放、組合。
+- 介面文字全部繁體中文。
+- 目標：內容量足夠玩 500 小時以上（見內容量表）。所有內容資料化（JSON），之後加內容不用改程式。
+
+■ 入口（嵌在聊天室裡）
+- 一對一聊天（conv.type 為 dm，不含只有自己的備忘錄）右上角的三條槓 #btn-chat-info，目前直接開對方個人資料。改成先跳出選單：「個人資料」「我們的農場」。群組維持原本行為。
+- 每一組好友（每個 dm 對話）各自擁有一座農場，用對話 id 對應。
+- 遊戲開在面板裡：桌機蓋在聊天區上（可切全螢幕），手機全螢幕。右上角有關閉鈕，關閉後回到原本的聊天。
+- 遊戲放在 public/games/farm/，用同源 iframe 載入，遊戲的 CSS/JS 不影響聊天室。
+- 遵守現有 CSP：不用 inline script、不用 CDN、HTML 裡不用 style 屬性（用 JS 設 el.style 或 class），連線只連自己網域。盡量不用函式庫：Canvas 2D ＋ 原生 JS ES modules。
+- 維持現有做法：沒有打包工具，public/ 裡的檔案直接部署。
+
+■ 雙人共同經營
+- 兩人共用同一座農場、同一個錢包、同一個倉庫；各自有自己的角色、背包、體力、技能等級、和居民的好感度。
+- 兩人同時上線：即時看到對方走動、動作、頭上的聊天泡泡和表情。
+- 一人離線：另一人照常玩，進度存在伺服器；離線的人上線時看到「你不在時發生的事」摘要。
+- 時間：遊戲時鐘只在至少一人在農場裡時走，一天約 15 分鐘現實時間（可調）。兩人都在線時，兩人都上床（或過了凌晨 2 點昏倒）才換日；只有一人在線時由他決定。
+- 以伺服器為準：地圖格子、物品、金錢、動物、時間都由伺服器決定。角色移動在自己畫面先動，再同步給對方（平滑插值）。兩人搶同一格作物時先到先得。
+- 雙人限定內容：合力搬大石頭或大樹根、雙人釣傳說魚、一起做料理有加成、節慶雙人賽、互送禮物、在農場留便條給對方。
+
+■ 角色與紙娃娃
+- 建立角色時選「男生」或「女生」，再自訂：膚色、眼睛、眉毛、嘴巴、髮型、髮色、上衣、下身（褲或裙）、鞋子、帽子、配件、名字。之後可以在家裡衣櫃換裝。
+- Q 版約 2.5 頭身。男女共用同一套身體，差別在五官、髮型和預設服裝；所有服裝男女都能穿。
+- 身體拆成零件：頭、軀幹、左右手臂、左右腳。
+- 圖層順序（後到前）：後髮 → 後手臂（側面時）→ 身體 → 下身 → 鞋 → 上衣（洋裝類會隱藏下身）→ 前手臂 → 臉部五官 → 前髮 → 帽子 → 配件 → 手持工具。
+- 方向：正面、背面、側面（另一側用鏡像）。
+- 動作不畫逐格動畫，全部用程式讓零件動（位移、旋轉、上下彈跳、擠壓伸展）：待機、走路、揮工具、澆水、釣魚、吃東西、坐下、開心跳。所以一件衣服只要正、背、側三張圖。
+- 髮色、膚色、衣服顏色用程式換色：可換色的圖是白到淺灰色，載入時依目標顏色上色並快取，一張圖可以變出很多顏色。
+- 居民（NPC）也用同一套紙娃娃零件組成，加上自己專屬的髮型和服裝；對話時另外顯示大頭像（有多種表情）。
+
+■ 世界
+- 地圖：自家農場（可以逐步開墾擴大）、小鎮、海邊、森林、湖、山區礦坑，之後解鎖島嶼和深淵。
+- 地面用程式畫（色塊＋柔和邊緣＋少量雜訊），上面擺手繪的物件（草叢、花、石頭、樹、建築、家具）。
+- 四季，每季 28 天，一年 112 天。天氣：晴、陰、雨、雷雨、強風、雪、霧，稀有的彩虹日和流星夜。
+- 一天：早上 6 點起床到凌晨 2 點；商店有營業時間；居民有每日行程。
+
+■ 系統（數量見內容量表）
+1. 種田：翻土、播種、澆水、施肥、收成；成長階段；品質五級（普通、銀、金、虹、傳說）；多季作物、果樹、溫室、灑水器、稻草人、巨型作物；相鄰作物交配育種出新品種。
+2. 畜牧：雞舍、畜舍、餵食、撫摸、刷毛、放牧、好感、產品品質、生小孩、毛色與特性遺傳。寵物（貓狗）和坐騎。
+3. 釣魚：依地點、季節、天氣、時段出現不同魚；釣魚小遊戲（手機好操作）；尺寸紀錄、魚拓、水族箱。
+4. 採礦：每層用程式生成；礦石、寶石、化石；可愛風怪物，不血腥；每 5 層電梯；後期無限深淵。
+5. 採集：野菜、菇、貝殼、昆蟲、花。
+6. 製作：工具升級 6 級、加工機、家具製作。
+7. 料理：食譜、廚房，料理有效果（體力、速度、幸運、釣魚等）。
+8. 小鎮與居民：24 位原創居民，每人有個性、行程、喜好禮物、10 心好感、心事件；可交往對象男女都有，設定裡可以關閉戀愛內容。
+9. 任務：主線「修復小鎮」（多個設施逐步重建）、居民委託、每日佈告欄（程序生成）、季節挑戰。
+10. 節慶：一年 12 個，各有小遊戲或比賽。
+11. 農場建設：房屋多級擴建；自由擺放建築、家具、道路、圍欄、裝飾；室內裝潢；年度農場評比。
+12. 收集：圖鑑（作物、魚、昆蟲、礦物、化石、料理、家具、服裝）、博物館捐贈、成就。
+13. 技能：農耕、畜牧、釣魚、採礦、採集、料理、工藝，每項 1～100 級，每 10 級選一個專精。
+14. 經濟：出貨箱（隔天早上結算）、商店、流浪商人、季節價格波動。
+15. 存檔：伺服器自動存檔，每天備份，保留最近 7 天，可以回復。
+
+■ 操作
+- 桌機：WASD／方向鍵移動、滑鼠點擊使用工具和互動、數字鍵切換快捷列、E 開背包。
+- 手機：左下虛擬搖桿、右下動作鈕、點擊互動、快捷列可滑動。直式和橫式都能玩。
+- 第一週有新手引導。
+
+■ 效能
+- 目標：中階手機 60fps。圖片轉 WebP、合併成圖集、依地圖分批載入、組好的紙娃娃快取成一張圖、畫面外的東西不畫。
+
+【內容量表（500 小時目標）】
+時間換算：一天約 15 分鐘 → 一年（112 天）約 28 小時 → 500 小時約等於遊戲內 18 年。所以內容要有「長期目標」，不能只撐前 3 年。
+- 作物：120 種（春 25、夏 25、秋 25、冬 10、溫室與特殊 35）＋育種新品種 60；巨型作物 10
+- 果樹 20、花 40（花的種類影響蜂蜜種類）
+- 野生採集物 60（四季各 12＋特殊 12）、昆蟲 60
+- 魚 150（含傳說魚 12，依地點、季節、天氣、時段）
+- 礦石 10、寶石 30、化石與古物 60
+- 礦坑：主礦坑 120 層＋無限深淵（程序生成）；怪物 40 種（可愛風）
+- 家畜 12 種（每種 3～6 種毛色、20 種可遺傳特性）；寵物貓狗各 6 種外觀；坐騎 4 種
+- 料理 200 道；加工品 80 種（依原料自動產生，例如「草莓果醬」）；加工機 40 台
+- 家具：150 種造型 × 換色 → 400 件以上
+- 服裝零件：髮型 30、上衣 40、下身 25、鞋 15、帽子 30、配件 30（換色後上千種組合）
+- 居民 24 位：每人 10 心、10 段心事件、每日對話 150 句以上、喜好禮物表
+- 節慶 12 個；主線：小鎮 8 個設施修復，每個 5～8 項捐獻目標
+- 委託：固定 100 個＋每日程序生成；成就 300 個
+- 技能 7 項 × 1～100 級
+- 年份目標：第 1～3 年是主要內容；第 4 年起每年解鎖新區域或新挑戰，至少規劃到第 10 年
+遊玩時數預估：主線與小鎮修復約 100～150 小時；全部居民心事件與全圖鑑約 300 小時；全育種、深淵、技能全 100 級、傳說魚、完美農場評比 500 小時以上。
+內容不用一次做完：先把系統做好、放少量資料，之後用「內容擴充」分批加滿。
+
+【開發規則】
+1. 只在 feature/farm-game 分支工作。每個階段做完、經我測過才 commit，commit 訊息用中文。
+2. 不能弄壞現有聊天功能。改到既有檔案（app.js、chatserver.js、index.js、index.html、style.css、sw.js、wrangler.jsonc）時，回報改了哪些函式、為什麼。
+3. 遵守現有 CSP；不用 CDN、不用打包工具；要加任何函式庫先問我，並放進專案內。
+4. 遊戲內容全部放 public/games/farm/data/ 的 JSON，程式不寫死內容；數值集中在平衡設定檔。
+5. 美術還沒到時用暫代圖（色塊＋名稱），遊戲照樣能跑；素材到了只要放進去、跑素材工具就能替換。
+6. 每個階段結束更新 docs/farm-game/進度.md。
+7. 測試方法：wrangler dev，兩個瀏覽器（一般視窗＋無痕視窗）登入兩個互為好友的帳號。手機用瀏覽器開發者工具的手機模擬，能的話用真手機連區網測。
+8. 部署前一定先問我。資料庫結構變更要有轉移方式，不能清掉現有聊天資料。
+9. 不確定的事先問我，不要自己猜。</pre></div>
+
+<div class="pbox" id="c1" data-id="c1"><div class="bar"><span class="t">階段 1　入口與遊戲骨架</span><span class="ctl"><label><input type="checkbox" class="done-cb"> 做完了</label><button class="copy">複製</button></span></div>
+<pre class="prompt">讀 CLAUDE.md 和 docs/farm-game/ 的 規格.md、架構計畫.md、進度.md，做「階段 1：入口與遊戲骨架」。
+
+1. 入口
+- 一對一聊天（dm，不含備忘錄）的三條槓 #btn-chat-info：改成先跳出選單（沿用現有 openSheet），選項「個人資料」「我們的農場」。群組維持原樣。
+- 「我們的農場」開啟遊戲面板：同源 iframe 載入 /games/farm/?conv={對話 id}。桌機蓋在聊天區上（可切全螢幕），手機全螢幕。右上角關閉鈕，Esc 也能關。手機按返回鍵要關閉遊戲，而不是離開聊天（用 history.pushState）。
+- 遊戲開著時聊天訊息照常收，面板上顯示未讀小紅點。
+2. 遊戲骨架（public/games/farm/）
+- index.html（加上和聊天室一樣嚴格的 CSP meta），ES modules 結構：core（遊戲迴圈、場景管理、輸入、相機、資源載入）、render、systems、net、ui、data。
+- Canvas 2D，處理 devicePixelRatio 和視窗大小改變；固定步長更新和畫面渲染分開。
+- 場景流程：載入畫面 → 標題 → （之後的角色建立）→ 遊戲。
+- 輸入：鍵盤（WASD／方向鍵、E、數字鍵）、滑鼠、觸控（左下虛擬搖桿、右下動作鈕）。
+- 一張測試地圖：暫代色塊畫的草地和幾棵樹；暫代角色（圓形）可以走動、相機跟隨、依 y 座標排序前後遮擋。
+- 登入身分：用同源的登入 token，或由父頁 postMessage 傳入，選一種並說明理由；確認目前使用者是這個對話的成員。
+3. Service Worker：檢查 sw.js 的快取策略，確保遊戲檔更新後不會一直讀到舊版。
+
+驗收：從好友對話的三條槓打開農場，角色能用鍵盤和手機搖桿走動，關閉後回到原本聊天，聊天功能完全正常。
+完成後更新進度.md，告訴我怎麼測，等我確認再 commit。</pre></div>
+
+<div class="pbox" id="c2" data-id="c2"><div class="bar"><span class="t">階段 2　伺服器與雙人同步</span><span class="ctl"><label><input type="checkbox" class="done-cb"> 做完了</label><button class="copy">複製</button></span></div>
+<pre class="prompt">讀 CLAUDE.md 和 docs/farm-game/ 的 規格.md、架構計畫.md、進度.md，做「階段 2：伺服器與雙人同步」。
+
+1. 伺服器
+- 新增 Durable Object 類別 FarmRoom，每個 dm 對話一個實例（例如 idFromName('farm:' + 對話 id)）。在 wrangler.jsonc 加新的 migration（新增 SQLite 類別），不能動到既有 ChatServer 的資料。
+- 新增遊戲用的 WebSocket（例如 /farm/ws）和 /api/farm/*。連線時先用現有的登入 token 驗證身分、確認是這個對話的成員，再交給 FarmRoom。驗證放在哪裡最乾淨，請讀 chatserver.js 後提出做法。
+- 使用和 ChatServer 一樣的 WebSocket Hibernation API。
+- 先查 Cloudflare 目前免費方案對 Durable Objects 和 WebSocket 訊息的限制，把同步頻率設計在限制內，寫進架構計畫.md。
+2. 同步協定（寫成 docs/farm-game/協定.md）
+- 連線：hello → 伺服器回完整快照（農場狀態、兩位玩家、時間）。斷線重連後重新拿快照。
+- 移動：自己畫面先動，節流後送位置（例如每秒最多 10 次、沒動就不送），對方用插值平滑顯示。
+- 動作：送「請求」（例如在某格澆水）→ 伺服器檢查是否合法 → 廣播結果；不合法就回絕並讓客戶端修正。兩人搶同一格時先到先得。
+- 其他：上線／離線、頭上聊天泡泡、表情。
+3. 存檔
+- FarmRoom 的 SQLite：農場基本資料、地圖格子（分區塊存）、物件、倉庫、玩家資料、事件紀錄。變更批次寫入，不要每個動作寫一次。
+- 每天換日自動備份，保留最近 7 天，提供回復方式。
+4. 時間
+- 伺服器管遊戲時鐘（用 alarm），只有至少一人在農場時才走。換日規則照規格。
+- 離線摘要：上線時顯示「你不在時發生的事」（對方做了什麼、過了幾天、賺了多少）。
+- 動物走動、居民行程、礦坑地形這類兩台都要一樣的東西，用「同一個種子的確定性亂數」各自計算，不必每一步都同步。
+
+驗收：兩個瀏覽器、兩個帳號同時進同一座農場，互相看到走動和泡泡；關掉 wrangler dev 重開，狀態還在；一人斷網再連回來會自動同步。
+完成後更新進度.md 和協定.md，告訴我怎麼測，等我確認再 commit。</pre></div>
+
+<div class="pbox" id="c3" data-id="c3"><div class="bar"><span class="t">階段 3　素材工具與紙娃娃<span class="tag">需要第 1 批圖</span></span><span class="ctl"><label><input type="checkbox" class="done-cb"> 做完了</label><button class="copy">複製</button></span></div>
+<pre class="prompt">讀 CLAUDE.md 和 docs/farm-game/ 的 規格.md、架構計畫.md、進度.md，做「階段 3：素材工具與紙娃娃系統」。
+ChatGPT 的原圖放在 art-src/farm/第N批/（不放 public、不部署；原圖要不要進 git 先問我）。每張圖旁邊有同名 .txt，是當時用的 prompt，裡面有物件名稱和排列順序；批次清單也在 docs/farm-game/ 的 prompt 集 HTML。
+
+1. 素材工具（tools/farm-assets/，Node 腳本，可以加 sharp 當 devDependency）
+- 去背：透明背景直接用；不透明時依純色背景（#FF00FF 洋紅或 #00FFFF 青色）去背，處理邊緣殘色。
+- 自動切圖：找出每個物件，依「由上到下、由左到右」排序，對照 .txt 的名稱命名。距離很近的小塊要合併成同一個物件（例如一對眼睛、一對眉毛）。切不準的列出來給我看。
+- 修邊、依類別縮放到統一尺寸（圖示、作物、角色零件、建築各有規格，寫在設定檔），輸出 WebP，合併成圖集＋座標 JSON。
+- 產生素材預覽頁：所有素材縮圖、名稱、尺寸，方便我挑出要重畫的。
+- 一個指令跑完一批，例如：node tools/farm-assets/build.mjs 1
+2. 紙娃娃對位工具（tools/doll-align.html，只在本機用，不部署）
+- 顯示素體，每個零件可以拖曳、縮放、旋轉對齊，設定旋轉軸心（肩膀、腳根），存成 JSON。
+- 正面、背面、側面分開調整；可以預覽整套搭配。
+- 需要分區換色的零件（例如袖子是衣服色、手是膚色），可以在工具裡畫遮罩。
+3. 遊戲內紙娃娃
+- 照規格的圖層順序組合；側面時後手臂在身體後面、前手臂在前面；帽子可設定要不要遮住部分頭髮；洋裝類上衣隱藏下身。
+- 換色：載入時用 getImageData 依目標顏色上色並快取（不要依賴 ctx.filter，相容性不夠）。預設只換低彩度（白、灰）的像素，描邊和其他有顏色的部分保留。袖子依上衣的袖型和主色自動上色。
+- 程式動畫：待機呼吸、走路（身體上下彈跳＋腳前後擺＋手擺）、揮工具、澆水、拋竿、吃東西、坐下、開心跳一下。
+- 組好的角色快取成一張圖，換裝時才重畫。
+4. 角色建立畫面
+- 選男生／女生（決定預設五官、髮型、服裝和稱呼），自訂所有零件和顏色，有「隨機」按鈕；預覽可以轉方向、播放走路；輸入名字。存到伺服器，對方畫面同步看到。
+- 衣櫃換裝先做好資料和介面接口。
+
+驗收：用第 1 批素材建立男女角色各一，兩個瀏覽器互相看到對方的造型和走路動作；換色、轉向都正確。
+完成後更新進度.md，等我確認再 commit。</pre></div>
+
+<div class="pbox" id="c4" data-id="c4"><div class="bar"><span class="t">階段 4　核心農場玩法<span class="tag">需要第 2 批圖</span></span><span class="ctl"><label><input type="checkbox" class="done-cb"> 做完了</label><button class="copy">複製</button></span></div>
+<pre class="prompt">讀 CLAUDE.md 和 docs/farm-game/ 的 規格.md、架構計畫.md、進度.md，做「階段 4：核心農場玩法」。
+
+1. 地圖
+- 格子地圖（分區塊）；地面用程式畫（色塊、柔和邊緣、少量雜訊），上面擺圖片物件；碰撞、依 y 排序遮擋、門和出入口切換地圖。
+- 簡易地圖編輯器（tools/map-editor.html，本機用）：畫地面類型、擺物件、設碰撞和出入口，存成 data/maps/*.json。之後的地圖都用它做。
+- 先做：自家農場（初始範圍＋之後可開墾的區域）、農舍內部、通往小鎮的路。
+2. 時間與生活
+- 時間、日期、季節、天氣顯示；體力；睡覺換日；凌晨 2 點昏倒。
+- 背包、快捷列、倉庫（兩人共用）、錢包（兩人共用）。
+3. 工具與種田
+- 鋤頭、澆水壺、斧頭、十字鎬、鐮刀（釣竿下一階段）；工具有使用動畫，留好音效接口。
+- 翻土 → 播種 → 澆水 → 每天成長 → 收成；品質受肥料和技能影響；沒澆水會停止成長、換季會枯死。
+- 先做第 2 批的 16 種春季作物資料；種子袋圖示用程式合成（空白種子袋＋作物圖示）。
+- 清除石頭、樹枝、雜草、砍樹，取得材料。
+4. 經濟
+- 出貨箱：隔天早上結算，兩人共享收入，各自看得到出貨明細。雜貨店買種子（先做簡單的商店畫面）。
+5. 雙人
+- 所有動作都走伺服器，對方看得到你在澆水、收成；體力和技能經驗各自計算。
+
+驗收：兩人一起玩完遊戲內春季第一週：開墾、播種、澆水、收成、出貨、睡覺換日；重新整理頁面後一切正確。
+完成後更新進度.md，等我確認再 commit。</pre></div>
+
+<div class="pbox" id="c5" data-id="c5"><div class="bar"><span class="t">階段 5　生活系統<span class="tag">需要第 3 批圖</span></span><span class="ctl"><label><input type="checkbox" class="done-cb"> 做完了</label><button class="copy">複製</button></span></div>
+<pre class="prompt">讀 CLAUDE.md 和 docs/farm-game/ 的 規格.md、架構計畫.md、進度.md，做「階段 5：生活系統」。每個系統先做好資料格式和少量內容，之後用內容擴充加滿。
+
+1. 畜牧：雞舍、畜舍；4 種家畜（雞、鴨、牛、綿羊）；餵食、撫摸、刷毛、放牧、好感、產品品質、懷孕生小孩；毛色和特性遺傳的資料結構先建好。貓、狗各一隻（可換色）。
+2. 釣魚：拋竿、等待、上鉤小遊戲（手機一隻手能玩）；魚依地點、季節、天氣、時段出現；先做 30 種；最大尺寸紀錄。
+3. 採礦：礦坑入口；每層程序生成（用種子，兩人看到同一層）；敲石頭、礦石、寶石、樓梯、每 5 層電梯；先做 20 層；3 種可愛怪物和簡單戰鬥（揮劍、閃避），倒下送回入口，懲罰不要太重。
+4. 採集：四季野生採集物，每天隨機重生。
+5. 料理：廚房；學食譜的方式（電視節目、居民、書）；先做 20 道；料理有效果並顯示剩餘時間。
+6. 製作：製作台、熔爐和加工機（果醬機、醃漬桶、起司機、美乃滋機、釀造桶、熏製爐、乾燥架、榨油機、蜂箱、種子機）；加工品依原料自動產生名稱、價格和圖示（通用容器＋內容物換色）。
+7. 雙人：兩人可以在礦坑同一層或不同層；釣魚時對方看得到；先做一個「一起料理」的加成。
+
+驗收：兩人各自去釣魚、採礦，再回農場加工、出貨；存檔重整後狀態正確。
+完成後更新進度.md，等我確認再 commit。</pre></div>
+
+<div class="pbox" id="c6" data-id="c6"><div class="bar"><span class="t">階段 6　小鎮與居民<span class="tag">需要第 4 批圖</span></span><span class="ctl"><label><input type="checkbox" class="done-cb"> 做完了</label><button class="copy">複製</button></span></div>
+<pre class="prompt">讀 CLAUDE.md 和 docs/farm-game/ 的 規格.md、架構計畫.md、進度.md，做「階段 6：小鎮與居民」。
+
+1. 先設計 24 位原創居民名單（名字、年齡、職業、個性、外觀、住處、喜歡／討厭的禮物、家人朋友關係、是否可交往），存到 data/npcs/，給我確認後再往下做。可交往對象男女都有。
+2. 居民資料格式：每日行程（依季節、天氣、星期、節慶）、對話（依好感、季節、天氣、事件條件，隨機不重複）、禮物反應。
+3. 對話介面：對話框＋大頭像（多種表情）、選項、打字機效果、可快轉。
+4. 好感：聊天、送禮（每週上限）、生日；10 心；兩位玩家各自計算。
+5. 劇情事件系統：用 JSON 寫小腳本（移動、說話、表情、等待、淡入淡出、選項、條件、旗標），之後所有心事件和主線都用它。先做 2 位居民各 2 段心事件當範例。
+6. 小鎮設施：雜貨店、鐵匠鋪（工具升級）、木工屋（蓋建築）、漁具店、診所、餐館、廣場、佈告欄（每日委託，程序生成）、信箱（居民寄信、附禮物）。
+7. 節慶框架＋春季 2 個節慶，各有一個小遊戲。
+8. 居民用紙娃娃系統組成。依 prompt 集的「T9 居民大頭像」和服裝模板，幫我寫好每一位的 ChatGPT prompt（包含外觀描述、排列順序、尺寸），存到 art-src/farm/待生成/第4批.txt。
+9. 先完成 8 位居民的完整資料，其餘 16 位先放名單，之後用內容擴充補。
+
+驗收：在小鎮和 8 位居民對話、送禮、看一段心事件；接一個佈告欄委託並完成。
+完成後更新進度.md，等我確認再 commit。</pre></div>
+
+<div class="pbox" id="c7" data-id="c7"><div class="bar"><span class="t">階段 7　長期目標（撐起 500 小時的系統）</span><span class="ctl"><label><input type="checkbox" class="done-cb"> 做完了</label><button class="copy">複製</button></span></div>
+<pre class="prompt">讀 CLAUDE.md 和 docs/farm-game/ 的 規格.md、架構計畫.md、進度.md、內容量表.md，做「階段 7：長期目標」。
+
+1. 主線「修復小鎮」：設計 8 個原創設施，每個有捐獻清單，修好後地圖外觀改變並解鎖新內容（新區域、新商店、新居民或新玩法）。設施名單先給我確認。
+2. 房屋擴建 6 級；農場建築（雞舍、畜舍升級、溫室、筒倉、井、魚塘等）；自由擺放模式（建築、家具、道路、圍欄、裝飾，可旋轉、可收回）；室內裝潢。
+3. 育種：作物相鄰交配產生新品種（可以命名）；動物毛色與特性遺傳；基因圖鑑。
+4. 收集：圖鑑（作物、魚、昆蟲、礦物、化石、料理、家具、服裝）、博物館捐贈與獎勵、成就系統（先做 50 個）。
+5. 技能 1～100 級，每 10 級選一個專精；後期等級曲線要拉長。
+6. 無限深淵（主礦坑 120 層以後，越深越難、掉落越好）、傳說魚、巨型作物、年度農場評比。
+7. 寫 docs/farm-game/長期路線.md：規劃第 1～10 年每年的新目標和解鎖（新島嶼、新居民、新節慶、新挑戰），讓第 4 年以後仍然有事做。
+8. 寫經濟模擬腳本 tools/balance-sim.mjs：模擬兩人照正常節奏玩 10 年的收入、花費、解鎖時間，輸出報告；數值有問題就調整平衡設定檔，結果寫進 docs/farm-game/平衡.md。
+
+驗收：給我看長期路線.md 和平衡模擬報告，並示範一個設施從捐獻到修好的完整流程。
+完成後更新進度.md，等我確認再 commit。</pre></div>
+
+<div class="pbox" id="c8" data-id="c8"><div class="bar"><span class="t">階段 8　雙人特色與聊天室整合</span><span class="ctl"><label><input type="checkbox" class="done-cb"> 做完了</label><button class="copy">複製</button></span></div>
+<pre class="prompt">讀 CLAUDE.md 和 docs/farm-game/ 的 規格.md、架構計畫.md、進度.md，做「階段 8：雙人特色與聊天室整合」。
+
+1. 雙人合作：合力搬大石頭／大樹根（兩人同時操作才搬得動）、雙人釣傳說魚、一起料理加成、節慶雙人賽、互送禮物（可選包裝紙）、農場便條板（留言給對方，上線時看到）、表情輪盤、兩人靠近時可以牽手走。
+2. 農場紀念冊：自動記錄兩人的里程碑（第一次豐收、第一隻小雞出生、第一次修好設施…）的日期和截圖。
+3. 拍照模式：隱藏介面、選姿勢和表情、拍下農場照片；可以一鍵傳到這個聊天室（沿用現有的傳圖片功能）。
+4. 聊天室通知（先問我要不要做，以及要不要改伺服器的訊息類型白名單）：例如「對方在農場留了便條」「作物可以收成了」，用系統訊息或推播；要有開關，預設不要太吵。
+5. 遊戲裡看得到聊天室新訊息提示，點一下回到聊天。
+
+驗收：兩個帳號完成一次合力搬石頭、互送禮物、留便條、拍照傳到聊天室。
+完成後更新進度.md，等我確認再 commit。</pre></div>
+
+<div class="pbox" id="c9" data-id="c9"><div class="bar"><span class="t">階段 9　打磨與上線準備</span><span class="ctl"><label><input type="checkbox" class="done-cb"> 做完了</label><button class="copy">複製</button></span></div>
+<pre class="prompt">讀 CLAUDE.md 和 docs/farm-game/ 的 規格.md、架構計畫.md、進度.md，做「階段 9：打磨與上線準備」。
+
+1. 設定：音量、一天長度、戀愛內容開關、畫質（低階手機模式）、字體大小、操作方式。
+2. 音效與音樂：先用 WebAudio 程式產生簡單音效；背景音樂之後我提供檔案，做好依季節和地點切換的接口。
+3. 新手教學：第一週的引導任務；兩人一起玩時，教學不要擋住對方。
+4. 效能：在手機上量測 FPS 和記憶體；圖集依地圖分批載入、畫面外不畫、紙娃娃快取；列出量測結果。
+5. 全面檢查：存檔損毀保護、斷線重連、兩人同時操作的衝突、換日的邊界情況、iPhone Safari 和 Android Chrome。
+6. 更新 README（遊戲說明、開發方式、素材工具用法）。
+7. 列出部署前檢查清單和風險（資料庫 migration、Service Worker 快取、既有聊天資料），等我確認後才部署。</pre></div>
+
+<h3 id="c-more">隨時會用到的 prompt</h3>
+
+<div class="pbox" data-id="c-cont"><div class="bar"><span class="t">接續（開新對話時）</span><span class="ctl"><button class="copy">複製</button></span></div>
+<pre class="prompt">讀 CLAUDE.md 和 docs/farm-game/ 的 規格.md、架構計畫.md、進度.md。
+先告訴我：目前做到哪個階段、哪些完成、哪些還沒完成、有哪些已知問題。然後問我接下來要做什麼，我確認後再開始。</pre></div>
+
+<div class="pbox" data-id="c-art"><div class="bar"><span class="t">素材處理（ChatGPT 圖放好之後）</span><span class="ctl"><button class="copy">複製</button></span></div>
+<pre class="prompt">art-src/farm/第【N】批/ 已經放好 ChatGPT 生成的圖，每張旁邊有同名 .txt（當時用的 prompt，裡面有名稱和排列順序）。
+請用素材工具處理這一批：去背、切圖、命名、縮放、合成圖集，接進遊戲取代暫代圖。
+做完給我看素材預覽頁，列出切壞的、比例不對的、風格不一致需要重畫的圖，並幫我寫好重畫用的 ChatGPT prompt（照 prompt 集的共同畫風設定）。</pre></div>
+
+<div class="pbox" data-id="c-exp"><div class="bar"><span class="t">內容擴充（加作物、魚、居民…）</span><span class="ctl"><button class="copy">複製</button></span></div>
+<pre class="prompt">讀 docs/farm-game/內容量表.md、平衡.md、進度.md。這次新增內容包：【例如：夏季作物 25 種／秋季魚 20 種／居民 3 位／家具 30 件】。
+1. 先列出要新增的項目（名稱、說明、季節或出現條件、數值、需要的圖），數值要符合平衡.md 的經濟曲線，給我確認。
+2. 我確認後寫進 data/*.json，更新內容量表的完成進度。
+3. 依 prompt 集的「共同畫風設定」和對應模板（T1～T9），幫我寫好這一批的 ChatGPT 生圖 prompt（每張的名稱清單、排列順序、尺寸、編號），存到 art-src/farm/待生成/批次名.txt。
+4. 圖還沒到之前用暫代圖，遊戲不能壞。</pre></div>
+
+<div class="pbox" data-id="c-bug"><div class="bar"><span class="t">回報問題</span><span class="ctl"><button class="copy">複製</button></span></div>
+<pre class="prompt">問題：【描述，例如：兩人同時收成同一格時，對方畫面上的作物沒有消失】
+重現步驟：【1. … 2. … 3. …】
+先找出原因並說明，不要直接改。告訴我打算怎麼修、會影響哪些地方，我確認後再改；改完附上可以重複測試的方法。</pre></div>
+
+<!-- ============ ChatGPT ============ -->
+<h2 id="s-gpt">給 ChatGPT 的生圖 prompt</h2>
+
+<h3 id="g-flow">生圖工作流程</h3>
+<ol>
+<li>在 ChatGPT 建一個專案（Projects）叫「晴耕谷美術」，所有生圖都在裡面做。</li>
+<li>先做 <a href="#g-0">第 0 批 畫風基準圖</a>，滿意了就下載保存。之後每開一個新對話，都先上傳基準圖，說「之後的圖都沿用這張的畫風」。</li>
+<li>每個 prompt 開頭都要有「共同畫風設定」。這頁的複製鈕已經自動幫你加上。</li>
+<li><b>紙娃娃類</b>（五官、髮型、衣服、鞋、帽子）一定要同時上傳 <b>1-01 素體圖</b>，ChatGPT 才會畫成同樣大小。</li>
+<li>一次只要一張圖。不滿意時說「保持構圖，只改 OO」，不要整段重貼。</li>
+<li>下載原圖（PNG）放到 <code>art-src/farm/第N批/</code>，檔名用編號（例如 <code>2-05.png</code>），再把那次用的 prompt 存成同名 <code>2-05.txt</code>。</li>
+<li>依開發進度一批一批做，不用一次全部生完。生圖有使用次數限制（依方案不同），一天做一批就好。</li>
+</ol>
+<div class="box">
+<h4>常見問題的修正說法</h4>
+<ul class="small">
+<li>背景不透明 → 「背景改成完全均勻的純洋紅色 #FF00FF，不要有雜點」</li>
+<li>物件黏在一起 → 「物件之間再拉開，至少留物件一半寬的空白，不要互相碰到」</li>
+<li>出現文字或標籤 → 「拿掉圖上所有文字和編號」</li>
+<li>變成像素風或 3D → 重貼共同畫風設定，加一句「完全不要像素風」</li>
+<li>大小不一 → 不用太在意，素材工具會統一縮放；只有紙娃娃零件要對齊素體</li>
+<li>紙娃娃零件畫成整個人 → 「只畫零件本身，不要畫身體和頭」</li>
+</ul>
+</div>
+
+<h3 id="g-style">共同畫風設定</h3>
+<p class="small muted">每個 prompt 都會自動接在這段後面。想調整整體畫風只要改這裡。</p>
+<div class="pbox" data-id="g-style"><div class="bar"><span class="t">共同畫風設定</span><span class="ctl"><button class="copy">複製</button></span></div>
+<pre class="prompt" id="style-common">【共同畫風設定】
+用途：2D 網頁遊戲素材，溫馨的田園生活遊戲。
+畫風：手繪卡通插畫，像溫暖的童話繪本。造型圓潤可愛；乾淨的深棕色描邊（線條粗細一致、轉角圓潤）；平塗上色，加一層柔和陰影和一層亮面，帶一點點水彩紙紋理。色彩明亮溫暖、飽和度中等偏高，光源固定在左上方。
+不要：像素風、點陣風格、3D 渲染、寫實照片感、強烈漸層和光暈、文字、浮水印、邊框。
+視角：2D 遊戲常用的正面俯視 3/4 視角，看得到物件正面和一點點頂部；不是正上方俯瞰，也不是斜 45 度等角。
+背景：透明背景 PNG。如果無法透明，背景用完全均勻的純洋紅色 #FF00FF；物件本身是粉紅或紫色系時，改用純青色 #00FFFF。
+物件不要畫地面陰影（陰影由遊戲程式畫）。</pre></div>
+
+<h3 id="g-0">第 0 批　畫風基準圖（開工前）</h3>
+<div class="pbox" data-id="g0" data-style="1"><div class="bar"><span class="t">0-01 畫風基準圖<span class="tag">1536×1024，不用去背</span></span><span class="ctl"><label><input type="checkbox" class="done-cb"> 做完了</label><button class="copy">複製</button></span></div>
+<pre class="prompt">【0-01 畫風基準圖】尺寸 1536×1024
+這張是例外：要畫完整場景和背景，不用透明、可以有陰影。
+請畫一張遊戲宣傳用的畫風基準圖：
+春天早晨的小農場。左邊是一棟木造小農舍（紅色屋頂、煙囪冒著煙、窗台有花盆），前面有幾排整齊的田，種著不同成長階段的蔬菜（剛發芽的、長大中的、成熟的紅蘿蔔和高麗菜）。
+田邊有兩個 Q 版 2.5 頭身的角色：一個短髮男生拿著澆水壺在澆水，一個綁馬尾的女生抱著一籃剛收成的蔬菜，兩人笑著聊天。
+旁邊有木頭柵欄、兩隻小雞、一棵開滿花的果樹、石頭小路，遠方有綠色山丘和小鎮的屋頂。
+這張用來決定整個遊戲的畫風，請完全照共同畫風設定的風格畫。</pre></div>
+
+<h3 id="g-1">第 1 批　紙娃娃（階段 3 用）</h3>
+<p>先只做少量髮型和服裝，確認對位工具和換色效果都好用，再大量生成。1-02 之後每張都要<b>上傳 1-01 素體圖</b>。</p>
+
+<div class="pbox" data-id="g1-01" data-style="1"><div class="bar"><span class="t">1-01 紙娃娃素體<span class="tag">1536×1024</span></span><span class="ctl"><label><input type="checkbox" class="done-cb"> 做完了</label><button class="copy">複製</button></span></div>
+<pre class="prompt">【1-01 紙娃娃素體】尺寸 1536×1024
+請畫一張 2D 遊戲角色的「紙娃娃零件」圖。Q 版 2.5 頭身：圓圓的大頭、小小的身體、短手短腳，可愛溫和。
+這是所有角色共用的素體：光頭（沒有頭髮）、臉上沒有五官（只有臉的形狀和耳朵）、淺膚色、穿簡單的白色無袖貼身上衣和白色短褲、赤腳。
+把身體拆成零件攤平排列（像關節紙娃娃），排成 3 列，零件之間留很大的空白，不能互相碰到：
+第 1 列（正面）：頭、軀幹（含脖子、上衣和短褲）、左手臂（含手）、右手臂（含手）、左腳、右腳
+第 2 列（背面）：頭（後腦勺）、軀幹、左手臂、右手臂、左腳、右腳
+第 3 列（側面，面向右）：頭、軀幹、前面的手臂、後面的手臂、前面的腳、後面的腳
+在畫面最右邊，另外畫一個「組合好的完整正面素體」當參考。
+所有零件比例一致，可以直接拼回一個完整角色。</pre></div>
+
+<div class="pbox" data-id="g1-02" data-style="1"><div class="bar"><span class="t">1-02 手臂與袖子<span class="tag">1536×1024・上傳 1-01</span></span><span class="ctl"><label><input type="checkbox" class="done-cb"> 做完了</label><button class="copy">複製</button></span></div>
+<pre class="prompt">【1-02 手臂與袖子】尺寸 1536×1024（已附上 1-01 素體圖）
+依照附圖素體的手臂大小和形狀，畫兩種「穿袖子的手臂」零件，讓遊戲依上衣袖長替換。
+袖子部分畫成白色到淺灰色（遊戲會換成上衣的顏色），描邊深灰色；手的部分維持素體的膚色。只畫手臂零件，不要畫身體。
+排成 2 列，零件之間留很大空白：
+第 1 列（短袖）：正面左手臂、正面右手臂、背面左手臂、背面右手臂、側面前手臂、側面後手臂
+第 2 列（長袖）：正面左手臂、正面右手臂、背面左手臂、背面右手臂、側面前手臂、側面後手臂</pre></div>
+
+<div class="pbox" data-id="g1-03" data-style="1"><div class="bar"><span class="t">1-03 正面五官<span class="tag">1536×1024・上傳 1-01</span></span><span class="ctl"><label><input type="checkbox" class="done-cb"> 做完了</label><button class="copy">複製</button></span></div>
+<pre class="prompt">【1-03 正面五官】尺寸 1536×1024（已附上 1-01 素體圖）
+依照附圖素體「正面頭部」的大小，畫臉部五官零件。只畫五官本身，不要畫臉和頭。
+成對的東西（一對眼睛、一對眉毛、一對腮紅）兩邊靠近畫在一起；每組之間留很大空白。
+排成 4 列、每列 6 組：
+第 1 列（眼睛）：大圓眼、溫柔下垂眼、有精神的上揚眼、瞇瞇眼、長睫毛大眼、酷酷的細長眼
+第 2 列（表情眼）：閉眼、開心彎眼、驚訝圓眼、含淚眼、生氣眼、愛心眼
+第 3 列（眉毛）：普通眉、粗眉、細彎眉、八字眉、生氣眉、驚訝挑眉
+第 4 列：微笑嘴、張嘴大笑、嘟嘴、驚訝 o 嘴、難過嘴、淡粉紅腮紅一對</pre></div>
+
+<div class="pbox" data-id="g1-04" data-style="1"><div class="bar"><span class="t">1-04 側面五官<span class="tag">1536×1024・上傳 1-01</span></span><span class="ctl"><label><input type="checkbox" class="done-cb"> 做完了</label><button class="copy">複製</button></span></div>
+<pre class="prompt">【1-04 側面五官】尺寸 1536×1024（已附上 1-01 素體圖）
+依照附圖素體「側面頭部（面向右）」的大小，畫側臉五官零件。側面只看得到一隻眼睛和一道眉毛。只畫五官本身，不要畫臉和頭。每個之間留很大空白。
+排成 4 列、每列 6 個：
+第 1 列（眼睛）：大圓眼、溫柔下垂眼、上揚眼、瞇瞇眼、長睫毛大眼、細長眼
+第 2 列（表情眼）：閉眼、開心彎眼、驚訝眼、含淚眼、生氣眼、愛心眼
+第 3 列（眉毛）：普通眉、粗眉、細彎眉、八字眉、生氣眉、驚訝挑眉
+第 4 列：微笑嘴、張嘴大笑、嘟嘴、驚訝 o 嘴、難過嘴、腮紅</pre></div>
+
+<div class="pbox" data-id="g1-hair" data-style="1"><div class="bar"><span class="t">1-05～1-07 髮型（同一個模板用 3 次）<span class="tag">1536×1024・上傳 1-01</span></span><span class="ctl"><label><input type="checkbox" class="done-cb"> 做完了</label><button class="copy">複製</button></span></div>
+<pre class="prompt">【髮型】編號【1-05】尺寸 1536×1024（已附上 1-01 素體圖）
+依照附圖素體的頭部大小和形狀畫 2 種髮型，要剛好戴得上這個光頭。
+這是可換色版本：頭髮畫成白色到淺灰色（保留明暗層次和髮絲線條），描邊深灰色。只畫頭髮，不要畫頭、臉和身體。
+每種髮型畫 5 個零件排成一列，零件之間留很大空白：
+① 正面前髮（瀏海和臉兩側、會蓋在臉前面的部分）
+② 正面後髮（在頭後面、從臉兩側或肩膀後面露出的部分；短髮也要畫，就算大部分會被頭擋住）
+③ 背面（從後面看的整頭頭髮）
+④ 側面前髮（面向右）
+⑤ 側面後髮（面向右，在頭後面的部分）
+第 1 列：【髮型 A】
+第 2 列：【髮型 B】</pre></div>
+<div class="tablewrap"><table>
+<tr><th>編號</th><th>髮型 A</th><th>髮型 B</th></tr>
+<tr><td>1-05</td><td>清爽短髮（男）</td><td>雙馬尾（女）</td></tr>
+<tr><td>1-06</td><td>刺刺短髮（男）</td><td>鮑伯短髮（女）</td></tr>
+<tr><td>1-07</td><td>自然捲（男）</td><td>及腰長直髮（女）</td></tr>
+</table></div>
+
+<div class="pbox" data-id="g1-cloth" data-style="1"><div class="bar"><span class="t">1-08～1-13 服裝（同一個模板）<span class="tag">1024×1024・上傳 1-01</span></span><span class="ctl"><label><input type="checkbox" class="done-cb"> 做完了</label><button class="copy">複製</button></span></div>
+<pre class="prompt">【紙娃娃服裝】編號【1-08】尺寸 1024×1024（已附上 1-01 素體圖）
+依照附圖素體的【軀幹／下半身／腳／頭】大小和形狀，畫 3 件【上衣／下身／鞋子／帽子】，要剛好能穿戴在素體上。只畫服裝本身，不要畫身體、頭和手臂。
+可換色款：服裝主色畫成白色到淺灰色（保留明暗和布料皺褶），圖案細節用深一點的灰色，描邊深灰色。
+每件 3 個角度排成一列：正面、背面、側面（面向右）。零件之間留很大空白。
+第 1 列：【第 1 件】
+第 2 列：【第 2 件】
+第 3 列：【第 3 件】
+補充：上衣的袖子只畫到肩膀袖口（手臂另外組合）；鞋子每個角度只畫一隻；帽子要比光頭稍大、戴在頭髮上面。</pre></div>
+<div class="tablewrap"><table>
+<tr><th>編號</th><th>種類</th><th>第 1 件</th><th>第 2 件</th><th>第 3 件</th></tr>
+<tr><td>1-08</td><td>上衣</td><td>素面短袖 T 恤</td><td>條紋短袖 T 恤</td><td>連帽衫（長袖）</td></tr>
+<tr><td>1-09</td><td>上衣</td><td>格子長袖襯衫</td><td>圓領毛衣</td><td>吊帶工作服（連身，會蓋住下身）</td></tr>
+<tr><td>1-10</td><td>下身</td><td>短褲</td><td>長褲</td><td>牛仔褲</td></tr>
+<tr><td>1-11</td><td>下身</td><td>百褶短裙</td><td>A 字長裙</td><td>工作褲（膝蓋有補丁）</td></tr>
+<tr><td>1-12</td><td>鞋（這張改成 5 雙、排 5 列）</td><td colspan="3">布鞋、短靴、雨鞋、涼鞋、皮鞋</td></tr>
+<tr><td>1-13</td><td>帽子</td><td>寬邊草帽</td><td>毛線帽</td><td>棒球帽</td></tr>
+</table></div>
+
+<h3 id="g-tpl">通用模板 T1～T9（第 2 批以後都用這些）</h3>
+<p class="small muted">把【】換成清單裡的內容再送出。複製時一樣會自動加上共同畫風設定。</p>
+
+<div class="pbox" data-id="T1" data-style="1"><div class="bar"><span class="t">T1 作物成長階段<span class="tag">1536×1024，一張 2 種作物</span></span><span class="ctl"><button class="copy">複製</button></span></div>
+<pre class="prompt">【作物成長階段】編號【2-01】尺寸 1536×1024
+畫 2 種作物的成長階段，每種一列，每列由左到右 6 個，零件之間留很大空白，同一列底部對齊、比例一致：
+① 剛播下（土上冒出一點點小芽）② 發芽 ③ 幼苗 ④ 成長中 ⑤ 成熟可收成（還長在地上的樣子）⑥ 收成物（單獨一個，當背包圖示）
+不要畫耕地格子（遊戲另外畫），植物底部只帶一點點土。
+第 1 列：【作物 A】
+第 2 列：【作物 B】</pre></div>
+
+<div class="pbox" data-id="T2" data-style="1"><div class="bar"><span class="t">T2 樹木四季<span class="tag">1536×1024，一張 1 種樹</span></span><span class="ctl"><button class="copy">複製</button></span></div>
+<pre class="prompt">【樹木四季】編號【2-09】尺寸 1536×1024
+畫【樹名】，排成 2 列，零件之間留很大空白，底部對齊、比例一致：
+第 1 列：樹苗、小樹、砍完的樹樁、【一般樹：倒下的原木／果樹：結滿果實的成樹】
+第 2 列：成樹春天、成樹夏天、成樹秋天、成樹冬天（落葉或積雪）
+成樹要高大、樹冠圓潤蓬鬆。</pre></div>
+
+<div class="pbox" data-id="T3" data-style="1"><div class="bar"><span class="t">T3 圖示或小物件 4×4<span class="tag">1024×1024，一張 16 個</span></span><span class="ctl"><button class="copy">複製</button></span></div>
+<pre class="prompt">【圖示 4×4】編號【2-19】尺寸 1024×1024
+畫 16 個遊戲【物品圖示／地圖物件】，排成整齊的 4 列×4 欄，每個置中、大小一致、彼此之間留很大空白，不要格線、不要文字。
+由左到右、由上到下：【16 個名稱】
+物品圖示：單一物件、可愛造型、輪廓清楚，縮小到 48×48 還認得出來。
+地圖物件：正面俯視 3/4 視角，底部對齊。</pre></div>
+
+<div class="pbox" data-id="T4" data-style="1"><div class="bar"><span class="t">T4 動物<span class="tag">1024×1024，一張 1 種</span></span><span class="ctl"><button class="copy">複製</button></span></div>
+<pre class="prompt">【動物】編號【3-01】尺寸 1024×1024
+畫【動物名】，排成 3 列×3 欄，零件之間留很大空白，比例一致：
+第 1 列（成體）：正面、背面、側面（面向右）
+第 2 列（成體動作，都面向右）：趴下休息、低頭吃東西、開心（閉眼微笑）
+第 3 列：幼體正面、幼體側面（面向右）、產品圖示（【例如：雞蛋】）
+【可換色的動物才加這段】毛色畫成白色到淺灰色（保留明暗），花紋用深一點的灰色，描邊深灰色，遊戲會換成各種毛色。</pre></div>
+
+<div class="pbox" data-id="T5" data-style="1"><div class="bar"><span class="t">T5 建築<span class="tag">1024×1024；修復類用 1536×1024</span></span><span class="ctl"><button class="copy">複製</button></span></div>
+<pre class="prompt">【建築】編號【2-16】尺寸 1024×1024
+畫一棟【建築名稱和外觀描述】，只畫一棟，置中。
+正面俯視 3/4 視角，看得到屋頂和正面牆；門在正面下方；建築底部邊緣是平的，方便放在地圖格子上。
+【修復類設施才加這段，尺寸改 1536×1024】畫兩個版本左右並排、間距很大：左邊是破舊荒廢版（木板破洞、雜草、顏色褪色），右邊是修好的漂亮版，兩者大小、角度、位置完全一樣。</pre></div>
+
+<div class="pbox" data-id="T6" data-style="1"><div class="bar"><span class="t">T6 物件 3×3（家具、機器、農場小物）<span class="tag">1024×1024，一張 9 個</span></span><span class="ctl"><button class="copy">複製</button></span></div>
+<pre class="prompt">【物件 3×3】編號【2-17】尺寸 1024×1024
+畫 9 個遊戲物件，排成 3 列×3 欄，比例彼此一致，零件之間留很大空白，正面俯視 3/4 視角，底部對齊：
+由左到右、由上到下：【9 個名稱】
+【家具可換色才加這段】布料、坐墊、油漆等主色部分畫成白色到淺灰色；木頭、金屬部分維持原本顏色。</pre></div>
+
+<div class="pbox" data-id="T7" data-style="1"><div class="bar"><span class="t">T7 紙娃娃服裝（同 1-08）<span class="tag">1024×1024・上傳 1-01</span></span><span class="ctl"><button class="copy">複製</button></span></div>
+<pre class="prompt">【紙娃娃服裝】編號【5-xx】尺寸 1024×1024（已附上 1-01 素體圖）
+依照附圖素體的【軀幹／下半身／腳／頭／身上的位置】大小和形狀，畫 3 件【上衣／下身／鞋子／帽子／配件】，要剛好能穿戴在素體上。只畫服裝本身，不要畫身體、頭和手臂。
+【可換色款】服裝主色畫成白色到淺灰色（保留明暗和皺褶），圖案細節用深一點的灰色，描邊深灰色。【固定色款】照描述上色。
+每件 3 個角度排成一列：正面、背面、側面（面向右）。零件之間留很大空白。
+第 1 列：【第 1 件】
+第 2 列：【第 2 件】
+第 3 列：【第 3 件】
+補充：上衣的袖子只畫到肩膀袖口；鞋子每個角度只畫一隻；帽子要比光頭稍大、戴在頭髮上面。</pre></div>
+
+<div class="pbox" data-id="T8" data-style="1"><div class="bar"><span class="t">T8 怪物<span class="tag">1024×1024，一張 3 種</span></span><span class="ctl"><button class="copy">複製</button></span></div>
+<pre class="prompt">【礦坑怪物】編號【3-14】尺寸 1024×1024
+畫 3 種礦坑怪物，可愛不恐怖、沒有血腥，像會讓人想摸的小生物。
+排成 3 列，每種一列，每列 3 個：正面、側面（面向右）、被打到時的表情（眼睛變成 × 或淚眼）。零件之間留很大空白。
+第 1 列：【怪物 A 與外觀】
+第 2 列：【怪物 B 與外觀】
+第 3 列：【怪物 C 與外觀】</pre></div>
+
+<div class="pbox" data-id="T9" data-style="1"><div class="bar"><span class="t">T9 居民大頭像<span class="tag">1536×1024，一張 1 位</span></span><span class="ctl"><button class="copy">複製</button></span></div>
+<pre class="prompt">【居民大頭像】編號【4-01】尺寸 1536×1024
+畫一位遊戲居民的對話大頭像（胸口以上），同一個人 5 種表情排成一列，每個之間留空白。臉的大小、位置、角度完全一致，只有表情不同：一般、開心、生氣、難過、害羞。
+比遊戲裡的 Q 版角色稍微細緻，臉約 3 頭身比例。
+人物設定：【名字、年齡、職業、個性、髮型與髮色、眼睛、服裝、配件】
+範例 A：阿禾，45 歲，雜貨店老闆，溫和又愛碎念；灰黑色短捲髮、圓框眼鏡、八字眉；捲起袖子的格子襯衫加綠色圍裙。
+範例 B：小滿，19 歲，麵包店老闆的女兒，開朗又冒失；紅棕色雙丸子頭、雀斑、大圓眼；黃色頭巾、白色圍裙洋裝。</pre></div>
+
+<h3 id="g-2">第 2 批　農場基本（階段 4 用，約 22 張）</h3>
+<div class="tablewrap"><table>
+<tr><th>編號</th><th>模板</th><th>填入內容</th></tr>
+<tr><td>2-01</td><td>T1</td><td>紅蘿蔔、白蘿蔔</td></tr>
+<tr><td>2-02</td><td>T1</td><td>高麗菜、馬鈴薯</td></tr>
+<tr><td>2-03</td><td>T1</td><td>草莓、菠菜</td></tr>
+<tr><td>2-04</td><td>T1</td><td>萵苣、豌豆</td></tr>
+<tr><td>2-05</td><td>T1</td><td>蠶豆、蘆筍</td></tr>
+<tr><td>2-06</td><td>T1</td><td>青蔥、花椰菜</td></tr>
+<tr><td>2-07</td><td>T1</td><td>小松菜、甜菜根</td></tr>
+<tr><td>2-08</td><td>T1</td><td>鬱金香、油菜花</td></tr>
+<tr><td>2-09</td><td>T2</td><td>橡樹（一般樹）</td></tr>
+<tr><td>2-10</td><td>T2</td><td>楓樹（一般樹，秋天紅葉）</td></tr>
+<tr><td>2-11</td><td>T2</td><td>松樹（一般樹，冬天積雪）</td></tr>
+<tr><td>2-12</td><td>T3 地圖物件</td><td>小草叢、大草叢、雜草、紅色小花叢、黃色小花叢、白色小花叢、小石頭、中石頭、樹枝、小樹樁、野蘑菇叢、灌木、蕨類、倒木、蒲公英叢、長青苔的石頭</td></tr>
+<tr><td>2-13</td><td>T6</td><td>超大石頭（要兩人合力搬）、超大樹根（要兩人合力搬）、池邊蘆葦、荷葉、石板路一塊、碎石路一塊、木板步道一塊、花圃、木頭路標</td></tr>
+<tr><td>2-14</td><td>T6</td><td>木柵欄柱子、木柵欄橫向一段、木柵欄直向一段（看得到側面）、木柵欄門（關）、木柵欄門（開）、石牆柱子、石牆橫向一段、石牆直向一段、白色小籬笆橫向一段</td></tr>
+<tr><td>2-15</td><td>專用（下方）</td><td>耕地四種狀態</td></tr>
+<tr><td>2-16</td><td>T5</td><td>自家農舍第 1 級：小小的木造農舍，紅色屋頂、煙囪、門前兩級木階梯、窗台花盆</td></tr>
+<tr><td>2-17</td><td>T6</td><td>出貨箱、信箱、水井、木箱、稻草人、灑水器、木桶、堆肥箱、木長椅</td></tr>
+<tr><td>2-18</td><td>T3 物品圖示</td><td>（加一句「工具畫側面、握把在左下」）木鋤頭、木澆水壺、石斧、石十字鎬、鐮刀、竹釣竿、捕蟲網、木劍、銅鋤頭、銅澆水壺、銅斧、銅十字鎬、銅鐮刀、玻璃纖維釣竿、銅捕蟲網、銅劍</td></tr>
+<tr><td>2-19</td><td>T3 物品圖示</td><td>木材、石頭、纖維、樹枝、硬木、黏土、樹液、空白種子袋（白色、可換色）、肥料袋、高級肥料袋、雜草團、野莓、蒲公英、野蔥、蕨菜、竹筍</td></tr>
+<tr><td>2-20</td><td>專用（下方）</td><td>UI 零件</td></tr>
+<tr><td>2-21</td><td>T3 物品圖示</td><td>水花、灰塵煙、閃亮星星、愛心泡泡、驚嘆號、問號、汗滴、Zzz、音符、生氣符號、花瓣、落葉、雪花、雨滴、愛心爆開、升級光芒</td></tr>
+<tr><td>2-22</td><td>專用（下方）</td><td>標題畫面插畫</td></tr>
+</table></div>
+
+<div class="pbox" data-id="g2-15" data-style="1"><div class="bar"><span class="t">2-15 耕地<span class="tag">1024×1024</span></span><span class="ctl"><label><input type="checkbox" class="done-cb"> 做完了</label><button class="copy">複製</button></span></div>
+<pre class="prompt">【2-15 耕地】尺寸 1024×1024
+這張例外：耕地是貼在地面上的，請「從正上方看」。
+畫 4 塊正方形耕地格子，排成 2 列×2 欄，間距很大：乾的耕地、澆過水的濕耕地（顏色較深、有一點水光）、施了普通肥料的耕地（有小顆粒）、施了高級肥料的耕地（有發亮的顆粒）。
+每塊是鬆軟的田土，有幾道整齊的犁溝，邊緣柔和圓潤，四塊大小完全一樣；並排拼起來要像一整片田。</pre></div>
+
+<div class="pbox" data-id="g2-20" data-style="1"><div class="bar"><span class="t">2-20 UI 零件<span class="tag">1536×1024</span></span><span class="ctl"><label><input type="checkbox" class="done-cb"> 做完了</label><button class="copy">複製</button></span></div>
+<pre class="prompt">【2-20 UI 零件】尺寸 1536×1024
+這張例外：是遊戲介面，用「木頭邊框＋米色紙張」的質感，正面平視即可。
+畫一套遊戲 UI 零件，全部不要文字，排列整齊、零件之間留很大空白：
+1. 大面板：四角有木頭邊框和小葉子裝飾，邊框寬度均勻，中間是米色紙張（中間要能延伸放大）
+2. 對話框：橫長、圓角，左邊留放頭像的位置
+3. 圓形按鈕：一般、按下 兩個狀態
+4. 長方形按鈕：一般、按下 兩個狀態
+5. 物品格子：一般、選中（發出淡淡的光）
+6. 快捷列底板（橫長，可以放 10 格）
+7. 時鐘框：圓形錶盤，旁邊有放季節和天氣的小窗
+8. 空的體力條外框、金幣、愛心（空、半、滿）、品質星星（銀、金、彩虹）
+9. 小圖示：關閉 ×、返回箭頭、齒輪、背包、地圖、相機、晴天、雨天、雪天、春夏秋冬四個季節符號</pre></div>
+
+<div class="pbox" data-id="g2-22" data-style="1"><div class="bar"><span class="t">2-22 標題畫面插畫<span class="tag">1536×1024，不用去背</span></span><span class="ctl"><label><input type="checkbox" class="done-cb"> 做完了</label><button class="copy">複製</button></span></div>
+<pre class="prompt">【2-22 標題畫面插畫】尺寸 1536×1024
+這張例外：完整場景、不用透明、可以有陰影，畫面上「不要任何文字」（標題字由遊戲程式另外放）。
+夕陽下山谷裡的農場全景：中間是小農舍和整齊的田，旁邊有雞舍、果樹、風車，遠方有小鎮、海邊和山上的礦坑入口，天空有暖橘色雲朵和第一顆星星。兩個 Q 版角色（一男一女）坐在田邊的木柵欄上看夕陽，背對畫面。
+畫面上方三分之一留比較空的天空，要放遊戲標題。</pre></div>
+
+<h3 id="g-3">第 3 批　生活系統（階段 5 用，約 21 張）</h3>
+<div class="tablewrap"><table>
+<tr><th>編號</th><th>模板</th><th>填入內容</th></tr>
+<tr><td>3-01</td><td>T4</td><td>雞（可換色，產品：雞蛋）</td></tr>
+<tr><td>3-02</td><td>T4</td><td>鴨（產品：鴨蛋）</td></tr>
+<tr><td>3-03</td><td>T4</td><td>乳牛（可換色，產品：牛奶）</td></tr>
+<tr><td>3-04</td><td>T4</td><td>綿羊（可換色，產品：羊毛）</td></tr>
+<tr><td>3-05</td><td>T4</td><td>小狗（可換色，產品格改成：狗碗）</td></tr>
+<tr><td>3-06</td><td>T4</td><td>小貓（可換色，產品格改成：毛線球）</td></tr>
+<tr><td>3-07</td><td>T6</td><td>飼料槽、乾草堆、孵蛋器、擠奶桶、剪毛剪、動物刷、乾草叉、動物睡墊、水桶</td></tr>
+<tr><td>3-08</td><td>T5</td><td>雞舍第 1 級：小木屋、有小斜坡門</td></tr>
+<tr><td>3-09</td><td>T5</td><td>畜舍第 1 級：紅色穀倉、大拉門</td></tr>
+<tr><td>3-10</td><td>T3 物品圖示</td><td>（加「魚都畫側面、頭朝右」）鯽魚、鯉魚、吳郭魚、鱸魚、鱒魚、香魚、鯰魚、泥鰍、溪蝦、毛蟹、竹莢魚、沙丁魚、鯖魚、鯛魚、比目魚、章魚</td></tr>
+<tr><td>3-11</td><td>T3 物品圖示</td><td>烏賊、鰻魚、秋刀魚、鮭魚、鮪魚、河豚、海膽、蛤蜊、小鯊魚、劍魚、虹鱒、錦鯉、金魚、寄居蟹、海星、蝦虎魚</td></tr>
+<tr><td>3-12</td><td>T6</td><td>小塊可敲碎的石頭、大塊可敲碎的石頭、銅礦石堆、鐵礦石堆、金礦石堆、寶石原石、往下的樓梯洞、礦坑電梯、木頭礦坑支架</td></tr>
+<tr><td>3-13</td><td>T5</td><td>礦坑入口：山壁上的洞口，木頭框架、掛著油燈、門口有礦車軌道</td></tr>
+<tr><td>3-14</td><td>T8</td><td>果凍球（圓滾滾半透明果凍）、石頭小精靈（身上長苔蘚的小石頭）、蘑菇小怪（戴大蘑菇帽的小東西）</td></tr>
+<tr><td>3-15</td><td>T3 物品圖示</td><td>銅礦、鐵礦、金礦、煤炭、石英、紫水晶、翡翠、紅寶石、藍寶石、黃玉、月光石、鑽石、銅錠、鐵錠、金錠、化石碎片</td></tr>
+<tr><td>3-16</td><td>T3 物品圖示</td><td>貝殼、珊瑚、椰子、野生藍莓、栗子、榛果、野菇、楓葉、柿子、松果、冬季根莖、雪花蓮、水晶果、蟬殼、蝴蝶標本、獨角仙</td></tr>
+<tr><td>3-17</td><td>T3 物品圖示</td><td>（料理都裝在盤子或碗裡）煎蛋、生菜沙拉、烤馬鈴薯、草莓蛋糕、蔬菜湯、蛋包飯、炒青菜、鮭魚飯糰、鹽烤魚、玉米濃湯、鬆餅、果醬吐司、奶油燉菜、紅蘿蔔蛋糕、馬鈴薯沙拉、蘑菇濃湯</td></tr>
+<tr><td>3-18</td><td>T6</td><td>果醬機、醃漬桶、起司機、美乃滋機、釀造桶、熏製爐、乾燥架、榨油機、蜂箱</td></tr>
+<tr><td>3-19</td><td>T6</td><td>種子機、熔爐、製作台、廚房爐灶、冰箱、收納箱、木工台、堆肥機、捕魚籠</td></tr>
+<tr><td>3-20</td><td>T3 物品圖示</td><td>（加「內容物部分畫成白色，遊戲會換色」）果醬罐、醃漬罐、果汁瓶、酒瓶、起司輪、美乃滋罐、熏製品盤、果乾袋、油瓶、蜂蜜罐、茶葉罐、麵粉袋、奶油塊、優格杯、冰淇淋杯、蛋糕盒</td></tr>
+<tr><td>3-21</td><td>T3 物品圖示</td><td>（料理續）蛋花湯、番茄義大利麵、咖哩飯、草莓牛奶、烤玉米、南瓜派、蘋果派、煎餅、燉菜、烤雞腿、壽司捲、海鮮湯、熱可可、薑餅、栗子飯、冰沙</td></tr>
+</table></div>
+
+<h3 id="g-4">第 4 批　小鎮（階段 6 用，約 22 張）</h3>
+<p class="small">居民的人物設定由 Claude Code 在階段 6 設計，並照 T9 幫你寫好每一位的 prompt（存在 <code>art-src/farm/待生成/第4批.txt</code>）。</p>
+<div class="tablewrap"><table>
+<tr><th>編號</th><th>模板</th><th>填入內容</th></tr>
+<tr><td>4-01～4-08</td><td>T9</td><td>第一批 8 位居民的大頭像（設定由 Claude Code 產生）</td></tr>
+<tr><td>4-09～4-12</td><td>1-05 髮型模板／T7</td><td>8 位居民專屬的髮型和服裝（Claude Code 列清單）</td></tr>
+<tr><td>4-13</td><td>T5</td><td>雜貨店：綠色遮雨棚、門口擺著蔬菜箱</td></tr>
+<tr><td>4-14</td><td>T5</td><td>鐵匠鋪：石砌、煙囪冒火光、門口有鐵砧</td></tr>
+<tr><td>4-15</td><td>T5</td><td>木工屋：原木小屋、門口堆著木材</td></tr>
+<tr><td>4-16</td><td>T5</td><td>漁具店：海邊的藍色小屋、掛著漁網和救生圈</td></tr>
+<tr><td>4-17</td><td>T5</td><td>診所：白牆、綠十字招牌（不要文字）</td></tr>
+<tr><td>4-18</td><td>T5</td><td>餐館：暖黃燈光、戶外有兩張桌子</td></tr>
+<tr><td>4-19</td><td>T5</td><td>民宅 A：兩層樓、藍色屋頂、陽台花盆</td></tr>
+<tr><td>4-20</td><td>T5</td><td>民宅 B：平房、黃色屋頂、小菜園</td></tr>
+<tr><td>4-21</td><td>T6</td><td>噴水池、佈告欄、路燈、長椅、花台、郵筒、攤販推車、垃圾桶、公車站牌</td></tr>
+<tr><td>4-22</td><td>T6</td><td>彩色三角旗串、紙燈籠、花拱門、木頭舞台、節慶攤位、南瓜燈、裝飾燈的冬星樹、煙火台、氣球串</td></tr>
+</table></div>
+
+<h3 id="g-5">第 5 批以後（階段 7～9 與內容擴充）</h3>
+<p>其餘大約 250～300 張，建議用 Claude Code 的 <a href="#c-more">內容擴充 prompt</a>：它會先設計內容，再照上面的模板寫好每一張的 prompt。紙娃娃服裝是遊戲的特色，完整清單先列在這裡：</p>
+<div class="tablewrap"><table>
+<tr><th>種類</th><th>完整清單（第 1 批已做的不再列）</th></tr>
+<tr><td>髮型（共 30）</td><td>男：中分、平頭、蓬鬆瀏海、側分油頭、小狼尾、綁小馬尾、刺蝟頭、超短寸頭／女：高馬尾、大波浪捲髮、丸子頭、雙丸子頭、麻花辮、公主切、短捲髮、低馬尾、半紮髮／中性：西瓜皮、亂翹短髮、及肩直髮、側邊編髮、捲毛蓬蓬頭、遮眼長瀏海、髮帶短髮</td></tr>
+<tr><td>上衣（共 40）</td><td>基本：口袋 T、背心、短袖襯衫、POLO 衫、高領毛衣、針織背心、長袖 T 恤／外套：牛仔外套、工作夾克、羽絨外套、毛呢大衣、雨衣、運動外套、披風、農夫背心／連身（遮住下身）：短洋裝、長洋裝、圍裙洋裝、浴衣、睡衣、廚師服、漁夫連身褲、禮服、節慶服／固定色特色款：草莓圖案 T、小雞圖案 T、紅蘿蔔刺繡毛衣、星空襯衫、落葉毛衣、雪花毛衣、櫻花上衣、西瓜 T、漁夫背心、礦工外套</td></tr>
+<tr><td>下身（共 25）</td><td>七分褲、運動褲、燈籠褲、吊帶短褲、卡其褲、格子裙、蓬蓬裙、褲裙、燈芯絨褲、雪褲、海灘褲、牛仔短裙、長圓裙、工作吊帶褲、燈籠短褲、騎馬褲、百慕達短褲、針織長裙、節慶紗裙</td></tr>
+<tr><td>鞋（共 15）</td><td>運動鞋、拖鞋、草鞋、雪靴、娃娃鞋、木屐、工作靴、高筒帆布鞋、毛毛拖鞋、長筒靴</td></tr>
+<tr><td>帽子（共 30）</td><td>貝雷帽、漁夫帽、牛仔帽、頭巾、髮箍、蝴蝶結、花冠、廚師帽、礦工頭燈帽、雨帽、節慶紅帽、兔耳髮箍、貓耳帽、小雞帽、西瓜帽、南瓜帽、雪人毛帽、海盜帽、魔法師帽、皇冠、遮陽帽、安全帽、耳罩、髮夾組、花朵頭飾、青蛙帽、蜂蜜罐帽</td></tr>
+<tr><td>配件（共 30）</td><td>圓框眼鏡、方框眼鏡、墨鏡、圍巾、領結、領帶、項鍊、後背包、斜背包、圍裙、手套、耳環、OK 繃、花朵髮夾、星星髮夾、天使翅膀、小惡魔尾巴、腰包、披肩、手錶、手環、口哨、望遠鏡、種子袋腰帶、草帽繩、鈴鐺項圈、徽章、髮帶、圍兜、小提燈</td></tr>
+</table></div>
+<p class="small">其他還要生成的類別（由內容擴充分批產生 prompt）：夏秋冬與溫室作物（約 50 張）、果樹 20、花、昆蟲、其餘 120 種魚與傳說魚、家畜其餘 8 種與坐騎、寶石與化石、料理其餘約 170 道、家具 150 種、農舍第 2～6 級與各建築升級、8 個修復設施（破舊／修好）、其餘 16 位居民、其餘礦坑怪物、節慶道具、海邊與島嶼的地圖物件、冬季積雪版的地圖物件。</p>
+
+<!-- ============ 注意事項 ============ -->
+<h2 id="s-note">注意事項</h2>
+<div class="box warn">
+<ul>
+<li><b>500 小時是內容目標</b>，不會一次做出來。做法是先把系統做好（階段 1～9），再用「內容擴充」一包一包加資料和圖。Claude Code 一次對話做一個階段或一個內容包最穩。</li>
+<li><b>紙娃娃最容易出問題</b>：ChatGPT 每張圖的比例和線條粗細都會有點不同。第 1 批先少量做，確認對位工具和換色效果可行，再大量生成服裝。</li>
+<li><b>原創</b>：prompt 裡不要寫現有遊戲的名字叫 ChatGPT 模仿，可能會被拒絕，或畫出太像的角色。用這份的畫風描述就好。</li>
+<li><b>Cloudflare 免費方案有用量上限</b>，階段 2 已要求 Claude Code 先查清楚再設計同步頻率。兩個人玩通常夠用。</li>
+<li><b>不要直接在正式網站上測</b>：先用 wrangler dev 在本機測，部署前讓 Claude Code 列出風險再決定。</li>
+<li>遊戲只會出現在一對一聊天，群組和備忘錄不會出現農場選項。</li>
+</ul>
+</div>
+
+</main>
+</div>
+
+<script>
+(function(){
+  var styleEl = document.getElementById('style-common');
+  var KEY = 'qgg-prompt-done';
+  var done = {};
+  try { done = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { done = {}; }
+
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+
+  document.querySelectorAll('.pbox').forEach(function(box){
+    var id = box.getAttribute('data-id');
+    var cb = box.querySelector('.done-cb');
+    if (cb && id) {
+      if (done[id]) { cb.checked = true; box.classList.add('done'); }
+      cb.addEventListener('change', function(){
+        done[id] = cb.checked;
+        box.classList.toggle('done', cb.checked);
+        save();
+      });
+    }
+    var btn = box.querySelector('button.copy');
+    if (!btn) return;
+    btn.addEventListener('click', function(){
+      var text = box.querySelector('pre').innerText;
+      if (box.getAttribute('data-style') === '1' && styleEl) {
+        text = styleEl.innerText + '\n\n' + text;
+      }
+      copyText(text, btn);
+    });
+  });
+
+  function copyText(text, btn){
+    function fallback(){
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) {}
+      ta.remove();
+      flash(btn, ok);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function(){ flash(btn, true); }, fallback);
+    } else { fallback(); }
+  }
+  function flash(btn, ok){
+    btn.textContent = ok ? '已複製' : '請手動選取';
+    setTimeout(function(){ btn.textContent = '複製'; }, 1500);
+  }
+})();
+</script>
+</body>
+</html>
