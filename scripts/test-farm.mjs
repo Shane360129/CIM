@@ -929,5 +929,19 @@ const lum = (c) => [1, 3, 5].reduce((n, i) => n + parseInt(c.slice(i, i + 2), 16
 check('明暗：亮一階比較亮、暗一階比較暗、0 不變', [lum(shade('#62ad4b', 0.1)) > lum('#62ad4b'), lum(shade('#62ad4b', -0.1)) < lum('#62ad4b'), shade('#62ad4b', 0)],
   [true, true, '#62ad4b']);
 
+// 外掛圖包（public/farm-pack/）：manifest 裡每張圖都在 atlas 的範圍裡、大小是整數；三種房子、四季的樹、動物的兩張走路圖都成對
+{
+  const { readFileSync } = await import('node:fs');
+  const m = JSON.parse(readFileSync(new URL('../public/farm-pack/manifest.json', import.meta.url), 'utf8'));
+  const png = readFileSync(new URL('../public/farm-pack/' + m.atlas, import.meta.url));
+  const AW = png.readUInt32BE(16), AH = png.readUInt32BE(20), names = Object.keys(m.sprites);
+  const outside = names.filter((n) => { const s = m.sprites[n]; return ![s.x, s.y, s.w, s.h].every(Number.isInteger) || s.x < 0 || s.y < 0 || s.x + s.w > AW || s.y + s.h > AH; });
+  const need = ['house1', 'house2', 'house3', 'barn', ...['spring', 'summer', 'autumn', 'winter', 'cherry', 'maple', 'snow'].map((k) => 'tree@' + k),
+    ...ART_NAMES.animals.flatMap((a) => [a + '_0', a + '_1'])];
+  check('外掛圖包：每張圖都在 atlas 裡，房子、樹、動物的圖都齊', [outside, need.filter((n) => !m.sprites[n]), m.hd], [[], [], 2]);
+  const { packSprite } = await import('../public/farm-pack.js');
+  check('外掛圖包：還沒載入的時候回傳 null，照舊用程式畫的圖', packSprite('house1'), null);
+}
+
 console.log(`\n結果：${pass} 通過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);

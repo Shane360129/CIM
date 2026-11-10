@@ -10,9 +10,11 @@
     "test": "node scripts/test-api.mjs",
     "test:security": "node scripts/test-security.mjs",
     "test:farm": "node --no-warnings=MODULE_TYPELESS_PACKAGE_JSON scripts/test-farm.mjs",
-    "test:games": "node --no-warnings=MODULE_TYPELESS_PACKAGE_JSON scripts/test-games.mjs"
+    "test:games": "node --no-warnings=MODULE_TYPELESS_PACKAGE_JSON scripts/test-games.mjs",
+    "farm:pack": "node scripts/farm-pack.mjs"
   },
   "devDependencies": {
-    "wrangler": "^4.0.0"
+    "wrangler": "^4.0.0",
+    "sharp": "^0.35.2"
   }
 }

@@ -8,6 +8,7 @@ import {
   gearSprite, crowSprite, paddySprite, teaBushSprite, teaBudsSprite, smithSprite, bugSprite, mailboxSprite,
   snowCoverSprite, snowmanSprite,
 } from '/farm-sprites.js';
+import { loadPack } from '/farm-pack.js';
 
 const T = 16;            // 一格 16 像素
 const SPEED = 4.5;       // 每秒走幾格
@@ -2883,7 +2884,7 @@ const g = canvas.getContext('2d');
 // 32×32 的新圖（img.hd = 2）畫在地圖上一樣佔一格：兩個像素算一個單位；比較高的圖（樹）往上多畫 img.oy 個像素
 const rawDraw = g.drawImage.bind(g);
 g.drawImage = (img, ...a) => (img && img.hd && a.length === 2
-  ? rawDraw(img, a[0], a[1] - (img.oy || 0) / img.hd, img.width / img.hd, img.height / img.hd)
+  ? rawDraw(img, a[0] - (img.ox || 0) / img.hd, a[1] - (img.oy || 0) / img.hd, img.width / img.hd, img.height / img.hd)
   : rawDraw(img, ...a));
 let dpr = 1;
 
@@ -3485,7 +3486,7 @@ async function boot() {
   if (!token) return fatal('請先在聊天室登入，再從聊天室右上角 ☰ 打開牧場');
   if (!convId) return fatal('找不到要打開哪一座牧場，請從聊天室右上角 ☰ 打開');
   try {
-    const [meRes] = await Promise.all([api('/api/me'), loadState()]);
+    const [meRes] = await Promise.all([api('/api/me'), loadState(), loadPack()]); // loadPack：外掛圖包，沒有也沒關係
     S.meId = meRes.user.id;
     if (meRes.user.avatarColor) S.myColor = meRes.user.avatarColor;
   } catch (e) {
