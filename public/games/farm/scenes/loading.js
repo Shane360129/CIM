@@ -10,7 +10,7 @@ export const loading = {
     try {
       const convId = Number(new URLSearchParams(location.search).get('conv')) || 0;
       const [data, session] = await Promise.all([
-        loadAll([['balance', 'data/balance.json'], ['objects', 'data/objects.json'], ['map', 'data/map-test.json']], (p) => { this.progress = p * 0.8; }),
+        loadAll([['balance', 'data/balance.json'], ['objects', 'data/objects.json'], ['map', 'data/map-test.json'], ['parts', 'data/doll/parts.json']], (p) => { this.progress = p * 0.8; }),
         signIn(convId),
       ]);
       Object.assign(ctx, { data, session });

@@ -14,6 +14,7 @@
     "test:farmroom": "node scripts/test-farmroom.mjs"
   },
   "devDependencies": {
+    "sharp": "^0.35.5",
     "wrangler": "^4.0.0"
   }
 }

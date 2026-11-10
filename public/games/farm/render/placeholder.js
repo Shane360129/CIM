@@ -26,6 +26,7 @@ export function drawTilled(g, x, y, T, wet) {
   for (let i = 1; i <= 3; i++) { g.beginPath(); g.moveTo(x * T + T * 0.18, y * T + T * i / 4); g.lineTo(x * T + T * 0.82, y * T + T * i / 4); g.stroke(); }
   if (wet) { g.fillStyle = 'rgba(160, 215, 255, .5)'; g.beginPath(); g.ellipse(x * T + T * 0.68, y * T + T * 0.3, T * 0.09, T * 0.05, 0, 0, 7); g.fill(); }
 }
+export function drawName(g, text, x, y, T) { label(g, text, x, y, T * 0.2); }
 export function drawShadow(g, x, y, w) {
   g.fillStyle = 'rgba(40, 60, 30, .22)';
   g.beginPath(); g.ellipse(x, y, w * 0.5, w * 0.17, 0, 0, 7); g.fill();

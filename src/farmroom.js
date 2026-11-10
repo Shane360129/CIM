@@ -3,6 +3,7 @@
 // 一切以這裡為準：格子、錢、時間由這裡決定；玩家的走動在各自畫面先動，這裡只轉給對方。協定見 docs/farm-game/協定.md。
 import MAP from '../public/games/farm/data/map-test.json';
 import BAL from '../public/games/farm/data/balance.json';
+import PARTS from '../public/games/farm/data/doll/parts.json';
 
 const TICK_MS = 10000;                 // 有人在線時，每 10 秒推進一次遊戲時鐘
 const DAY_SPAN = BAL.dayEndMinute - BAL.dayStartMinute;            // 一天有幾個遊戲分鐘（早上 6 點到凌晨 2 點）
@@ -11,6 +12,17 @@ const CHUNK = 16, BACKUP_DAYS = 7, MOVE_MIN_MS = 40;
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
 const groundAt = (x, y) => { let t = MAP.ground || 'grass'; for (const p of MAP.patches || []) if (x >= p.x && x < p.x + p.w && y >= p.y && y < p.y + p.h) t = p.type; return t; };
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+// 外觀只收清單裡有的零件和顏色（data/doll/parts.json），其他一律不收
+const LOOK_IDS = ['eyes', 'brows', 'mouths', 'hair', 'top', 'bottom', 'shoes', 'hat', 'acc'];
+const LOOK_COLORS = { skin: 'skin', hairColor: 'hair', topColor: 'cloth', bottomColor: 'cloth', shoesColor: 'cloth', hatColor: 'cloth' };
+export function cleanLook(look) {
+  if (!look || typeof look !== 'object' || !['boy', 'girl'].includes(look.gender)) return null;
+  const out = { gender: look.gender };
+  for (const k of LOOK_IDS) { if (!PARTS[k].some((v) => v.id === look[k])) return null; out[k] = look[k]; }
+  for (const [k, list] of Object.entries(LOOK_COLORS)) { if (!PARTS.colors[list].includes(look[k])) return null; out[k] = look[k]; }
+  return out;
+}
+const cleanName = (name) => String(name || '').replace(/[\u0000-\u001f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 10);
 
 export class FarmRoom {
   constructor(ctx, env) {
@@ -55,7 +67,7 @@ export class FarmRoom {
   online() { return this.sockets().map((ws) => ({ ws, a: ws.deserializeAttachment() })).filter((s) => s.a && !s.a.gone); } // gone：被自己的新分頁換掉的舊連線
   send(ws, msg) { try { ws.send(JSON.stringify(msg)); } catch { /* 對方剛好斷線 */ } }
   broadcast(msg, exceptId = 0) { const text = JSON.stringify(msg); for (const { ws, a } of this.online()) if (a.id !== exceptId) { try { ws.send(text); } catch {} } }
-  pub(a) { return { id: a.id, name: a.name, color: a.color, x: a.x, y: a.y, dir: a.dir, vx: a.vx || 0, vy: a.vy || 0, asleep: !!a.asleep }; }
+  pub(a) { return { id: a.id, name: a.nick || a.name, look: a.look || null, color: a.color, x: a.x, y: a.y, dir: a.dir, vx: a.vx || 0, vy: a.vy || 0, asleep: !!a.asleep }; }
 
   async fetch(request) {
     const url = new URL(request.url);
@@ -81,17 +93,21 @@ export class FarmRoom {
     const others = this.online().filter((s) => s.a.id !== me.id);
     const pair = new WebSocketPair(), [client, server] = Object.values(pair);
     this.ctx.acceptWebSocket(server);
-    const a = { id: me.id, name: me.name, color: me.color, x: saved ? saved.x : MAP.spawn.x, y: saved ? saved.y : MAP.spawn.y, dir: saved ? saved.dir : 'down', vx: 0, vy: 0, asleep: false, mt: 0 };
+    const a = { id: me.id, name: me.name, color: me.color, x: saved ? saved.x : MAP.spawn.x, y: saved ? saved.y : MAP.spawn.y, dir: saved ? saved.dir : 'down', vx: 0, vy: 0, asleep: false, mt: 0,
+      look: (saved && saved.look) || null, nick: (saved && saved.nick) || '' };
     server.serializeAttachment(a);
     // 時鐘只在有人的時候走：第一個人進來，從現在開始算
     if (!others.length) { this.farm.lastTick = now; this.saveFarm(); await this.ctx.storage.setAlarm(now + TICK_MS); }
     const summary = row ? this.summaryFor(me.id, saved, row.last_seen) : null;
-    this.sql.exec(`INSERT OR REPLACE INTO players (user_id, name, data, last_seen) VALUES (?, ?, ?, ?)`, me.id, me.name,
-      JSON.stringify({ x: a.x, y: a.y, dir: a.dir, lastDay: this.farm.day, lastMoney: this.farm.money }), now);
+    this.savePlayer(a, now);
     this.send(server, { t: 'snapshot', you: this.pub(a), partner: who.partner, players: others.map((s) => this.pub(s.a)), farm: this.pubFarm(), tiles: this.tileList(), summary, map: MAP.name });
     this.broadcast({ t: 'join', p: this.pub(a) }, me.id);
     const protocols = (request.headers.get('Sec-WebSocket-Protocol') || '').split(',').map((s) => s.trim());
     return new Response(null, { status: 101, webSocket: client, headers: protocols.includes('farm.v1') ? { 'Sec-WebSocket-Protocol': 'farm.v1' } : {} });
+  }
+  savePlayer(a, now) {
+    this.sql.exec(`INSERT OR REPLACE INTO players (user_id, name, data, last_seen) VALUES (?, ?, ?, ?)`, a.id, a.name,
+      JSON.stringify({ x: a.x, y: a.y, dir: a.dir, look: a.look, nick: a.nick, lastDay: this.farm.day, lastMoney: this.farm.money }), now);
   }
   // 現在的遊戲時間：上次記下的分鐘，加上從那之後過了多久（兩次 tick 之間也準）
   minuteNow(now = Date.now()) { return this.farm.lastTick && this.online().length ? this.farm.minute + Math.min(now - this.farm.lastTick, TICK_MS * 3) * MIN_PER_MS : this.farm.minute; }
@@ -114,6 +130,11 @@ export class FarmRoom {
     if (m.t === 'move') return this.onMove(ws, a, m);
     if (m.t === 'act') { this.onAct(ws, a, m); this.flush(); return; }
     if (m.t === 'bubble') { const text = String(m.text || '').replace(/\s+/g, ' ').trim().slice(0, BAL.bubbleMaxChars); if (text) this.broadcast({ t: 'bubble', id: a.id, text }); return; }
+    if (m.t === 'look') { // 建立角色、換裝：存起來，對方馬上看到
+      const look = cleanLook(m.look); if (!look) return this.send(ws, { t: 'no', id: 0, reason: 'look' });
+      a.look = look; a.nick = cleanName(m.name) || a.nick; ws.serializeAttachment(a); this.savePlayer(a, Date.now());
+      this.broadcast({ t: 'look', id: a.id, look, name: a.nick || a.name }); return;
+    }
     if (m.t === 'emote') { if (BAL.emotes.includes(m.e)) this.broadcast({ t: 'emote', id: a.id, e: m.e }); return; }
     if (m.t === 'sleep') { a.asleep = !!m.on; ws.serializeAttachment(a); this.broadcast({ t: 'sleep', id: a.id, on: a.asleep }); if (a.asleep) await this.maybeNewDay('sleep'); }
   }
@@ -190,8 +211,7 @@ export class FarmRoom {
     this.load();
     const still = this.online().some((s) => s.ws !== ws && s.a.id === a.id); // 被自己的新分頁換掉的不算離開
     if (!still) {
-      this.sql.exec(`INSERT OR REPLACE INTO players (user_id, name, data, last_seen) VALUES (?, ?, ?, ?)`, a.id, a.name,
-        JSON.stringify({ x: a.x, y: a.y, dir: a.dir, lastDay: this.farm.day, lastMoney: this.farm.money }), Date.now());
+      this.savePlayer(a, Date.now());
       this.broadcast({ t: 'leave', id: a.id }, a.id);
     }
     const left = this.online().filter((s) => s.ws !== ws);

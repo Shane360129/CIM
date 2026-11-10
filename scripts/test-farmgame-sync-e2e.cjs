@@ -12,18 +12,24 @@ const { chromium } = require('playwright');
   const br = await chromium.launch(); let fails = 0;
   const ok = (l, c) => { if (!c) fails++; console.log((c ? 'PASS ' : 'FAIL ') + l); };
   const errs = [];
-  const enter = async (tok) => {
+  const enter = async (tok, look) => {
     const cx = await br.newContext({ viewport: { width: 1000, height: 700 } }), p = await cx.newPage();
     p.on('pageerror', (e) => errs.push(e.message)); p.on('console', (m) => { if (m.type() === 'error' && !/WebSocket|ERR_/.test(m.text())) errs.push(m.text()); });
     await p.goto(B + '/games/farm/?test'); await p.evaluate((t) => localStorage.setItem('cim_token', t), tok);
     await p.goto(B + `/games/farm/?conv=${dm.id}&test`); await p.waitForTimeout(1200);
-    await p.locator('#stage').click({ position: { x: 500, y: 350 } }); await p.waitForFunction(() => window.__game.scenes.current.ready === true, null, { timeout: 8000 });
+    await p.locator('#stage').click({ position: { x: 300, y: 350 } }); await p.waitForTimeout(700);
+    if (await p.locator('.maker').count()) { if (look) await look(p); await p.locator('.maker [data-act=done]').click(); }
+    await p.waitForFunction(() => window.__game.scenes.current.ready === true, null, { timeout: 8000 });
     return p;
   };
   const st = (p) => p.evaluate(() => { const s = window.__game.scenes.current; return { me: { x: s.player.x, y: s.player.y, asleep: s.player.asleep }, others: [...s.others.values()].map((o) => ({ name: o.name, x: o.x, y: o.y, asleep: o.asleep })), tiles: [...s.tiles.values()], day: s.farm.day, minute: s.minute(), bubbles: [...s.bubbles.values()].map((x) => x.text), ready: s.ready }; });
-  const pa = await enter(a.token), pb = await enter(b.token); await pa.waitForTimeout(500);
+  const pa = await enter(a.token, async (p) => { await p.locator('.maker [data-gender=girl]').click(); await p.locator('.maker [data-next=hair]').click(); await p.locator('.maker .minput').fill('晴晴'); await p.screenshot({ path: S + '/s3-create.png' }); });
+  const pb = await enter(b.token); await pa.waitForTimeout(500);
+  const looks = async (p) => p.evaluate(() => { const w = window.__game.world; return { me: w.me.look, name: w.me.name, other: [...w.others.values()][0]?.look, otherName: [...w.others.values()][0]?.name }; });
+  let la = await looks(pa), lb = await looks(pb);
+  ok('建立角色：A 選女生、換髮型、改名字，B 看到一樣的造型和名字', la.me.gender === 'girl' && la.me.hair === 'bob' && lb.other && lb.other.hair === 'bob' && lb.otherName === '晴晴' && la.other && la.other.gender === 'boy');
   let sa = await st(pa), sb = await st(pb);
-  ok('兩邊都看得到對方', sa.others.length === 1 && sa.others[0].name === '阿耕' && sb.others.length === 1 && sb.others[0].name === '小晴');
+  ok('兩邊都看得到對方', sa.others.length === 1 && sa.others[0].name === '阿耕' && sb.others.length === 1 && sb.others[0].name === '晴晴');
   await pa.keyboard.down('KeyD'); await pa.waitForTimeout(900); await pa.keyboard.up('KeyD'); await pa.waitForTimeout(500);
   sa = await st(pa); sb = await st(pb);
   ok(`A 走動，B 畫面上的 A 跟著走到差不多的位置（A ${sa.me.x.toFixed(2)}、B 看到 ${sb.others[0].x.toFixed(2)}）`, sa.me.x > 13 && Math.abs(sb.others[0].x - sa.me.x) < 0.25 && Math.abs(sb.others[0].y - sa.me.y) < 0.25);
@@ -51,6 +57,13 @@ const { chromium } = require('playwright');
   await pa.waitForFunction(() => window.__game.scenes.current.ready === true, null, { timeout: 8000 }); await pb.waitForTimeout(400);
   sa = await st(pa);
   ok('A 自動重連：位置、格子都照伺服器的回來，B 又看到 A', sa.tiles.length === 1 && Math.abs(sa.me.x - 15.5) < 0.01 && (await st(pb)).others.length === 1);
+  // 衣櫃換裝
+  await pa.evaluate(() => { const s = window.__game.scenes.current; s.player.x = s.player.px = 10.5; s.player.y = s.player.py = 8.5; s.player.dir = 'up'; s.room.send({ t: 'move', x: 10.5, y: 8.5, dir: 'up', vx: 0, vy: 0 }); });
+  await pa.waitForTimeout(200); await pa.keyboard.press('Space'); await pa.waitForTimeout(300); await pa.locator('.card button', { hasText: '換衣服' }).click(); await pa.waitForTimeout(400);
+  await pb.evaluate(() => window.__game.world.room.act('till', 16, 13)); // A 在衣櫃裡的時候，B 那邊照常運作
+  await pa.locator('.maker [data-next=hat]').click(); await pa.locator('.maker [data-act=done]').click(); await pb.waitForTimeout(600);
+  la = await looks(pa); lb = await looks(pb);
+  ok('在家裡換衣服（戴上草帽），B 馬上看到；回到農場畫面', la.me.hat === 'straw' && lb.other.hat === 'straw' && (await pa.evaluate(() => !!window.__game.scenes.current.player)));
   // 睡覺換日
   const bed = async (p) => { await p.evaluate(() => { const s = window.__game.scenes.current; s.player.x = s.player.px = 10.5; s.player.y = s.player.py = 8.5; s.player.dir = 'up'; s.room.send({ t: 'move', x: 10.5, y: 8.5, dir: 'up', vx: 0, vy: 0 }); }); await p.waitForTimeout(200); await p.keyboard.press('Space'); await p.waitForTimeout(300); await p.locator('.card button', { hasText: '睡覺' }).click(); await p.waitForTimeout(400); };
   await bed(pa); sa = await st(pa); sb = await st(pb);
@@ -63,6 +76,7 @@ const { chromium } = require('playwright');
   await pb.evaluate(async () => { const s = window.__game.scenes.current; s.player.x = 15.5; s.player.y = 12.5; s.room.send({ t: 'move', x: 15.5, y: 12.5, dir: 'down', vx: 0, vy: 0 }); await new Promise((r) => setTimeout(r, 200)); await s.room.act('till', 16, 13); await s.room.act('water', 16, 13); });
   const pa2 = await enter(a.token);
   const card = await pa2.locator('.card').textContent().catch(() => '');
+  ok('重新進來不用再建立角色，造型還在', (await looks(pa2)).me.hat === 'straw' && (await looks(pa2)).name === '晴晴');
   ok('A 回來看到「你不在時發生的事」：' + card, /你不在時發生的事/.test(card) && /阿耕/.test(card) && /翻土 1 次/.test(card));
   await pa2.screenshot({ path: S + '/s2-summary.png' });
   ok('沒有錯誤訊息 ' + errs.join(' | '), errs.length === 0);

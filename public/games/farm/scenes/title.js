@@ -1,11 +1,17 @@
 // 標題畫面（之後這裡會接「建立角色」）。標題插畫還沒到，先用色塊
 import { play } from './play.js';
+import { create } from './create.js';
+import { createWorld } from '../core/world.js';
 
 export const title = {
   t: 0,
   enter(ctx) {
     this.t = 0;
-    const start = () => ctx.scenes.go(play);
+    // 在標題畫面就先連上農場，按開始時通常已經拿到資料了。還沒進到農場畫面時收到的「你不在時發生的事」先留著，進去再顯示
+    if (!ctx.world) { ctx.world = createWorld(ctx.session, ctx.data.balance); ctx.world.on('snapshot', (m) => { if (m.summary && ctx.scenes.current !== play) ctx.pendingSummary = m; }); }
+    this.wait = false;
+    const go = () => ctx.scenes.go(ctx.world.me.look ? play : create); // 還沒有角色：先去建立
+    const start = () => { if (ctx.world.ready) go(); else if (!this.wait) { this.wait = true; const off = ctx.world.on('snapshot', () => { off(); if (ctx.scenes.current === this) go(); }); } };
     this.off = [ctx.input.on('action', start), ctx.input.on('tap', start)];
   },
   exit() { this.off.forEach((f) => f()); },
@@ -23,7 +29,7 @@ export const title = {
     g.font = `700 18px ${F}`; g.fillStyle = '#5a3d22';
     g.fillText(session.partnerName ? `${session.me.displayName} 和 ${session.partnerName} 的農場` : '我們的農場', view.w / 2, view.h * 0.36 + size * 0.85);
     g.globalAlpha = 0.55 + 0.45 * Math.sin(this.t * 3.2);
-    g.font = `16px ${F}`; g.fillText('點一下畫面，或按空白鍵開始', view.w / 2, view.h * 0.7);
+    g.font = `16px ${F}`; g.fillText(this.wait ? '連線中…' : '點一下畫面，或按空白鍵開始', view.w / 2, view.h * 0.7);
     g.globalAlpha = 1;
   },
 };

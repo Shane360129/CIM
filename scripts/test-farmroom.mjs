@@ -98,6 +98,13 @@ const bub = await Bc.wait('bubble'); check('聊天泡泡：去掉多餘空白、
 A.send({ t: 'emote', e: '😊' }); check('表情會送到', !!(await Bc.wait('emote', (m) => m.e === '😊')));
 Bc.clear(); A.send({ t: 'emote', e: '<script>' }); await sleep(250); check('清單以外的表情不會送', !Bc.log.some((m) => m.t === 'emote'));
 
+// ---- 外觀（建立角色、換裝）----
+const LOOK = { gender: 'girl', skin: '#ffe0bd', eyes: 'lash', brows: 'thin', mouths: 'smile', hair: 'twin', hairColor: '#8a5a34', top: 'stripe', topColor: '#e88ab0', bottom: 'skirt', bottomColor: '#3b6ea8', shoes: 'boot', shoesColor: '#8a5a34', hat: 'none', hatColor: '#f6d34a', acc: 'none' };
+Bc.clear(); A.send({ t: 'look', look: LOOK, name: '  晴<b>晴  ' + '長'.repeat(30) });
+const lk = await Bc.wait('look'); check('外觀存起來並通知對方；名字去掉奇怪的字、最多 10 個字', !!lk && lk.look.hair === 'twin' && lk.name.startsWith('晴b晴') && lk.name.length === 10, lk && lk.name);
+Bc.clear(); A.send({ t: 'look', look: { ...LOOK, hair: 'dragon' } }); A.send({ t: 'look', look: { ...LOOK, topColor: 'url(x)' } }); A.send({ t: 'look', look: { ...LOOK, extra: 1, top: undefined } }); await sleep(300);
+check('清單以外的零件、顏色不收', !Bc.log.some((m) => m.t === 'look'));
+
 // ---- 睡覺、換日、備份 ----
 A.clear(); Bc.clear(); A.send({ t: 'sleep', on: true });
 check('一個人上床：對方看得到，還不會換日', !!(await Bc.wait('sleep', (m) => m.on)) && !(await A.wait('newday', undefined, 500)));
@@ -117,6 +124,7 @@ await act(Bc, 20, 'till', 17, 14); await act(Bc, 21, 'water', 17, 14);
 Bc.send({ t: 'sleep', on: true }); await Bc.wait('newday', (m) => m.farm.day === 3);
 check('只有一個人在線：他自己睡就換日', Bc.log.some((m) => m.t === 'newday' && m.farm.day === 3));
 const A2 = open(dm.id, a.token); const s2 = await A2.wait('snapshot');
+check('重新上線：造型和名字還在', !!s2 && !!s2.you.look && s2.you.look.hair === 'twin' && s2.you.name.startsWith('晴b晴'));
 check('重新上線：位置還在、看得到離線時的變化', !!s2 && Math.abs(s2.you.x - 15.5) < 0.01 && s2.tiles.length === 3 && s2.farm.day === 3);
 check('「你不在時發生的事」：過了 1 天、對方翻土 1 次澆水 1 次', !!s2 && !!s2.summary && s2.summary.days === 1 && s2.summary.acts.till === 1 && s2.summary.acts.water === 1, s2 && JSON.stringify(s2.summary));
 const A3 = open(dm.id, a.token); await A3.wait('snapshot'); await sleep(300);
