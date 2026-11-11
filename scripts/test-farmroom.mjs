@@ -322,10 +322,20 @@ check('沒走到梯子不能出去', (await (async () => { await go(Bc, 3, 3); r
 await go(Bc, 10.5, 12.5); Bc.clear();
 check('從梯子出去：回到湖邊的入口前面', (await req(Bc, { t: 'mine-exit' })).t === 'ok' && !!(await Bc.wait('warp', (m) => m.id === b.user.id && m.map === 'lake')));
 check('在外面不能敲礦坑的石頭', (await mineHit(5, 5)).reason === 'far');
+// ---- 劇情事件、節慶 ----
+check('沒有的劇情不能完成、好感不夠的劇情不算數', (await req(Bc, { t: 'event-done', event: 'nope', picks: [] })).reason === 'unknown' && (await req(Bc, { t: 'event-done', event: 'xiaoman_2', picks: [{ step: 3, opt: 1 }] })).reason === 'hearts');
+check('不是節慶的日子不能交成績', Bc.farm.festival === null && (await req(Bc, { t: 'fest-score', fest: 'flower', score: 50 })).reason === 'closed');
+await go(Bc, 17.6, 25.3); await req(Bc, { t: 'warp', i: 0 }); await go(Bc, 0.6, 7); await req(Bc, { t: 'warp', i: 0 }); await enter(Bc); await go(Bc, 2.6, 3.4);
+let ndf = null; for (let d = Bc.farm.day; d < 10; d++) { Bc.clear(); await req(Bc, { t: 'sleep', on: true }); ndf = await Bc.wait('newday'); }
+check('春天第 10 天是花見祭', !!ndf && ndf.farm.day === 10 && ndf.farm.festival === 'flower', ndf && `第 ${ndf.farm.day} 天 ${ndf.farm.festival}`);
+check('不在小鎮不能交成績', (await req(Bc, { t: 'fest-score', fest: 'flower', score: 20 })).reason === 'far');
+await go(Bc, 5, 7.6); await req(Bc, { t: 'warp', i: 0 }); await go(Bc, 42.5, 16); await req(Bc, { t: 'warp', i: 0 }); await go(Bc, 28.5, 7); await req(Bc, { t: 'warp', i: 1 });
+const fm = Bc.farm.money, fs = await req(Bc, { t: 'fest-score', fest: 'flower', score: 20 });
+check('接花瓣 20 分：拿到第二級的獎（150 元和鬱金香種子 3 包）；一年只能領一次；別的節慶今天不能交', fs.t === 'ok' && fs.tier === 1 && Bc.farm.money === fm + 150 && has(Bc, 'seed_tulip') === 3 && (await req(Bc, { t: 'fest-score', fest: 'flower', score: 99 })).reason === 'already' && (await req(Bc, { t: 'fest-score', fest: 'egg', score: 5 })).reason === 'closed', JSON.stringify(fs));
 const A2 = open(dm.id, a.token); const s2 = await A2.wait('snapshot');
 check('重新上線：造型和名字還在', !!s2 && !!s2.you.look && s2.you.look.hair === 'twin' && s2.you.name.startsWith('晴b晴'));
-check('重新上線：人還在農舍裡、背包還在、看得到離線時的變化', !!s2 && s2.you.map === 'house' && s2.self.inv.some((x) => x && x.id === 'seed_strawberry') && s2.farm.day === 7 && s2.farm.animals.length === 1 && s2.farm.pets.length === 1);
-check('「你不在時發生的事」：過了 5 天、對方澆水和收成', !!s2 && !!s2.summary && s2.summary.days === 5 && s2.summary.acts.harvest >= 1 && s2.summary.acts.water >= 1, s2 && JSON.stringify(s2.summary));
+check('重新上線：人還在農舍裡、背包還在、看得到離線時的變化', !!s2 && s2.you.map === 'house' && s2.self.inv.some((x) => x && x.id === 'seed_strawberry') && s2.farm.day === 10 && s2.farm.animals.length === 1 && s2.farm.pets.length === 1);
+check('「你不在時發生的事」：過了 8 天、對方澆水和收成', !!s2 && !!s2.summary && s2.summary.days === 8 && s2.summary.acts.harvest >= 1 && s2.summary.acts.water >= 1, s2 && JSON.stringify(s2.summary));
 const A3 = open(dm.id, a.token); await A3.wait('snapshot'); await sleep(300);
 check('同一個人開第二個分頁：舊的收到 replaced，對方不會以為他離開', A2.log.some((m) => m.t === 'replaced') && !Bc.log.some((m) => m.t === 'leave' && m.id === a.user.id));
 // 時鐘只在有人的時候走

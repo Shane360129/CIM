@@ -13,7 +13,7 @@ export const loading = {
       const convId = Number(new URLSearchParams(location.search).get('conv')) || 0;
       const [data, session] = await Promise.all([
         loadAll([['balance', 'data/balance.json'], ['objects', 'data/objects.json'], ['parts', 'data/doll/parts.json'], ['items', 'data/items.json'], ['crops', 'data/crops.json'],
-          ['map_farm', 'data/maps/farm.json'], ['map_house', 'data/maps/house.json'], ['map_road', 'data/maps/road.json'], ['map_lake', 'data/maps/lake.json'], ['fish', 'data/fish.json'], ['machines', 'data/machines.json'], ['recipes', 'data/recipes.json'], ['animals', 'data/animals.json'], ['map_town', 'data/maps/town.json'], ['npcs', 'data/npcs/residents.json'], ['shops', 'data/shops.json']], (p) => { this.progress = p * 0.8; }),
+          ['map_farm', 'data/maps/farm.json'], ['map_house', 'data/maps/house.json'], ['map_road', 'data/maps/road.json'], ['map_lake', 'data/maps/lake.json'], ['fish', 'data/fish.json'], ['machines', 'data/machines.json'], ['recipes', 'data/recipes.json'], ['animals', 'data/animals.json'], ['map_town', 'data/maps/town.json'], ['npcs', 'data/npcs/residents.json'], ['shops', 'data/shops.json'], ['events', 'data/events/hearts.json'], ['festivals', 'data/festivals.json']], (p) => { this.progress = p * 0.8; }),
         signIn(convId),
       ]);
       data.items = makeItems(data.items, data.machines); // 加工品的名字和價錢是算出來的

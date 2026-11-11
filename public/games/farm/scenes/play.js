@@ -3,11 +3,13 @@ import { buildGround } from '../render/ground.js';
 import { drawObject, drawPlayer, drawBubble, drawTilled, drawShadow, drawName } from '../render/placeholder.js';
 import { drawDoll } from '../render/doll.js';
 import { drawSprite } from '../render/sprites.js';
-import { groundAt, levelOf, sellPrice, animalPos, hearts, mineMap, monPos, npcPos, seasonIndex } from '../shared/rules.js';
+import { groundAt, levelOf, sellPrice, animalPos, hearts, mineMap, monPos, npcPos, seasonIndex, rng } from '../shared/rules.js';
 import { iconEl } from '../render/sprites.js';
 import { openPanel, itemIcon, setToolLv } from '../ui/panels.js';
 import { create } from './create.js';
 import { createFishing } from '../systems/fishing.js';
+import { runEvent } from '../systems/cutscene.js';
+import { minigame } from './minigame.js';
 
 const NO_TEXT = { far: '太遠了，走近一點', ground: '這裡不行', locked: '這塊地還沒開墾（之後才能用）', already: '這裡已經弄好了', untilled: '要先用鋤頭翻土', offline: '連線中斷，稍等一下', timeout: '伺服器沒有回應',
   tired: '太累了，體力不夠', gone: '魚跑掉了', machine: '這個放不進這台機器', place: '加工機要放在農場的空地上', full: '背包滿了', season: '這個季節種不活', crop: '上面還有作物', late: '已經發芽了，來不及施肥', nothing: '', out: '', unknown: '', closed: '那邊還沒開放' };
@@ -59,7 +61,7 @@ export const play = {
     ];
     if (ctx.pendingSummary) { this.showSummary(ctx.pendingSummary.summary, ctx.pendingSummary.partner); ctx.pendingSummary = null; }
   },
-  exit(ctx) { this.fishing.cancel(); this.off.forEach((f) => f()); ctx.hud.show(false); ctx.hud.showPlay(false); ctx.view.onResize = null; },
+  exit(ctx) { this.fishing.cancel(); if (this.hunt) { this.hunt.timer.remove(); this.hunt = null; } this.off.forEach((f) => f()); ctx.hud.show(false); ctx.hud.showPlay(false); ctx.view.onResize = null; },
 
   // 換地圖：地面重畫，不會動的東西（房子、家具）和它們擋住的格子、可以互動的格子重算。樹、石頭這些會被清掉的在 world.objs 裡
   setMap(id) {
@@ -89,6 +91,7 @@ export const play = {
     const { hud, data } = this.ctx, f = m.farm, W = this.world, born = (f.newborn || []).length ? [`${f.newborn.join('、')} 出生了！`] : [];
     const head = m.reason === 'late' ? '太晚了，累得昏倒了… 已經是隔天早上' : m.reason === 'restore' ? '農場回復到備份的樣子了' : `早安！第 ${f.day} 天`;
     const lines = [`今天的天氣：${this.bal.weatherNames[f.weather]}`];
+    if (f.festival) lines.push(`今天是${data.festivals[f.festival].name}！到小鎮廣場的舞台參加活動。`);
     if (f.lastShip && f.lastShip.day === f.day - 1 && m.reason !== 'restore') {
       for (const l of f.lastShip.lines) lines.push(`${l.by === W.me.id ? '你' : (W.partner && W.partner.name) || '對方'}：${data.items[l.id].name}${l.q ? `（${this.bal.quality.names[l.q]}）` : ''}×${l.n} → ${l.sum} 元`);
       lines.push(`出貨收入一共 ${f.lastShip.total} 元。`);
@@ -123,6 +126,7 @@ export const play = {
     if (hud.hasCard || !W.ready || t.x < 0 || t.y < 0 || t.x >= this.map.w || t.y >= this.map.h) return;
     W.mark = { ...t, life: 0.6, color: '#fff' };
     if (this.map.mine) return this.actMine(t);
+    const fe = this.fest(); if (fe && !this.hunt && Math.abs(t.x + 0.5 - (fe.d.stage.x + 1)) <= 1.6 && Math.abs(t.y - fe.d.stage.y) <= 1) return this.festival(fe);
     const use = this.useAt.get(key(t.x, t.y));
     if (use) {
       if (Math.hypot(t.x + 0.5 - pl.x, t.y + 0.5 - pl.y) > this.bal.reach + 1) return hud.toast('走近一點', 900);
@@ -193,6 +197,25 @@ export const play = {
     else if (Math.abs(t.x - s.spawn.x) <= 1 && t.y >= s.spawn.y) return this.elevator(true);
     if (r && r.t === 'no') { const need = r.reason.startsWith('tool:') && TOOL_NAME[r.reason.slice(5)]; const text = need ? `這個要用${need}` : NO_TEXT[r.reason]; if (text) hud.toast(text, 1200); }
   },
+  // 今天這張地圖上有沒有節慶
+  fest() { const W = this.world, id = W.farm && W.farm.festival, d = id && this.ctx.data.festivals[id]; return d && d.map === this.mapId ? { id, d } : null; },
+  // 對著節慶的舞台按動作鍵：說明規則，開始小遊戲
+  async festival(fe) {
+    const { hud } = this.ctx, W = this.world, year = Math.floor((W.farm.day - 1) / (this.bal.seasonDays * 4)), played = (W.self.fest || {})[`${year}:${fe.id}`];
+    const go = await hud.card(fe.d.name, [fe.d.intro, played != null ? `你今年已經拿過獎了（${played} 分），再玩一次不會再給獎。` : '獎品一年只能領一次。'], [{ label: '先不要', value: false, ghost: true }, { label: '開始！', value: true }]);
+    if (!go) return;
+    if (fe.d.game === 'catch') return this.ctx.scenes.go(minigame, { fest: fe.d, id: fe.id });
+    // 尋蛋：彩蛋藏在這張地圖上能走到的地方（位置用天數算，兩個人看到的一樣），走過去就撿起來
+    const r = rng(W.farm.day * 7919 + 31), eggs = [];
+    for (let tries = 0; eggs.length < fe.d.eggs && tries < 800; tries++) { const x = 2 + Math.floor(r() * (this.map.w - 4)), y = 3 + Math.floor(r() * (this.map.h - 6)); if (!this.blocked(x + 0.5, y + 0.5) && !eggs.some((e) => e.x === x && e.y === y)) eggs.push({ x, y, hue: Math.floor(r() * 360) }); }
+    const timer = document.createElement('div'); timer.className = 'timer'; document.getElementById('ui').append(timer);
+    this.hunt = { fe, left: fe.d.seconds, eggs, score: 0, timer };
+  },
+  async endHunt() {
+    const { hud, data } = this.ctx, h = this.hunt; this.hunt = null; h.timer.remove();
+    const r = await this.room.req({ t: 'fest-score', fest: h.fe.id, score: h.score }), p = r.t === 'ok' ? r.prize : null;
+    hud.card(`${h.fe.d.name}：找到 ${h.score} 顆`, [p ? `獎品：${p.money ? p.money + ' 元' : ''}${p.item ? `、${data.items[p.item[0]].name}×${p.item[1]}` : ''}` : r.reason === 'already' ? '今年已經領過獎了，這次只是玩玩。' : '成績沒有送出去。'], [{ label: '好', value: true }]);
+  },
   // 佈告欄：今天的委託（某位居民想要幾個某種東西）
   async board() {
     const { hud, data } = this.ctx, W = this.world, q = W.farm.quest;
@@ -223,7 +246,11 @@ export const play = {
     if (Math.hypot(folk.x - pl.x, folk.y - pl.y) > this.bal.reach + 1) return hud.toast('走近一點再說話', 900);
     const face = (expr) => iconEl(`${n.portrait}/${expr}`, 96) || iconEl(`${n.portrait}/normal`, 96);
     const r = await this.room.req({ t: 'talk', npc: folk.id }); if (r.t !== 'ok') return hud.toast('他好像沒聽到', 900);
-    const fr = W.self.friend[folk.id] || { pts: 0 }, h = Math.floor(fr.pts / F.heart), wet = ['rain', 'storm'].includes(W.farm.weather);
+    const fr = W.self.friend[folk.id] || { pts: 0 }, h = Math.floor(fr.pts / F.heart);
+    // 好感夠了、還沒看過的劇情：先演那一段
+    const evId = Object.keys(data.events).find((k) => data.events[k].npc === folk.id && h >= data.events[k].hearts && !(W.self.events || {})[k]);
+    if (evId) { const picks = await runEvent(this.ctx, data.events[evId]); const d = await this.room.req({ t: 'event-done', event: evId, picks }); if (d.t === 'ok' && d.gain) hud.toast(`${n.name} 更喜歡你了 ♥`, 1600); return; }
+    const wet = ['rain', 'storm'].includes(W.farm.weather);
     const pool = [...n.talk.any, ...(wet ? n.talk.rain : []), ...(h >= 3 ? n.talk.h3 : []), ...(h >= 6 ? n.talk.h6 : [])];
     const text = r.first ? n.talk.first : r.bday && r.daily ? n.talk.birthday : pool[(W.farm.day * 7 + folk.id.length * 3 + (this.talkN = (this.talkN || 0) + 1)) % pool.length];
     const held = W.self.inv[hud.selected], it = held && data.items[held.id], canGift = it && it.kind !== 'tool';
@@ -275,6 +302,12 @@ export const play = {
       if (hit) { this.hurtAt = now + this.bal.mine.hurtEveryMs; this.flash = 0.35; this.room.req({ t: 'hurt', mid: hit.id }); }
     }
     if (this.flash > 0) this.flash -= dt;
+    if (this.hunt) { // 尋蛋進行中：走到彩蛋旁邊就撿起來，時間到結算
+      const h = this.hunt; h.left -= dt;
+      for (const e of h.eggs) if (!e.got && Math.hypot(e.x + 0.5 - p.x, e.y + 0.5 - p.y) < 0.8) { e.got = true; h.score++; W.floaters.push({ map: this.mapId, x: e.x + 0.5, y: e.y, heart: true, life: 0.9 }); }
+      h.timer.textContent = `${h.fe.d.name}　${Math.max(0, Math.ceil(h.left))} 秒　${h.score}／${h.eggs.length} 顆`;
+      if (h.left <= 0 || h.score >= h.eggs.length || this.mapId !== h.fe.d.map) this.endHunt();
+    }
     // 走到地圖的出入口：換地圖（請伺服器帶過去）
     if (p.moving && now > this.warping) (this.map.exits || []).forEach((e, i) => {
       if (p.x >= e.x && p.x < e.x + e.w && p.y >= e.y && p.y < e.y + e.h) {
@@ -328,6 +361,12 @@ export const play = {
     for (const t of this.things) if (t.fx > x0 && t.fx < x1 && t.fy > y0 && t.fy < y1) list.push({ y: t.fy, t });
     for (const o of W.objs.values()) if (o.map === mapId && o.x > x0 && o.x < x1 && o.y > y0 && o.y < y1) list.push({ y: o.y + 0.92, o, t: { def: o.item ? { ...data.objects[o.type], art: data.items[o.item].art, name: data.items[o.item].name } : o.kind ? { ...data.objects[o.type], art: data.machines[o.kind].art, name: data.machines[o.kind].name } : data.objects[o.type], fx: o.x + 0.5, fy: o.y + 0.92 } });
     for (const b of this.beasts()) list.push({ y: b.y, beast: b });
+    const fe = this.fest();
+    if (fe) { // 節慶：廣場上搭了舞台、掛了三角旗
+      const st = fe.d.stage; list.push({ y: st.y + 0.95, t: { def: { name: fe.d.name + '舞台', shape: 'block', w: 2.6, h: 2.0, color: '#c98a3c', art: 'obj/stage' }, fx: st.x + 1, fy: st.y + 0.95 } });
+      for (const [bx, by] of [[st.x - 4, st.y - 6], [st.x + 1, st.y - 7], [st.x + 6, st.y - 6]]) list.push({ y: by + 0.9, t: { def: { name: '旗', shape: 'blob', w: 2.2, h: 1.0, color: '#e5484d', art: 'obj/bunting' }, fx: bx, fy: by + 0.9 } });
+    }
+    if (this.hunt) for (const e of this.hunt.eggs) if (!e.got) list.push({ y: e.y + 0.8, egg: e });
     for (const n of this.folks()) list.push({ y: n.y, pp: { q: { id: 'npc:' + n.id, x: n.x, y: n.y, dir: n.dir, moving: n.moving, anim: performance.now() / 1000, look: n.n.look, name: n.n.name }, color: '#ccc' } });
     if (this.map.mine && W.mine) { // 礦坑：石頭、打開的樓梯、入口的梯子、怪物
       const s = W.mine, RT = this.bal.mine.rockTypes, MT = this.bal.mine.monsters, tnow = W.serverNow();
@@ -343,6 +382,7 @@ export const play = {
     const parts = data.parts, U = T * 0.62;
     for (const it of list) {
       if (it.crop) { this.drawCrop(g, it.crop, T); continue; }
+      if (it.egg) { const ex = (it.egg.x + 0.5) * T, ey = (it.egg.y + 0.6) * T; g.fillStyle = `hsl(${it.egg.hue} 80% 70%)`; g.strokeStyle = '#5a3d22'; g.lineWidth = Math.max(1.5, T * 0.04); g.beginPath(); g.ellipse(ex, ey, T * 0.17, T * 0.22, 0, 0, 7); g.fill(); g.stroke(); g.fillStyle = 'rgba(255,255,255,.7)'; g.fillRect(ex - T * 0.15, ey - T * 0.03, T * 0.3, T * 0.05); continue; }
       if (it.mon) { // 怪物：被打到的那一下換成「被打」的表情
         const q = it.mon, sz = q.d.size * T, hit = q.m.hitAt && performance.now() - q.m.hitAt < 300, by = q.y * T - Math.abs(Math.sin(performance.now() / 260 + q.m.id)) * T * 0.08;
         drawShadow(g, q.x * T, q.y * T, sz * 0.7);

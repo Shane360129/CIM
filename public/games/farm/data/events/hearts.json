@@ -1,0 +1,257 @@
+{
+ "xiaoman_2": {
+  "npc": "xiaoman",
+  "hearts": 2,
+  "title": "烤焦的麵包",
+  "steps": [
+   {
+    "fade": "餐館的後門飄出一陣焦味……"
+   },
+   {
+    "say": "xiaoman",
+    "face": "sad",
+    "text": "嗚……又烤焦了。這是今天第三盤。"
+   },
+   {
+    "say": "xiaoman",
+    "face": "normal",
+    "text": "啊，是你！不要看！……好啦，你看到了。"
+   },
+   {
+    "choice": [
+     {
+      "text": "聞起來其實很香",
+      "pts": 40,
+      "goto": "nice"
+     },
+     {
+      "text": "要不要我幫你試吃？",
+      "pts": 60,
+      "goto": "taste"
+     },
+     {
+      "text": "……確實焦了",
+      "pts": 0,
+      "goto": "honest"
+     }
+    ]
+   },
+   {
+    "label": "nice"
+   },
+   {
+    "say": "xiaoman",
+    "face": "happy",
+    "text": "真的嗎？你人真好……雖然我知道你在安慰我。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "taste"
+   },
+   {
+    "say": "xiaoman",
+    "face": "shy",
+    "text": "你、你要吃？這個？……那、那你吃邊邊沒有焦的地方！"
+   },
+   {
+    "emote": "😊"
+   },
+   {
+    "say": "xiaoman",
+    "face": "happy",
+    "text": "怎麼樣？……好吃？太好了！我下次一定烤一盤漂亮的給你！"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "honest"
+   },
+   {
+    "say": "xiaoman",
+    "face": "sad",
+    "text": "嗚……你好誠實。不過春嬸也是這樣說的。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "xiaoman",
+    "face": "normal",
+    "text": "我不會放棄的！總有一天，我要烤出讓全鎮都排隊的麵包！"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "xiaoman_4": {
+  "npc": "xiaoman",
+  "hearts": 4,
+  "title": "會讓人想回家的味道",
+  "steps": [
+   {
+    "fade": "傍晚的廣場，小滿一個人坐在噴水池邊。"
+   },
+   {
+    "say": "xiaoman",
+    "face": "normal",
+    "text": "你知道嗎，我小時候在山裡迷路過。"
+   },
+   {
+    "say": "xiaoman",
+    "face": "normal",
+    "text": "天黑了，我一直哭。後來聞到麵包的香味，就跟著那個味道一直走……走到了春嬸的餐館。"
+   },
+   {
+    "say": "xiaoman",
+    "face": "shy",
+    "text": "所以我想做出那種麵包。會讓迷路的人，想起要回家的麵包。"
+   },
+   {
+    "choice": [
+     {
+      "text": "你一定做得到",
+      "pts": 60,
+      "flag": "xiaoman_dream"
+     },
+     {
+      "text": "到時候我要第一個吃",
+      "pts": 80,
+      "flag": "xiaoman_dream"
+     }
+    ]
+   },
+   {
+    "say": "xiaoman",
+    "face": "happy",
+    "text": "嗯！說好了喔！……謝謝你聽我說這些。"
+   },
+   {
+    "emote": "❤️"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "xiyin_2": {
+  "npc": "xiyin",
+  "hearts": 2,
+  "title": "不開店的日子",
+  "steps": [
+   {
+    "fade": "漁具店的門上掛著一塊牌子，上面畫了一條魚。"
+   },
+   {
+    "say": "xiyin",
+    "face": "normal",
+    "text": "喔，是你。今天不開店，我要去湖邊。"
+   },
+   {
+    "say": "xiyin",
+    "face": "normal",
+    "text": "你一定覺得我很隨便吧。客人上門，老闆卻跑去釣魚。"
+   },
+   {
+    "choice": [
+     {
+      "text": "這樣很自由，不錯啊",
+      "pts": 60,
+      "goto": "free"
+     },
+     {
+      "text": "生意沒關係嗎？",
+      "pts": 20,
+      "goto": "biz"
+     }
+    ]
+   },
+   {
+    "label": "free"
+   },
+   {
+    "say": "xiyin",
+    "face": "happy",
+    "text": "哈，你懂。很少人這樣說。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "biz"
+   },
+   {
+    "say": "xiyin",
+    "face": "normal",
+    "text": "夠吃飯就好。錢賺再多，魚也不會比較好釣。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "xiyin",
+    "face": "normal",
+    "text": "下次一起去吧。我知道一個沒人知道的釣點。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "xiyin_4": {
+  "npc": "xiyin",
+  "hearts": 4,
+  "title": "安靜的水",
+  "steps": [
+   {
+    "fade": "清晨的湖邊起了薄霧。"
+   },
+   {
+    "say": "xiyin",
+    "face": "normal",
+    "text": "我以前在很大的港口工作。吊車、汽笛、叫賣聲，一天到晚沒有停過。"
+   },
+   {
+    "say": "xiyin",
+    "face": "sad",
+    "text": "有一天我發現，我已經很久沒有聽見水的聲音了。明明每天都在海邊。"
+   },
+   {
+    "wait": 1
+   },
+   {
+    "say": "xiyin",
+    "face": "normal",
+    "text": "所以我走了。一路走到這個連地圖上都很小的地方。"
+   },
+   {
+    "choice": [
+     {
+      "text": "這裡的水聲很好聽",
+      "pts": 80,
+      "flag": "xiyin_past"
+     },
+     {
+      "text": "你後悔過嗎？",
+      "pts": 50,
+      "flag": "xiyin_past"
+     }
+    ]
+   },
+   {
+    "say": "xiyin",
+    "face": "happy",
+    "text": "……現在不會了。尤其是有人願意陪我坐在這裡，什麼都不說的時候。"
+   },
+   {
+    "emote": "😊"
+   },
+   {
+    "end": true
+   }
+  ]
+ }
+}

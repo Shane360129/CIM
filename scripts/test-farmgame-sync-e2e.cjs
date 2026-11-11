@@ -111,6 +111,36 @@ const { chromium } = require('playwright');
   const thanks = await pa.locator('.dialog .dtext').textContent();
   ok('把手上的東西送給他：他有反應，好感變多，種子少一包 → ' + thanks.slice(0, 20), thanks.length > 3 && (await pa.evaluate(() => window.__game.world.self.friend.ahe.pts)) === 40 && (await count(pa, 'seed_carrot')) === 6);
   await pa.locator('.dialog button').last().click(); await pa.waitForTimeout(200);
+  // 劇情事件（畫面流程；測試裡把畫面上的好感調高來觸發，伺服器那邊好感不夠所以不會真的記下來）
+  const xm = folk.find((f) => f.id === 'xiaoman'); await tp(pa, xm.x, xm.y + 1.0, 'up');
+  await pa.evaluate(() => { window.__game.world.self.friend.xiaoman = { pts: 600 }; window.__game.room = window.__game.world.room; const r = window.__game.world.room, req = r.req.bind(r); r.req = async (m) => { const out = await req(m); if (m.t === 'talk') window.__game.world.self.friend.xiaoman = { pts: 600 }; return out; }; });
+  await pa.keyboard.press('Space'); await pa.waitForTimeout(900);
+  ok('好感夠了去找小滿：先淡出顯示旁白', (await pa.locator('.fade').count()) === 1 && /焦味/.test(await pa.locator('.fade').textContent()));
+  await pa.waitForSelector('.dialog', { timeout: 6000 }); await pa.keyboard.press('Space'); await pa.waitForTimeout(150);
+  ok('接著是她的台詞（難過的表情）', /又烤焦了/.test(await pa.locator('.dialog .dtext').textContent()));
+  await pa.locator('.dialog button').click(); await pa.waitForTimeout(300); await pa.keyboard.press('Space'); await pa.locator('.dialog button').click(); await pa.waitForTimeout(300);
+  ok('出現三個選項', (await pa.locator('.dialog button').count()) === 3);
+  await pa.screenshot({ path: S + '/s6-event.png' });
+  await pa.locator('.dialog button', { hasText: '試吃' }).click(); await pa.waitForTimeout(300); await pa.keyboard.press('Space'); await pa.waitForTimeout(100);
+  ok('選「幫你試吃」跳到對應的那一段', /吃邊邊沒有焦的地方/.test(await pa.locator('.dialog .dtext').textContent()));
+  for (let i = 0; i < 6 && (await pa.locator('.dialog').count()); i++) { await pa.keyboard.press('Space'); await pa.waitForTimeout(80); await pa.locator('.dialog button').first().click().catch(() => {}); await pa.waitForTimeout(900); }
+  ok('劇情演完回到遊戲', (await pa.locator('.dialog').count()) === 0);
+  // 節慶（把畫面上的日子當成節慶、時間縮成 3 秒來看流程；伺服器知道今天不是節慶，所以不會給獎）
+  await pa.evaluate(() => { const g = window.__game; g.world.farm.festival = 'flower'; g.data.festivals.flower.seconds = 3; g.data.festivals.egg.seconds = 3; });
+  await tp(pa, 22, 21.6, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
+  ok('節慶當天廣場有舞台，對著它按空白鍵：說明規則', /花見祭/.test(await pa.locator('.card h2').textContent()) && /接花瓣/.test(await pa.locator('.card').textContent()));
+  await pa.locator('.card button', { hasText: '開始' }).click(); await pa.waitForTimeout(600);
+  ok('開始接花瓣：畫面換成小遊戲，上面有倒數和分數', /花見祭　\d 秒/.test(await pa.locator('.timer').textContent()));
+  await pa.keyboard.down('KeyD'); await pa.waitForTimeout(800); await pa.keyboard.up('KeyD'); await pa.screenshot({ path: S + '/s6-petals.png' });
+  await pa.waitForSelector('.card', { timeout: 8000 });
+  ok('時間到：顯示分數，按回去回到小鎮', /花見祭：\d+ 分/.test(await pa.locator('.card h2').textContent()));
+  await pa.locator('.card button').click(); await pa.waitForTimeout(600);
+  await pa.evaluate(() => { window.__game.world.farm.festival = 'egg'; }); await tp(pa, 22, 21.6, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300); await pa.locator('.card button', { hasText: '開始' }).click(); await pa.waitForTimeout(400);
+  const eggs = await pa.evaluate(() => window.__game.scenes.current.hunt.eggs.length); const e0 = await pa.evaluate(() => window.__game.scenes.current.hunt.eggs[0]);
+  await tp(pa, e0.x + 0.5, e0.y + 0.5, 'down'); await pa.waitForTimeout(300);
+  ok(`尋蛋節：地圖上藏了 ${eggs} 顆彩蛋，走過去就撿到`, eggs === 14 && /1／14 顆/.test(await pa.locator('.timer').textContent()));
+  await pa.waitForSelector('.card', { timeout: 8000 });
+  ok('時間到結算', /找到 1 顆/.test(await pa.locator('.card h2').textContent())); await pa.locator('.card button').click(); await pa.evaluate(() => { window.__game.world.farm.festival = null; });
   await tp(pa, 25.5, 14.5, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
   ok('佈告欄：今天的委託（誰要幾個什麼、報酬多少） → ' + (await pa.locator('.card').textContent()).slice(0, 40), /今天的委託/.test(await pa.locator('.card h2').textContent()) && /報酬 \d+ 元/.test(await pa.locator('.card').textContent()));
   await pa.keyboard.press('Escape');

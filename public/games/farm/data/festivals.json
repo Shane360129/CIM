@@ -1,0 +1,105 @@
+{
+ "flower": {
+  "name": "花見祭",
+  "season": 0,
+  "day": 10,
+  "map": "town",
+  "stage": {
+   "x": 21,
+   "y": 20
+  },
+  "game": "catch",
+  "seconds": 30,
+  "intro": "廣場上的樹都開花了。今天的活動是「接花瓣」：左右移動，把飄下來的花瓣接住，接到越多獎品越好！粉紅的 1 分、金色的 3 分，小心別接到毛毛蟲。",
+  "prizes": [
+   [
+    0,
+    {
+     "money": 50
+    }
+   ],
+   [
+    15,
+    {
+     "money": 150,
+     "item": [
+      "seed_tulip",
+      3
+     ]
+    }
+   ],
+   [
+    30,
+    {
+     "money": 300,
+     "item": [
+      "honey",
+      1
+     ]
+    }
+   ],
+   [
+    45,
+    {
+     "money": 600,
+     "item": [
+      "fertilizer_gold",
+      5
+     ]
+    }
+   ]
+  ]
+ },
+ "egg": {
+  "name": "尋蛋節",
+  "season": 0,
+  "day": 22,
+  "map": "town",
+  "stage": {
+   "x": 21,
+   "y": 20
+  },
+  "game": "hunt",
+  "seconds": 60,
+  "eggs": 14,
+  "intro": "鎮上藏了十四顆彩蛋。時間內走過去就能撿起來，找到越多獎品越好！兩個人可以分頭找。",
+  "prizes": [
+   [
+    0,
+    {
+     "money": 50
+    }
+   ],
+   [
+    5,
+    {
+     "money": 150,
+     "item": [
+      "egg",
+      3
+     ]
+    }
+   ],
+   [
+    9,
+    {
+     "money": 300,
+     "item": [
+      "hay",
+      10
+     ]
+    }
+   ],
+   [
+    13,
+    {
+     "money": 600,
+     "item": [
+      "dish_strawberry_cake",
+      1
+     ]
+    }
+   ]
+  ]
+ }
+}

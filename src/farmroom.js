@@ -18,6 +18,8 @@ import FISH from '../public/games/farm/data/fish.json';
 import MAP_TOWN from '../public/games/farm/data/maps/town.json';
 import NPCS from '../public/games/farm/data/npcs/residents.json';
 import SHOPS from '../public/games/farm/data/shops.json';
+import EVENTS from '../public/games/farm/data/events/hearts.json';
+import FESTIVALS from '../public/games/farm/data/festivals.json';
 import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelOf, rollQuality, invAdd, invTake, sellPrice, makeItems, matches, planTake, absMinute, animalPos, genFloor, monPos, mineMap, npcPos, giftTaste, seasonIndex } from '../public/games/farm/shared/rules.js';
 
 const ITEMS = makeItems(RAW_ITEMS, MACHINES); // 加工品（g:機器:原料）的名字和價錢是算出來的
@@ -139,7 +141,7 @@ export class FarmRoom {
   pubTile(k) { const v = this.tiles.get(k), t = unK(k); return v ? { ...t, t: 1, w: v.w === this.farm.day ? 1 : 0, f: v.f || 0, c: v.c ? { id: v.c.id, s: v.c.dead ? -1 : cropStage(CROPS[v.c.id], v.c.g) } : null } : { ...t, t: 0 }; }
   pubObj(k) { const o = this.objs.get(k); return o ? { ...unK(k), type: o.type, hp: o.hp, ...(o.item ? { item: o.item } : {}), ...(o.kind ? { kind: o.kind, out: o.out || null, doneAt: o.doneAt || 0 } : {}) } : { ...unK(k), type: null }; }
   absNow() { return absMinute(this.farm.day, this.minuteNow(), BAL); }
-  pubSelf(a) { const p = this.player(a.id); return { inv: p.inv, energy: p.energy, energyMax: BAL.energyMax, skills: p.skills, fishRec: p.fishRec || {}, buffs: p.buffs || {}, hp: p.hp ?? BAL.mine.hpMax, hpMax: BAL.mine.hpMax, friend: p.friend || {}, toolLv: p.toolLv || {}, mail: p.mail || [] }; }
+  pubSelf(a) { const p = this.player(a.id); return { inv: p.inv, energy: p.energy, energyMax: BAL.energyMax, skills: p.skills, fishRec: p.fishRec || {}, buffs: p.buffs || {}, hp: p.hp ?? BAL.mine.hpMax, hpMax: BAL.mine.hpMax, friend: p.friend || {}, toolLv: p.toolLv || {}, mail: p.mail || [], events: p.events || {}, fest: p.fest || {} }; }
 
   // ---------- 連線 ----------
   sockets() { return this.ctx.getWebSockets(); }
@@ -192,7 +194,7 @@ export class FarmRoom {
   pubFarm() {
     const f = this.farm;
     return { day: f.day, minute: this.minuteNow(), money: f.money, season: seasonId(f.day, BAL), weather: weatherOf(f.seed, f.day, BAL), minutesPerSecond: MIN_PER_MS * 1000, dayStart: BAL.dayStartMinute, dayEnd: BAL.dayEndMinute,
-      quest: f.quest || null, now: Date.now(), mineDeepest: f.mineDeepest || 1, ship: f.ship, lastShip: f.lastShip, chest: f.chest, newborn: f.newborn || [], animals: f.animals || [], pets: f.pets || [], graze: !!f.graze };
+      quest: f.quest || null, festival: this.festivalToday(), now: Date.now(), mineDeepest: f.mineDeepest || 1, ship: f.ship, lastShip: f.lastShip, chest: f.chest, newborn: f.newborn || [], animals: f.animals || [], pets: f.pets || [], graze: !!f.graze };
   }
   // 「你不在時發生的事」：過了幾天、錢差多少、對方做了什麼
   summaryFor(userId, saved, lastSeen) {
@@ -280,6 +282,20 @@ export class FarmRoom {
     }
     else if (['animal-buy', 'animal', 'feed', 'graze', 'adopt', 'pet'].includes(m.t)) this.onAnimal(a, p, m, { no, done, self, near, farmChanged });
     else if (m.t === 'talk' || m.t === 'gift') this.onNpc(a, p, m, { no, done, self });
+    else if (m.t === 'event-done') { // 看完一段劇情：記下來（每段只看一次），照選的選項加好感、記旗標。要好感夠才算
+      const ev = EVENTS[m.event]; if (!ev) return no('unknown'); if ((p.events ||= {})[m.event]) return no('already');
+      const fr = (p.friend || {})[ev.npc]; if (!fr || fr.pts < ev.hearts * BAL.friend.heart) return no('hearts');
+      let gain = 0; const seen = new Set();
+      for (const pk of Array.isArray(m.picks) ? m.picks.slice(0, 8) : []) { const st = ev.steps[Number(pk.step)], opt = st && st.choice && st.choice[Number(pk.opt)]; if (!opt || seen.has(pk.step)) continue; seen.add(pk.step); gain += opt.pts || 0; if (opt.flag) (p.flags ||= {})[opt.flag] = 1; }
+      p.events[m.event] = this.farm.day; fr.pts = clamp(fr.pts + gain, 0, BAL.friend.max); this.logEvent(a.id, 'event', { id: m.event }); this.mailCheck(a.id, p); self(); done({ gain, pts: fr.pts });
+    } else if (m.t === 'fest-score') { // 節慶小遊戲的成績：一年一次，照分數給獎（錢進共用的錢包、東西進自己的背包）
+      const id = this.festivalToday(), F = FESTIVALS[id]; if (!id || id !== m.fest) return no('closed'); if (a.map !== F.map) return no('far');
+      const key = `${Math.floor((this.farm.day - 1) / (BAL.seasonDays * 4))}:${id}`; if ((p.fest ||= {})[key] != null) return no('already');
+      const score = clamp(Math.floor(Number(m.score)) || 0, 0, 200), tier = F.prizes.filter(([need]) => score >= need).length - 1, prize = F.prizes[tier][1];
+      if (prize.item && !invAdd(p.inv, BAL.invSlots, prize.item[0], prize.item[1])) return no('full');
+      p.fest[key] = score; this.farm.money += prize.money || 0; this.logEvent(a.id, 'festival', { id, score }); self(); farmChanged();
+      this.broadcast({ t: 'fest', id: a.id, fest: id, score }); done({ prize, tier, score });
+    }
     else if (m.t.startsWith('mine-') || m.t === 'mon-hit' || m.t === 'hurt') this.onMine(ws, a, p, m, { no, done, self, near });
     else if (m.t === 'fish') this.onFish(a, p, m, { no, done, self });
     else if (m.t === 'reel') this.onReel(a, p, m, { no, done, self });
@@ -296,6 +312,9 @@ export class FarmRoom {
     }
     this.flush();
   }
+  // 今天是不是節慶（回傳節慶的 id，不是就回傳 null）
+  festivalToday() { const f = this.farm, season = seasonIndex(f.day, BAL), d = ((f.day - 1) % BAL.seasonDays) + 1; return Object.keys(FESTIVALS).find((k) => FESTIVALS[k].season === season && FESTIVALS[k].day === d) || null; }
+
   // ---------- 居民 ----------
   // 好感是每個玩家各算各的。居民在哪裡是照行程用時間算的（shared/rules.js 的 npcPos），這裡只檢查你是不是站在他旁邊
   onNpc(a, p, m, { no, done, self }) {

@@ -127,3 +127,8 @@ button.chip { cursor: pointer; }
 .dialog button { font: inherit; font-weight: 700; padding: 7px 14px; border-radius: 12px; border: 2px solid #5a3d22; background: #e8872e; color: #fff; cursor: pointer; }
 .dialog button.ghost { background: #f3e6c8; color: #5a3d22; }
 @media (max-width: 520px) { .dface { width: 68px; height: 68px; } }
+
+/* 階段 6c：劇情的淡出旁白、節慶小遊戲 */
+.fade { position: absolute; inset: 0; background: #1d1712; color: #f3e6c8; display: flex; align-items: center; justify-content: center; padding: 24px; font-size: 18px; line-height: 1.8; text-align: center; opacity: 0; transition: opacity .4s; pointer-events: none; z-index: 6; }
+.fade.on { opacity: 1; }
+.timer { position: absolute; left: 50%; top: calc(12px + env(safe-area-inset-top)); transform: translateX(-50%); padding: 6px 16px; border-radius: 999px; background: #f3e6c8; border: 2px solid #5a3d22; font-weight: 700; font-size: 16px; }
