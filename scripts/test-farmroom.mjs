@@ -199,7 +199,7 @@ check('走到東邊的出口：到「往小鎮的路」，對方看到你離開'
 // ---- 小鎮與居民 ----
 await go(A, 28.5, 7);
 check('路的東邊通到小鎮', (await req(A, { t: 'warp', i: 1 })).t === 'ok' && A.log.some((m) => m.t === 'warp' && m.id === a.user.id && m.map === 'town'));
-check('沒有的居民、還沒寫好的居民不能聊；站太遠也不行', (await req(A, { t: 'talk', npc: 'nobody' })).reason === 'unknown' && (await req(A, { t: 'talk', npc: 'yunxiu' })).reason === 'unknown' && (await req(A, { t: 'talk', npc: 'ahe' })).reason === 'far');
+check('沒有的居民不能聊；站太遠也不行', (await req(A, { t: 'talk', npc: 'nobody' })).reason === 'unknown' && (await req(A, { t: 'talk', npc: 'ahe' })).reason === 'far');
 await go(A, 6.5, 25.5); // 早上 8 點前阿禾在家門口（6.5, 24.5）
 const tk = await req(A, { t: 'talk', npc: 'ahe' }), tk2 = await req(A, { t: 'talk', npc: 'ahe' });
 check('第一次見面：好感 +20；同一天再聊不會再加', tk.t === 'ok' && tk.first === true && tk.daily === true && tk.pts === 20 && tk2.first === false && tk2.daily === false && tk2.pts === 20 && A.self.friend.ahe.pts === 20);

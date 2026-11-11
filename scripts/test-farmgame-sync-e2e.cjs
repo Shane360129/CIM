@@ -130,7 +130,7 @@ const { chromium } = require('playwright');
   await tp(pa, 28.6, 7, 'right'); await pa.keyboard.down('KeyD'); await pa.waitForTimeout(500); await pa.keyboard.up('KeyD'); await pa.waitForTimeout(700);
   ok('沿著路往東走到小鎮', (await st(pa)).me.map === 'town');
   const folk = await pa.evaluate(() => window.__game.scenes.current.folks().map((f) => ({ id: f.id, x: f.x, y: f.y })));
-  ok('小鎮上有 8 位居民', folk.length === 8);
+  ok('小鎮上有 24 位居民', folk.length === 24);
   const ahe = folk.find((f) => f.id === 'ahe'); await tp(pa, ahe.x, ahe.y + 1.0, 'up'); await hold(pa, 'seed_carrot'); await pa.keyboard.press('Space'); await pa.waitForTimeout(600);
   ok('走到阿禾旁邊按空白鍵：對話框有大頭像、名字、職業和愛心', (await pa.locator('.dialog').count()) === 1 && /阿禾/.test(await pa.locator('.dialog h2').textContent()) && /雜貨店老闆/.test(await pa.locator('.dialog .dsub').textContent()) && (await pa.locator('.dialog .dface .icon').count()) === 1);
   await pa.keyboard.press('Space'); await pa.waitForTimeout(200); const hello = await pa.locator('.dialog .dtext').textContent();

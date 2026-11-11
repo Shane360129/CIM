@@ -771,7 +771,92 @@
   "job": "圖書館員",
   "about": "安靜愛看書，其實很會吐槽",
   "datable": true,
-  "full": false
+  "full": true,
+  "birthday": [
+   0,
+   15
+  ],
+  "portrait": "portrait/yunxiu",
+  "look": {
+   "gender": "girl",
+   "skin": "#fbe0c4",
+   "eyes": "cool",
+   "brows": "thin",
+   "mouths": "smile",
+   "hair": "long",
+   "hairColor": "#2f2a35",
+   "top": "sweater",
+   "topColor": "#8a7fb5",
+   "bottom": "longskirt",
+   "bottomColor": "#4a4660",
+   "shoes": "leather",
+   "shoesColor": "#6b4a2e",
+   "hat": "none",
+   "hatColor": "#d9b45a",
+   "acc": "glasses"
+  },
+  "schedule": [
+   [
+    360,
+    20.5,
+    25.5
+   ],
+   [
+    480,
+    10.5,
+    10.5
+   ],
+   [
+    1020,
+    21.5,
+    18.5
+   ],
+   [
+    1230,
+    20.5,
+    25.5
+   ]
+  ],
+  "loves": [
+   "dish_strawberry_milk",
+   "lily",
+   "amethyst"
+  ],
+  "likes": [
+   "@flower",
+   "honey"
+  ],
+  "dislikes": [
+   "junk",
+   "@ore"
+  ],
+  "talk": {
+   "first": "……啊，新面孔。我是雲岫，管鎮上的小圖書室。借書要登記，逾期我會記得很清楚。",
+   "any": [
+    "今天整理到一本講輪作的書，你們大概用得上。",
+    "安靜的地方才聽得見翻頁的聲音。……你腳步聲有點大。",
+    "阿禾又來借食譜了，借了三次都沒還。",
+    "你們農場的事，鎮上的人都在聊。好的那種。"
+   ],
+   "rain": [
+    "下雨天最適合看書。也最適合不出門。"
+   ],
+   "h3": [
+    "上次推薦你的書看了嗎？……沒看也沒關係，我只是問問。",
+    "其實我會把大家說的話記在筆記本裡。放心，你的那幾頁還算體面。"
+   ],
+   "h6": [
+    "我以前覺得書比人好懂。最近……有幾個人，我也想慢慢讀懂。"
+   ],
+   "birthday": "你記得我的生日……謝謝你，我很開心。",
+   "gift_love": "這個是我最喜歡的！謝謝你！",
+   "gift_like": "謝謝，我會好好用的。",
+   "gift_dislike": "呃……謝謝你的心意。"
+  },
+  "mailGift": [
+   "honey",
+   2
+  ]
  },
  "ayan": {
   "name": "阿焱",
@@ -779,7 +864,92 @@
   "job": "溫泉澡堂的小老闆",
   "about": "熱血又有點粗心",
   "datable": true,
-  "full": false
+  "full": true,
+  "birthday": [
+   1,
+   8
+  ],
+  "portrait": "portrait/ayan",
+  "look": {
+   "gender": "boy",
+   "skin": "#e8b98a",
+   "eyes": "sharp",
+   "brows": "thick",
+   "mouths": "open",
+   "hair": "spiky",
+   "hairColor": "#b5462e",
+   "top": "tee",
+   "topColor": "#e5673a",
+   "bottom": "shorts",
+   "bottomColor": "#3d4a5c",
+   "shoes": "sandal",
+   "shoesColor": "#6b4a2e",
+   "hat": "none",
+   "hatColor": "#d9b45a",
+   "acc": "none"
+  },
+  "schedule": [
+   [
+    360,
+    31.5,
+    24.5
+   ],
+   [
+    480,
+    5.5,
+    11.5
+   ],
+   [
+    1020,
+    17.5,
+    20.5
+   ],
+   [
+    1230,
+    31.5,
+    24.5
+   ]
+  ],
+  "loves": [
+   "dish_grilled_fish",
+   "chili",
+   "coal"
+  ],
+  "likes": [
+   "@fish",
+   "egg"
+  ],
+  "dislikes": [
+   "junk",
+   "snowdrop"
+  ],
+  "talk": {
+   "first": "喔！你就是新來的農夫！我是阿焱，澡堂是我家開的。做完農來泡一泡，保證復活！",
+   "any": [
+    "今天的水溫剛剛好！……大概。我忘了量。",
+    "我在想澡堂要不要賣冰牛奶，你覺得呢？",
+    "礦坑那邊的阿拓每次來都把水泡成灰色的。",
+    "一起種田感覺很讚耶，改天教我！"
+   ],
+   "rain": [
+    "下雨天泡澡最棒了！雖然客人都不出門……"
+   ],
+   "h3": [
+    "上次燒柴燒太旺，差點把鍋爐燒壞。不要跟我媽說。",
+    "你送的東西我擺在櫃台，客人都說澡堂變有品味了！"
+   ],
+   "h6": [
+    "老實說，接下澡堂我很怕做不好。看你們把荒地弄成那樣，我也想再拚一下。"
+   ],
+   "birthday": "你記得我的生日……謝謝你，我很開心。",
+   "gift_love": "這個是我最喜歡的！謝謝你！",
+   "gift_like": "謝謝，我會好好用的。",
+   "gift_dislike": "呃……謝謝你的心意。"
+  },
+  "mailGift": [
+   "coal",
+   5
+  ]
  },
  "youzi": {
   "name": "柚子",
@@ -787,7 +957,92 @@
   "job": "花店店員",
   "about": "溫柔愛做夢",
   "datable": true,
-  "full": false
+  "full": true,
+  "birthday": [
+   0,
+   21
+  ],
+  "portrait": "portrait/youzi",
+  "look": {
+   "gender": "girl",
+   "skin": "#fbe0c4",
+   "eyes": "lash",
+   "brows": "thin",
+   "mouths": "smile",
+   "hair": "twin",
+   "hairColor": "#d98a4a",
+   "top": "stripe",
+   "topColor": "#f3a6b8",
+   "bottom": "skirt",
+   "bottomColor": "#f6e2a8",
+   "shoes": "sandal",
+   "shoesColor": "#6b4a2e",
+   "hat": "straw",
+   "hatColor": "#d9b45a",
+   "acc": "none"
+  },
+  "schedule": [
+   [
+    360,
+    33.5,
+    27.5
+   ],
+   [
+    480,
+    35.5,
+    12.5
+   ],
+   [
+    1020,
+    18.5,
+    20.5
+   ],
+   [
+    1230,
+    33.5,
+    27.5
+   ]
+  ],
+  "loves": [
+   "rose",
+   "tulip",
+   "dish_strawberry_cake"
+  ],
+  "likes": [
+   "@flower",
+   "@fruit"
+  ],
+  "dislikes": [
+   "junk",
+   "stone"
+  ],
+  "talk": {
+   "first": "你好呀～我是柚子，在花店幫忙。你們農場以後也會種花嗎？好期待。",
+   "any": [
+    "今天的花開得特別精神，一定是昨晚有人跟它們說晚安。",
+    "如果雲是棉花糖，下雨就是糖水了吧。",
+    "每種花都有脾氣喔，鬱金香最愛撒嬌。",
+    "你們兩個站在一起的樣子，好像一幅畫。"
+   ],
+   "rain": [
+    "花在喝水的時候，會發出很小很小的聲音喔。"
+   ],
+   "h3": [
+    "我把你送的花夾在書裡了，這樣它就不會謝。",
+    "有時候我會對著花練習說話。……不要笑我。"
+   ],
+   "h6": [
+    "我的夢想是開一間屬於自己的花店。以前只敢對花說，現在敢對你說了。"
+   ],
+   "birthday": "你記得我的生日……謝謝你，我很開心。",
+   "gift_love": "這個是我最喜歡的！謝謝你！",
+   "gift_like": "謝謝，我會好好用的。",
+   "gift_dislike": "呃……謝謝你的心意。"
+  },
+  "mailGift": [
+   "seed_tulip",
+   5
+  ]
  },
  "atie": {
   "name": "阿鐵",
@@ -795,7 +1050,92 @@
   "job": "火車站站長",
   "about": "嚴肅守時但很疼小孩",
   "datable": false,
-  "full": false
+  "full": true,
+  "birthday": [
+   2,
+   5
+  ],
+  "portrait": "portrait/atie",
+  "look": {
+   "gender": "boy",
+   "skin": "#f6cfa3",
+   "eyes": "cool",
+   "brows": "thick",
+   "mouths": "pout",
+   "hair": "short",
+   "hairColor": "#2b2b2e",
+   "top": "shirt",
+   "topColor": "#3d5a80",
+   "bottom": "pants",
+   "bottomColor": "#2e3440",
+   "shoes": "leather",
+   "shoesColor": "#6b4a2e",
+   "hat": "cap",
+   "hatColor": "#d9b45a",
+   "acc": "none"
+  },
+  "schedule": [
+   [
+    360,
+    21.5,
+    23.5
+   ],
+   [
+    480,
+    38.5,
+    10.5
+   ],
+   [
+    1020,
+    17.5,
+    19.5
+   ],
+   [
+    1230,
+    21.5,
+    23.5
+   ]
+  ],
+  "loves": [
+   "dish_stew",
+   "iron_bar",
+   "dish_potato_salad"
+  ],
+  "likes": [
+   "@veg",
+   "copper_bar"
+  ],
+  "dislikes": [
+   "junk",
+   "@flower"
+  ],
+  "talk": {
+   "first": "我是站長阿鐵。火車每天準點，請不要在月台奔跑。……歡迎搬來。",
+   "any": [
+    "今天的班次誤點零分鐘。跟昨天一樣。",
+    "芽芽又來月台看火車了，我準備了小板凳給她。",
+    "時刻表是一種承諾。",
+    "你們的農產品如果要運出去，跟我說一聲。"
+   ],
+   "rain": [
+    "雨天鐵軌滑，我會多巡一次。"
+   ],
+   "h3": [
+    "……這個哨子是我父親留下的。每天擦。",
+    "上次你送的東西，我放在站長室。很整齊地放著。"
+   ],
+   "h6": [
+    "我不太會說話。但你們搬來以後，我每天多看一次時刻表以外的東西。"
+   ],
+   "birthday": "你記得我的生日……謝謝你，我很開心。",
+   "gift_love": "這個是我最喜歡的！謝謝你！",
+   "gift_like": "謝謝，我會好好用的。",
+   "gift_dislike": "呃……謝謝你的心意。"
+  },
+  "mailGift": [
+   "iron_bar",
+   2
+  ]
  },
  "haibo": {
   "name": "海伯",
@@ -803,7 +1143,92 @@
   "job": "燈塔看守人",
   "about": "老船長，愛講海上的故事",
   "datable": false,
-  "full": false
+  "full": true,
+  "birthday": [
+   3,
+   2
+  ],
+  "portrait": "portrait/haibo",
+  "look": {
+   "gender": "boy",
+   "skin": "#e8b98a",
+   "eyes": "smile",
+   "brows": "thick",
+   "mouths": "open",
+   "hair": "short",
+   "hairColor": "#d8d8d8",
+   "top": "sweater",
+   "topColor": "#3a6b8a",
+   "bottom": "work",
+   "bottomColor": "#4a4a4a",
+   "shoes": "boot",
+   "shoesColor": "#6b4a2e",
+   "hat": "beanie",
+   "hatColor": "#d9b45a",
+   "acc": "none"
+  },
+  "schedule": [
+   [
+    360,
+    28.5,
+    22.5
+   ],
+   [
+    480,
+    14.5,
+    10.5
+   ],
+   [
+    1020,
+    18.5,
+    15.5
+   ],
+   [
+    1230,
+    28.5,
+    22.5
+   ]
+  ],
+  "loves": [
+   "dish_seafood_soup",
+   "fish_koi",
+   "seashell"
+  ],
+  "likes": [
+   "@fish",
+   "dish_grilled_fish"
+  ],
+  "dislikes": [
+   "junk",
+   "dish_salad"
+  ],
+  "talk": {
+   "first": "喲，年輕人！我是海伯，守燈塔的。想聽海上的故事嗎？我有四十年份的。",
+   "any": [
+    "那年的浪啊，有三層樓高！……好吧，兩層。",
+    "燈塔的燈每晚都要亮，不然魚會迷路。騙你的，是船。",
+    "汐音那孩子釣魚的手感，有我年輕時的八成。",
+    "土地跟海一樣，你對它好，它就對你好。"
+   ],
+   "rain": [
+    "這種雨算什麼，我在海上淋過橫著下的。"
+   ],
+   "h3": [
+    "我的船叫「小滿月」，現在停在港邊曬太陽。",
+    "你送的東西讓我想起以前靠港時的市集。"
+   ],
+   "h6": [
+    "老了才知道，最好的港口是有人等你回來的地方。你們那座農場，就是這種地方。"
+   ],
+   "birthday": "你記得我的生日……謝謝你，我很開心。",
+   "gift_love": "這個是我最喜歡的！謝謝你！",
+   "gift_like": "謝謝，我會好好用的。",
+   "gift_dislike": "呃……謝謝你的心意。"
+  },
+  "mailGift": [
+   "seashell",
+   3
+  ]
  },
  "yaya": {
   "name": "芽芽",
@@ -811,7 +1236,92 @@
   "job": "鎮上的小女孩",
   "about": "害羞但喜歡動物",
   "datable": false,
-  "full": false
+  "full": true,
+  "birthday": [
+   1,
+   25
+  ],
+  "portrait": "portrait/yaya",
+  "look": {
+   "gender": "girl",
+   "skin": "#fbe0c4",
+   "eyes": "round",
+   "brows": "worry",
+   "mouths": "o",
+   "hair": "twin",
+   "hairColor": "#5a4636",
+   "top": "hoodie",
+   "topColor": "#f6d34a",
+   "bottom": "skirt",
+   "bottomColor": "#e58aa0",
+   "shoes": "rain",
+   "shoesColor": "#6b4a2e",
+   "hat": "none",
+   "hatColor": "#d9b45a",
+   "acc": "none"
+  },
+  "schedule": [
+   [
+    360,
+    9.5,
+    27.5
+   ],
+   [
+    480,
+    30.5,
+    12.5
+   ],
+   [
+    1020,
+    23.5,
+    20.5
+   ],
+   [
+    1230,
+    9.5,
+    27.5
+   ]
+  ],
+  "loves": [
+   "egg",
+   "wildberry",
+   "dish_pancake"
+  ],
+  "likes": [
+   "@fruit",
+   "milk"
+  ],
+  "dislikes": [
+   "junk",
+   "chili"
+  ],
+  "talk": {
+   "first": "……你、你好。我叫芽芽。……你們家有養小雞嗎？",
+   "any": [
+    "我今天跟一隻貓說話了，牠有回我喔。",
+    "火車每天都會來，阿鐵叔叔說的。",
+    "我的口袋裡有三顆很漂亮的石頭。不能給你，只能給你看。",
+    "長大以後我要養一百隻雞。"
+   ],
+   "rain": [
+    "青蛙今天很開心，我聽得出來。"
+   ],
+   "h3": [
+    "這個給你看……是我畫的，這是你，這是雞。",
+    "小樹哥哥說礦坑有怪物。真的嗎？你會保護雞嗎？"
+   ],
+   "h6": [
+    "你是我第……第三個朋友。第一個是貓，第二個是小樹哥哥。"
+   ],
+   "birthday": "你記得我的生日……謝謝你，我很開心。",
+   "gift_love": "這個是我最喜歡的！謝謝你！",
+   "gift_like": "謝謝，我會好好用的。",
+   "gift_dislike": "呃……謝謝你的心意。"
+  },
+  "mailGift": [
+   "wildberry",
+   5
+  ]
  },
  "molaoshi": {
   "name": "墨老師",
@@ -819,7 +1329,92 @@
   "job": "學校老師",
   "about": "博學溫和，愛種盆栽",
   "datable": false,
-  "full": false
+  "full": true,
+  "birthday": [
+   2,
+   20
+  ],
+  "portrait": "portrait/molaoshi",
+  "look": {
+   "gender": "boy",
+   "skin": "#f6cfa3",
+   "eyes": "soft",
+   "brows": "plain",
+   "mouths": "smile",
+   "hair": "curly",
+   "hairColor": "#6b6b6b",
+   "top": "shirt",
+   "topColor": "#8a7a5c",
+   "bottom": "pants",
+   "bottomColor": "#4a4636",
+   "shoes": "leather",
+   "shoesColor": "#6b4a2e",
+   "hat": "none",
+   "hatColor": "#d9b45a",
+   "acc": "glasses"
+  },
+  "schedule": [
+   [
+    360,
+    9.5,
+    26.5
+   ],
+   [
+    480,
+    15.5,
+    11.5
+   ],
+   [
+    1020,
+    19.5,
+    16.5
+   ],
+   [
+    1230,
+    9.5,
+    26.5
+   ]
+  ],
+  "loves": [
+   "dish_veg_soup",
+   "bamboo_shoot",
+   "jade"
+  ],
+  "likes": [
+   "@forage",
+   "@veg"
+  ],
+  "dislikes": [
+   "junk",
+   "coal"
+  ],
+  "talk": {
+   "first": "你好，我是鎮上學校的老師，大家叫我墨老師。種田是一門很深的學問，我們可以互相請教。",
+   "any": [
+    "盆栽跟學生一樣，急不得。",
+    "今天教孩子們認節氣，他們比較想知道午餐吃什麼。",
+    "你知道嗎？這個鎮以前叫「晴谷」，後來才多了一個耕字。",
+    "讀萬卷書，也要行萬里田埂。"
+   ],
+   "rain": [
+    "雨是最公平的老師，每一株都教到。"
+   ],
+   "h3": [
+    "我那盆五葉松養了二十年，比我教過的任何一屆都久。",
+    "你送的東西我拿去課堂上當教材了，孩子們很喜歡。"
+   ],
+   "h6": [
+    "教了三十年書，我還在學。看你們把一塊荒地教成了良田——這是我見過最好的一堂課。"
+   ],
+   "birthday": "你記得我的生日……謝謝你，我很開心。",
+   "gift_love": "這個是我最喜歡的！謝謝你！",
+   "gift_like": "謝謝，我會好好用的。",
+   "gift_dislike": "呃……謝謝你的心意。"
+  },
+  "mailGift": [
+   "fertilizer_gold",
+   2
+  ]
  },
  "maisui": {
   "name": "麥穗",
@@ -827,7 +1422,92 @@
   "job": "農會職員",
   "about": "能幹又直爽",
   "datable": true,
-  "full": false
+  "full": true,
+  "birthday": [
+   2,
+   1
+  ],
+  "portrait": "portrait/maisui",
+  "look": {
+   "gender": "girl",
+   "skin": "#e8b98a",
+   "eyes": "sharp",
+   "brows": "plain",
+   "mouths": "open",
+   "hair": "bob",
+   "hairColor": "#8a5a2e",
+   "top": "shirt",
+   "topColor": "#d9a441",
+   "bottom": "jeans",
+   "bottomColor": "#3d5a80",
+   "shoes": "boot",
+   "shoesColor": "#6b4a2e",
+   "hat": "none",
+   "hatColor": "#d9b45a",
+   "acc": "none"
+  },
+  "schedule": [
+   [
+    360,
+    30.5,
+    27.5
+   ],
+   [
+    480,
+    31.5,
+    10.5
+   ],
+   [
+    1020,
+    19.5,
+    15.5
+   ],
+   [
+    1230,
+    30.5,
+    27.5
+   ]
+  ],
+  "loves": [
+   "wheat",
+   "dish_omurice",
+   "fertilizer_gold"
+  ],
+  "likes": [
+   "@veg",
+   "@good"
+  ],
+  "dislikes": [
+   "junk",
+   "fiber"
+  ],
+  "talk": {
+   "first": "你們就是接下那塊地的人？我是農會的麥穗。有問題直接問，我不講廢話。",
+   "any": [
+    "出貨箱記得每天清，放過夜價錢不會變，但我看了會焦慮。",
+    "這一季的行情我都記在腦子裡，要聽嗎？",
+    "雜草長得比你想的快。去拔。",
+    "做得不錯嘛。我說真的，我很少誇人。"
+   ],
+   "rain": [
+    "下雨省一次澆水，算一算是賺到。"
+   ],
+   "h3": [
+    "農會的報表我都自己做，別人做的我看不下去。",
+    "你送的東西品質可以，下次比賽要不要報名？"
+   ],
+   "h6": [
+    "我從小在田邊長大，最怕看到地荒掉。謝謝你們沒有讓那塊地繼續等。"
+   ],
+   "birthday": "你記得我的生日……謝謝你，我很開心。",
+   "gift_love": "這個是我最喜歡的！謝謝你！",
+   "gift_like": "謝謝，我會好好用的。",
+   "gift_dislike": "呃……謝謝你的心意。"
+  },
+  "mailGift": [
+   "fertilizer_gold",
+   3
+  ]
  },
  "laosong": {
   "name": "老松",
@@ -835,7 +1515,92 @@
   "job": "山上小祠的守護人",
   "about": "慢條斯理，懂很多古老傳說",
   "datable": false,
-  "full": false
+  "full": true,
+  "birthday": [
+   3,
+   15
+  ],
+  "portrait": "portrait/laosong",
+  "look": {
+   "gender": "boy",
+   "skin": "#e8b98a",
+   "eyes": "smile",
+   "brows": "thin",
+   "mouths": "smile",
+   "hair": "long",
+   "hairColor": "#e8e8e8",
+   "top": "sweater",
+   "topColor": "#6b8a5a",
+   "bottom": "longskirt",
+   "bottomColor": "#5a5f4a",
+   "shoes": "sandal",
+   "shoesColor": "#6b4a2e",
+   "hat": "none",
+   "hatColor": "#d9b45a",
+   "acc": "none"
+  },
+  "schedule": [
+   [
+    360,
+    40.5,
+    22.5
+   ],
+   [
+    480,
+    8.5,
+    12.5
+   ],
+   [
+    1020,
+    21.5,
+    20.5
+   ],
+   [
+    1230,
+    40.5,
+    22.5
+   ]
+  ],
+  "loves": [
+   "pinecone",
+   "dish_mushroom_soup",
+   "moonstone"
+  ],
+  "likes": [
+   "@forage",
+   "wild_mushroom"
+  ],
+  "dislikes": [
+   "junk",
+   "coal"
+  ],
+  "talk": {
+   "first": "……喔……有客人……我是老松……山上小祠……是我在掃的……不急……慢慢來……",
+   "any": [
+    "樹……比人有耐心……所以活得久……",
+    "今天的風……從東邊來……會有好事……",
+    "山裡的東西……拿多少……就還多少……",
+    "你們的田……土地公……很喜歡……"
+   ],
+   "rain": [
+    "雨……是山在洗臉……"
+   ],
+   "h3": [
+    "很久以前……這座山谷……有一棵會唱歌的樹……",
+    "你送的東西……我供在祠裡了……祂也有份……"
+   ],
+   "h6": [
+    "我守了五十年……一直在等人回來種那塊地……等到了……"
+   ],
+   "birthday": "你記得我的生日……謝謝你，我很開心。",
+   "gift_love": "這個是我最喜歡的！謝謝你！",
+   "gift_like": "謝謝，我會好好用的。",
+   "gift_dislike": "呃……謝謝你的心意。"
+  },
+  "mailGift": [
+   "pinecone",
+   5
+  ]
  },
  "liuli": {
   "name": "琉璃",
@@ -843,7 +1608,92 @@
   "job": "流浪商人",
   "about": "神秘愛開玩笑，來去無蹤",
   "datable": true,
-  "full": false
+  "full": true,
+  "birthday": [
+   1,
+   28
+  ],
+  "portrait": "portrait/liuli",
+  "look": {
+   "gender": "girl",
+   "skin": "#f6cfa3",
+   "eyes": "lash",
+   "brows": "thin",
+   "mouths": "pout",
+   "hair": "long",
+   "hairColor": "#3a6b8a",
+   "top": "hoodie",
+   "topColor": "#5a3d7a",
+   "bottom": "pants",
+   "bottomColor": "#2e2e3a",
+   "shoes": "boot",
+   "shoesColor": "#6b4a2e",
+   "hat": "none",
+   "hatColor": "#d9b45a",
+   "acc": "scarf"
+  },
+  "schedule": [
+   [
+    360,
+    32.5,
+    23.5
+   ],
+   [
+    480,
+    6.5,
+    10.5
+   ],
+   [
+    1020,
+    27.5,
+    15.5
+   ],
+   [
+    1230,
+    32.5,
+    23.5
+   ]
+  ],
+  "loves": [
+   "diamond",
+   "ruby",
+   "dish_carrot_cake"
+  ],
+  "likes": [
+   "@ore",
+   "amethyst"
+  ],
+  "dislikes": [
+   "junk",
+   "fiber"
+  ],
+  "talk": {
+   "first": "哎呀哎呀，新客人～我是琉璃，賣一些「別的地方買不到」的東西。至於從哪來的嘛……秘密。",
+   "any": [
+    "今天的貨？看心情。我的心情，不是你的。",
+    "我上個月在哪裡？你猜。猜對也不告訴你。",
+    "這個鎮的人太老實了，害我都不好意思抬價。",
+    "你們農場出的東西，外地人搶著要喔。真的啦。"
+   ],
+   "rain": [
+    "雨天生意差，但適合打聽消息。"
+   ],
+   "h3": [
+    "告訴你一個秘密：我其實每次都會繞回這個鎮。",
+    "你送的東西我沒賣掉。別問為什麼。"
+   ],
+   "h6": [
+    "流浪的人不該有想回去的地方。……麻煩了，我好像有了。"
+   ],
+   "birthday": "你記得我的生日……謝謝你，我很開心。",
+   "gift_love": "這個是我最喜歡的！謝謝你！",
+   "gift_like": "謝謝，我會好好用的。",
+   "gift_dislike": "呃……謝謝你的心意。"
+  },
+  "mailGift": [
+   "amethyst",
+   1
+  ]
  },
  "apeng": {
   "name": "阿椪",
@@ -851,7 +1701,92 @@
   "job": "餐館的少年學徒",
   "about": "貪吃又努力",
   "datable": false,
-  "full": false
+  "full": true,
+  "birthday": [
+   0,
+   3
+  ],
+  "portrait": "portrait/apeng",
+  "look": {
+   "gender": "boy",
+   "skin": "#f6cfa3",
+   "eyes": "round",
+   "brows": "thick",
+   "mouths": "open",
+   "hair": "curly",
+   "hairColor": "#4a3626",
+   "top": "tee",
+   "topColor": "#f3ead2",
+   "bottom": "shorts",
+   "bottomColor": "#5a5f66",
+   "shoes": "sneaker",
+   "shoesColor": "#6b4a2e",
+   "hat": "none",
+   "hatColor": "#d9b45a",
+   "acc": "none"
+  },
+  "schedule": [
+   [
+    360,
+    31.5,
+    26.5
+   ],
+   [
+    480,
+    30.5,
+    10.5
+   ],
+   [
+    1020,
+    19.5,
+    20.5
+   ],
+   [
+    1230,
+    31.5,
+    26.5
+   ]
+  ],
+  "loves": [
+   "dish_omurice",
+   "dish_pancake",
+   "dish_cream_stew"
+  ],
+  "likes": [
+   "egg",
+   "@veg"
+  ],
+  "dislikes": [
+   "junk",
+   "bitter_melon"
+  ],
+  "talk": {
+   "first": "你好！我是阿椪，在餐館當學徒！……你身上有食物的味道嗎？沒有喔。",
+   "any": [
+    "師父說我試吃的量已經超過「試」了。",
+    "今天切了五十顆洋蔥，哭到看不見砧板。",
+    "小滿姐烤焦的麵包其實還是很好吃，我都幫忙吃掉。",
+    "你們種的菜送來餐館的話，我會很用心煮的！"
+   ],
+   "rain": [
+    "下雨天最適合喝熱湯。晴天也是。"
+   ],
+   "h3": [
+    "我的夢想是煮出讓人吃了會笑的料理。先從不要燒焦開始。",
+    "你送的東西我吃——我是說，我有好好研究！"
+   ],
+   "h6": [
+    "我以前覺得自己只會吃。可是你說我煮的好吃那次，我第一次覺得自己可以當廚師。"
+   ],
+   "birthday": "你記得我的生日……謝謝你，我很開心。",
+   "gift_love": "這個是我最喜歡的！謝謝你！",
+   "gift_like": "謝謝，我會好好用的。",
+   "gift_dislike": "呃……謝謝你的心意。"
+  },
+  "mailGift": [
+   "dish_fried_egg",
+   2
+  ]
  },
  "qinglan": {
   "name": "青嵐",
@@ -859,7 +1794,92 @@
   "job": "登山嚮導兼採藥人",
   "about": "冷靜可靠，不太說話",
   "datable": true,
-  "full": false
+  "full": true,
+  "birthday": [
+   3,
+   22
+  ],
+  "portrait": "portrait/qinglan",
+  "look": {
+   "gender": "boy",
+   "skin": "#e8b98a",
+   "eyes": "cool",
+   "brows": "plain",
+   "mouths": "pout",
+   "hair": "long",
+   "hairColor": "#3b4a3a",
+   "top": "hoodie",
+   "topColor": "#4a6b5a",
+   "bottom": "work",
+   "bottomColor": "#3a3a30",
+   "shoes": "boot",
+   "shoesColor": "#6b4a2e",
+   "hat": "none",
+   "hatColor": "#d9b45a",
+   "acc": "none"
+  },
+  "schedule": [
+   [
+    360,
+    19.5,
+    23.5
+   ],
+   [
+    480,
+    5.5,
+    10.5
+   ],
+   [
+    1020,
+    27.5,
+    20.5
+   ],
+   [
+    1230,
+    19.5,
+    23.5
+   ]
+  ],
+  "loves": [
+   "fern_shoot",
+   "wild_mushroom",
+   "dish_mushroom_soup"
+  ],
+  "likes": [
+   "@forage",
+   "tonic"
+  ],
+  "dislikes": [
+   "junk",
+   "dish_strawberry_cake"
+  ],
+  "talk": {
+   "first": "……青嵐。帶人上山，也採藥。山裡迷路的話，往有鳥叫的方向走。",
+   "any": [
+    "今天山上起霧。別去。",
+    "這種草能退燒。那種不行。別搞混。",
+    "白芷的藥，一半是我採的。",
+    "……田種得不錯。"
+   ],
+   "rain": [
+    "雨後菇多。蛇也多。"
+   ],
+   "h3": [
+    "我不太說話，不是討厭人。是山裡不需要說話。",
+    "你送的東西。……有用。謝謝。"
+   ],
+   "h6": [
+    "我習慣一個人走。最近下山的時候，會繞去看看你們的田。……沒什麼，就是看看。"
+   ],
+   "birthday": "你記得我的生日……謝謝你，我很開心。",
+   "gift_love": "這個是我最喜歡的！謝謝你！",
+   "gift_like": "謝謝，我會好好用的。",
+   "gift_dislike": "呃……謝謝你的心意。"
+  },
+  "mailGift": [
+   "tonic",
+   2
+  ]
  },
  "mipo": {
   "name": "米婆",
@@ -867,7 +1887,92 @@
   "job": "鎮上最年長的奶奶",
   "about": "慈祥，最會醃菜",
   "datable": false,
-  "full": false
+  "full": true,
+  "birthday": [
+   3,
+   26
+  ],
+  "portrait": "portrait/mipo",
+  "look": {
+   "gender": "girl",
+   "skin": "#fbe0c4",
+   "eyes": "smile",
+   "brows": "worry",
+   "mouths": "smile",
+   "hair": "bob",
+   "hairColor": "#e0e0e0",
+   "top": "sweater",
+   "topColor": "#c9788a",
+   "bottom": "longskirt",
+   "bottomColor": "#6b5a6b",
+   "shoes": "sandal",
+   "shoesColor": "#6b4a2e",
+   "hat": "none",
+   "hatColor": "#d9b45a",
+   "acc": "glasses"
+  },
+  "schedule": [
+   [
+    360,
+    16.5,
+    27.5
+   ],
+   [
+    480,
+    20.5,
+    12.5
+   ],
+   [
+    1020,
+    25.5,
+    19.5
+   ],
+   [
+    1230,
+    16.5,
+    27.5
+   ]
+  ],
+  "loves": [
+   "napa",
+   "daikon",
+   "dish_stew"
+  ],
+  "likes": [
+   "@veg",
+   "egg"
+  ],
+  "dislikes": [
+   "junk",
+   "@ore"
+  ],
+  "talk": {
+   "first": "唉唷，好俊的孩子。我是米婆，在這鎮上住了七十幾年囉。吃飽沒？來，這個拿去吃。",
+   "any": [
+    "醃菜啊，要等。人也一樣，急不得。",
+    "我年輕的時候，這條街還是泥巴路呢。",
+    "阿禾那孩子小時候最愛哭，現在開店了，真好。",
+    "要多穿一件。我看你就是穿太少。"
+   ],
+   "rain": [
+    "下雨天關節就知道了，比天氣預報還準。"
+   ],
+   "h3": [
+    "這罈是我十年前醃的，等你們下次來開。",
+    "你送的東西讓我想起我老伴，他也老是帶東西回來給我。"
+   ],
+   "h6": [
+    "我看過這個鎮熱鬧，也看過它安靜。你們來了以後，我又聽到笑聲了。婆婆很高興。"
+   ],
+   "birthday": "你記得我的生日……謝謝你，我很開心。",
+   "gift_love": "這個是我最喜歡的！謝謝你！",
+   "gift_like": "謝謝，我會好好用的。",
+   "gift_dislike": "呃……謝謝你的心意。"
+  },
+  "mailGift": [
+   "dish_veg_soup",
+   2
+  ]
  },
  "atuo": {
   "name": "阿拓",
@@ -875,7 +1980,92 @@
   "job": "礦工",
   "about": "樂天大嗓門，力氣很大",
   "datable": true,
-  "full": false
+  "full": true,
+  "birthday": [
+   2,
+   17
+  ],
+  "portrait": "portrait/atuo",
+  "look": {
+   "gender": "boy",
+   "skin": "#e8b98a",
+   "eyes": "round",
+   "brows": "thick",
+   "mouths": "open",
+   "hair": "spiky",
+   "hairColor": "#2e2a26",
+   "top": "overalls",
+   "topColor": "#c9772e",
+   "bottom": "work",
+   "bottomColor": "#4a3a2a",
+   "shoes": "boot",
+   "shoesColor": "#6b4a2e",
+   "hat": "none",
+   "hatColor": "#d9b45a",
+   "acc": "none"
+  },
+  "schedule": [
+   [
+    360,
+    17.5,
+    23.5
+   ],
+   [
+    480,
+    10.5,
+    11.5
+   ],
+   [
+    1020,
+    24.5,
+    15.5
+   ],
+   [
+    1230,
+    17.5,
+    23.5
+   ]
+  ],
+  "loves": [
+   "gold_bar",
+   "dish_stew",
+   "copper_ore"
+  ],
+  "likes": [
+   "@ore",
+   "dish_baked_potato"
+  ],
+  "dislikes": [
+   "junk",
+   "@flower"
+  ],
+  "talk": {
+   "first": "哈哈哈！你們就是新來的！我是阿拓，挖礦的！聲音大是因為礦坑裡要用喊的！",
+   "any": [
+    "今天挖到一顆超大的石頭！只是石頭！哈哈哈！",
+    "礦坑越下面越涼快，夏天我都不想上來！",
+    "石磊哥打的鎬子最好用，我已經敲壞三把了！",
+    "你們也下礦坑嗎？下次比誰挖得深！"
+   ],
+   "rain": [
+    "下雨？礦坑裡又淋不到！哈哈！"
+   ],
+   "h3": [
+    "我小聲跟你說……（其實還是很大聲）……我怕蝙蝠！",
+    "你送的東西我掛在礦坑入口了，這樣每天都看得到！"
+   ],
+   "h6": [
+    "我這個人沒什麼優點，就是力氣大。以後你們農場有要搬的東西，喊一聲，我一定到！"
+   ],
+   "birthday": "你記得我的生日……謝謝你，我很開心。",
+   "gift_love": "這個是我最喜歡的！謝謝你！",
+   "gift_like": "謝謝，我會好好用的。",
+   "gift_dislike": "呃……謝謝你的心意。"
+  },
+  "mailGift": [
+   "iron_ore",
+   5
+  ]
  },
  "xiaocheng": {
   "name": "小澄",
@@ -883,7 +2073,92 @@
   "job": "畫家",
   "about": "害羞，隨身帶著素描本",
   "datable": true,
-  "full": false
+  "full": true,
+  "birthday": [
+   1,
+   11
+  ],
+  "portrait": "portrait/xiaocheng",
+  "look": {
+   "gender": "girl",
+   "skin": "#fbe0c4",
+   "eyes": "soft",
+   "brows": "worry",
+   "mouths": "o",
+   "hair": "bob",
+   "hairColor": "#6b8ab5",
+   "top": "stripe",
+   "topColor": "#bcd6ec",
+   "bottom": "longskirt",
+   "bottomColor": "#e8e2d0",
+   "shoes": "sneaker",
+   "shoesColor": "#6b4a2e",
+   "hat": "beanie",
+   "hatColor": "#d9b45a",
+   "acc": "none"
+  },
+  "schedule": [
+   [
+    360,
+    32.5,
+    22.5
+   ],
+   [
+    480,
+    14.5,
+    11.5
+   ],
+   [
+    1020,
+    20.5,
+    13.5
+   ],
+   [
+    1230,
+    32.5,
+    22.5
+   ]
+  ],
+  "loves": [
+   "sunflower",
+   "cosmos",
+   "dish_jam_toast"
+  ],
+  "likes": [
+   "@flower",
+   "honey"
+  ],
+  "dislikes": [
+   "junk",
+   "coal"
+  ],
+  "talk": {
+   "first": "啊……你、你好……我是小澄……在、在畫畫……對不起，我不太會跟人說話……",
+   "any": [
+    "今天的光……很好……我想把它留下來。",
+    "那個……我可以畫你們的農場嗎？遠遠地畫就好……",
+    "柚子說我的畫有花的味道……我不太懂，但是很開心。",
+    "顏料又用完了……藍色總是最先用完。"
+   ],
+   "rain": [
+    "雨天的顏色……比晴天多。"
+   ],
+   "h3": [
+    "這、這張……是畫你們的田。還沒畫完……不要看太久……",
+    "你送的東西……我畫下來了。這樣它就不會不見。"
+   ],
+   "h6": [
+    "我以前只敢畫沒有人的風景。現在……我的畫裡開始有人了。有你。"
+   ],
+   "birthday": "你記得我的生日……謝謝你，我很開心。",
+   "gift_love": "這個是我最喜歡的！謝謝你！",
+   "gift_like": "謝謝，我會好好用的。",
+   "gift_dislike": "呃……謝謝你的心意。"
+  },
+  "mailGift": [
+   "seed_tulip",
+   3
+  ]
  },
  "awangshu": {
   "name": "阿汪叔",
@@ -891,6 +2166,91 @@
   "job": "寵物店老闆兼獸醫",
   "about": "大嗓門，對動物超溫柔",
   "datable": false,
-  "full": false
+  "full": true,
+  "birthday": [
+   0,
+   12
+  ],
+  "portrait": "portrait/awangshu",
+  "look": {
+   "gender": "boy",
+   "skin": "#f6cfa3",
+   "eyes": "smile",
+   "brows": "thick",
+   "mouths": "open",
+   "hair": "short",
+   "hairColor": "#6b4a2e",
+   "top": "shirt",
+   "topColor": "#e8872e",
+   "bottom": "work",
+   "bottomColor": "#5a4a3a",
+   "shoes": "boot",
+   "shoesColor": "#6b4a2e",
+   "hat": "none",
+   "hatColor": "#d9b45a",
+   "acc": "none"
+  },
+  "schedule": [
+   [
+    360,
+    32.5,
+    26.5
+   ],
+   [
+    480,
+    15.5,
+    10.5
+   ],
+   [
+    1020,
+    22.5,
+    13.5
+   ],
+   [
+    1230,
+    32.5,
+    26.5
+   ]
+  ],
+  "loves": [
+   "milk",
+   "wool",
+   "dish_grilled_fish"
+  ],
+  "likes": [
+   "egg",
+   "@fish"
+  ],
+  "dislikes": [
+   "junk",
+   "chili"
+  ],
+  "talk": {
+   "first": "喂——！新來的！我是阿汪叔，開寵物店的，也看動物的病！你們家的雞有沒有好好摸啊！",
+   "any": [
+    "動物不會說話，所以你要多看牠的眼睛！",
+    "今天接生了一窩小狗，每一隻都是最可愛的！",
+    "刷毛要順著刷！逆著刷牠會記恨你一整天！",
+    "（小聲）噓……牠睡著了……"
+   ],
+   "rain": [
+    "下雨天記得把動物趕回屋裡！會感冒的！"
+   ],
+   "h3": [
+    "我嗓門大，可是打針的時候手很輕，動物都知道。",
+    "你送的東西，我家那幾隻搶著聞。"
+   ],
+   "h6": [
+    "人家說我對動物比對人好。哈！那是因為以前沒遇到像你們這麼疼動物的人！"
+   ],
+   "birthday": "你記得我的生日……謝謝你，我很開心。",
+   "gift_love": "這個是我最喜歡的！謝謝你！",
+   "gift_like": "謝謝，我會好好用的。",
+   "gift_dislike": "呃……謝謝你的心意。"
+  },
+  "mailGift": [
+   "hay",
+   10
+  ]
  }
 }
