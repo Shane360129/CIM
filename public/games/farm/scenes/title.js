@@ -2,13 +2,14 @@
 import { play } from './play.js';
 import { create } from './create.js';
 import { createWorld } from '../core/world.js';
+import { wireAudio } from '../core/audio.js';
 
 export const title = {
   t: 0,
   enter(ctx) {
     this.t = 0;
     // 在標題畫面就先連上農場，按開始時通常已經拿到資料了。還沒進到農場畫面時收到的「你不在時發生的事」先留著，進去再顯示
-    if (!ctx.world) { ctx.world = createWorld(ctx.session, ctx.data.balance); ctx.world.on('snapshot', (m) => { if (m.summary && ctx.scenes.current !== play) ctx.pendingSummary = m; }); }
+    if (!ctx.world) { ctx.world = createWorld(ctx.session, ctx.data.balance); wireAudio(ctx.audio, ctx.world.room, () => ctx.world.me.id); ctx.world.on('snapshot', (m) => { if (m.summary && ctx.scenes.current !== play) ctx.pendingSummary = m; }); }
     this.wait = false;
     const go = () => ctx.scenes.go(ctx.world.me.look ? play : create); // 還沒有角色：先去建立
     const start = () => { if (ctx.world.ready) go(); else if (!this.wait) { this.wait = true; const off = ctx.world.on('snapshot', () => { off(); if (ctx.scenes.current === this) go(); }); } };

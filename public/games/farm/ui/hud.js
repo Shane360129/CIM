@@ -33,7 +33,9 @@ export function createHud(ui, slots) {
   const side = mk('div', 'side hidden'), btnSay = mk('button', '', '💬'), btnEmote = mk('button', '', '😊');
   btnSay.type = btnEmote.type = 'button'; btnSay.title = '說一句話（T）'; btnEmote.title = '表情';
   const btnPhoto = mk('button', '', '📷'); btnPhoto.type = 'button'; btnPhoto.title = '拍一張照片傳到聊天室';
-  side.append(btnSay, btnEmote, btnPhoto); ui.append(side);
+  const btnSet = mk('button', '', '⚙️'); btnSet.type = 'button'; btnSet.title = '設定'; btnSet.dataset.act = 'settings';
+  side.append(btnSay, btnEmote, btnPhoto, btnSet); ui.append(side);
+  const guide = mk('button', 'guide hidden'); guide.type = 'button'; ui.append(guide); // 新手教學：時鐘下面一行小字，不擋畫面，點了才展開
   const emotes = mk('div', 'emotes hidden'); ui.append(emotes);
   const say = mk('form', 'say hidden'), sayInput = mk('input'), sayBtn = mk('button', '', '送出');
   sayInput.type = 'text'; sayInput.placeholder = '說一句話…'; sayInput.autocomplete = 'off'; say.append(sayInput, sayBtn); ui.append(say);
@@ -48,7 +50,7 @@ export function createHud(ui, slots) {
   btnEmote.addEventListener('click', () => emotes.classList.toggle('hidden'));
   // 用 defineProperties 而不是 Object.assign：後者會把 get typing 這種「每次問才算」的屬性當場算一次、變成固定的值
   Object.defineProperties(hud, Object.getOwnPropertyDescriptors({
-    showPlay(on) { for (const n of [clock, side, chips]) n.classList.toggle('hidden', !on); if (!on) { emotes.classList.add('hidden'); closeSay(); hud.closeCard(); hud.closePanel(); } },
+    showPlay(on) { for (const n of [clock, side, chips]) n.classList.toggle('hidden', !on); if (!on) { guide.classList.add('hidden'); emotes.classList.add('hidden'); closeSay(); hud.closeCard(); hud.closePanel(); } },
     onBag(fn) { btnBag.onclick = fn; },
     setStatus(money, energy, max, hp = null, hpMax = 100) { chipHp.classList.toggle('hidden', hp == null); if (hp != null) hfill.style.width = Math.round(100 * hp / hpMax) + '%'; const m = `💰 ${money}`; if (chipMoney.textContent !== m) chipMoney.textContent = m; efill.style.width = Math.round(100 * energy / max) + '%'; chipEnergy.classList.toggle('low', energy < max * 0.2); chipEnergy.title = `體力 ${energy}/${max}`; },
     // 快捷列：背包的前 10 格。make(i) 回傳那一格要放的圖示（沒有東西回傳 null）
@@ -69,6 +71,9 @@ export function createHud(ui, slots) {
       });
     },
     onPhoto(fn) { btnPhoto.onclick = fn; },
+    onSettings(fn) { btnSet.onclick = fn; },
+    onGuide(fn) { guide.onclick = fn; },
+    setGuide(text) { guide.classList.toggle('hidden', !text || clock.classList.contains('hidden')); if (text && guide.textContent !== text) guide.textContent = text; },
     hideAll(on) { ui.classList.toggle('hidden', on); },
     // 對話框：左邊大頭像、名字、一個字一個字跑出來的話（點一下或按動作鍵就全部顯示）、下面幾個按鈕。回傳按了哪一個
     dialog({ portrait, name, sub, text, buttons = [{ label: '好', value: true }] }) {

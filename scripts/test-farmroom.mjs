@@ -4,6 +4,7 @@
 //   npm run test:farmroom            # 第一輪（要乾淨的資料庫）
 //   重開 npm run dev（不要刪資料）
 //   npm run test:farmroom -- after-restart   # 確認重開後狀態還在
+//   停掉 npm run dev → node scripts/corrupt-farm-save.mjs farm（再跑一次 player、chunk）→ 重開 → npm run test:farmroom -- after-corrupt   # 存檔壞掉也打得開
 const B = process.env.BASE_URL || 'http://127.0.0.1:8787', WSB = B.replace(/^http/, 'ws'), PASS = 'pass123456';
 const j = async (path, opts = {}, token) => {
   const r = await fetch(B + path, { method: opts.method || (opts.body ? 'POST' : 'GET'), headers: { 'content-type': 'application/json', ...(token ? { authorization: 'Bearer ' + token } : {}), ...(opts.headers || {}) }, body: opts.body ? JSON.stringify(opts.body) : undefined });
@@ -38,6 +39,19 @@ if (process.argv[2] === 'after-restart') {
   const A = open(dm.id, a.token); const snap = await A.wait('snapshot');
   check('重開伺服器後：天數、格子、背包、錢、所在的地圖、造型都還在', !!snap && snap.farm.day >= 6 && snap.tiles.length >= 1 && snap.self.inv.some((x) => x && x.id === 'seed_strawberry') && snap.farm.animals.length === 1 && snap.you.map === 'house' && !!snap.you.look, snap && `第 ${snap.farm.day} 天、${snap.tiles.length} 格、${snap.farm.money} 元、${snap.objs.length} 個東西`);
   A.ws.close(); await sleep(200);
+  console.log(`\n結果：${pass} 通過，${fail} 失敗`); process.exit(fail ? 1 : 0);
+}
+
+if (process.argv[2] === 'after-corrupt') {
+  const a = await login('fr_a'), b = await login('fr_b'); const convs = (await j('/api/conversations', {}, a.token)).data.conversations;
+  const dm = convs.find((c) => c.type === 'dm' && c.members.length === 2 && c.members.some((m) => m.userId === b.user.id));
+  const backups = (await j(`/api/farmroom/backups?conv=${dm.id}`, {}, a.token)).data.backups || [];
+  const A = open(dm.id, a.token); const snap = await A.wait('snapshot');
+  check('存檔主檔壞掉：農場照樣打得開，回到最近一份每日備份，錢和田都在', !!snap && backups.length > 0 && snap.farm.day === backups[0].day && snap.farm.money > 0 && snap.tiles.length >= 1, snap ? `第 ${snap.farm.day} 天、${snap.farm.money} 元、${snap.tiles.length} 格、備份 ${backups.map((x) => x.day).join()}` : '沒有快照');
+  check('角色資料壞掉的那個人：當成新玩家重新發工具，不會卡住', !!snap && snap.self.inv.some((x) => x && x.id === 'hoe'));
+  const Bc = open(dm.id, b.token); const sb = await Bc.wait('snapshot');
+  check('另一個人的背包沒有受影響；壞掉之後還能繼續玩（翻土或澆水有回應）', !!sb && sb.self.inv.filter(Boolean).length >= 7 && ['ok', 'no'].includes((await new Promise((res) => { A.ws.addEventListener('message', (e) => { const m = JSON.parse(e.data); if (m.id === 9001) res(m.t); }); A.send({ t: 'note', text: 'x', id: 9001 }); setTimeout(() => res('none'), 3000); }))));
+  A.ws.close(); Bc.ws.close(); await sleep(200);
   console.log(`\n結果：${pass} 通過，${fail} 失敗`); process.exit(fail ? 1 : 0);
 }
 
@@ -158,7 +172,9 @@ A.clear(); const p2 = await use(Bc, 'axe', 24, 23);
 check('對方在幾秒內也動手：樹根搬開了，東西給後動手的人，兩邊都看到它不見', p2.t === 'ok' && !p2.waiting && has(Bc, 'wood') === 25 && has(Bc, 'sap') === 3 && !!(await A.wait('objs', (m) => m.list[0].x === 24 && m.list[0].type === null)));
 check('離便條板太遠不能留言', (await req(A, { t: 'note', text: '記得澆水' })).reason === 'far');
 await go(A, 13.5, 10.4); Bc.clear();
-check('留便條：對方收到；空白的不行；太長會截短', (await req(A, { t: 'note', text: '  記得   澆水喔 ' })).t === 'ok' && (await Bc.wait('notes')).notes[0].text === '記得 澆水喔' && (await req(A, { t: 'note', text: '   ' })).reason === 'slot' && (await req(A, { t: 'note', text: '好'.repeat(200) })).t === 'ok' && (await Bc.wait('notes', (m) => m.notes.length === 2)).notes[1].text.length === 60);
+check('留便條：對方收到；空白的不行；太長會截短', (await req(A, { t: 'note', text: '  記得   澆水喔 ' })).t === 'ok' && (await Bc.wait('notes')).notes[0].text === '記得 澆水喔' && !!(await Bc.wait('stat', (m) => m.key === 'note')) && (await req(A, { t: 'note', text: '   ' })).reason === 'slot' && (await req(A, { t: 'note', text: '好'.repeat(200) })).t === 'ok' && (await Bc.wait('notes', (m) => m.notes.length === 2)).notes[1].text.length === 60);
+Bc.clear();
+check('一天的長度（兩人共用的設定）：只能選設定檔列的幾種；改了兩邊的時鐘速度一起變，時間不會跳', (await req(A, { t: 'set', key: 'dayLen', value: 7 })).reason === 'unknown' && (await req(A, { t: 'set', key: 'money', value: 15 })).reason === 'unknown' && (await req(A, { t: 'set', key: 'dayLen', value: 30 })).t === 'ok' && Math.abs((await Bc.wait('opts')).minutesPerSecond - 1200 / 1800) < 1e-6 && (await req(A, { t: 'set', key: 'dayLen', value: 15 })).t === 'ok');
 check('對方站太遠不能送東西', (await req(A, { t: 'give', slot: slot(A, 'fiber'), n: 1 })).reason === 'far');
 await go(Bc, 12.5, 10.6); Bc.clear();
 check('站在一起可以送：我少一個、對方多一個並收到通知', (await req(A, { t: 'give', slot: slot(A, 'fiber'), n: 1 })).t === 'ok' && has(A, 'fiber') === 0 && !!(await Bc.wait('given', (m) => m.item === 'fiber' && m.n === 1)) && has(Bc, 'fiber') === 1);

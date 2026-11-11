@@ -136,3 +136,19 @@ button.chip { cursor: pointer; }
 .frow { width: 100%; text-align: left; font: inherit; cursor: pointer; flex-wrap: wrap; } .frow.on { border-color: #e8872e; background: #fff3d6; } .frow .sname { width: auto; min-width: 8em; }
 
 .cell.unknown .icon, .cell.unknown .ifallback { filter: brightness(0); opacity: .28; } span.cell { cursor: default; }
+
+/* 階段 9：新手教學提示、設定面板、字體大小、左手模式 */
+.guide { position: absolute; left: calc(10px + env(safe-area-inset-left)); top: calc(100px + env(safe-area-inset-top)); max-width: min(300px, calc(100% - 70px)); padding: 5px 10px; border-radius: 10px;
+  background: rgba(255, 250, 235, .92); border: 2px solid #c79a3c; color: #5a3d22; font: inherit; font-size: 13px; font-weight: 700; text-align: left; cursor: pointer; }
+.setrow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 6px 0; border-bottom: 1px dashed #dcc79c; }
+.setlabel { flex: 1 1 150px; font-size: 14px; font-weight: 700; }
+.setlabel small { display: block; font-weight: 400; font-size: 12px; color: #8a6a44; }
+.setrow input[type=range] { width: 150px; accent-color: #e8872e; }
+.seg { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+.seg button { font: inherit; font-size: 13px; padding: 5px 9px; border-radius: 8px; border: 2px solid #5a3d22; background: #f3e6c8; color: #5a3d22; cursor: pointer; }
+.seg button.on { background: #e8872e; color: #fff; }
+#ui.font-s .panel, #ui.font-s .card, #ui.font-s .dialog, #ui.font-s .guide, #ui.font-s .clock { zoom: .9; }
+#ui.font-l .panel, #ui.font-l .card, #ui.font-l .dialog, #ui.font-l .guide, #ui.font-l .clock { zoom: 1.18; }
+#ui.lefty .stick { left: auto; right: calc(22px + env(safe-area-inset-right)); }
+#ui.lefty .act-btn { right: auto; left: calc(26px + env(safe-area-inset-left)); }
+@media (pointer: coarse) { .guide { top: calc(166px + env(safe-area-inset-top)); } }

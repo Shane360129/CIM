@@ -14,7 +14,7 @@ export function createRoom(convId) {
       if (e.data === 'pong') return;
       let m; try { m = JSON.parse(e.data); } catch { return; }
       if (m.t === 'replaced') { closed = true; emit('status', 'replaced'); try { ws.close(); } catch {} return; } // 同一個帳號在別的分頁打開了：這邊不再重連
-      if (m.t === 'ok' || m.t === 'no') { const p = pending.get(m.id); if (p) { pending.delete(m.id); p(m); } }
+      if (m.t === 'ok' || m.t === 'no') { const p = pending.get(m.id); if (p) { pending.delete(m.id); emit('reply', { req: p.msg, res: m }); p(m); } }
       emit(m.t, m);
     };
     ws.onclose = (e) => {
@@ -36,7 +36,7 @@ export function createRoom(convId) {
     req(msg) {
       return new Promise((resolve) => {
         if (!ws || ws.readyState !== 1) return resolve({ t: 'no', reason: 'offline' });
-        const id = nextId++; pending.set(id, resolve); ws.send(JSON.stringify({ ...msg, id }));
+        const id = nextId++; resolve.msg = msg; pending.set(id, resolve); ws.send(JSON.stringify({ ...msg, id }));
         setTimeout(() => { if (pending.delete(id)) resolve({ t: 'no', reason: 'timeout' }); }, 6000);
       });
     },

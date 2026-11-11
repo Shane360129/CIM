@@ -9,6 +9,7 @@
   "playerRadius": 0.3,
   "hotbarSlots": 10,
   "dayMinutesReal": 15,
+  "dayLenOptions": [10, 15, 20, 30],
   "dayStartMinute": 360,
   "dayEndMinute": 1560,
   "reach": 2.6,

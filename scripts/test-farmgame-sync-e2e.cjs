@@ -11,7 +11,7 @@ const { chromium } = require('playwright');
   const b = await j('/api/register', { username: 'sy_b', password: 'pass123456', displayName: '阿耕', inviteCode: 'inv-2' });
   const dm = (await j('/api/conversations', { type: 'dm', userId: b.user.id }, a.token)).conversation;
   const br = await chromium.launch(); let fails = 0;
-  const ok = (l, c) => { if (!c) fails++; console.log((c ? 'PASS ' : 'FAIL ') + l); };
+  const ok = (l, c, extra) => { if (!c) fails++; console.log((c ? 'PASS ' : 'FAIL ') + l + (!c && extra ? '  →  ' + extra : '')); };
   const errs = [];
   const enter = async (tok, look) => {
     const cx = await br.newContext({ viewport: { width: 1000, height: 700 } }), p = await cx.newPage();
@@ -45,6 +45,19 @@ const { chromium } = require('playwright');
   ok('A 說一句話，B 看到頭上的泡泡；打字的時候角色不會亂走', (await st(pb)).bubbles.includes('今天種什麼') && Math.abs((await st(pa)).me.x - sa.me.x) < 0.01);
   await pb.locator('.side button').nth(1).click(); await pb.locator('.emotes button').first().click(); await pa.waitForTimeout(500);
   ok('B 按表情，A 看到', (await st(pa)).bubbles.includes('😊'));
+  // 階段 9：新手教學提示、設定、音效
+  ok('一進來就有新手教學提示（第 1 步），不擋畫面', /📖 1\/11　清掉一根雜草或樹枝/.test(await pa.locator('.guide').textContent()) && !(await pa.locator('.card').count()));
+  await pa.locator('.guide').click(); await pa.waitForTimeout(200);
+  ok('點教學提示：展開說明和整張清單', /鐮刀/.test(await pa.locator('.card').textContent()) && /在便條板留一句話/.test(await pa.locator('.card').textContent())); await pa.locator('.card button').last().click();
+  await pa.locator('.side [data-act=settings]').click(); await pa.waitForTimeout(200);
+  ok('⚙️ 設定面板：音量、畫質、字體、搖桿、戀愛內容、教學、一天的長度', (await pa.locator('.settings .setrow').count()) === 9 && (await pa.locator('.settings [data-set=dayLen] button').count()) === 4 && /on/.test(await pa.locator('.settings [data-set=dayLen] button[data-value="15"]').getAttribute('class')));
+  await pa.screenshot({ path: S + '/s9-settings.png' });
+  await pa.locator('.settings [data-set=font] button[data-value=l]').click(); await pa.locator('.settings [data-set=low] button[data-value=true]').click(); await pa.waitForTimeout(200);
+  ok('字體改大、畫質改省電：馬上生效（畫布像素變少），重新整理後還記得', (await pa.evaluate(() => document.getElementById('ui').classList.contains('font-l') && window.__game.view.dpr === 1 && JSON.parse(localStorage.getItem('farm-settings')).low === true)));
+  await pa.locator('.settings [data-set=font] button[data-value=m]').click(); await pa.locator('.settings [data-set=low] button[data-value=false]').click();
+  await pa.locator('.settings [data-set=dayLen] button[data-value="30"]').click(); await pb.waitForTimeout(500);
+  ok('一天的長度改成 30 分鐘：兩邊的時鐘一起變慢，對方看到提示', (await pb.evaluate(() => window.__game.world.farm.opts.dayLen)) === 30 && Math.abs((await pa.evaluate(() => window.__game.world.farm.minutesPerSecond)) - 1200 / 1800) < 0.001 && /一天的長度改成 30 分鐘/.test(await pb.locator('.toast').textContent()));
+  await pa.locator('.settings [data-set=dayLen] button[data-value="15"]').click(); await pa.waitForTimeout(300); await pa.keyboard.press('Escape');
   // 雙人：便條板、互送東西、拍照傳到聊天室
   await tp(pa, 13.5, 10.4, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
   await pa.locator('.card .minput').fill('記得澆水喔'); await pa.locator('.card button').last().click(); await pb.waitForTimeout(500);
@@ -59,6 +72,7 @@ const { chromium } = require('playwright');
   const msgs = (await j(`/api/conversations/${dm.id}/messages`, null, a.token)).messages || [];
   ok('按 📷 拍照：照片以圖片訊息傳到這個聊天室', msgs.some((m) => m.type === 'image' && !!(m.meta && m.meta.media)) && (await count(pa, 'seed_spinach')) === 6);
   // 種田：找一格沒有東西擋著的田
+  const sfxB0 = await pb.evaluate(() => window.__game.audio.count);
   const F = await pa.evaluate(() => { const w = window.__game.world; for (let y = 13; y < 21; y++) for (let x = 15; x < 27; x++) if (!w.obj('farm', x, y) && !w.obj('farm', x, y - 1) && !w.obj('farm', x + 1, y)) return { x, y }; });
   await tp(pa, F.x + 0.5, F.y - 0.5, 'down'); await tp(pb, F.x + 1.5, F.y - 0.5, 'down');
   await hold(pa, 'hoe'); await pa.keyboard.press('Space'); await pb.waitForTimeout(500);
@@ -68,6 +82,7 @@ const { chromium } = require('playwright');
   ok('A 翻土、播種、澆水（切快捷列＋空白鍵），B 看到那一格有剛種下的紅蘿蔔而且是濕的', !!tb && tb.c && tb.c.id === 'carrot' && tb.c.s === 0 && tb.w === 1 && (await count(pa, 'seed_carrot')) === 7 && sa.energy < 100);
   await pa.keyboard.press('Space'); await pa.waitForTimeout(400);
   ok('重複澆水會被伺服器拒絕並提示', /已經弄好/.test(await pa.locator('.toast').textContent()));
+  ok('翻土、播種、澆水各有音效，被拒絕也有；B 那邊沒有因為 A 的動作出聲', (await pa.evaluate(() => window.__game.audio.count)) >= 4 && (await pb.evaluate(() => window.__game.audio.count)) === sfxB0, `A ${await pa.evaluate(() => window.__game.audio.count)}、B ${await pb.evaluate(() => window.__game.audio.count)}`);
   await pa.screenshot({ path: S + '/s4-farm.png' });
   // 清雜草
   const weed = await pa.evaluate(([fx, fy]) => { const w = window.__game.world; return [...w.objs.values()].filter((o) => o.map === 'farm' && o.type === 'weed').sort((p, q) => Math.hypot(p.x - fx, p.y - fy) - Math.hypot(q.x - fx, q.y - fy))[0]; }, [F.x, F.y]);
@@ -75,6 +90,7 @@ const { chromium } = require('playwright');
   ok('用錯工具會提示要用哪一種', /鐮刀/.test(await pa.locator('.toast').textContent()));
   await hold(pa, 'sickle'); await pa.keyboard.press('Space'); await pb.waitForTimeout(500);
   ok('鐮刀割掉雜草：兩邊都少一個東西，A 拿到纖維', (await st(pb)).objs === n0 - 1 && (await count(pa, 'fiber')) === 1);
+  ok('教學跟著進度往前（兩個人共用）：B 的提示也到下一步了', /📖 5\/11　把東西放進出貨箱/.test(await pb.locator('.guide').textContent()), await pb.locator('.guide').textContent());
   // 背包
   await pa.keyboard.press('KeyE'); await pa.waitForTimeout(300); await pa.screenshot({ path: S + '/s4-bag.png' });
   const fi = await slotOf(pa, 'fiber'); await pa.locator('.panel .cell').nth(fi).click(); await pa.locator('.panel .cell').nth(25).click(); await pa.waitForTimeout(400);

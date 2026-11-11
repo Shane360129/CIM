@@ -54,6 +54,8 @@ export function createWorld(session, bal) {
   room.on('restored', (m) => emit('restored', m));
   room.on('notes', (m) => { if (w.farm) w.farm.notes = m.notes; emit('farm', m); });
   room.on('given', (m) => emit('given', m));
+  room.on('stat', (m) => { if (!w.farm) return; const st = (w.farm.stats ||= {}); st[m.key] = Math.max(1, st[m.key] || 0); w.farm.album = m.album; emit('farm', m); }); // 農場第一次發生某件事（新手教學、紀念冊用）
+  room.on('opts', (m) => { if (!w.farm) return; Object.assign(w.farm, { opts: m.opts, minute: m.minute, minutesPerSecond: m.minutesPerSecond, at: performance.now() }); emit('farm', m); if (m.by !== w.me.id) emit('toast', `對方把一天的長度改成 ${m.opts.dayLen} 分鐘`); });
   room.on('built', (m) => { if (w.farm) Object.assign(w.farm, { houseLv: m.houseLv, land: m.land }); emit('built', m); });
   room.on('fest', (m) => { const who = w.who(m.id); if (who && m.id !== w.me.id) emit('toast', `${who.name} 在節慶活動拿到 ${m.score} 分！`); });
   room.on('warp', (m) => {

@@ -10,6 +10,7 @@ import { create } from './create.js';
 import { createFishing } from '../systems/fishing.js';
 import { runEvent } from '../systems/cutscene.js';
 import { minigame } from './minigame.js';
+import { openSettings } from '../ui/settings.js';
 
 const NO_TEXT = { far: '太遠了，走近一點', ground: '這裡不行', locked: '這塊地還沒開墾（之後才能用）', already: '這裡已經弄好了', untilled: '要先用鋤頭翻土', offline: '連線中斷，稍等一下', timeout: '伺服器沒有回應',
   tired: '太累了，體力不夠', gone: '魚跑掉了', machine: '這個放不進這台機器', place: '加工機要放在農場的空地上', full: '背包滿了', season: '這個季節種不活', crop: '上面還有作物', late: '已經發芽了，來不及施肥', nothing: '', out: '', unknown: '', closed: '那邊還沒開放' };
@@ -39,7 +40,10 @@ export const play = {
     hud.setChat({ maxChars: balance.bubbleMaxChars, emoteList: balance.emotes, say: (text) => this.room.send({ t: 'bubble', text }), emote: (e) => this.room.send({ t: 'emote', e }) });
     hud.onBag(() => { this.fishing.cancel(); this.togglePanel('bag'); });
     hud.onPhoto(() => { if (!hud.hasCard) this.photo(); });
-    const refresh = () => { setToolLv(W.self.toolLv); hud.setHotbar(W.self.inv, (s) => itemIcon(ctx.data.items, s.id, 30)); if (W.farm) hud.setStatus(W.farm.money, W.self.energy, W.self.energyMax, W.me.map === 'mine' ? W.self.hp : null, W.self.hpMax); };
+    hud.onSettings(() => { if (hud.hasPanel) hud.closePanel(); else if (!hud.hasCard) openSettings(ctx); });
+    hud.onGuide(() => { if (!hud.hasCard) this.guideCard(); });
+    this.guideAt = -1; this.offSet = ctx.settings.on((k) => { if (k === 'tutorial') this.guide(); });
+    const refresh = () => { setToolLv(W.self.toolLv); hud.setHotbar(W.self.inv, (s) => itemIcon(ctx.data.items, s.id, 30)); if (W.farm) hud.setStatus(W.farm.money, W.self.energy, W.self.energyMax, W.me.map === 'mine' ? W.self.hp : null, W.self.hpMax); this.guide(); };
     refresh();
     const net = (s) => hud.setNet(s === 'online' ? '' : s === 'replaced' ? '已在別的分頁打開' : '連線中斷，重新連線中…');
     net(W.net);
@@ -61,14 +65,15 @@ export const play = {
       W.on('faint', () => hud.card('昏倒了…', ['被怪物打到沒力氣，醒來已經在礦坑外面。東西都還在，只是體力剩一半。'], [{ label: '好', value: true }])),
       W.on('mine-upd', (m) => { if (m.by === W.me.id && m.drops) hud.toast('拿到 ' + Object.entries(m.drops).map(([id, n]) => `${ctx.data.items[id].name}×${n}`).join('、'), 1300); if (m.stairs && m.stairs.open && m.rock && m.rock.x === m.stairs.x && m.rock.y === m.stairs.y) hud.toast('石頭下面有往下的樓梯！', 1600); }),
       W.on('objs', (m) => { if (m.by === W.me.id && m.drops) hud.toast('拿到 ' + Object.entries(m.drops).map(([id, n]) => `${ctx.data.items[id].name}×${n}`).join('、'), 1300); }),
-      W.on('newday', (m) => { refresh(); hud.closePanel(); hud.closeCard(); this.morning(m); }),
+      W.on('newday', (m) => { refresh(); hud.closePanel(); hud.closeCard(); this.morning(m); ctx.audio.music(this.mapId, W.farm.season); }),
     ];
     if (ctx.pendingSummary) { this.showSummary(ctx.pendingSummary.summary, ctx.pendingSummary.partner); ctx.pendingSummary = null; }
   },
-  exit(ctx) { this.fishing.cancel(); if (this.hunt) { this.hunt.timer.remove(); this.hunt = null; } this.off.forEach((f) => f()); ctx.hud.show(false); ctx.hud.showPlay(false); ctx.view.onResize = null; },
+  exit(ctx) { if (this.offSet) this.offSet(); this.fishing.cancel(); if (this.hunt) { this.hunt.timer.remove(); this.hunt = null; } this.off.forEach((f) => f()); ctx.hud.show(false); ctx.hud.showPlay(false); ctx.view.onResize = null; },
 
   // 換地圖：地面重畫，不會動的東西（房子、家具）和它們擋住的格子、可以互動的格子重算。樹、石頭這些會被清掉的在 world.objs 裡
   setMap(id) {
+    this.ctx.audio.music(id, (this.world.farm && this.world.farm.season) || 'spring');
     const { ctx } = this, mine = id === 'mine' && this.world.mine, map = mine ? mineMap(this.bal, mine.floor) : ctx.data.maps[id] || ctx.data.maps.farm, objects = ctx.data.objects;
     this.mapId = mine ? 'mine' : ctx.data.maps[id] ? id : 'farm'; this.map = map; this.ground = buildGround(map, this.T, !!(this.world.farm && (this.world.farm.land || {}).field2));
     this.solid = new Set(); this.useAt = new Map(); this.things = [];
@@ -223,6 +228,25 @@ export const play = {
     const r = await this.room.req({ t: 'fest-score', fest: h.fe.id, score: h.score }), p = r.t === 'ok' ? r.prize : null;
     hud.card(`${h.fe.d.name}：找到 ${h.score} 顆`, [p ? `獎品：${p.money ? p.money + ' 元' : ''}${p.item ? `、${data.items[p.item[0]].name}×${p.item[1]}` : ''}` : r.reason === 'already' ? '今年已經領過獎了，這次只是玩玩。' : '成績沒有送出去。'], [{ label: '好', value: true }]);
   },
+  // 新手教學：照 data/tutorial.json 的順序，看農場的統計做到哪一步（兩個人共用，誰做的都算）。只是一行提示，不會擋住任何人
+  guideState() {
+    const W = this.world, steps = this.ctx.data.tutorial.steps, st = (W.farm && W.farm.stats) || {};
+    const done = (s) => (s.stat === 'day' ? (W.farm ? W.farm.day : 1) : st[s.stat] || 0) >= s.n;
+    const i = steps.findIndex((s) => !done(s)); return { steps, done, i: i < 0 ? steps.length : i };
+  },
+  guide() {
+    const { hud, settings, audio } = this.ctx, W = this.world; if (!W.farm) return;
+    const g = this.guideState(), on = settings.get('tutorial') && g.i < g.steps.length;
+    if (this.guideAt >= 0 && g.i > this.guideAt && settings.get('tutorial')) { hud.toast(g.i >= g.steps.length ? '新手教學全部完成了！' : `✓ ${g.steps[this.guideAt].title}`, 1800); audio.play('done'); }
+    this.guideAt = g.i;
+    hud.setGuide(on ? `📖 ${g.i + 1}/${g.steps.length}　${g.steps[g.i].title}` : '');
+  },
+  async guideCard() {
+    const { hud, settings } = this.ctx, g = this.guideState(), s = g.steps[g.i]; if (!s) return;
+    const lines = [s.how, '', ...g.steps.map((x, k) => `${k < g.i ? '✓' : k === g.i ? '▶' : '・'} ${x.title}`)];
+    const r = await hud.card(`新手教學：${s.title}`, lines, [{ label: '不用教學了', value: 'off', ghost: true }, { label: '好', value: true }]);
+    if (r === 'off') { settings.set('tutorial', false); hud.toast('教學關掉了，之後可以在 ⚙️ 設定裡再打開', 2200); }
+  },
   // 便條板：看對方留的話、自己留一句
   async notes() {
     const { hud } = this.ctx, W = this.world, list = (W.farm.notes || []).slice(-5);
@@ -274,7 +298,7 @@ export const play = {
     const r = await this.room.req({ t: 'talk', npc: folk.id }); if (r.t !== 'ok') return hud.toast('他好像沒聽到', 900);
     const fr = W.self.friend[folk.id] || { pts: 0 }, h = Math.floor(fr.pts / F.heart);
     // 好感夠了、還沒看過的劇情：先演那一段
-    const evId = Object.keys(data.events).find((k) => data.events[k].npc === folk.id && h >= data.events[k].hearts && !(W.self.events || {})[k]);
+    const evId = Object.keys(data.events).find((k) => data.events[k].npc === folk.id && h >= data.events[k].hearts && !(W.self.events || {})[k] && (this.ctx.settings.get('romance') || !data.events[k].romance));
     if (evId) { const picks = await runEvent(this.ctx, data.events[evId]); const d = await this.room.req({ t: 'event-done', event: evId, picks }); if (d.t === 'ok' && d.gain) hud.toast(`${n.name} 更喜歡你了 ♥`, 1600); return; }
     const wet = ['rain', 'storm'].includes(W.farm.weather);
     const pool = [...n.talk.any, ...(wet ? n.talk.rain : []), ...(h >= 3 ? n.talk.h3 : []), ...(h >= 6 ? n.talk.h6 : [])];
@@ -361,7 +385,7 @@ export const play = {
   render(ctx, alpha) {
     const W = this.world, { view, camera, data } = ctx, g = view.ctx, T = this.T, p = this.player, mapId = this.mapId, season = (W.farm && W.farm.season) || 'spring';
     // 兩次更新之間用內插的位置畫，更新率比螢幕低也不會一頓一頓
-    const lerp = (q) => ({ ...q, x: q.px + (q.x - q.px) * alpha, y: q.py + (q.y - q.py) * alpha });
+    const lerp = (q) => ({ ...q, x: q.px + (q.x - q.px) * alpha, y: q.py + (q.y - q.py) * alpha }), low = ctx.settings.get('low'); // low：省電模式，不畫影子、雨絲少一點
     const me = lerp(p);
     camera.follow(me.x * T, me.y * T, view, this.map.w * T, this.map.h * T, 0.18);
     g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = this.map.outdoor ? '#5f9c4a' : '#3b2f22'; g.fillRect(0, 0, view.canvas.width, view.canvas.height);
@@ -411,13 +435,13 @@ export const play = {
       if (it.egg) { const ex = (it.egg.x + 0.5) * T, ey = (it.egg.y + 0.6) * T; g.fillStyle = `hsl(${it.egg.hue} 80% 70%)`; g.strokeStyle = '#5a3d22'; g.lineWidth = Math.max(1.5, T * 0.04); g.beginPath(); g.ellipse(ex, ey, T * 0.17, T * 0.22, 0, 0, 7); g.fill(); g.stroke(); g.fillStyle = 'rgba(255,255,255,.7)'; g.fillRect(ex - T * 0.15, ey - T * 0.03, T * 0.3, T * 0.05); continue; }
       if (it.mon) { // 怪物：被打到的那一下換成「被打」的表情
         const q = it.mon, sz = q.d.size * T, hit = q.m.hitAt && performance.now() - q.m.hitAt < 300, by = q.y * T - Math.abs(Math.sin(performance.now() / 260 + q.m.id)) * T * 0.08;
-        drawShadow(g, q.x * T, q.y * T, sz * 0.7);
+        if (!low) drawShadow(g, q.x * T, q.y * T, sz * 0.7);
         if (!drawSprite(g, `${q.d.art}/${hit ? 'hit' : 'front'}`, q.x * T, by, sz, sz)) { g.fillStyle = hit ? '#fff' : '#7dbb5a'; g.strokeStyle = '#5a3d22'; g.lineWidth = Math.max(1.5, T * 0.04); g.beginPath(); g.arc(q.x * T, by - sz * 0.4, sz * 0.4, 0, 7); g.fill(); g.stroke(); }
         continue;
       }
       if (it.beast) { // 家畜、寵物：有圖用圖（側面，往左走就翻過來），小時候畫小一點；有產品可以收的頭上冒泡泡
         const b = it.beast, sz = b.d.size * (b.baby ? 0.6 : 1) * T, bx = b.x * T, by = b.y * T - (b.moving ? Math.abs(Math.sin(performance.now() / 130 + b.an.id)) * T * 0.04 : 0);
-        drawShadow(g, bx, b.y * T, sz * 0.7);
+        if (!low) drawShadow(g, bx, b.y * T, sz * 0.7);
         g.save(); g.translate(bx, by); if (b.flip) g.scale(-1, 1);
         if (!drawSprite(g, `${b.d.art}/${b.baby ? 'baby_side' : 'side'}`, 0, 0, sz, sz)) { g.fillStyle = b.an.color; g.strokeStyle = '#5a3d22'; g.lineWidth = Math.max(1.5, T * 0.04); g.beginPath(); g.ellipse(0, -sz * 0.3, sz * 0.38, sz * 0.28, 0, 0, 7); g.fill(); g.stroke(); g.beginPath(); g.arc(sz * 0.3, -sz * 0.5, sz * 0.17, 0, 7); g.fill(); g.stroke(); }
         g.restore();
@@ -434,7 +458,7 @@ export const play = {
       }
       const q = it.pp.q;
       if (!q.look) { drawPlayer(g, q, T, it.pp.color); continue; } // 對方還在建立角色：先畫暫代的圓圓人
-      drawShadow(g, q.x * T, q.y * T, T * 0.62);
+      if (!low) drawShadow(g, q.x * T, q.y * T, T * 0.62);
       drawDoll(g, q.look, parts, q.x * T, q.y * T, U, q.dir, q.action || (q.asleep ? 'sit' : q.moving ? 'walk' : 'idle'), q.action ? q.actionT : q.anim, q.tool);
       drawName(g, q.asleep ? q.name + ' Zzz' : q.name, q.x * T, q.y * T - U * 2.72, T);
     }
@@ -449,7 +473,7 @@ export const play = {
     g.setTransform(1, 0, 0, 1, 0, 0);
     const m = W.minute(), wet = W.farm.weather === 'rain' || W.farm.weather === 'storm';
     if (wet || W.farm.weather === 'cloud') { g.fillStyle = wet ? 'rgba(60, 80, 110, .22)' : 'rgba(90, 100, 110, .12)'; g.fillRect(0, 0, view.canvas.width, view.canvas.height); }
-    if (wet) { g.strokeStyle = 'rgba(210, 230, 255, .55)'; g.lineWidth = view.dpr * 1.5; const t = performance.now() / 1000; g.beginPath(); for (let i = 0; i < 70; i++) { const rx = ((i * 137.5 + t * 260) % (view.canvas.width + 80)) - 40, ry = ((i * 71.3 + t * 900) % (view.canvas.height + 60)) - 30; g.moveTo(rx, ry); g.lineTo(rx - 6 * view.dpr, ry + 16 * view.dpr); } g.stroke(); }
+    if (wet) { g.strokeStyle = 'rgba(210, 230, 255, .55)'; g.lineWidth = view.dpr * 1.5; const t = performance.now() / 1000; g.beginPath(); for (let i = 0; i < (low ? 25 : 70); i++) { const rx = ((i * 137.5 + t * 260) % (view.canvas.width + 80)) - 40, ry = ((i * 71.3 + t * 900) % (view.canvas.height + 60)) - 30; g.moveTo(rx, ry); g.lineTo(rx - 6 * view.dpr, ry + 16 * view.dpr); } g.stroke(); }
     if (m > 1020) {
       const k = Math.min(1, (m - 1020) / 240);
       g.fillStyle = m < 1140 ? `rgba(255, 150, 60, ${0.16 * k})` : `rgba(20, 30, 80, ${0.12 + 0.3 * Math.min(1, (m - 1140) / 180)})`;

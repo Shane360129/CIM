@@ -31,7 +31,7 @@ const MAPS = { farm: MAP_FARM, house: MAP_HOUSE, road: MAP_ROAD, lake: MAP_LAKE,
 const STATIC = Object.fromEntries(Object.entries(MAPS).map(([id, m]) => [id, new Set(m.objects.flatMap((o) => { const [tw, th] = OBJECTS[o.type].tiles || [1, 1], out = []; for (let x = 0; x < tw; x++) for (let y = 0; y < th; y++) out.push((o.x + x) + ',' + (o.y - y)); return out; }))]));
 const TICK_MS = 10000;                 // 有人在線時，每 10 秒推進一次遊戲時鐘
 const DAY_SPAN = BAL.dayEndMinute - BAL.dayStartMinute;            // 一天有幾個遊戲分鐘（早上 6 點到凌晨 2 點）
-const MIN_PER_MS = DAY_SPAN / (BAL.dayMinutesReal * 60000);         // 現實一毫秒等於幾個遊戲分鐘
+const tryParse = (text) => { try { return JSON.parse(text); } catch { return undefined; } }; // 存檔壞掉時回傳 undefined，不讓整個農場打不開
 const CHUNK = 16, BACKUP_DAYS = 7, MOVE_MIN_MS = 40;
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -72,14 +72,18 @@ export class FarmRoom {
   load() {
     if (this.farm) return;
     const row = this.sql.exec(`SELECT value FROM meta WHERE key = 'farm'`).toArray()[0];
-    this.farm = row ? JSON.parse(row.value) : { v: 4, created: Date.now(), convId: 0, seed: Math.floor(Math.random() * 1e9), day: 1, minute: BAL.dayStartMinute, money: BAL.startMoney, lastTick: 0, ship: [], lastShip: null, chest: [] };
+    let saved = row ? tryParse(row.value) : null;
+    if (row && (!saved || typeof saved !== 'object' || !(saved.day >= 1))) { // 存檔壞了：原樣留一份，改用最近一份讀得出來的每日備份；連備份都沒有才開新農場
+      this.sql.exec(`INSERT OR REPLACE INTO meta (key, value) VALUES ('farm-corrupt', ?)`, row.value); saved = null;
+      for (const b of this.sql.exec(`SELECT data FROM backups ORDER BY day DESC`).toArray()) { const d = tryParse(b.data); if (d && d.farm && d.farm.day >= 1) { this.farm = { ...d.farm, lastTick: 0, recovered: Date.now() }; this.tiles = new Map(); this.objs = this.baseObjs(); this.applyBackup(d); this.flush(); return; } }
+    }
+    this.farm = saved ? saved : { v: 4, created: Date.now(), convId: 0, seed: Math.floor(Math.random() * 1e9), day: 1, minute: BAL.dayStartMinute, money: BAL.startMoney, lastTick: 0, ship: [], lastShip: null, chest: [] };
     if (!this.farm.v) Object.assign(this.farm, { v: 4, seed: this.farm.seed || Math.floor(Math.random() * 1e9), ship: [], lastShip: null, chest: [], money: this.farm.money ?? BAL.startMoney }); // 階段 2 留下的農場：補上新欄位
     this.tiles = new Map();
-    for (const r of this.sql.exec(`SELECT data FROM mapchunks`).toArray()) for (const [k, v] of Object.entries(JSON.parse(r.data))) this.tiles.set(k, v);
+    for (const r of this.sql.exec(`SELECT data FROM mapchunks`).toArray()) for (const [k, v] of Object.entries(tryParse(r.data) || {})) this.tiles.set(k, v); // 壞掉的那一塊當成沒翻過的地
     // 可以清掉的東西（樹、石頭、樹枝、雜草）：地圖檔裡原本有的，加上之後的變化（被清掉、被砍了幾下）
-    this.objs = new Map();
-    for (const [id, m] of Object.entries(MAPS)) for (const o of m.objects) if (OBJECTS[o.type].tool) this.objs.set(K(id, o.x, o.y), { type: o.type, hp: OBJECTS[o.type].hp });
-    for (const r of this.sql.exec(`SELECT k, data FROM objs`).toArray()) { if (r.data) this.objs.set(r.k, JSON.parse(r.data)); else this.objs.delete(r.k); }
+    this.objs = this.baseObjs();
+    for (const r of this.sql.exec(`SELECT k, data FROM objs`).toArray()) { const o = r.data ? tryParse(r.data) : null; if (o && OBJECTS[o.type]) this.objs.set(r.k, o); else if (!r.data) this.objs.delete(r.k); }
     if (this.farm.forageDay !== this.farm.day) { this.spawnDaily(); this.flush(); } // 新農場的第一天也要有東西可以撿
   }
   // 每天早上：野外長出這一季的採集物（昨天沒撿的會不見），農場多幾根雜草。位置用農場的種子算，同一天重算結果一樣
@@ -111,6 +115,7 @@ export class FarmRoom {
     if (f.day >= M.welcome.day) push('welcome', M.welcome.from, M.welcome.text, M.welcome.item);
     for (const [npc, fr] of Object.entries(p.friend || {})) for (const [h, text] of Object.entries(M.hearts)) if (fr.pts >= Number(h) * BAL.friend.heart && NPCS[npc]) push(`h${h}:${npc}`, npc, text, NPCS[npc].mailGift);
   }
+  baseObjs() { const objs = new Map(); for (const [id, m] of Object.entries(MAPS)) for (const o of m.objects) if (OBJECTS[o.type].tool) objs.set(K(id, o.x, o.y), { type: o.type, hp: OBJECTS[o.type].hp }); return objs; }
   touch(map, x, y) { this.dirty.add(`${map}:${Math.floor(x / CHUNK)},${Math.floor(y / CHUNK)}`); }
   // 格子分區塊存（16×16 一塊）：一個動作、一次換日改很多格也只寫幾列，不會每格寫一次
   flush() {
@@ -130,7 +135,7 @@ export class FarmRoom {
   player(id, name = '') {
     let p = this.pl.get(id); if (p) return p;
     const row = this.sql.exec(`SELECT data FROM players WHERE user_id = ?`, id).toArray()[0];
-    p = row ? JSON.parse(row.data) : null;
+    p = row ? tryParse(row.data) || null : null; // 壞掉的角色資料當成新玩家，重新發工具
     if (!p || !p.inv) { // 新玩家（或階段 2 留下的舊資料）：發工具和一點種子
       p = { x: MAPS.farm.spawn.x, y: MAPS.farm.spawn.y, dir: 'down', map: 'farm', look: null, nick: '', lastDay: this.farm.day, lastMoney: this.farm.money, ...(p || {}), inv: [], energy: BAL.energyMax, skills: {} };
       if (!MAPS[p.map]) { p.map = 'farm'; p.x = MAPS.farm.spawn.x; p.y = MAPS.farm.spawn.y; }
@@ -140,9 +145,12 @@ export class FarmRoom {
     this.pl.set(id, p); return p;
   }
   // 每做一件事：統計 +1（成就用）；某種事第一次發生時，在紀念冊記一筆
-  logEvent(userId, type, data) { const st = (this.farm.stats ||= {}); st[type] = (st[type] || 0) + 1; this.farmDirty = true; if (st[type] === 1 && BAL.album[type]) (this.farm.album ||= []).push({ day: this.farm.day, key: type, by: userId }); this.sql.exec(`INSERT INTO events (ts, day, user_id, type, data) VALUES (?, ?, ?, ?, ?)`, Date.now(), this.farm.day, userId, type, data ? JSON.stringify(data) : null); }
+  logEvent(userId, type, data) { const st = (this.farm.stats ||= {}); st[type] = (st[type] || 0) + 1; this.farmDirty = true; if (st[type] === 1 && BAL.album[type]) (this.farm.album ||= []).push({ day: this.farm.day, key: type, by: userId }); if (st[type] === 1) this.broadcast({ t: 'stat', key: type, album: this.farm.album || [] }); this.sql.exec(`INSERT INTO events (ts, day, user_id, type, data) VALUES (?, ?, ?, ?, ?)`, Date.now(), this.farm.day, userId, type, data ? JSON.stringify(data) : null); }
   pubTile(k) { const v = this.tiles.get(k), t = unK(k); return v ? { ...t, t: 1, w: v.w === this.farm.day ? 1 : 0, f: v.f || 0, c: v.c ? { id: v.c.id, s: v.c.dead ? -1 : cropStage(CROPS[v.c.id], v.c.g) } : null } : { ...t, t: 0 }; }
   pubObj(k) { const o = this.objs.get(k); return o ? { ...unK(k), type: o.type, hp: o.hp, ...(o.item ? { item: o.item } : {}), ...(o.kind ? { kind: o.kind, out: o.out || null, doneAt: o.doneAt || 0 } : {}) } : { ...unK(k), type: null }; }
+  // 一天在現實裡是幾分鐘：兩個人共用的設定，只能選平衡設定檔列出來的幾種
+  dayLen() { const v = (this.farm.opts || {}).dayLen; return BAL.dayLenOptions.includes(v) ? v : BAL.dayMinutesReal; }
+  minPerMs() { return DAY_SPAN / (this.dayLen() * 60000); } // 現實一毫秒等於幾個遊戲分鐘
   absNow() { return absMinute(this.farm.day, this.minuteNow(), BAL); }
   pubSelf(a) { const p = this.player(a.id); return { inv: p.inv, energy: p.energy, energyMax: this.energyMax(), skills: p.skills, fishRec: p.fishRec || {}, buffs: p.buffs || {}, hp: p.hp ?? BAL.mine.hpMax, hpMax: BAL.mine.hpMax, friend: p.friend || {}, toolLv: p.toolLv || {}, mail: p.mail || [], events: p.events || {}, fest: p.fest || {} }; }
 
@@ -193,10 +201,10 @@ export class FarmRoom {
     return new Response(null, { status: 101, webSocket: client, headers: protocols.includes('farm.v1') ? { 'Sec-WebSocket-Protocol': 'farm.v1' } : {} });
   }
   // 現在的遊戲時間：上次記下的分鐘，加上從那之後過了多久（兩次 tick 之間也準）
-  minuteNow(now = Date.now()) { return this.farm.lastTick && this.online().length ? this.farm.minute + Math.min(now - this.farm.lastTick, TICK_MS * 3) * MIN_PER_MS : this.farm.minute; }
+  minuteNow(now = Date.now()) { return this.farm.lastTick && this.online().length ? this.farm.minute + Math.min(now - this.farm.lastTick, TICK_MS * 3) * this.minPerMs() : this.farm.minute; }
   pubFarm() {
     const f = this.farm;
-    return { day: f.day, minute: this.minuteNow(), money: f.money, season: seasonId(f.day, BAL), weather: weatherOf(f.seed, f.day, BAL), minutesPerSecond: MIN_PER_MS * 1000, dayStart: BAL.dayStartMinute, dayEnd: BAL.dayEndMinute,
+    return { day: f.day, minute: this.minuteNow(), money: f.money, season: seasonId(f.day, BAL), weather: weatherOf(f.seed, f.day, BAL), minutesPerSecond: this.minPerMs() * 1000, opts: { dayLen: this.dayLen() }, dayStart: BAL.dayStartMinute, dayEnd: BAL.dayEndMinute,
       notes: f.notes || [], album: f.album || [], newAchievements: f.newAchievements || [], houseLv: this.houseLv(), land: f.land || {}, codex: f.codex || {}, achieved: f.achieved || {}, stats: f.stats || {}, restore: f.restore || {}, quest: f.quest || null, festival: this.festivalToday(), now: Date.now(), mineDeepest: f.mineDeepest || 1, ship: f.ship, lastShip: f.lastShip, chest: f.chest, newborn: f.newborn || [], animals: f.animals || [], pets: f.pets || [], graze: !!f.graze };
   }
   // 「你不在時發生的事」：過了幾天、錢差多少、對方做了什麼
@@ -339,6 +347,12 @@ export class FarmRoom {
       this.broadcast({ t: 'look', id: a.id, look, name: p.nick || a.name });
     } else if (m.t === 'bubble') { const text = String(m.text || '').replace(/\s+/g, ' ').trim().slice(0, BAL.bubbleMaxChars); if (text) this.broadcast({ t: 'bubble', id: a.id, text }); }
     else if (m.t === 'emote') { if (BAL.emotes.includes(m.e)) this.broadcast({ t: 'emote', id: a.id, e: m.e }); }
+    else if (m.t === 'set') { // 兩個人共用的設定（目前只有一天的長度）：先把時鐘結算到現在再換速度，時間不會跳
+      if (m.key !== 'dayLen' || !BAL.dayLenOptions.includes(m.value)) return no('unknown');
+      const now = Date.now(); if (this.farm.lastTick) { this.farm.minute = this.minuteNow(now); this.farm.lastTick = now; }
+      (this.farm.opts ||= {}).dayLen = m.value; this.farmDirty = true;
+      this.broadcast({ t: 'opts', by: a.id, opts: { dayLen: m.value }, minute: this.farm.minute, minutesPerSecond: this.minPerMs() * 1000 }); done();
+    }
     else if (m.t === 'sleep') {
       if (m.on && !near('bed')) return no('far');
       a.asleep = !!m.on; a.sleptAt = this.minuteNow(); ws.serializeAttachment(a); this.broadcast({ t: 'sleep', id: a.id, on: a.asleep }); done();
@@ -642,7 +656,7 @@ export class FarmRoom {
     this.load();
     const now = Date.now(), n = this.online().length;
     if (!n) { this.saveFarm(); return; } // 沒有人了：時鐘停下來，不再排下一次
-    this.farm.minute += Math.min(now - (this.farm.lastTick || now), TICK_MS * 3) * MIN_PER_MS; this.farm.lastTick = now;
+    this.farm.minute += Math.min(now - (this.farm.lastTick || now), TICK_MS * 3) * this.minPerMs(); this.farm.lastTick = now;
     if (this.farm.minute >= BAL.dayEndMinute) await this.newDay('late'); // 凌晨 2 點還沒睡：昏倒，直接隔天
     else { this.saveFarm(); this.broadcast({ t: 'time', day: this.farm.day, minute: this.farm.minute }); }
     await this.ctx.storage.setAlarm(now + TICK_MS);
@@ -689,16 +703,21 @@ export class FarmRoom {
     this.flush();
     for (const { ws, a } of this.online()) this.send(ws, { t: 'newday', reason, farm: this.pubFarm(), tiles: [...this.tiles.keys()].map((k) => this.pubTile(k)), objs: [...this.objs.keys()].map((k) => this.pubObj(k)), self: this.pubSelf(a), you: this.pub(a), players: this.online().filter((s) => s.a.id !== a.id).map((s) => this.pub(s.a)) });
   }
-  async restore(request, who) {
-    const body = await request.json().catch(() => ({})), day = Number(body.day) || 0;
-    const row = this.sql.exec(`SELECT data FROM backups WHERE day = ?`, day).toArray()[0];
-    if (!row) return json({ error: '沒有這一天的備份' }, 404);
-    const b = JSON.parse(row.data);
-    this.farm = { ...b.farm, lastTick: Date.now() }; this.tiles = new Map(b.tiles); this.pl.clear();
+  // 把一份備份的田、物件、角色寫回去（this.farm 由呼叫的人先設好）
+  applyBackup(b) {
+    this.tiles = new Map(b.tiles); this.pl.clear();
     this.sql.exec(`DELETE FROM mapchunks`); this.sql.exec(`DELETE FROM objs`);
     for (const k of this.tiles.keys()) { const t = unK(k); this.touch(t.map, t.x, t.y); }
     if (b.objs) { const now = new Map(b.objs); for (const k of this.objs.keys()) if (!now.has(k)) this.sql.exec(`INSERT OR REPLACE INTO objs (k, data) VALUES (?, NULL)`, k); for (const [k, o] of now) this.sql.exec(`INSERT OR REPLACE INTO objs (k, data) VALUES (?, ?)`, k, JSON.stringify(o)); this.objs = now; }
     for (const r of b.players || []) this.sql.exec(`UPDATE players SET data = ? WHERE user_id = ?`, r.data, r.user_id);
+    this.farmDirty = true;
+  }
+  async restore(request, who) {
+    const body = await request.json().catch(() => ({})), day = Number(body.day) || 0;
+    const row = this.sql.exec(`SELECT data FROM backups WHERE day = ?`, day).toArray()[0];
+    if (!row) return json({ error: '沒有這一天的備份' }, 404);
+    const b = tryParse(row.data); if (!b || !b.farm) return json({ error: '這一天的備份讀不出來' }, 500);
+    this.farm = { ...b.farm, lastTick: Date.now() }; this.applyBackup(b);
     this.farmDirty = true; this.flush(); this.logEvent(who.user.id, 'restore', { day });
     // 人留在原地（備份只回復農場和背包，不把人搬走）
     for (const { ws, a } of this.online()) { const p = this.player(a.id); if (a.map === 'mine') Object.assign(a, MINE_EXIT, { floor: 0 }); Object.assign(p, { map: a.map, x: a.x, y: a.y }); this.dirtyPl.add(a.id); a.asleep = false; ws.serializeAttachment(a); }
@@ -722,7 +741,7 @@ export class FarmRoom {
     const left = this.online().filter((s) => s.ws !== ws);
     if (!left.length) { // 最後一個人走了：把時間記到現在，時鐘停下來
       const now = Date.now();
-      this.farm.minute += Math.min(now - (this.farm.lastTick || now), TICK_MS * 3) * MIN_PER_MS; this.farm.lastTick = 0;
+      this.farm.minute += Math.min(now - (this.farm.lastTick || now), TICK_MS * 3) * this.minPerMs(); this.farm.lastTick = 0;
       this.saveFarm(); await this.ctx.storage.deleteAlarm();
     } else if (left.every((s) => s.a.asleep)) await this.newDay('sleep'); // 沒睡的那個離開了，剩下的人都睡了
   }
