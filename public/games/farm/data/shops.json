@@ -5,16 +5,42 @@
   "open": 360,
   "close": 1080,
   "items": [
-   "seed_carrot",
-   "seed_spinach",
-   "seed_scallion",
-   "seed_lettuce",
-   "seed_cabbage",
-   "seed_strawberry",
    "fertilizer",
    "hay"
   ],
-  "hint": "路邊的小攤，只有幾樣最常用的。種類齊全的在小鎮的雜貨店。"
+  "hint": "路邊的小攤，只有幾樣最常用的。種類齊全的在小鎮的雜貨店。",
+  "seeds": {
+   "spring": [
+    "seed_carrot",
+    "seed_spinach",
+    "seed_scallion",
+    "seed_lettuce",
+    "seed_cabbage",
+    "seed_strawberry"
+   ],
+   "summer": [
+    "seed_tomato",
+    "seed_cucumber",
+    "seed_corn",
+    "seed_edamame",
+    "seed_water_spinach",
+    "seed_watermelon"
+   ],
+   "autumn": [
+    "seed_sweet_potato",
+    "seed_wheat",
+    "seed_peanut",
+    "seed_napa",
+    "seed_buckwheat",
+    "seed_taro"
+   ],
+   "winter": [
+    "seed_garlic_sprout",
+    "seed_winter_radish",
+    "seed_winter_scallion",
+    "seed_winter_spinach"
+   ]
+  }
  },
  "store": {
   "name": "雜貨店",
@@ -23,28 +49,13 @@
   "open": 480,
   "close": 1080,
   "items": [
-   "seed_carrot",
-   "seed_daikon",
-   "seed_cabbage",
-   "seed_potato",
-   "seed_strawberry",
-   "seed_spinach",
-   "seed_lettuce",
-   "seed_pea",
-   "seed_fava",
-   "seed_asparagus",
-   "seed_scallion",
-   "seed_cauliflower",
-   "seed_komatsuna",
-   "seed_beet",
-   "seed_tulip",
-   "seed_rapeseed",
    "fertilizer",
    "fertilizer_gold",
    "hay",
    "brush"
   ],
-  "hint": "阿禾的店。種子要種在翻過的土上；現在賣的都是春天的作物。"
+  "hint": "阿禾的店。種子要種在翻過的土上；每一季賣的種子不一樣，換季前沒收成的作物會枯掉。",
+  "seeds": "season"
  },
  "tackle": {
   "name": "漁具店",
@@ -82,5 +93,35 @@
    "bandage"
   ],
   "hint": "白芷醫生：累了就休息，別硬撐。"
+ },
+ "nursery": {
+  "name": "果樹苗圃",
+  "use": "store",
+  "owner": "ahe",
+  "open": 480,
+  "close": 1080,
+  "items": [
+   "m_tree_apple",
+   "m_tree_peach",
+   "m_tree_cherry",
+   "m_tree_pear",
+   "m_tree_plum",
+   "m_tree_persimmon",
+   "m_tree_orange",
+   "m_tree_lemon",
+   "m_tree_pomelo",
+   "m_tree_mango",
+   "m_tree_banana",
+   "m_tree_coconut",
+   "m_tree_lychee",
+   "m_tree_longan",
+   "m_tree_guava",
+   "m_tree_loquat",
+   "m_tree_fig",
+   "m_tree_pomegranate",
+   "m_tree_chestnut",
+   "m_tree_olive"
+  ],
+  "hint": "果樹苗種在農場的空地上（不是田裡）。8 天長大，之後一年四季每 3 天結一次果，不用澆水。"
  }
 }

@@ -144,6 +144,7 @@ export const play = {
       if (use === 'bin') return openPanel(this.ctx, 'ship');
       if (use === 'chest') return openPanel(this.ctx, 'chest');
       if (use === 'shop') return openPanel(this.ctx, 'shop', { shop: 'stall' });
+      if (use === 'store') return hud.card('雜貨店', ['想看什麼？'], [{ label: '果樹苗', value: 'nursery', ghost: true }, { label: '種子和雜貨', value: 'store' }]).then((v) => { if (v) openPanel(this.ctx, 'shop', { shop: v }); });
       if (data.shops[use]) return openPanel(this.ctx, 'shop', { shop: use });
       if (use === 'smith') return openPanel(this.ctx, 'smith');
       if (use === 'carpenter') return openPanel(this.ctx, 'build');
@@ -246,6 +247,13 @@ export const play = {
     const lines = [s.how, '', ...g.steps.map((x, k) => `${k < g.i ? '✓' : k === g.i ? '▶' : '・'} ${x.title}`)];
     const r = await hud.card(`新手教學：${s.title}`, lines, [{ label: '不用教學了', value: 'off', ghost: true }, { label: '好', value: true }]);
     if (r === 'off') { settings.set('tutorial', false); hud.toast('教學關掉了，之後可以在 ⚙️ 設定裡再打開', 2200); }
+  },
+  // 果樹現在長什麼樣：還在長（樹苗 → 小樹）、結果了、或是照季節的樣子
+  treeLook(o) {
+    const mc = this.ctx.data.machines[o.kind]; if (!mc.tree) return null;
+    const left = o.doneAt - this.world.abs(), season = (this.world.farm && this.world.farm.season) || 'spring';
+    if (left > mc.minutes) { const young = left > mc.minutes + (mc.grow - mc.minutes) / 2; return { art: `${mc.art}/${young ? 'sapling' : 'small'}`, w: young ? 0.8 : 1.3, h: young ? 0.9 : 1.6, shape: 'tree' }; }
+    return { art: `${mc.art}/${left <= 0 ? 'fruit' : season}`, w: mc.w, h: mc.h, shape: 'tree' };
   },
   // 便條板：看對方留的話、自己留一句
   async notes() {
@@ -409,7 +417,7 @@ export const play = {
     for (const e of this.map.exits || []) { g.font = `700 ${T * 0.22}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = 'rgba(255,255,255,.85)'; g.fillText(e.label, clampX((e.x + e.w / 2) * T, this.map.w * T, T * 1.6), (e.y + e.h / 2) * T - T * 1.1 * (e.h > 1 ? 1 : 0.2)); }
     // 只畫看得到的，依腳的位置由遠到近畫
     for (const t of this.things) if (t.fx > x0 && t.fx < x1 && t.fy > y0 && t.fy < y1) list.push({ y: t.fy, t });
-    for (const o of W.objs.values()) if (o.map === mapId && o.x > x0 && o.x < x1 && o.y > y0 && o.y < y1) list.push({ y: o.y + 0.92, o, t: { def: o.item ? { ...data.objects[o.type], art: data.items[o.item].art, name: data.items[o.item].name } : o.kind ? { ...data.objects[o.type], art: data.machines[o.kind].art, name: data.machines[o.kind].name } : data.objects[o.type], fx: o.x + 0.5, fy: o.y + 0.92 } });
+    for (const o of W.objs.values()) if (o.map === mapId && o.x > x0 && o.x < x1 && o.y > y0 && o.y < y1) list.push({ y: o.y + 0.92, o, t: { def: o.item ? { ...data.objects[o.type], art: data.items[o.item].art, name: data.items[o.item].name } : o.kind ? { ...data.objects[o.type], art: data.machines[o.kind].art, name: data.machines[o.kind].name, ...this.treeLook(o) } : data.objects[o.type], fx: o.x + 0.5, fy: o.y + 0.92 } });
     for (const b of this.beasts()) list.push({ y: b.y, beast: b });
     const fe = this.fest();
     if (fe) { // 節慶：廣場上搭了舞台、掛了三角旗

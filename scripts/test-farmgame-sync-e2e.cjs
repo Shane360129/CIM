@@ -15,12 +15,12 @@ const { chromium } = require('playwright');
   const errs = [];
   const enter = async (tok, look) => {
     const cx = await br.newContext({ viewport: { width: 1000, height: 700 } }), p = await cx.newPage();
-    p.on('pageerror', (e) => errs.push(e.message)); p.on('console', (m) => { if (m.type() === 'error' && !/WebSocket|ERR_/.test(m.text())) errs.push(m.text()); });
+    p.on('pageerror', (e) => { errs.push(e.message); console.log('PAGEERROR ' + e.message); }); p.on('console', (m) => { if (m.type() === 'error' && !/WebSocket|ERR_/.test(m.text())) errs.push(m.text()); });
     await p.goto(B + '/games/farm/?test'); await p.evaluate((t) => localStorage.setItem('cim_token', t), tok);
-    await p.goto(B + `/games/farm/?conv=${dm.id}&test`); await p.waitForTimeout(1200);
+    await p.goto(B + `/games/farm/?conv=${dm.id}&test`); await p.waitForFunction(() => window.__game && window.__game.data, null, { timeout: 30000 }); await p.waitForTimeout(400); // 等圖集載完、標題畫面出來
     await p.locator('#stage').click({ position: { x: 300, y: 350 } }); await p.waitForTimeout(700);
     if (await p.locator('.maker').count()) { if (look) await look(p); await p.locator('.maker [data-act=done]').click(); }
-    await p.waitForFunction(() => window.__game.scenes.current.ready === true, null, { timeout: 8000 });
+    await p.waitForFunction(() => window.__game.scenes.current.ready === true, null, { timeout: 20000 });
     return p;
   };
   const st = (p) => p.evaluate(() => {
@@ -116,7 +116,7 @@ const { chromium } = require('playwright');
   // 斷線重連
   await pa.evaluate(() => window.__game.world.room.drop()); await pb.waitForTimeout(500);
   ok('A 斷線：B 那邊 A 消失', (await st(pb)).n === 0);
-  await pa.waitForFunction(() => window.__game.world.ready === true && window.__game.world.net === 'online', null, { timeout: 8000 }); await pb.waitForTimeout(500);
+  await pa.waitForFunction(() => window.__game.world.ready === true && window.__game.world.net === 'online', null, { timeout: 20000 }); await pb.waitForTimeout(500);
   sa = await st(pa);
   ok('A 自動重連：格子、背包都照伺服器的回來，B 又看到 A', sa.tiles.length === 1 && sa.inv.filter(Boolean).length >= 7 && (await st(pb)).n === 1);
   // 走到出口：往小鎮的路，買種子
@@ -130,7 +130,7 @@ const { chromium } = require('playwright');
   await tp(pa, 28.6, 7, 'right'); await pa.keyboard.down('KeyD'); await pa.waitForTimeout(500); await pa.keyboard.up('KeyD'); await pa.waitForTimeout(700);
   ok('沿著路往東走到小鎮', (await st(pa)).me.map === 'town');
   const folk = await pa.evaluate(() => window.__game.scenes.current.folks().map((f) => ({ id: f.id, x: f.x, y: f.y })));
-  ok('小鎮上有 8 位居民', folk.length === 8);
+  ok('小鎮上有 24 位居民', folk.length === 24);
   const ahe = folk.find((f) => f.id === 'ahe'); await tp(pa, ahe.x, ahe.y + 1.0, 'up'); await hold(pa, 'seed_carrot'); await pa.keyboard.press('Space'); await pa.waitForTimeout(600);
   ok('走到阿禾旁邊按空白鍵：對話框有大頭像、名字、職業和愛心', (await pa.locator('.dialog').count()) === 1 && /阿禾/.test(await pa.locator('.dialog h2').textContent()) && /雜貨店老闆/.test(await pa.locator('.dialog .dsub').textContent()) && (await pa.locator('.dialog .dface .icon').count()) === 1);
   await pa.keyboard.press('Space'); await pa.waitForTimeout(200); const hello = await pa.locator('.dialog .dtext').textContent();
@@ -161,14 +161,14 @@ const { chromium } = require('playwright');
   await pa.locator('.card button', { hasText: '開始' }).click(); await pa.waitForTimeout(600);
   ok('開始接花瓣：畫面換成小遊戲，上面有倒數和分數', /花見祭　\d 秒/.test(await pa.locator('.timer').textContent()));
   await pa.keyboard.down('KeyD'); await pa.waitForTimeout(800); await pa.keyboard.up('KeyD'); await pa.screenshot({ path: S + '/s6-petals.png' });
-  await pa.waitForSelector('.card', { timeout: 8000 });
+  await pa.waitForSelector('.card', { timeout: 20000 });
   ok('時間到：顯示分數，按回去回到小鎮', /花見祭：\d+ 分/.test(await pa.locator('.card h2').textContent()));
   await pa.locator('.card button').click(); await pa.waitForTimeout(600);
   await pa.evaluate(() => { window.__game.world.farm.festival = 'egg'; }); await tp(pa, 22, 21.6, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300); await pa.locator('.card button', { hasText: '開始' }).click(); await pa.waitForTimeout(400);
   const eggs = await pa.evaluate(() => window.__game.scenes.current.hunt.eggs.length); const e0 = await pa.evaluate(() => window.__game.scenes.current.hunt.eggs[0]);
   await tp(pa, e0.x + 0.5, e0.y + 0.5, 'down'); await pa.waitForTimeout(300);
   ok(`尋蛋節：地圖上藏了 ${eggs} 顆彩蛋，走過去就撿到`, eggs === 14 && /1／14 顆/.test(await pa.locator('.timer').textContent()));
-  await pa.waitForSelector('.card', { timeout: 8000 });
+  await pa.waitForSelector('.card', { timeout: 20000 });
   ok('時間到結算', /找到 1 顆/.test(await pa.locator('.card h2').textContent())); await pa.locator('.card button').click(); await pa.evaluate(() => { window.__game.world.farm.festival = null; });
   await tp(pa, 25.5, 14.5, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300); await pa.locator('.card button', { hasText: '修復小鎮' }).click(); await pa.waitForTimeout(300);
   ok('佈告欄 → 修復小鎮：列出八個設施和各自需要的東西', (await pa.locator('.panel .frow').count()) === 8 && /木材 0.120/.test(await pa.locator('.panel .frow[data-item=clocktower]').textContent()));
@@ -179,6 +179,10 @@ const { chromium } = require('playwright');
   ok('佈告欄：今天的委託（誰要幾個什麼、報酬多少） → ' + (await pa.locator('.card').textContent()).slice(0, 40), /今天的委託/.test(await pa.locator('.card h2').textContent()) && /報酬 \d+ 元/.test(await pa.locator('.card').textContent()));
   await pa.keyboard.press('Escape');
   await tp(pa, 7, 9.7, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
+  ok('雜貨店先問要看什麼：果樹苗、或種子和雜貨', /想看什麼/.test(await pa.locator('.card').textContent()) && (await pa.locator('.card button').count()) === 2);
+  await pa.locator('.card button').first().click(); await pa.waitForTimeout(300);
+  ok('果樹苗圃：20 種果樹苗，寫著多久長大', (await pa.locator('.panel .shoprow').count()) === 20 && /蘋果樹苗/.test(await pa.locator('.panel .shoprow').first().textContent()) && /8 天長大/.test(await pa.locator('.panel').textContent()));
+  await pa.screenshot({ path: S + '/s9-nursery.png' }); await pa.keyboard.press('Escape'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300); await pa.locator('.card button').last().click(); await pa.waitForTimeout(300);
   ok('雜貨店：早上 8 點才開，面板會寫營業時間，買的按鈕按不下去', /雜貨店/.test(await pa.locator('.panel h2').textContent()) && /8:00～18:00/.test(await pa.locator('.panel .hint').first().textContent()) && (await pa.locator('.panel .pbtn:not(:disabled)').count()) === 0);
   await pa.keyboard.press('Escape');
   await tp(pa, 37, 9.7, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
@@ -201,7 +205,7 @@ const { chromium } = require('playwright');
   await tp(pa, 18.5, 14.6, 'up'); await hold(pa, 'rod'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
   ok('拿釣竿對著湖面按空白鍵：拋竿，浮標在水上', (await pa.evaluate(() => window.__game.scenes.current.fishing.state)) === 'wait');
   await pa.screenshot({ path: S + '/s5-fishing.png' });
-  await pa.waitForFunction(() => window.__game.scenes.current.fishing.state === 'bite', null, { timeout: 8000 }); await pa.keyboard.press('Space'); await pa.waitForTimeout(150);
+  await pa.waitForFunction(() => window.__game.scenes.current.fishing.state === 'bite', null, { timeout: 20000 }); await pa.keyboard.press('Space'); await pa.waitForTimeout(150);
   ok('看到「！」按空白鍵：進入小遊戲', (await pa.locator('.fishgame').count()) === 1);
   await pa.screenshot({ path: S + '/s5-fishgame.png' });
   for (let i = 0; i < 3; i++) { await pa.evaluate(() => window.__game.scenes.current.fishing.debug.aim()); await pa.keyboard.press('Space'); await pa.waitForTimeout(120); }

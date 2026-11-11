@@ -18,9 +18,7 @@ export const loading = {
       ]);
       data.rawItems = data.items; data.items = makeItems(data.items, data.machines); // 加工品的名字和價錢是算出來的
       data.maps = { farm: data.map_farm, house: data.map_house, road: data.map_road, lake: data.map_lake, town: data.map_town };
-      await loadAtlas('b4');
-      await loadAtlas('b3');
-      await loadAtlas('b2'); // 第 2 批素材（目前是縮圖做的，畫質是暫時的）；載不到就全部用暫代圖
+      await Promise.all(['b1', 'b2', 'b3', 'b4', 'b5', 'b6'].map((b) => loadAtlas(b))); // 各批素材的圖集一起下載（名字不重複，順序沒差）；載不到的那一批用暫代圖
       Object.assign(ctx, { data, session }); ctx.audio.setTracks(data.music.tracks);
       this.progress = 1;
       await ctx.scenes.go(title);

@@ -208,3 +208,11 @@
 {"id": "6-60", "name": "樹：柚子樹（果樹）", "batch": 6, "status": "quota", "media_id": null, "link": null, "attempts": 1, "note": "Canva 回 quota_cooldown（額度冷卻中，請稍後再試），停止"}
 {"id": "6-60", "name": "樹：柚子樹（果樹）", "batch": 6, "status": "ok", "media_id": "MAHaleVxMX0", "link": "https://www.canva.com/M/MAHaleVxMX0?utm_source=OC-AaBlKuT9h240&utm_campaign=agent_connector_create_image_asset_opened", "attempts": 1, "note": "符合"}
 {"id": "6-71", "name": "樹：橄欖樹（果樹）", "batch": 6, "status": "quota", "media_id": null, "link": null, "attempts": 1, "note": "Canva 再次回 quota_cooldown（額度冷卻中），停止"}
+{"id": "6-71", "name": "樹：橄欖樹（果樹）", "batch": 6, "status": "ok", "media_id": "MAHalVWWrew", "link": "https://www.canva.com/M/MAHalVWWrew?utm_source=OC-AaBlKuT9h240&utm_campaign=agent_connector_create_image_asset_opened", "attempts": 1, "note": "符合"}
+{"id": "6-72", "name": "花：玫瑰、百合", "batch": 6, "status": "quota", "media_id": null, "link": null, "attempts": 1, "note": "Canva 回 quota_cooldown（額度冷卻中），停止"}
+{"id": "6-72", "name": "花：玫瑰、百合", "batch": 6, "status": "ok", "media_id": "MAHamEV3wQ8", "link": "https://www.canva.com/M/MAHamEV3wQ8?utm_source=OC-AaBlKuT9h240&utm_campaign=agent_connector_create_image_asset_opened", "attempts": 1, "note": "每列 6 個、排列正確；兩種的收成物都畫成一籃花（帶籃子），不是單獨一朵"}
+{"id": "6-73", "name": "花：雛菊、波斯菊", "batch": 6, "status": "quota", "media_id": null, "link": null, "attempts": 1, "note": "Canva 回 quota_cooldown（額度冷卻中），停止"}
+{"id": "6-73", "name": "花：雛菊、波斯菊", "batch": 6, "status": "ok", "media_id": "MAHam5SzJE4", "link": "https://www.canva.com/M/MAHam5SzJE4?utm_source=OC-AaBlKuT9h240&utm_campaign=agent_connector_create_image_asset_opened", "attempts": 1, "note": "符合"}
+{"id": "6-74", "name": "花：牽牛花、繡球花", "batch": 6, "status": "quota", "media_id": null, "link": null, "attempts": 1, "note": "Canva 回 quota_cooldown（額度冷卻中），停止"}
+{"id": "6-74", "name": "花：牽牛花、繡球花", "batch": 6, "status": "ok", "media_id": "MAHanFV8J0w", "link": "https://www.canva.com/M/MAHanFV8J0w?utm_source=OC-AaBlKuT9h240&utm_campaign=agent_connector_create_image_asset_opened", "attempts": 1, "note": "符合；繡球花偏淺藍，跟青色背景有點接近，去背時要留意"}
+{"id": "6-75", "name": "花：桔梗、金盞花", "batch": 6, "status": "quota", "media_id": null, "link": null, "attempts": 1, "note": "Canva 回 quota_cooldown（額度冷卻中），停止"}

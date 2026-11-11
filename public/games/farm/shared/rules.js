@@ -35,6 +35,11 @@ export function invTake(inv, slot, n = 1) { const s = inv[slot]; if (!s || s.n <
 export const sellPrice = (item, q, bal) => Math.round((item.sell || 0) * bal.quality.mult[q || 0]);
 
 // 物品查詢：一般物品直接查表；加工品是「機器＋原料」拼出來的（id 長得像 g:jam:strawberry），名字、價錢、圖示在這裡算出來，所以不用一種一種寫
+// 一間店這一季賣什麼：種子照季節（seeds 是 "season" 表示這一季所有的種子，或是每一季各自的清單），後面接一年到頭都賣的東西
+export function shopItems(shop, season, crops) {
+  const seeds = shop.seeds === 'season' ? Object.keys(crops).filter((id) => crops[id].seasons.includes(season)).map((id) => 'seed_' + id) : (shop.seeds && shop.seeds[season]) || [];
+  return [...seeds, ...shop.items];
+}
 export function makeItems(items, machines) {
   const cache = new Map();
   return new Proxy(items, { get(t, id) {

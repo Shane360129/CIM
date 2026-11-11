@@ -22,7 +22,7 @@ import EVENTS from '../public/games/farm/data/events/hearts.json';
 import FESTIVALS from '../public/games/farm/data/festivals.json';
 import RESTORE from '../public/games/farm/data/restore.json';
 import ACHIEVEMENTS from '../public/games/farm/data/achievements.json';
-import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelOf, rollQuality, invAdd, invTake, sellPrice, makeItems, matches, planTake, absMinute, animalPos, genFloor, monPos, mineMap, npcPos, giftTaste, seasonIndex } from '../public/games/farm/shared/rules.js';
+import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelOf, rollQuality, invAdd, invTake, sellPrice, makeItems, matches, planTake, shopItems, absMinute, animalPos, genFloor, monPos, mineMap, npcPos, giftTaste, seasonIndex } from '../public/games/farm/shared/rules.js';
 
 const ITEMS = makeItems(RAW_ITEMS, MACHINES); // 加工品（g:機器:原料）的名字和價錢是算出來的
 
@@ -242,7 +242,7 @@ export class FarmRoom {
       this.logEvent(a.id, 'ship', { id: s.id, n: k }); self(); farmChanged(); done();
     } else if (m.t === 'buy') { // 買東西：要站在那間店（或攤位）旁邊、營業時間內；錢是兩個人共用的
       const shop = SHOPS[m.shop || 'stall'], item = ITEMS[m.item], min = this.minuteNow(); if (!shop) return no('unknown'); if (!near(shop.use)) return no('far');
-      if (!item || !shop.items.includes(m.item)) return no('unknown');
+      if (!item || !shopItems(shop, seasonId(this.farm.day, BAL), CROPS).includes(m.item)) return no('unknown');
       if (min < shop.open || min >= shop.close + this.perk('shopHours')) return no('closed'); if (this.farm.money < item.buy * n) return no('money');
       if (!invAdd(p.inv, BAL.invSlots, m.item, n)) return no('full');
       this.farm.money -= item.buy * n; this.logEvent(a.id, 'buy', { id: m.item, n }); self(); farmChanged(); done();
@@ -301,7 +301,7 @@ export class FarmRoom {
       invTake(from, slot, k); self(); farmChanged(); done();
     } else if (m.t === 'warp') this.onWarp(ws, a, p, m, { no, done });
     else if (m.t === 'craft') { // 製作台：用材料做加工機
-      const mc = MACHINES[m.kind]; if (!near('workbench')) return no('far'); if (!mc) return no('unknown');
+      const mc = MACHINES[m.kind]; if (!near('workbench')) return no('far'); if (!mc || !mc.craft) return no('unknown'); // 果樹不是做出來的，要買樹苗
       const plan = planTake(ITEMS, p.inv, mc.craft); if (!plan) return no('materials');
       const inv = JSON.parse(JSON.stringify(p.inv)); for (const [i, k] of plan) invTake(inv, i, k);
       if (!invAdd(inv, BAL.invSlots, 'm_' + m.kind, 1)) return no('full');
@@ -648,7 +648,7 @@ export class FarmRoom {
     if (item && item.kind === 'machine') { // 把加工機放在農場的空地上
       if (a.map !== 'farm' || !['grass', 'path'].includes(ground) || tile || STATIC[a.map].has(x + ',' + y)) return bad('place');
       const mc = MACHINES[item.machine]; invTake(p.inv, Math.floor(Number(m.slot)), 1);
-      this.objs.set(k, { type: 'machine', kind: item.machine, hp: 1, ...(mc.gives ? { out: mc.gives, n: 1, doneAt: this.absNow() + mc.minutes } : {}) });
+      this.objs.set(k, { type: 'machine', kind: item.machine, hp: 1, ...(mc.gives ? { out: mc.gives, n: 1, doneAt: this.absNow() + (mc.grow || mc.minutes) } : {}) }); // 果樹第一次要先長大（grow），之後每隔 minutes 結一次果
       this.dirtyObjs.add(k); self(); fx('plant'); this.broadcast({ t: 'objs', by: a.id, list: [this.pubObj(k)] }); return done();
     }
     if (item && item.kind === 'fertilizer') { if (!tile) return bad('untilled'); if (tile.f) return bad('already'); if (crop && cropStage(def, crop.g) > 0) return bad('late'); invTake(p.inv, Math.floor(Number(m.slot)), 1); tile.f = item.power; return changed('fertilize'); }
