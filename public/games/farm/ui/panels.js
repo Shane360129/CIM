@@ -46,6 +46,8 @@ export function openPanel(ctx, mode, arg = {}) {
         const all = Object.keys(ctx.data.rawItems).filter((k) => ctx.data.rawItems[k].kind === kind), got = all.filter((k) => cx[k]);
         root.append(mk('h3', '', `${label} ${got.length}／${all.length}`)); const g2 = mk('div', 'grid'); for (const k of all) { const c = mk('span', 'cell' + (cx[k] ? '' : ' unknown')); c.title = cx[k] ? items[k].name : '？？？'; c.append(itemIcon(items, k)); g2.append(c); } root.append(g2);
       }
+      const album = f.album || []; root.append(mk('h3', '', `紀念冊 ${album.length}／${Object.keys(bal.album).length}`));
+      const ab = mk('div', 'shoplist'); for (const e of album) { const r = mk('div', 'shoprow'); r.append(mk('span', 'sname', `第 ${e.day} 天`), mk('span', 'sdesc', bal.album[e.key] || e.key)); ab.append(r); } root.append(ab);
       const ach = ctx.data.achievements, done = ach.filter((a) => (f.achieved || {})[a.id]); root.append(mk('h3', '', `成就 ${done.length}／${ach.length}`));
       const al = mk('div', 'shoplist'); for (const a of ach) { const r = mk('div', 'shoprow'); r.append(mk('span', 'sname', ((f.achieved || {})[a.id] ? '✔ ' : '') + a.name), mk('span', 'sdesc', a.desc), mk('span', 'sprice', `${a.money} 元`)); al.append(r); } root.append(al);
     } else if (mode === 'restore') {
@@ -139,6 +141,10 @@ export function openPanel(ctx, mode, arg = {}) {
         const it = items[inv[picked].id], b = mk('button', 'pbtn eat', `吃（體力 +${it.energy}${it.buff ? '・' + bal.buffNames[it.buff[0]] : ''}）`); b.type = 'button';
         b.addEventListener('click', async () => { const a = picked; picked = -1; info = ''; const r = await room.req({ t: 'eat', slot: a }); if (r.t === 'ok') hud.toast(r.buff ? `好吃！${bal.buffNames[r.buff[0]]}` : '好吃！', 1400); });
         root.append(b);
+      }
+      if (mode === 'bag' && picked >= 0 && inv[picked] && items[inv[picked].id].kind !== 'tool') { // 選到東西：對方在旁邊的話可以送給他
+        const mate = [...W.others.values()].find((o) => o.map === W.me.map && Math.hypot(o.x - W.me.x, o.y - W.me.y) <= bal.duo.giveReach);
+        if (mate) { const b = mk('button', 'pbtn eat', `送給 ${mate.name}（整疊）`); b.type = 'button'; b.dataset.act = 'give'; b.addEventListener('click', async () => { const a = picked; picked = -1; info = ''; const r = await room.req({ t: 'give', slot: a, n: 999 }); if (r.t === 'ok') hud.toast(`送給 ${mate.name} 了`, 1300); else say(r); }); root.append(b); }
       }
       const buffs = Object.keys(bal.buffNames).filter((k) => W.buff(k)).map((k) => bal.buffNames[k]); if (mode === 'bag' && buffs.length) root.append(mk('p', 'hint', '料理的效果：' + buffs.join('、')));
       if (mode === 'bag') { const cb = mk('button', 'pbtn', '圖鑑與成就'); cb.type = 'button'; cb.dataset.act = 'codex'; cb.addEventListener('click', () => { hud.closePanel(); openPanel(ctx, 'codex'); }); root.append(cb); }

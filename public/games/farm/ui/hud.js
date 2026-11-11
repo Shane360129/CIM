@@ -32,7 +32,8 @@ export function createHud(ui, slots) {
   clock.append(clockMain, clockSub, clockNet); ui.append(clock);
   const side = mk('div', 'side hidden'), btnSay = mk('button', '', '💬'), btnEmote = mk('button', '', '😊');
   btnSay.type = btnEmote.type = 'button'; btnSay.title = '說一句話（T）'; btnEmote.title = '表情';
-  side.append(btnSay, btnEmote); ui.append(side);
+  const btnPhoto = mk('button', '', '📷'); btnPhoto.type = 'button'; btnPhoto.title = '拍一張照片傳到聊天室';
+  side.append(btnSay, btnEmote, btnPhoto); ui.append(side);
   const emotes = mk('div', 'emotes hidden'); ui.append(emotes);
   const say = mk('form', 'say hidden'), sayInput = mk('input'), sayBtn = mk('button', '', '送出');
   sayInput.type = 'text'; sayInput.placeholder = '說一句話…'; sayInput.autocomplete = 'off'; say.append(sayInput, sayBtn); ui.append(say);
@@ -55,6 +56,20 @@ export function createHud(ui, slots) {
     openPanel(node, onClose) { hud.closePanel(); panel = node; panelClose = onClose; ui.append(node); },
     closePanel() { if (panel) { panel.remove(); panel = null; if (panelClose) panelClose(); panelClose = null; } },
     get hasPanel() { return !!panel; },
+    // 問一句話（寫便條用）：回傳打的字，取消回傳 null
+    ask(title, lines, placeholder, max) {
+      hud.closeCard();
+      return new Promise((resolve) => {
+        card = mk('div', 'card'); card.append(mk('h2', '', title)); for (const l of lines) card.append(mk('p', '', l));
+        const input = mk('input', 'minput'); input.type = 'text'; input.maxLength = max; input.placeholder = placeholder; card.append(input);
+        const row = mk('div', 'row'), fin = (v) => { card.resolve = () => {}; hud.closeCard(); resolve(v); };
+        const no = mk('button', 'ghost', '關閉'), yes = mk('button', '', '貼上去'); no.type = yes.type = 'button'; no.addEventListener('click', () => fin(null)); yes.addEventListener('click', () => fin(input.value.trim() || null));
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') fin(input.value.trim() || null); e.stopPropagation(); });
+        row.append(no, yes); card.append(row); card.resolve = resolve; ui.append(card); setTimeout(() => input.focus(), 50);
+      });
+    },
+    onPhoto(fn) { btnPhoto.onclick = fn; },
+    hideAll(on) { ui.classList.toggle('hidden', on); },
     // 對話框：左邊大頭像、名字、一個字一個字跑出來的話（點一下或按動作鍵就全部顯示）、下面幾個按鈕。回傳按了哪一個
     dialog({ portrait, name, sub, text, buttons = [{ label: '好', value: true }] }) {
       hud.closeCard();

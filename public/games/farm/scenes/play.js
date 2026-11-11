@@ -38,6 +38,7 @@ export const play = {
     hud.show(true); hud.showPlay(true);
     hud.setChat({ maxChars: balance.bubbleMaxChars, emoteList: balance.emotes, say: (text) => this.room.send({ t: 'bubble', text }), emote: (e) => this.room.send({ t: 'emote', e }) });
     hud.onBag(() => { this.fishing.cancel(); this.togglePanel('bag'); });
+    hud.onPhoto(() => { if (!hud.hasCard) this.photo(); });
     const refresh = () => { setToolLv(W.self.toolLv); hud.setHotbar(W.self.inv, (s) => itemIcon(ctx.data.items, s.id, 30)); if (W.farm) hud.setStatus(W.farm.money, W.self.energy, W.self.energyMax, W.me.map === 'mine' ? W.self.hp : null, W.self.hpMax); };
     refresh();
     const net = (s) => hud.setNet(s === 'online' ? '' : s === 'replaced' ? '已在別的分頁打開' : '連線中斷，重新連線中…');
@@ -54,6 +55,7 @@ export const play = {
       W.on('map', (id) => { this.fishing.cancel(); this.setMap(id); hud.closePanel(); refresh(); }),
       W.on('self', refresh), W.on('farm', refresh),
       W.on('toast', (t) => hud.toast(t)),
+      W.on('given', (m) => { const o = W.others.get(m.from); hud.toast(`${o ? o.name : '對方'} 送你 ${ctx.data.items[m.item].name}×${m.n}`, 2000); }),
       W.on('built', (m) => { this.setMap(this.mapId); refresh(); if (m.by !== W.me.id) hud.toast(m.what === 'house' ? '農舍擴建好了！' : '新的田開墾好了！', 1800); }),
       W.on('restored', (m) => { const r = ctx.data.restore[m.fac]; hud.closePanel(); hud.card(`「${r.name}」修好了！`, [r.perkText, ...(m.all ? [balance.restore.allDone.text + `（${balance.restore.allDone.money} 元）`] : [])], [{ label: '太好了', value: true }]); }),
       W.on('faint', () => hud.card('昏倒了…', ['被怪物打到沒力氣，醒來已經在礦坑外面。東西都還在，只是體力剩一半。'], [{ label: '好', value: true }])),
@@ -142,6 +144,7 @@ export const play = {
       if (use === 'carpenter') return openPanel(this.ctx, 'build');
       if (use === 'board') return this.board();
       if (use === 'mail') return this.mail();
+      if (use === 'notes') return this.notes();
       if (use === 'stove') return openPanel(this.ctx, 'cook');
       if (use === 'coop' || use === 'barn') return openPanel(this.ctx, use);
       if (use === 'workbench') return openPanel(this.ctx, 'craft');
@@ -174,6 +177,7 @@ export const play = {
       return;
     }
     const r = await this.room.req({ t: 'use', slot: hud.selected, x: t.x, y: t.y });
+    if (r.t === 'ok' && r.waiting) hud.toast('這個太大了，要兩個人一起動手！等對方也來敲一下', 2200);
     if (r.t === 'ok' && r.got) hud.toast(`收成了 ${data.items[r.got.id].name}${r.got.q ? `（${this.bal.quality.names[r.got.q]}）` : ''}`, 1200);
     if (r.t === 'no' && r.reason === 'busy') return hud.toast(`還在做，大約還要 ${r.left >= 60 ? Math.round(r.left / 60) + ' 小時' : r.left + ' 分鐘'}`, 1300);
     if (r.t === 'no') { const tool = r.reason.startsWith('tool:') && TOOL_NAME[r.reason.slice(5)]; const text = tool ? `這個要用${tool}` : NO_TEXT[r.reason]; if (text) hud.toast(text, 1300); }
@@ -218,6 +222,23 @@ export const play = {
     const { hud, data } = this.ctx, h = this.hunt; this.hunt = null; h.timer.remove();
     const r = await this.room.req({ t: 'fest-score', fest: h.fe.id, score: h.score }), p = r.t === 'ok' ? r.prize : null;
     hud.card(`${h.fe.d.name}：找到 ${h.score} 顆`, [p ? `獎品：${p.money ? p.money + ' 元' : ''}${p.item ? `、${data.items[p.item[0]].name}×${p.item[1]}` : ''}` : r.reason === 'already' ? '今年已經領過獎了，這次只是玩玩。' : '成績沒有送出去。'], [{ label: '好', value: true }]);
+  },
+  // 便條板：看對方留的話、自己留一句
+  async notes() {
+    const { hud } = this.ctx, W = this.world, list = (W.farm.notes || []).slice(-5);
+    try { localStorage.setItem(`farm-notes-seen-${this.ctx.session.convId}-${W.me.id}`, String((W.farm.notes || []).reduce((m, n) => Math.max(m, n.id), 0))); } catch { /* 存不了就算了 */ }
+    const text = await hud.ask('便條板', list.length ? list.map((n) => `第 ${n.day} 天　${n.by === W.me.id ? '我' : n.name}：${n.text}`) : ['還沒有便條。留一句話給對方吧。'], '寫一句話…', this.bal.duo.noteMaxChars);
+    if (text) { const r = await this.room.req({ t: 'note', text }); hud.toast(r.t === 'ok' ? '便條貼上去了' : '貼不上去', 1300); }
+  },
+  unreadNotes() { const W = this.world; let seen = 0; try { seen = Number(localStorage.getItem(`farm-notes-seen-${this.ctx.session.convId}-${W.me.id}`)) || 0; } catch { /* 讀不到就當沒看過 */ } return (W.farm.notes || []).some((n) => n.by !== W.me.id && n.id > seen); },
+  // 拍照：把介面藏起來畫一張，縮小成 JPEG 傳到這個聊天室（用聊天室原本傳圖片的方式）
+  async photo() {
+    const { hud, view, session } = this.ctx; hud.hideAll(true); await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const k = Math.min(1, 1100 / view.canvas.width), c = document.createElement('canvas'); c.width = Math.round(view.canvas.width * k); c.height = Math.round(view.canvas.height * k);
+    c.getContext('2d').drawImage(view.canvas, 0, 0, c.width, c.height); hud.hideAll(false);
+    let url = c.toDataURL('image/jpeg', 0.82); if (url.length > 650000) url = c.toDataURL('image/jpeg', 0.6);
+    const ok = await hud.card('拍好了', ['要把這張照片傳到聊天室嗎？'], [{ label: '不用了', value: false, ghost: true }, { label: '傳到聊天室', value: true }]); if (!ok) return;
+    try { const { api } = await import('../net/auth.js'); await api(`/api/conversations/${session.convId}/messages`, { method: 'POST', body: { type: 'image', content: url } }); hud.toast('照片傳到聊天室了', 1500); } catch (e) { hud.toast('傳不出去：' + e.message, 1800); }
   },
   // 佈告欄：今天的委託（某位居民想要幾個某種東西）
   async board() {
@@ -405,6 +426,7 @@ export const play = {
       }
       if (it.t) {
         const d = it.t.def; if (!(d.art && drawSprite(g, d.art.replace('{season}', season), it.t.fx * T, it.t.fy * T, d.w * T, d.h * T))) drawObject(g, d, it.t.fx * T, it.t.fy * T, T);
+        if (it.t.def.use === 'notes' && this.unreadNotes()) drawBubble(g, '📝', it.t.fx * T, it.t.fy * T - T * 1.3, T, true); // 便條板有對方的新便條
         if (it.t.def.use === 'mail' && (W.self.mail || []).some((m) => !m.got)) drawBubble(g, '✉', it.t.fx * T, it.t.fy * T - T * 1.2, T, true); // 信箱有新的信
         // 加工機：做好了頭上冒出成品，還在做就冒小點點
         if (it.o && it.o.kind && it.o.out) { if (W.abs() >= it.o.doneAt) { const oi = data.items[it.o.out]; drawBubble(g, ' ', it.t.fx * T, it.t.fy * T - T * 1.25, T, true); if (!drawSprite(g, oi.art, it.t.fx * T, it.t.fy * T - T * 1.38, T * 0.5, T * 0.5)) drawName(g, '好了', it.t.fx * T, it.t.fy * T - T * 1.6, T); } else drawName(g, '・'.repeat(1 + Math.floor(performance.now() / 500) % 3), it.t.fx * T, it.t.fy * T - T * 1.35, T); }

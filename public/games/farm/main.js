@@ -14,3 +14,6 @@ startLoop({ update: (dt) => ctx.scenes.update(dt), render: (alpha) => ctx.scenes
 ctx.scenes.go(loading);
 // 自動化測試用：網址帶 &test 時，讓測試程式看得到遊戲的狀態（正常使用不會出現）
 if (new URLSearchParams(location.search).has('test')) window.__game = ctx;
+
+// 聊天室（外面那一頁）說有新訊息：在遊戲裡提示一下，按 Esc 或右上角的 ✕ 就能回去看
+window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.type === 'chat-message') ctx.hud.toast('💬 聊天室有新訊息', 2500); });

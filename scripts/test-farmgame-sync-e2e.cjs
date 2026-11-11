@@ -45,6 +45,19 @@ const { chromium } = require('playwright');
   ok('A 說一句話，B 看到頭上的泡泡；打字的時候角色不會亂走', (await st(pb)).bubbles.includes('今天種什麼') && Math.abs((await st(pa)).me.x - sa.me.x) < 0.01);
   await pb.locator('.side button').nth(1).click(); await pb.locator('.emotes button').first().click(); await pa.waitForTimeout(500);
   ok('B 按表情，A 看到', (await st(pa)).bubbles.includes('😊'));
+  // 雙人：便條板、互送東西、拍照傳到聊天室
+  await tp(pa, 13.5, 10.4, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
+  await pa.locator('.card .minput').fill('記得澆水喔'); await pa.locator('.card button').last().click(); await pb.waitForTimeout(500);
+  ok('A 對著便條板留一句話，B 那邊收到', (await pb.evaluate(() => window.__game.world.farm.notes.map((n) => n.text).join())) === '記得澆水喔');
+  await tp(pb, 13.5, 10.4, 'up'); await pb.keyboard.press('Space'); await pb.waitForTimeout(300);
+  ok('B 打開便條板看得到 A 寫的', /晴晴：記得澆水喔/.test(await pb.locator('.card').textContent())); await pb.locator('.card button').first().click();
+  await tp(pb, 12.6, 10.4, 'right'); await pa.keyboard.press('KeyE'); await pa.waitForTimeout(200);
+  await pa.locator('.panel .cell').nth(await slotOf(pa, 'seed_spinach')).click(); await pa.waitForTimeout(150); await pa.locator('.panel [data-act=give]').click(); await pb.waitForTimeout(500);
+  ok('站在一起時背包裡可以把東西送給對方：A 沒了、B 多 6 個並看到提示', (await count(pa, 'seed_spinach')) === 0 && (await count(pb, 'seed_spinach')) === 12 && /送你/.test(await pb.locator('.toast').textContent().catch(() => '')));
+  await pa.keyboard.press('Escape'); await pb.evaluate(async () => { const w = window.__game.world; await w.room.req({ t: 'give', slot: w.self.inv.findIndex((x) => x && x.id === 'seed_spinach'), n: 6 }); }); await pa.waitForTimeout(300);
+  await pa.locator('.side button').nth(2).click(); await pa.waitForTimeout(500); await pa.locator('.card button').last().click(); await pa.waitForTimeout(900);
+  const msgs = (await j(`/api/conversations/${dm.id}/messages`, null, a.token)).messages || [];
+  ok('按 📷 拍照：照片以圖片訊息傳到這個聊天室', msgs.some((m) => m.type === 'image' && !!(m.meta && m.meta.media)) && (await count(pa, 'seed_spinach')) === 6);
   // 種田：找一格沒有東西擋著的田
   const F = await pa.evaluate(() => { const w = window.__game.world; for (let y = 13; y < 21; y++) for (let x = 15; x < 27; x++) if (!w.obj('farm', x, y) && !w.obj('farm', x, y - 1) && !w.obj('farm', x + 1, y)) return { x, y }; });
   await tp(pa, F.x + 0.5, F.y - 0.5, 'down'); await tp(pb, F.x + 1.5, F.y - 0.5, 'down');
@@ -156,7 +169,7 @@ const { chromium } = require('playwright');
   ok('木工屋：可以擴建農舍、開墾南邊的田，寫出要多少錢和材料', (await pa.locator('.panel .shoprow').count()) === 2 && /3000 元/.test(await pa.locator('.panel .shoprow[data-item=house]').textContent()) && /8000 元/.test(await pa.locator('.panel .shoprow[data-item=field2]').textContent()));
   await pa.keyboard.press('Escape');
   await pa.keyboard.press('KeyE'); await pa.waitForTimeout(200); await pa.locator('.panel [data-act=codex]').click(); await pa.waitForTimeout(300);
-  ok('背包 → 圖鑑與成就：六類圖鑑、54 個成就', (await pa.locator('.panel h3').count()) === 7 && /成就 0／54/.test(await pa.locator('.panel h3').last().textContent()) && (await pa.locator('.panel .cell.unknown').count()) >= 50);
+  ok('背包 → 圖鑑與成就：六類圖鑑、54 個成就、紀念冊', (await pa.locator('.panel h3').count()) === 8 && /成就 0／54/.test((await pa.locator('.panel h3').allTextContents()).join('|')) && /紀念冊 \d+／\d+/.test((await pa.locator('.panel h3').allTextContents()).join('|')) && (await pa.locator('.panel .cell.unknown').count()) >= 50);
   await pa.screenshot({ path: S + '/s7-codex.png' }); await pa.keyboard.press('Escape');
   await tp(pa, 30, 9.7, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
   ok('鐵匠鋪：列出六種工具現在的等級和升級要的錠', (await pa.locator('.panel .shoprow').count()) === 6 && /銅錠×5、1000 元/.test(await pa.locator('.panel .shoprow[data-item=hoe]').textContent()));

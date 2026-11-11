@@ -149,7 +149,21 @@ const busy = await use(A, 'hoe', 16, 10); check('還沒好不能拿，會說還�
 // 背包搬位置
 const s1 = slot(A, 'wood'); await req(A, { t: 'swap', slot: s1, b: 20 }); check('背包可以搬位置', A.self.inv[20] && A.self.inv[20].id === 'wood' && !A.self.inv[s1]);
 
+// ---- 雙人：合力搬超大樹根、便條板、互送東西 ----
+await go(A, 24.5, 22.4); await go(Bc, 25.4, 22.4);
+check('超大樹根用錯工具不行', (await use(A, 'pick', 24, 23)).reason === 'tool:axe');
+Bc.clear(); const p1 = await use(A, 'axe', 24, 23), p1b = await use(A, 'axe', 24, 23);
+check('一個人砍不動：要等對方（對方會看到你在搬）；同一個人連按也沒用', p1.t === 'ok' && p1.waiting === true && p1b.waiting === true && !!(await Bc.wait('fx', (m) => m.kind === 'push')));
+A.clear(); const p2 = await use(Bc, 'axe', 24, 23);
+check('對方在幾秒內也動手：樹根搬開了，東西給後動手的人，兩邊都看到它不見', p2.t === 'ok' && !p2.waiting && has(Bc, 'wood') === 25 && has(Bc, 'sap') === 3 && !!(await A.wait('objs', (m) => m.list[0].x === 24 && m.list[0].type === null)));
+check('離便條板太遠不能留言', (await req(A, { t: 'note', text: '記得澆水' })).reason === 'far');
+await go(A, 13.5, 10.4); Bc.clear();
+check('留便條：對方收到；空白的不行；太長會截短', (await req(A, { t: 'note', text: '  記得   澆水喔 ' })).t === 'ok' && (await Bc.wait('notes')).notes[0].text === '記得 澆水喔' && (await req(A, { t: 'note', text: '   ' })).reason === 'slot' && (await req(A, { t: 'note', text: '好'.repeat(200) })).t === 'ok' && (await Bc.wait('notes', (m) => m.notes.length === 2)).notes[1].text.length === 60);
+check('對方站太遠不能送東西', (await req(A, { t: 'give', slot: slot(A, 'fiber'), n: 1 })).reason === 'far');
+await go(Bc, 12.5, 10.6); Bc.clear();
+check('站在一起可以送：我少一個、對方多一個並收到通知', (await req(A, { t: 'give', slot: slot(A, 'fiber'), n: 1 })).t === 'ok' && has(A, 'fiber') === 0 && !!(await Bc.wait('given', (m) => m.item === 'fiber' && m.n === 1)) && has(Bc, 'fiber') === 1);
 // ---- 出貨箱（在家門口旁邊 12,9）----
+await go(A, 20.5, 14.5);
 check('離出貨箱太遠不能出貨', (await req(A, { t: 'ship', slot: 20, n: 99 })).reason === 'far');
 await go(A, 12.5, 10.4);
 check('工具不能賣', (await req(A, { t: 'ship', slot: slot(A, 'hoe'), n: 1 })).reason === 'unsellable');
@@ -346,6 +360,7 @@ check('重新上線：造型和名字還在', !!s2 && !!s2.you.look && s2.you.lo
 check('重新上線：人還在農舍裡、背包還在、看得到離線時的變化', !!s2 && s2.you.map === 'house' && s2.self.inv.some((x) => x && x.id === 'seed_strawberry') && s2.farm.day === 10 && s2.farm.animals.length === 1 && s2.farm.pets.length === 1);
 check('「你不在時發生的事」：過了 8 天、對方澆水和收成', !!s2 && !!s2.summary && s2.summary.days === 8 && s2.summary.acts.harvest >= 1 && s2.summary.acts.water >= 1, s2 && JSON.stringify(s2.summary));
 check('圖鑑記下拿到過的東西、統計記下做過的事（兩個人共用）', Object.keys(s2.farm.codex).length >= 15 && !!s2.farm.codex.carrot && s2.farm.stats.harvest >= 1 && s2.farm.stats.fish >= 1 && s2.farm.houseLv === 1, `圖鑑 ${Object.keys(s2.farm.codex).length} 種`);
+check('紀念冊記下第一次發生的事（第一次收成、第一次合力、第一隻動物…）', ['harvest', 'duo', 'animal-buy', 'fish', 'note'].every((k) => s2.farm.album.some((e) => e.key === k)) && s2.farm.notes.length === 2, s2.farm.album.map((e) => e.key).join(','));
 const A3 = open(dm.id, a.token); await A3.wait('snapshot'); await sleep(300);
 check('同一個人開第二個分頁：舊的收到 replaced，對方不會以為他離開', A2.log.some((m) => m.t === 'replaced') && !Bc.log.some((m) => m.t === 'leave' && m.id === a.user.id));
 // 時鐘只在有人的時候走

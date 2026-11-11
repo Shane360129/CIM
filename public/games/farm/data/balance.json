@@ -592,5 +592,29 @@
       "wood": 50,
       "fiber": 30
     }
+  },
+  "duo": {
+    "pushWindowMs": 5000,
+    "giveReach": 2.6,
+    "noteMaxChars": 60,
+    "notesKeep": 20
+  },
+  "album": {
+    "harvest": "第一次收成",
+    "fish": "釣到第一條魚",
+    "animal-buy": "第一隻動物來到農場",
+    "adopt": "領養了第一隻寵物",
+    "cook": "第一次下廚",
+    "mine": "第一次在礦坑敲開石頭",
+    "restored": "修好了第一個設施",
+    "festival": "第一次參加節慶",
+    "craft": "做出第一台加工機",
+    "upgrade": "第一次升級工具",
+    "build": "第一次找桐伯動工",
+    "duo": "兩個人第一次合力搬開大傢伙",
+    "note": "在便條板留下第一張便條",
+    "born": "農場第一次有小動物出生",
+    "quest": "完成第一個委託",
+    "gift": "第一次送禮物給居民"
   }
 }

@@ -52,6 +52,8 @@ export function createWorld(session, bal) {
     emit('mine-upd', m);
   });
   room.on('restored', (m) => emit('restored', m));
+  room.on('notes', (m) => { if (w.farm) w.farm.notes = m.notes; emit('farm', m); });
+  room.on('given', (m) => emit('given', m));
   room.on('built', (m) => { if (w.farm) Object.assign(w.farm, { houseLv: m.houseLv, land: m.land }); emit('built', m); });
   room.on('fest', (m) => { const who = w.who(m.id); if (who && m.id !== w.me.id) emit('toast', `${who.name} 在節慶活動拿到 ${m.score} 分！`); });
   room.on('warp', (m) => {
@@ -65,6 +67,7 @@ export function createWorld(session, bal) {
   room.on('fx', (m) => {
     const who = w.who(m.id); if (!who) return;
     who.action = m.kind === 'water' ? 'water' : m.kind === 'cast' ? 'cast' : m.kind === 'pick' || m.kind === 'sword' ? 'swing' : m.kind === 'eat' || m.kind === 'cook' ? 'eat' : m.kind === 'harvest' || m.kind === 'plant' || m.kind === 'fertilize' ? 'eat' : 'swing'; who.actionT = 0; who.tool = m.kind;
+    if (m.kind === 'push' && m.id !== w.me.id && m.map === w.me.map) emit('toast', `${who.name} 在搬大傢伙，快過去一起動手！`);
     if (m.id !== w.me.id && m.map === w.me.map) w.mark = { x: m.x, y: m.y, life: 0.6, color: '#ffd76a' };
     who.fishing = m.kind === 'cast' ? { x: m.x, y: m.y } : null; // 對方在釣魚：看得到他的浮標
     if (m.kind === 'harvest' || m.kind === 'cook') w.floaters.push({ map: m.map, x: m.x + 0.5, y: m.y, item: m.item, q: m.q, life: 1.1 });

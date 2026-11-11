@@ -139,7 +139,8 @@ export class FarmRoom {
     }
     this.pl.set(id, p); return p;
   }
-  logEvent(userId, type, data) { if (userId) { const st = (this.farm.stats ||= {}); st[type] = (st[type] || 0) + 1; this.farmDirty = true; } this.sql.exec(`INSERT INTO events (ts, day, user_id, type, data) VALUES (?, ?, ?, ?, ?)`, Date.now(), this.farm.day, userId, type, data ? JSON.stringify(data) : null); }
+  // 每做一件事：統計 +1（成就用）；某種事第一次發生時，在紀念冊記一筆
+  logEvent(userId, type, data) { const st = (this.farm.stats ||= {}); st[type] = (st[type] || 0) + 1; this.farmDirty = true; if (st[type] === 1 && BAL.album[type]) (this.farm.album ||= []).push({ day: this.farm.day, key: type, by: userId }); this.sql.exec(`INSERT INTO events (ts, day, user_id, type, data) VALUES (?, ?, ?, ?, ?)`, Date.now(), this.farm.day, userId, type, data ? JSON.stringify(data) : null); }
   pubTile(k) { const v = this.tiles.get(k), t = unK(k); return v ? { ...t, t: 1, w: v.w === this.farm.day ? 1 : 0, f: v.f || 0, c: v.c ? { id: v.c.id, s: v.c.dead ? -1 : cropStage(CROPS[v.c.id], v.c.g) } : null } : { ...t, t: 0 }; }
   pubObj(k) { const o = this.objs.get(k); return o ? { ...unK(k), type: o.type, hp: o.hp, ...(o.item ? { item: o.item } : {}), ...(o.kind ? { kind: o.kind, out: o.out || null, doneAt: o.doneAt || 0 } : {}) } : { ...unK(k), type: null }; }
   absNow() { return absMinute(this.farm.day, this.minuteNow(), BAL); }
@@ -196,7 +197,7 @@ export class FarmRoom {
   pubFarm() {
     const f = this.farm;
     return { day: f.day, minute: this.minuteNow(), money: f.money, season: seasonId(f.day, BAL), weather: weatherOf(f.seed, f.day, BAL), minutesPerSecond: MIN_PER_MS * 1000, dayStart: BAL.dayStartMinute, dayEnd: BAL.dayEndMinute,
-      newAchievements: f.newAchievements || [], houseLv: this.houseLv(), land: f.land || {}, codex: f.codex || {}, achieved: f.achieved || {}, stats: f.stats || {}, restore: f.restore || {}, quest: f.quest || null, festival: this.festivalToday(), now: Date.now(), mineDeepest: f.mineDeepest || 1, ship: f.ship, lastShip: f.lastShip, chest: f.chest, newborn: f.newborn || [], animals: f.animals || [], pets: f.pets || [], graze: !!f.graze };
+      notes: f.notes || [], album: f.album || [], newAchievements: f.newAchievements || [], houseLv: this.houseLv(), land: f.land || {}, codex: f.codex || {}, achieved: f.achieved || {}, stats: f.stats || {}, restore: f.restore || {}, quest: f.quest || null, festival: this.festivalToday(), now: Date.now(), mineDeepest: f.mineDeepest || 1, ship: f.ship, lastShip: f.lastShip, chest: f.chest, newborn: f.newborn || [], animals: f.animals || [], pets: f.pets || [], graze: !!f.graze };
   }
   // 「你不在時發生的事」：過了幾天、錢差多少、對方做了什麼
   summaryFor(userId, saved, lastSeen) {
@@ -249,6 +250,16 @@ export class FarmRoom {
       for (const [i, k] of plan) invTake(p.inv, i, k); q.done = a.id; q.reward = Math.round(q.reward * (1 + this.perk('questReward'))); this.farm.money += q.reward;
       const fr = ((p.friend ||= {})[q.npc] ||= { pts: 0, talk: 0, giftDay: 0, week: 0, gifts: 0, met: false }); fr.pts = clamp(fr.pts + BAL.quest.friend, 0, BAL.friend.max);
       this.logEvent(a.id, 'quest', { npc: q.npc }); this.mailCheck(a.id, p); self(); farmChanged(); done({ reward: q.reward });
+    } else if (m.t === 'note') { // 農場的便條板：留一句話給對方（留最近 20 張）
+      const text = String(m.text || '').replace(/[\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, BAL.duo.noteMaxChars); if (!near('notes')) return no('far'); if (!text) return no('slot');
+      const f = this.farm; f.noteN = (f.noteN || 0) + 1; (f.notes ||= []).push({ id: f.noteN, by: a.id, name: p.nick || a.name, text, day: f.day }); f.notes = f.notes.slice(-BAL.duo.notesKeep);
+      this.logEvent(a.id, 'note'); this.farmDirty = true; this.broadcast({ t: 'notes', notes: f.notes }); done();
+    } else if (m.t === 'give') { // 把東西送給對方：兩個人要站得夠近
+      const other = this.online().find((s) => s.a.id !== a.id && s.a.map === a.map && (a.map !== 'mine' || s.a.floor === a.floor) && Math.hypot(s.a.x - a.x, s.a.y - a.y) <= BAL.duo.giveReach); if (!other) return no('far');
+      const held = p.inv[slot]; if (!held) return no('slot'); const k = Math.min(n, held.n), q = this.player(other.a.id);
+      if (!invAdd(q.inv, BAL.invSlots, held.id, k, held.q || 0)) return no('full');
+      invTake(p.inv, slot, k); this.dirtyPl.add(other.a.id); this.logEvent(a.id, 'give', { id: held.id, n: k }); self();
+      this.send(other.ws, { t: 'self', ...this.pubSelf(other.a) }); this.send(other.ws, { t: 'given', from: a.id, item: held.id, n: k }); done();
     } else if (m.t === 'build') { // 木工屋：擴建農舍（倉庫箱變大、體力上限變多）、開墾新的田。錢和材料都要夠
       if (!near('carpenter')) return no('far');
       const cost = m.what === 'house' ? BAL.house.levels[this.houseLv()] : BAL.land[m.what]; if (!cost) return no(m.what === 'house' ? 'max' : 'unknown');
@@ -585,6 +596,11 @@ export class FarmRoom {
     }
     if (obj) { // 樹、石頭、樹枝、雜草：要用對的工具，打到沒血就清掉、掉材料
       const d = OBJECTS[obj.type]; if (tool !== d.tool) return bad('tool:' + d.tool);
+      if (d.duo) { // 要兩個人在幾秒內都對它動手才搬得開
+        const now = Date.now(), push = (this.pushes ||= new Map()).get(k), mate = push && push.id !== a.id && now - push.at <= BAL.duo.pushWindowMs;
+        if (!mate) { this.pushes.set(k, { id: a.id, at: now }); this.broadcast({ t: 'fx', id: a.id, kind: 'push', map: a.map, x, y }); return done({ waiting: true }); }
+        this.pushes.delete(k); this.logEvent(a.id, 'duo', { type: obj.type });
+      }
       if (obj.hp <= power) { const inv = JSON.parse(JSON.stringify(p.inv)); for (const [id, n] of Object.entries(d.drops)) if (!invAdd(inv, BAL.invSlots, id, n)) return bad('full'); if (!spend(d.energy)) return bad('tired'); p.inv = inv; this.objs.delete(k); xp(d.xp[0], d.xp[1]); this.logEvent(a.id, 'clear', { type: obj.type }); }
       else { if (!spend(d.energy)) return bad('tired'); obj.hp -= power; }
       this.dirtyObjs.add(k); self(); fx(tool); this.broadcast({ t: 'objs', by: a.id, list: [this.pubObj(k)], drops: this.objs.has(k) ? null : d.drops }); return done();

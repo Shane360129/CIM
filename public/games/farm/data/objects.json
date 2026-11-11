@@ -507,5 +507,57 @@
    2,
    1
   ]
+ },
+ "boulder": {
+  "name": "超大石頭",
+  "shape": "blob",
+  "solid": true,
+  "w": 1.7,
+  "h": 1.5,
+  "color": "#a9a59c",
+  "art": "obj/boulder",
+  "tool": "pick",
+  "hp": 1,
+  "duo": true,
+  "drops": {
+   "stone": 20,
+   "quartz": 1
+  },
+  "energy": 6,
+  "xp": [
+   "foraging",
+   25
+  ]
+ },
+ "bigroot": {
+  "name": "超大樹根",
+  "shape": "blob",
+  "solid": true,
+  "w": 1.7,
+  "h": 1.5,
+  "color": "#8a5a36",
+  "art": "obj/big_root",
+  "tool": "axe",
+  "hp": 1,
+  "duo": true,
+  "drops": {
+   "wood": 25,
+   "sap": 3
+  },
+  "energy": 6,
+  "xp": [
+   "foraging",
+   25
+  ]
+ },
+ "noteboard": {
+  "name": "便條板",
+  "shape": "block",
+  "solid": true,
+  "w": 1.2,
+  "h": 1.3,
+  "color": "#c9a877",
+  "art": "obj/board",
+  "use": "notes"
  }
 }
