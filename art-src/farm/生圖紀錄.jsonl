@@ -216,3 +216,5 @@
 {"id": "6-74", "name": "花：牽牛花、繡球花", "batch": 6, "status": "quota", "media_id": null, "link": null, "attempts": 1, "note": "Canva 回 quota_cooldown（額度冷卻中），停止"}
 {"id": "6-74", "name": "花：牽牛花、繡球花", "batch": 6, "status": "ok", "media_id": "MAHanFV8J0w", "link": "https://www.canva.com/M/MAHanFV8J0w?utm_source=OC-AaBlKuT9h240&utm_campaign=agent_connector_create_image_asset_opened", "attempts": 1, "note": "符合；繡球花偏淺藍，跟青色背景有點接近，去背時要留意"}
 {"id": "6-75", "name": "花：桔梗、金盞花", "batch": 6, "status": "quota", "media_id": null, "link": null, "attempts": 1, "note": "Canva 回 quota_cooldown（額度冷卻中），停止"}
+{"id": "6-75", "name": "花：桔梗、金盞花", "batch": 6, "status": "ok", "media_id": "MAHapxkiPSk", "link": "https://www.canva.com/M/MAHapxkiPSk?utm_source=OC-AaBlKuT9h240&utm_campaign=agent_connector_create_image_asset_opened", "attempts": 1, "note": "符合"}
+{"id": "6-76", "name": "花：三色堇、風信子", "batch": 6, "status": "quota", "media_id": null, "link": null, "attempts": 1, "note": "Canva 回 quota_cooldown（額度冷卻中），停止"}
