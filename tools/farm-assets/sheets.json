@@ -1859,6 +1859,177 @@
      "item/snow_lotus"
     ]
    ]
+  },
+  "6-01": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/onion/0",
+     "crop/onion/1",
+     "crop/onion/2",
+     "crop/onion/3",
+     "crop/onion/4",
+     "item/onion"
+    ],
+    [
+     "crop/bok_choy/0",
+     "crop/bok_choy/1",
+     "crop/bok_choy/2",
+     "crop/bok_choy/3",
+     "crop/bok_choy/4",
+     "item/bok_choy"
+    ]
+   ]
+  },
+  "6-02": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/celery/0",
+     "crop/celery/1",
+     "crop/celery/2",
+     "crop/celery/3",
+     "crop/celery/4",
+     "item/celery"
+    ],
+    [
+     "crop/chive/0",
+     "crop/chive/1",
+     "crop/chive/2",
+     "crop/chive/3",
+     "crop/chive/4",
+     "item/chive"
+    ]
+   ]
+  },
+  "6-03": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/pea_shoot/0",
+     "crop/pea_shoot/1",
+     "crop/pea_shoot/2",
+     "crop/pea_shoot/3",
+     "crop/pea_shoot/4",
+     "item/pea_shoot"
+    ],
+    [
+     "crop/radish/0",
+     "crop/radish/1",
+     "crop/radish/2",
+     "crop/radish/3",
+     "crop/radish/4",
+     "item/radish"
+    ]
+   ]
+  },
+  "6-04": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/kohlrabi/0",
+     "crop/kohlrabi/1",
+     "crop/kohlrabi/2",
+     "crop/kohlrabi/3",
+     "crop/kohlrabi/4",
+     "item/kohlrabi"
+    ],
+    [
+     "crop/mustard/0",
+     "crop/mustard/1",
+     "crop/mustard/2",
+     "crop/mustard/3",
+     "crop/mustard/4",
+     "item/mustard"
+    ]
+   ]
+  },
+  "6-05": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/garland/0",
+     "crop/garland/1",
+     "crop/garland/2",
+     "crop/garland/3",
+     "crop/garland/4",
+     "item/garland"
+    ],
+    [
+     "crop/coriander/0",
+     "crop/coriander/1",
+     "crop/coriander/2",
+     "crop/coriander/3",
+     "crop/coriander/4",
+     "item/coriander"
+    ]
+   ]
+  },
+  "6-72": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/rose/0",
+     "crop/rose/1",
+     "crop/rose/2",
+     "crop/rose/3",
+     "crop/rose/4",
+     "item/rose"
+    ],
+    [
+     "crop/lily/0",
+     "crop/lily/1",
+     "crop/lily/2",
+     "crop/lily/3",
+     "crop/lily/4",
+     "item/lily"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "6-73": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/daisy/0",
+     "crop/daisy/1",
+     "crop/daisy/2",
+     "crop/daisy/3",
+     "crop/daisy/4",
+     "item/daisy"
+    ],
+    [
+     "crop/cosmos/0",
+     "crop/cosmos/1",
+     "crop/cosmos/2",
+     "crop/cosmos/3",
+     "crop/cosmos/4",
+     "item/cosmos"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "6-74": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/morning_glory/0",
+     "crop/morning_glory/1",
+     "crop/morning_glory/2",
+     "crop/morning_glory/3",
+     "crop/morning_glory/4",
+     "item/morning_glory"
+    ],
+    [
+     "crop/hydrangea/0",
+     "crop/hydrangea/1",
+     "crop/hydrangea/2",
+     "crop/hydrangea/3",
+     "crop/hydrangea/4",
+     "item/hydrangea"
+    ]
+   ],
+   "bg": "#00ffff"
   }
  }
 }

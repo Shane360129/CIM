@@ -2426,5 +2426,293 @@
   "tags": [
    "veg"
   ]
+ },
+ "seed_onion": {
+  "name": "洋蔥種子",
+  "kind": "seed",
+  "crop": "onion",
+  "buy": 40,
+  "sell": 10,
+  "art": "item/seedbag",
+  "overlay": "item/onion"
+ },
+ "onion": {
+  "name": "洋蔥",
+  "kind": "crop",
+  "sell": 95,
+  "art": "item/onion",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_bok_choy": {
+  "name": "青江菜種子",
+  "kind": "seed",
+  "crop": "bok_choy",
+  "buy": 20,
+  "sell": 5,
+  "art": "item/seedbag",
+  "overlay": "item/bok_choy"
+ },
+ "bok_choy": {
+  "name": "青江菜",
+  "kind": "crop",
+  "sell": 46,
+  "art": "item/bok_choy",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_celery": {
+  "name": "芹菜種子",
+  "kind": "seed",
+  "crop": "celery",
+  "buy": 32,
+  "sell": 8,
+  "art": "item/seedbag",
+  "overlay": "item/celery"
+ },
+ "celery": {
+  "name": "芹菜",
+  "kind": "crop",
+  "sell": 78,
+  "art": "item/celery",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_chive": {
+  "name": "韭菜種子",
+  "kind": "seed",
+  "crop": "chive",
+  "buy": 45,
+  "sell": 11,
+  "art": "item/seedbag",
+  "overlay": "item/chive"
+ },
+ "chive": {
+  "name": "韭菜",
+  "kind": "crop",
+  "sell": 28,
+  "art": "item/chive",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_pea_shoot": {
+  "name": "豆苗種子",
+  "kind": "seed",
+  "crop": "pea_shoot",
+  "buy": 15,
+  "sell": 3,
+  "art": "item/seedbag",
+  "overlay": "item/pea_shoot"
+ },
+ "pea_shoot": {
+  "name": "豆苗",
+  "kind": "crop",
+  "sell": 31,
+  "art": "item/pea_shoot",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_radish": {
+  "name": "櫻桃蘿蔔種子",
+  "kind": "seed",
+  "crop": "radish",
+  "buy": 22,
+  "sell": 5,
+  "art": "item/seedbag",
+  "overlay": "item/radish"
+ },
+ "radish": {
+  "name": "櫻桃蘿蔔",
+  "kind": "crop",
+  "sell": 50,
+  "art": "item/radish",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_kohlrabi": {
+  "name": "大頭菜種子",
+  "kind": "seed",
+  "crop": "kohlrabi",
+  "buy": 42,
+  "sell": 10,
+  "art": "item/seedbag",
+  "overlay": "item/kohlrabi"
+ },
+ "kohlrabi": {
+  "name": "大頭菜",
+  "kind": "crop",
+  "sell": 100,
+  "art": "item/kohlrabi",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_mustard": {
+  "name": "芥菜種子",
+  "kind": "seed",
+  "crop": "mustard",
+  "buy": 27,
+  "sell": 6,
+  "art": "item/seedbag",
+  "overlay": "item/mustard"
+ },
+ "mustard": {
+  "name": "芥菜",
+  "kind": "crop",
+  "sell": 64,
+  "art": "item/mustard",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_garland": {
+  "name": "茼蒿種子",
+  "kind": "seed",
+  "crop": "garland",
+  "buy": 20,
+  "sell": 5,
+  "art": "item/seedbag",
+  "overlay": "item/garland"
+ },
+ "garland": {
+  "name": "茼蒿",
+  "kind": "crop",
+  "sell": 47,
+  "art": "item/garland",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_coriander": {
+  "name": "香菜種子",
+  "kind": "seed",
+  "crop": "coriander",
+  "buy": 15,
+  "sell": 3,
+  "art": "item/seedbag",
+  "overlay": "item/coriander"
+ },
+ "coriander": {
+  "name": "香菜",
+  "kind": "crop",
+  "sell": 33,
+  "art": "item/coriander",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_rose": {
+  "name": "玫瑰種子",
+  "kind": "seed",
+  "crop": "rose",
+  "buy": 75,
+  "sell": 18,
+  "art": "item/seedbag",
+  "overlay": "item/rose"
+ },
+ "rose": {
+  "name": "玫瑰",
+  "kind": "crop",
+  "sell": 185,
+  "art": "item/rose",
+  "tags": [
+   "flower"
+  ]
+ },
+ "seed_lily": {
+  "name": "百合種子",
+  "kind": "seed",
+  "crop": "lily",
+  "buy": 85,
+  "sell": 21,
+  "art": "item/seedbag",
+  "overlay": "item/lily"
+ },
+ "lily": {
+  "name": "百合",
+  "kind": "crop",
+  "sell": 210,
+  "art": "item/lily",
+  "tags": [
+   "flower"
+  ]
+ },
+ "seed_daisy": {
+  "name": "雛菊種子",
+  "kind": "seed",
+  "crop": "daisy",
+  "buy": 30,
+  "sell": 7,
+  "art": "item/seedbag",
+  "overlay": "item/daisy"
+ },
+ "daisy": {
+  "name": "雛菊",
+  "kind": "crop",
+  "sell": 70,
+  "art": "item/daisy",
+  "tags": [
+   "flower"
+  ]
+ },
+ "seed_cosmos": {
+  "name": "波斯菊種子",
+  "kind": "seed",
+  "crop": "cosmos",
+  "buy": 40,
+  "sell": 10,
+  "art": "item/seedbag",
+  "overlay": "item/cosmos"
+ },
+ "cosmos": {
+  "name": "波斯菊",
+  "kind": "crop",
+  "sell": 95,
+  "art": "item/cosmos",
+  "tags": [
+   "flower"
+  ]
+ },
+ "seed_morning_glory": {
+  "name": "牽牛花種子",
+  "kind": "seed",
+  "crop": "morning_glory",
+  "buy": 38,
+  "sell": 9,
+  "art": "item/seedbag",
+  "overlay": "item/morning_glory"
+ },
+ "morning_glory": {
+  "name": "牽牛花",
+  "kind": "crop",
+  "sell": 90,
+  "art": "item/morning_glory",
+  "tags": [
+   "flower"
+  ]
+ },
+ "seed_hydrangea": {
+  "name": "繡球花種子",
+  "kind": "seed",
+  "crop": "hydrangea",
+  "buy": 82,
+  "sell": 20,
+  "art": "item/seedbag",
+  "overlay": "item/hydrangea"
+ },
+ "hydrangea": {
+  "name": "繡球花",
+  "kind": "crop",
+  "sell": 200,
+  "art": "item/hydrangea",
+  "tags": [
+   "flower"
+  ]
  }
 }

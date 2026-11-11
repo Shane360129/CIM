@@ -1108,5 +1108,245 @@
   "regrowDays": 0,
   "xp": 16,
   "art": "crop/snow_lotus"
+ },
+ "onion": {
+  "name": "洋蔥",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   2,
+   2,
+   2,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 11,
+  "art": "crop/onion"
+ },
+ "bok_choy": {
+  "name": "青江菜",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 8,
+  "art": "crop/bok_choy"
+ },
+ "celery": {
+  "name": "芹菜",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   1,
+   2,
+   2,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 10,
+  "art": "crop/celery"
+ },
+ "chive": {
+  "name": "韭菜",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   1,
+   1,
+   2,
+   1
+  ],
+  "regrowDays": 2,
+  "xp": 12,
+  "art": "crop/chive"
+ },
+ "pea_shoot": {
+  "name": "豆苗",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   1,
+   1,
+   1,
+   0
+  ],
+  "regrowDays": 0,
+  "xp": 7,
+  "art": "crop/pea_shoot"
+ },
+ "radish": {
+  "name": "櫻桃蘿蔔",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 8,
+  "art": "crop/radish"
+ },
+ "kohlrabi": {
+  "name": "大頭菜",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   2,
+   2,
+   2,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 11,
+  "art": "crop/kohlrabi"
+ },
+ "mustard": {
+  "name": "芥菜",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   1,
+   2,
+   1,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 9,
+  "art": "crop/mustard"
+ },
+ "garland": {
+  "name": "茼蒿",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 8,
+  "art": "crop/garland"
+ },
+ "coriander": {
+  "name": "香菜",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   1,
+   1,
+   1,
+   0
+  ],
+  "regrowDays": 0,
+  "xp": 7,
+  "art": "crop/coriander"
+ },
+ "rose": {
+  "name": "玫瑰",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   2,
+   2,
+   2,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 12,
+  "art": "crop/rose"
+ },
+ "lily": {
+  "name": "百合",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 13,
+  "art": "crop/lily"
+ },
+ "daisy": {
+  "name": "雛菊",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   1,
+   2,
+   1,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 9,
+  "art": "crop/daisy"
+ },
+ "cosmos": {
+  "name": "波斯菊",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   1,
+   2,
+   2,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 10,
+  "art": "crop/cosmos"
+ },
+ "morning_glory": {
+  "name": "牽牛花",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   1,
+   2,
+   2,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 10,
+  "art": "crop/morning_glory"
+ },
+ "hydrangea": {
+  "name": "繡球花",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 13,
+  "art": "crop/hydrangea"
  }
 }
