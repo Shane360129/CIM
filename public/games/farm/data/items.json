@@ -1382,5 +1382,1049 @@
   "sell": 20,
   "art": "item/fiber",
   "desc": "在礦坑受傷時用，血 +60"
+ },
+ "seed_tomato": {
+  "name": "番茄種子",
+  "kind": "seed",
+  "crop": "tomato",
+  "buy": 55,
+  "sell": 13,
+  "art": "item/seedbag",
+  "overlay": "item/tomato"
+ },
+ "tomato": {
+  "name": "番茄",
+  "kind": "crop",
+  "sell": 40,
+  "art": "item/tomato",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_cucumber": {
+  "name": "小黃瓜種子",
+  "kind": "seed",
+  "crop": "cucumber",
+  "buy": 35,
+  "sell": 8,
+  "art": "item/seedbag",
+  "overlay": "item/cucumber"
+ },
+ "cucumber": {
+  "name": "小黃瓜",
+  "kind": "crop",
+  "sell": 25,
+  "art": "item/cucumber",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_eggplant": {
+  "name": "茄子種子",
+  "kind": "seed",
+  "crop": "eggplant",
+  "buy": 65,
+  "sell": 16,
+  "art": "item/seedbag",
+  "overlay": "item/eggplant"
+ },
+ "eggplant": {
+  "name": "茄子",
+  "kind": "crop",
+  "sell": 45,
+  "art": "item/eggplant",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_green_pepper": {
+  "name": "青椒種子",
+  "kind": "seed",
+  "crop": "green_pepper",
+  "buy": 70,
+  "sell": 17,
+  "art": "item/seedbag",
+  "overlay": "item/green_pepper"
+ },
+ "green_pepper": {
+  "name": "青椒",
+  "kind": "crop",
+  "sell": 50,
+  "art": "item/green_pepper",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_corn": {
+  "name": "玉米種子",
+  "kind": "seed",
+  "crop": "corn",
+  "buy": 105,
+  "sell": 26,
+  "art": "item/seedbag",
+  "overlay": "item/corn"
+ },
+ "corn": {
+  "name": "玉米",
+  "kind": "crop",
+  "sell": 245,
+  "art": "item/corn",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_watermelon": {
+  "name": "西瓜種子",
+  "kind": "seed",
+  "crop": "watermelon",
+  "buy": 90,
+  "sell": 22,
+  "art": "item/seedbag",
+  "overlay": "item/watermelon"
+ },
+ "watermelon": {
+  "name": "西瓜",
+  "kind": "crop",
+  "sell": 210,
+  "art": "item/watermelon",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "seed_melon": {
+  "name": "哈密瓜種子",
+  "kind": "seed",
+  "crop": "melon",
+  "buy": 105,
+  "sell": 26,
+  "art": "item/seedbag",
+  "overlay": "item/melon"
+ },
+ "melon": {
+  "name": "哈密瓜",
+  "kind": "crop",
+  "sell": 250,
+  "art": "item/melon",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "seed_pumpkin": {
+  "name": "南瓜種子",
+  "kind": "seed",
+  "crop": "pumpkin",
+  "buy": 90,
+  "sell": 22,
+  "art": "item/seedbag",
+  "overlay": "item/pumpkin"
+ },
+ "pumpkin": {
+  "name": "南瓜",
+  "kind": "crop",
+  "sell": 220,
+  "art": "item/pumpkin",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_bitter_melon": {
+  "name": "苦瓜種子",
+  "kind": "seed",
+  "crop": "bitter_melon",
+  "buy": 70,
+  "sell": 17,
+  "art": "item/seedbag",
+  "overlay": "item/bitter_melon"
+ },
+ "bitter_melon": {
+  "name": "苦瓜",
+  "kind": "crop",
+  "sell": 50,
+  "art": "item/bitter_melon",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_loofah": {
+  "name": "絲瓜種子",
+  "kind": "seed",
+  "crop": "loofah",
+  "buy": 70,
+  "sell": 17,
+  "art": "item/seedbag",
+  "overlay": "item/loofah"
+ },
+ "loofah": {
+  "name": "絲瓜",
+  "kind": "crop",
+  "sell": 50,
+  "art": "item/loofah",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_okra": {
+  "name": "秋葵種子",
+  "kind": "seed",
+  "crop": "okra",
+  "buy": 30,
+  "sell": 7,
+  "art": "item/seedbag",
+  "overlay": "item/okra"
+ },
+ "okra": {
+  "name": "秋葵",
+  "kind": "crop",
+  "sell": 20,
+  "art": "item/okra",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_chili": {
+  "name": "辣椒種子",
+  "kind": "seed",
+  "crop": "chili",
+  "buy": 50,
+  "sell": 12,
+  "art": "item/seedbag",
+  "overlay": "item/chili"
+ },
+ "chili": {
+  "name": "辣椒",
+  "kind": "crop",
+  "sell": 35,
+  "art": "item/chili",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_edamame": {
+  "name": "毛豆種子",
+  "kind": "seed",
+  "crop": "edamame",
+  "buy": 50,
+  "sell": 12,
+  "art": "item/seedbag",
+  "overlay": "item/edamame"
+ },
+ "edamame": {
+  "name": "毛豆",
+  "kind": "crop",
+  "sell": 120,
+  "art": "item/edamame",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_green_bean": {
+  "name": "四季豆種子",
+  "kind": "seed",
+  "crop": "green_bean",
+  "buy": 40,
+  "sell": 10,
+  "art": "item/seedbag",
+  "overlay": "item/green_bean"
+ },
+ "green_bean": {
+  "name": "四季豆",
+  "kind": "crop",
+  "sell": 30,
+  "art": "item/green_bean",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_water_spinach": {
+  "name": "空心菜種子",
+  "kind": "seed",
+  "crop": "water_spinach",
+  "buy": 35,
+  "sell": 8,
+  "art": "item/seedbag",
+  "overlay": "item/water_spinach"
+ },
+ "water_spinach": {
+  "name": "空心菜",
+  "kind": "crop",
+  "sell": 80,
+  "art": "item/water_spinach",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_amaranth": {
+  "name": "莧菜種子",
+  "kind": "seed",
+  "crop": "amaranth",
+  "buy": 35,
+  "sell": 8,
+  "art": "item/seedbag",
+  "overlay": "item/amaranth"
+ },
+ "amaranth": {
+  "name": "莧菜",
+  "kind": "crop",
+  "sell": 80,
+  "art": "item/amaranth",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_perilla": {
+  "name": "紫蘇種子",
+  "kind": "seed",
+  "crop": "perilla",
+  "buy": 45,
+  "sell": 11,
+  "art": "item/seedbag",
+  "overlay": "item/perilla"
+ },
+ "perilla": {
+  "name": "紫蘇",
+  "kind": "crop",
+  "sell": 110,
+  "art": "item/perilla",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_basil": {
+  "name": "九層塔種子",
+  "kind": "seed",
+  "crop": "basil",
+  "buy": 40,
+  "sell": 10,
+  "art": "item/seedbag",
+  "overlay": "item/basil"
+ },
+ "basil": {
+  "name": "九層塔",
+  "kind": "crop",
+  "sell": 95,
+  "art": "item/basil",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_mint": {
+  "name": "薄荷種子",
+  "kind": "seed",
+  "crop": "mint",
+  "buy": 30,
+  "sell": 7,
+  "art": "item/seedbag",
+  "overlay": "item/mint"
+ },
+ "mint": {
+  "name": "薄荷",
+  "kind": "crop",
+  "sell": 75,
+  "art": "item/mint",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_sunflower": {
+  "name": "向日葵種子",
+  "kind": "seed",
+  "crop": "sunflower",
+  "buy": 80,
+  "sell": 20,
+  "art": "item/seedbag",
+  "overlay": "item/sunflower"
+ },
+ "sunflower": {
+  "name": "向日葵",
+  "kind": "crop",
+  "sell": 195,
+  "art": "item/sunflower",
+  "tags": [
+   "flower"
+  ]
+ },
+ "seed_blueberry": {
+  "name": "藍莓種子",
+  "kind": "seed",
+  "crop": "blueberry",
+  "buy": 75,
+  "sell": 18,
+  "art": "item/seedbag",
+  "overlay": "item/blueberry"
+ },
+ "blueberry": {
+  "name": "藍莓",
+  "kind": "crop",
+  "sell": 55,
+  "art": "item/blueberry",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "seed_raspberry": {
+  "name": "覆盆子種子",
+  "kind": "seed",
+  "crop": "raspberry",
+  "buy": 70,
+  "sell": 17,
+  "art": "item/seedbag",
+  "overlay": "item/raspberry"
+ },
+ "raspberry": {
+  "name": "覆盆子",
+  "kind": "crop",
+  "sell": 50,
+  "art": "item/raspberry",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "seed_bell_pepper": {
+  "name": "甜椒種子",
+  "kind": "seed",
+  "crop": "bell_pepper",
+  "buy": 65,
+  "sell": 16,
+  "art": "item/seedbag",
+  "overlay": "item/bell_pepper"
+ },
+ "bell_pepper": {
+  "name": "甜椒",
+  "kind": "crop",
+  "sell": 45,
+  "art": "item/bell_pepper",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_winter_melon": {
+  "name": "冬瓜種子",
+  "kind": "seed",
+  "crop": "winter_melon",
+  "buy": 110,
+  "sell": 27,
+  "art": "item/seedbag",
+  "overlay": "item/winter_melon"
+ },
+ "winter_melon": {
+  "name": "冬瓜",
+  "kind": "crop",
+  "sell": 260,
+  "art": "item/winter_melon",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_sweet_potato": {
+  "name": "地瓜種子",
+  "kind": "seed",
+  "crop": "sweet_potato",
+  "buy": 45,
+  "sell": 11,
+  "art": "item/seedbag",
+  "overlay": "item/sweet_potato"
+ },
+ "sweet_potato": {
+  "name": "地瓜",
+  "kind": "crop",
+  "sell": 105,
+  "art": "item/sweet_potato",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_taro": {
+  "name": "芋頭種子",
+  "kind": "seed",
+  "crop": "taro",
+  "buy": 85,
+  "sell": 21,
+  "art": "item/seedbag",
+  "overlay": "item/taro"
+ },
+ "taro": {
+  "name": "芋頭",
+  "kind": "crop",
+  "sell": 205,
+  "art": "item/taro",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_yam": {
+  "name": "山藥種子",
+  "kind": "seed",
+  "crop": "yam",
+  "buy": 100,
+  "sell": 25,
+  "art": "item/seedbag",
+  "overlay": "item/yam"
+ },
+ "yam": {
+  "name": "山藥",
+  "kind": "crop",
+  "sell": 240,
+  "art": "item/yam",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_burdock": {
+  "name": "牛蒡種子",
+  "kind": "seed",
+  "crop": "burdock",
+  "buy": 75,
+  "sell": 18,
+  "art": "item/seedbag",
+  "overlay": "item/burdock"
+ },
+ "burdock": {
+  "name": "牛蒡",
+  "kind": "crop",
+  "sell": 180,
+  "art": "item/burdock",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_lotus_root": {
+  "name": "蓮藕種子",
+  "kind": "seed",
+  "crop": "lotus_root",
+  "buy": 125,
+  "sell": 31,
+  "art": "item/seedbag",
+  "overlay": "item/lotus_root"
+ },
+ "lotus_root": {
+  "name": "蓮藕",
+  "kind": "crop",
+  "sell": 300,
+  "art": "item/lotus_root",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_peanut": {
+  "name": "花生種子",
+  "kind": "seed",
+  "crop": "peanut",
+  "buy": 50,
+  "sell": 12,
+  "art": "item/seedbag",
+  "overlay": "item/peanut"
+ },
+ "peanut": {
+  "name": "花生",
+  "kind": "crop",
+  "sell": 125,
+  "art": "item/peanut",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_soybean": {
+  "name": "黃豆種子",
+  "kind": "seed",
+  "crop": "soybean",
+  "buy": 50,
+  "sell": 12,
+  "art": "item/seedbag",
+  "overlay": "item/soybean"
+ },
+ "soybean": {
+  "name": "黃豆",
+  "kind": "crop",
+  "sell": 115,
+  "art": "item/soybean",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_red_bean": {
+  "name": "紅豆種子",
+  "kind": "seed",
+  "crop": "red_bean",
+  "buy": 60,
+  "sell": 15,
+  "art": "item/seedbag",
+  "overlay": "item/red_bean"
+ },
+ "red_bean": {
+  "name": "紅豆",
+  "kind": "crop",
+  "sell": 145,
+  "art": "item/red_bean",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_wheat": {
+  "name": "小麥種子",
+  "kind": "seed",
+  "crop": "wheat",
+  "buy": 50,
+  "sell": 12,
+  "art": "item/seedbag",
+  "overlay": "item/wheat"
+ },
+ "wheat": {
+  "name": "小麥",
+  "kind": "crop",
+  "sell": 125,
+  "art": "item/wheat",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_rice": {
+  "name": "稻米種子",
+  "kind": "seed",
+  "crop": "rice",
+  "buy": 80,
+  "sell": 20,
+  "art": "item/seedbag",
+  "overlay": "item/rice"
+ },
+ "rice": {
+  "name": "稻米",
+  "kind": "crop",
+  "sell": 195,
+  "art": "item/rice",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_buckwheat": {
+  "name": "蕎麥種子",
+  "kind": "seed",
+  "crop": "buckwheat",
+  "buy": 35,
+  "sell": 8,
+  "art": "item/seedbag",
+  "overlay": "item/buckwheat"
+ },
+ "buckwheat": {
+  "name": "蕎麥",
+  "kind": "crop",
+  "sell": 80,
+  "art": "item/buckwheat",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_sorghum": {
+  "name": "高粱種子",
+  "kind": "seed",
+  "crop": "sorghum",
+  "buy": 50,
+  "sell": 12,
+  "art": "item/seedbag",
+  "overlay": "item/sorghum"
+ },
+ "sorghum": {
+  "name": "高粱",
+  "kind": "crop",
+  "sell": 115,
+  "art": "item/sorghum",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_sesame": {
+  "name": "芝麻種子",
+  "kind": "seed",
+  "crop": "sesame",
+  "buy": 50,
+  "sell": 12,
+  "art": "item/seedbag",
+  "overlay": "item/sesame"
+ },
+ "sesame": {
+  "name": "芝麻",
+  "kind": "crop",
+  "sell": 120,
+  "art": "item/sesame",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_napa": {
+  "name": "大白菜種子",
+  "kind": "seed",
+  "crop": "napa",
+  "buy": 75,
+  "sell": 18,
+  "art": "item/seedbag",
+  "overlay": "item/napa"
+ },
+ "napa": {
+  "name": "大白菜",
+  "kind": "crop",
+  "sell": 180,
+  "art": "item/napa",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_broccoli": {
+  "name": "青花菜種子",
+  "kind": "seed",
+  "crop": "broccoli",
+  "buy": 105,
+  "sell": 26,
+  "art": "item/seedbag",
+  "overlay": "item/broccoli"
+ },
+ "broccoli": {
+  "name": "青花菜",
+  "kind": "crop",
+  "sell": 245,
+  "art": "item/broccoli",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_red_spinach": {
+  "name": "紅鳳菜種子",
+  "kind": "seed",
+  "crop": "red_spinach",
+  "buy": 35,
+  "sell": 8,
+  "art": "item/seedbag",
+  "overlay": "item/red_spinach"
+ },
+ "red_spinach": {
+  "name": "紅鳳菜",
+  "kind": "crop",
+  "sell": 80,
+  "art": "item/red_spinach",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_water_bamboo": {
+  "name": "茭白筍種子",
+  "kind": "seed",
+  "crop": "water_bamboo",
+  "buy": 55,
+  "sell": 13,
+  "art": "item/seedbag",
+  "overlay": "item/water_bamboo"
+ },
+ "water_bamboo": {
+  "name": "茭白筍",
+  "kind": "crop",
+  "sell": 40,
+  "art": "item/water_bamboo",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_water_caltrop": {
+  "name": "菱角種子",
+  "kind": "seed",
+  "crop": "water_caltrop",
+  "buy": 70,
+  "sell": 17,
+  "art": "item/seedbag",
+  "overlay": "item/water_caltrop"
+ },
+ "water_caltrop": {
+  "name": "菱角",
+  "kind": "crop",
+  "sell": 170,
+  "art": "item/water_caltrop",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_big_pumpkin": {
+  "name": "大南瓜種子",
+  "kind": "seed",
+  "crop": "big_pumpkin",
+  "buy": 130,
+  "sell": 32,
+  "art": "item/seedbag",
+  "overlay": "item/big_pumpkin"
+ },
+ "big_pumpkin": {
+  "name": "大南瓜",
+  "kind": "crop",
+  "sell": 310,
+  "art": "item/big_pumpkin",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_gourd": {
+  "name": "葫蘆種子",
+  "kind": "seed",
+  "crop": "gourd",
+  "buy": 105,
+  "sell": 26,
+  "art": "item/seedbag",
+  "overlay": "item/gourd"
+ },
+ "gourd": {
+  "name": "葫蘆",
+  "kind": "crop",
+  "sell": 245,
+  "art": "item/gourd",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_ginger": {
+  "name": "薑種子",
+  "kind": "seed",
+  "crop": "ginger",
+  "buy": 50,
+  "sell": 12,
+  "art": "item/seedbag",
+  "overlay": "item/ginger"
+ },
+ "ginger": {
+  "name": "薑",
+  "kind": "crop",
+  "sell": 125,
+  "art": "item/ginger",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_garlic": {
+  "name": "蒜種子",
+  "kind": "seed",
+  "crop": "garlic",
+  "buy": 50,
+  "sell": 12,
+  "art": "item/seedbag",
+  "overlay": "item/garlic"
+ },
+ "garlic": {
+  "name": "蒜",
+  "kind": "crop",
+  "sell": 115,
+  "art": "item/garlic",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_shallot": {
+  "name": "紅蔥頭種子",
+  "kind": "seed",
+  "crop": "shallot",
+  "buy": 50,
+  "sell": 12,
+  "art": "item/seedbag",
+  "overlay": "item/shallot"
+ },
+ "shallot": {
+  "name": "紅蔥頭",
+  "kind": "crop",
+  "sell": 120,
+  "art": "item/shallot",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_cranberry": {
+  "name": "蔓越莓種子",
+  "kind": "seed",
+  "crop": "cranberry",
+  "buy": 75,
+  "sell": 18,
+  "art": "item/seedbag",
+  "overlay": "item/cranberry"
+ },
+ "cranberry": {
+  "name": "蔓越莓",
+  "kind": "crop",
+  "sell": 55,
+  "art": "item/cranberry",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "seed_garlic_sprout": {
+  "name": "大蒜苗種子",
+  "kind": "seed",
+  "crop": "garlic_sprout",
+  "buy": 25,
+  "sell": 6,
+  "art": "item/seedbag",
+  "overlay": "item/garlic_sprout"
+ },
+ "garlic_sprout": {
+  "name": "大蒜苗",
+  "kind": "crop",
+  "sell": 60,
+  "art": "item/garlic_sprout",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_winter_radish": {
+  "name": "冬季蘿蔔種子",
+  "kind": "seed",
+  "crop": "winter_radish",
+  "buy": 35,
+  "sell": 8,
+  "art": "item/seedbag",
+  "overlay": "item/winter_radish"
+ },
+ "winter_radish": {
+  "name": "冬季蘿蔔",
+  "kind": "crop",
+  "sell": 85,
+  "art": "item/winter_radish",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_snow_mustard": {
+  "name": "雪裡紅種子",
+  "kind": "seed",
+  "crop": "snow_mustard",
+  "buy": 40,
+  "sell": 10,
+  "art": "item/seedbag",
+  "overlay": "item/snow_mustard"
+ },
+ "snow_mustard": {
+  "name": "雪裡紅",
+  "kind": "crop",
+  "sell": 90,
+  "art": "item/snow_mustard",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_kale": {
+  "name": "羽衣甘藍種子",
+  "kind": "seed",
+  "crop": "kale",
+  "buy": 55,
+  "sell": 13,
+  "art": "item/seedbag",
+  "overlay": "item/kale"
+ },
+ "kale": {
+  "name": "羽衣甘藍",
+  "kind": "crop",
+  "sell": 40,
+  "art": "item/kale",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_brussels": {
+  "name": "抱子甘藍種子",
+  "kind": "seed",
+  "crop": "brussels",
+  "buy": 85,
+  "sell": 21,
+  "art": "item/seedbag",
+  "overlay": "item/brussels"
+ },
+ "brussels": {
+  "name": "抱子甘藍",
+  "kind": "crop",
+  "sell": 205,
+  "art": "item/brussels",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_winter_scallion": {
+  "name": "冬蔥種子",
+  "kind": "seed",
+  "crop": "winter_scallion",
+  "buy": 25,
+  "sell": 6,
+  "art": "item/seedbag",
+  "overlay": "item/winter_scallion"
+ },
+ "winter_scallion": {
+  "name": "冬蔥",
+  "kind": "crop",
+  "sell": 60,
+  "art": "item/winter_scallion",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_winter_spinach": {
+  "name": "耐寒菠菜種子",
+  "kind": "seed",
+  "crop": "winter_spinach",
+  "buy": 20,
+  "sell": 5,
+  "art": "item/seedbag",
+  "overlay": "item/winter_spinach"
+ },
+ "winter_spinach": {
+  "name": "耐寒菠菜",
+  "kind": "crop",
+  "sell": 50,
+  "art": "item/winter_spinach",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_sweet_pea": {
+  "name": "甜豌豆種子",
+  "kind": "seed",
+  "crop": "sweet_pea",
+  "buy": 30,
+  "sell": 7,
+  "art": "item/seedbag",
+  "overlay": "item/sweet_pea"
+ },
+ "sweet_pea": {
+  "name": "甜豌豆",
+  "kind": "crop",
+  "sell": 20,
+  "art": "item/sweet_pea",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_ice_plant": {
+  "name": "冰花菜種子",
+  "kind": "seed",
+  "crop": "ice_plant",
+  "buy": 60,
+  "sell": 15,
+  "art": "item/seedbag",
+  "overlay": "item/ice_plant"
+ },
+ "ice_plant": {
+  "name": "冰花菜",
+  "kind": "crop",
+  "sell": 140,
+  "art": "item/ice_plant",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_snow_lotus": {
+  "name": "雪蓮菜種子",
+  "kind": "seed",
+  "crop": "snow_lotus",
+  "buy": 115,
+  "sell": 28,
+  "art": "item/seedbag",
+  "overlay": "item/snow_lotus"
+ },
+ "snow_lotus": {
+  "name": "雪蓮菜",
+  "kind": "crop",
+  "sell": 270,
+  "art": "item/snow_lotus",
+  "tags": [
+   "veg"
+  ]
  }
 }

@@ -1238,6 +1238,627 @@
     ]
    ],
    "bg": "#00ffff"
+  },
+  "6-06": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/tomato/0",
+     "crop/tomato/1",
+     "crop/tomato/2",
+     "crop/tomato/3",
+     "crop/tomato/4",
+     "item/tomato"
+    ],
+    [
+     "crop/cucumber/0",
+     "crop/cucumber/1",
+     "crop/cucumber/2",
+     "crop/cucumber/3",
+     "crop/cucumber/4",
+     "item/cucumber"
+    ]
+   ]
+  },
+  "6-07": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/eggplant/0",
+     "crop/eggplant/1",
+     "crop/eggplant/2",
+     "crop/eggplant/3",
+     "crop/eggplant/4",
+     "item/eggplant"
+    ],
+    [
+     "crop/green_pepper/0",
+     "crop/green_pepper/1",
+     "crop/green_pepper/2",
+     "crop/green_pepper/3",
+     "crop/green_pepper/4",
+     "item/green_pepper"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "6-08": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/corn/0",
+     "crop/corn/1",
+     "crop/corn/2",
+     "crop/corn/3",
+     "crop/corn/4",
+     "item/corn"
+    ],
+    [
+     "crop/watermelon/0",
+     "crop/watermelon/1",
+     "crop/watermelon/2",
+     "crop/watermelon/3",
+     "crop/watermelon/4",
+     "item/watermelon"
+    ]
+   ]
+  },
+  "6-09": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/melon/0",
+     "crop/melon/1",
+     "crop/melon/2",
+     "crop/melon/3",
+     "crop/melon/4",
+     "item/melon"
+    ],
+    [
+     "crop/pumpkin/0",
+     "crop/pumpkin/1",
+     "crop/pumpkin/2",
+     "crop/pumpkin/3",
+     "crop/pumpkin/4",
+     "item/pumpkin"
+    ]
+   ]
+  },
+  "6-10": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/bitter_melon/0",
+     "crop/bitter_melon/1",
+     "crop/bitter_melon/2",
+     "crop/bitter_melon/3",
+     "crop/bitter_melon/4",
+     "item/bitter_melon"
+    ],
+    [
+     "crop/loofah/0",
+     "crop/loofah/1",
+     "crop/loofah/2",
+     "crop/loofah/3",
+     "crop/loofah/4",
+     "item/loofah"
+    ]
+   ]
+  },
+  "6-11": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/okra/0",
+     "crop/okra/1",
+     "crop/okra/2",
+     "crop/okra/3",
+     "crop/okra/4",
+     "item/okra"
+    ],
+    [
+     "crop/chili/0",
+     "crop/chili/1",
+     "crop/chili/2",
+     "crop/chili/3",
+     "crop/chili/4",
+     "item/chili"
+    ]
+   ]
+  },
+  "6-12": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/edamame/0",
+     "crop/edamame/1",
+     "crop/edamame/2",
+     "crop/edamame/3",
+     "crop/edamame/4",
+     "item/edamame"
+    ],
+    [
+     "crop/green_bean/0",
+     "crop/green_bean/1",
+     "crop/green_bean/2",
+     "crop/green_bean/3",
+     "crop/green_bean/4",
+     "item/green_bean"
+    ]
+   ]
+  },
+  "6-13": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/water_spinach/0",
+     "crop/water_spinach/1",
+     "crop/water_spinach/2",
+     "crop/water_spinach/3",
+     "crop/water_spinach/4",
+     "item/water_spinach"
+    ],
+    [
+     "crop/amaranth/0",
+     "crop/amaranth/1",
+     "crop/amaranth/2",
+     "crop/amaranth/3",
+     "crop/amaranth/4",
+     "item/amaranth"
+    ]
+   ],
+   "gap": 1,
+   "minArea": 6
+  },
+  "6-14": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/perilla/0",
+     "crop/perilla/1",
+     "crop/perilla/2",
+     "crop/perilla/3",
+     "crop/perilla/4",
+     "item/perilla"
+    ],
+    [
+     "crop/basil/0",
+     "crop/basil/1",
+     "crop/basil/2",
+     "crop/basil/3",
+     "crop/basil/4",
+     "item/basil"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "6-15": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/mint/0",
+     "crop/mint/1",
+     "crop/mint/2",
+     "crop/mint/3",
+     "crop/mint/4",
+     "item/mint"
+    ],
+    [
+     "crop/sunflower/0",
+     "crop/sunflower/1",
+     "crop/sunflower/2",
+     "crop/sunflower/3",
+     "crop/sunflower/4",
+     "item/sunflower"
+    ]
+   ]
+  },
+  "6-16": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/blueberry/0",
+     "crop/blueberry/1",
+     "crop/blueberry/2",
+     "crop/blueberry/3",
+     "crop/blueberry/4",
+     "item/blueberry"
+    ],
+    [
+     "crop/raspberry/0",
+     "crop/raspberry/1",
+     "crop/raspberry/2",
+     "crop/raspberry/3",
+     "crop/raspberry/4",
+     "item/raspberry"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "6-17": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/bell_pepper/0",
+     "crop/bell_pepper/1",
+     "crop/bell_pepper/2",
+     "crop/bell_pepper/3",
+     "crop/bell_pepper/4",
+     "item/bell_pepper"
+    ],
+    [
+     "crop/winter_melon/0",
+     "crop/winter_melon/1",
+     "crop/winter_melon/2",
+     "crop/winter_melon/3",
+     "crop/winter_melon/4",
+     "item/winter_melon"
+    ]
+   ]
+  },
+  "6-18": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/sweet_potato/0",
+     "crop/sweet_potato/1",
+     "crop/sweet_potato/2",
+     "crop/sweet_potato/3",
+     "crop/sweet_potato/4",
+     "item/sweet_potato"
+    ],
+    [
+     "crop/taro/0",
+     "crop/taro/1",
+     "crop/taro/2",
+     "crop/taro/3",
+     "crop/taro/4",
+     "item/taro"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "6-19": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/yam/0",
+     "crop/yam/1",
+     "crop/yam/2",
+     "crop/yam/3",
+     "crop/yam/4",
+     "item/yam"
+    ],
+    [
+     "crop/burdock/0",
+     "crop/burdock/1",
+     "crop/burdock/2",
+     "crop/burdock/3",
+     "crop/burdock/4",
+     "item/burdock"
+    ]
+   ],
+   "gap": 1,
+   "minArea": 6
+  },
+  "6-20": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/lotus_root/0",
+     "crop/lotus_root/1",
+     "crop/lotus_root/2",
+     "crop/lotus_root/3",
+     "crop/lotus_root/4",
+     "item/lotus_root"
+    ],
+    [
+     "crop/peanut/0",
+     "crop/peanut/1",
+     "crop/peanut/2",
+     "crop/peanut/3",
+     "crop/peanut/4",
+     "item/peanut"
+    ]
+   ]
+  },
+  "6-21": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/soybean/0",
+     "crop/soybean/1",
+     "crop/soybean/2",
+     "crop/soybean/3",
+     "crop/soybean/4",
+     "item/soybean"
+    ],
+    [
+     "crop/red_bean/0",
+     "crop/red_bean/1",
+     "crop/red_bean/2",
+     "crop/red_bean/3",
+     "crop/red_bean/4",
+     "item/red_bean"
+    ]
+   ]
+  },
+  "6-22": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/wheat/0",
+     "crop/wheat/1",
+     "crop/wheat/2",
+     "crop/wheat/3",
+     "crop/wheat/4",
+     "item/wheat"
+    ],
+    [
+     "crop/rice/0",
+     "crop/rice/1",
+     "crop/rice/2",
+     "crop/rice/3",
+     "crop/rice/4",
+     "item/rice"
+    ]
+   ]
+  },
+  "6-23": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/buckwheat/0",
+     "crop/buckwheat/1",
+     "crop/buckwheat/2",
+     "crop/buckwheat/3",
+     "crop/buckwheat/4",
+     "item/buckwheat"
+    ],
+    [
+     "crop/sorghum/0",
+     "crop/sorghum/1",
+     "crop/sorghum/2",
+     "crop/sorghum/3",
+     "crop/sorghum/4",
+     "item/sorghum"
+    ]
+   ]
+  },
+  "6-24": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/sesame/0",
+     "crop/sesame/1",
+     "crop/sesame/2",
+     "crop/sesame/3",
+     "crop/sesame/4",
+     "item/sesame"
+    ],
+    [
+     "crop/napa/0",
+     "crop/napa/1",
+     "crop/napa/2",
+     "crop/napa/3",
+     "crop/napa/4",
+     "item/napa"
+    ]
+   ]
+  },
+  "6-25": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/broccoli/0",
+     "crop/broccoli/1",
+     "crop/broccoli/2",
+     "crop/broccoli/3",
+     "crop/broccoli/4",
+     "item/broccoli"
+    ],
+    [
+     "crop/red_spinach/0",
+     "crop/red_spinach/1",
+     "crop/red_spinach/2",
+     "crop/red_spinach/3",
+     "crop/red_spinach/4",
+     "item/red_spinach"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "6-26": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/water_bamboo/0",
+     "crop/water_bamboo/1",
+     "crop/water_bamboo/2",
+     "crop/water_bamboo/3",
+     "crop/water_bamboo/4",
+     "item/water_bamboo"
+    ],
+    [
+     "crop/water_caltrop/0",
+     "crop/water_caltrop/1",
+     "crop/water_caltrop/2",
+     "crop/water_caltrop/3",
+     "crop/water_caltrop/4",
+     "item/water_caltrop"
+    ]
+   ]
+  },
+  "6-27": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/big_pumpkin/0",
+     "crop/big_pumpkin/1",
+     "crop/big_pumpkin/2",
+     "crop/big_pumpkin/3",
+     "crop/big_pumpkin/4",
+     "item/big_pumpkin"
+    ],
+    [
+     "crop/gourd/0",
+     "crop/gourd/1",
+     "crop/gourd/2",
+     "crop/gourd/3",
+     "crop/gourd/4",
+     "item/gourd"
+    ]
+   ]
+  },
+  "6-28": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/ginger/0",
+     "crop/ginger/1",
+     "crop/ginger/2",
+     "crop/ginger/3",
+     "crop/ginger/4",
+     "item/ginger"
+    ],
+    [
+     "crop/garlic/0",
+     "crop/garlic/1",
+     "crop/garlic/2",
+     "crop/garlic/3",
+     "crop/garlic/4",
+     "item/garlic"
+    ]
+   ]
+  },
+  "6-29": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/shallot/0",
+     "crop/shallot/1",
+     "crop/shallot/2",
+     "crop/shallot/3",
+     "crop/shallot/4",
+     "item/shallot"
+    ],
+    [
+     "crop/cranberry/0",
+     "crop/cranberry/1",
+     "crop/cranberry/2",
+     "crop/cranberry/3",
+     "crop/cranberry/4",
+     "item/cranberry"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "6-30": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/garlic_sprout/0",
+     "crop/garlic_sprout/1",
+     "crop/garlic_sprout/2",
+     "crop/garlic_sprout/3",
+     "crop/garlic_sprout/4",
+     "item/garlic_sprout"
+    ],
+    [
+     "crop/winter_radish/0",
+     "crop/winter_radish/1",
+     "crop/winter_radish/2",
+     "crop/winter_radish/3",
+     "crop/winter_radish/4",
+     "item/winter_radish"
+    ]
+   ]
+  },
+  "6-31": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/snow_mustard/0",
+     "crop/snow_mustard/1",
+     "crop/snow_mustard/2",
+     "crop/snow_mustard/3",
+     "crop/snow_mustard/4",
+     "item/snow_mustard"
+    ],
+    [
+     "crop/kale/0",
+     "crop/kale/1",
+     "crop/kale/2",
+     "crop/kale/3",
+     "crop/kale/4",
+     "item/kale"
+    ]
+   ],
+   "gap": 1,
+   "minArea": 6
+  },
+  "6-32": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/brussels/0",
+     "crop/brussels/1",
+     "crop/brussels/2",
+     "crop/brussels/3",
+     "crop/brussels/4",
+     "item/brussels"
+    ],
+    [
+     "crop/winter_scallion/0",
+     "crop/winter_scallion/1",
+     "crop/winter_scallion/2",
+     "crop/winter_scallion/3",
+     "crop/winter_scallion/4",
+     "item/winter_scallion"
+    ]
+   ]
+  },
+  "6-33": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/winter_spinach/0",
+     "crop/winter_spinach/1",
+     "crop/winter_spinach/2",
+     "crop/winter_spinach/3",
+     "crop/winter_spinach/4",
+     "item/winter_spinach"
+    ],
+    [
+     "crop/sweet_pea/0",
+     "crop/sweet_pea/1",
+     "crop/sweet_pea/2",
+     "crop/sweet_pea/3",
+     "crop/sweet_pea/4",
+     "item/sweet_pea"
+    ]
+   ]
+  },
+  "6-34": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/ice_plant/0",
+     "crop/ice_plant/1",
+     "crop/ice_plant/2",
+     "crop/ice_plant/3",
+     "crop/ice_plant/4",
+     "item/ice_plant"
+    ],
+    [
+     "crop/snow_lotus/0",
+     "crop/snow_lotus/1",
+     "crop/snow_lotus/2",
+     "crop/snow_lotus/3",
+     "crop/snow_lotus/4",
+     "item/snow_lotus"
+    ]
+   ]
   }
  }
 }

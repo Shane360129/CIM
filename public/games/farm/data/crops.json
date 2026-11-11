@@ -238,5 +238,875 @@
   "regrowDays": 0,
   "xp": 6,
   "art": "crop/rapeseed"
+ },
+ "tomato": {
+  "name": "番茄",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   2,
+   2,
+   2,
+   2
+  ],
+  "regrowDays": 3,
+  "xp": 15,
+  "art": "crop/tomato"
+ },
+ "cucumber": {
+  "name": "小黃瓜",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   1,
+   2,
+   2,
+   1
+  ],
+  "regrowDays": 2,
+  "xp": 13,
+  "art": "crop/cucumber"
+ },
+ "eggplant": {
+  "name": "茄子",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   2,
+   2,
+   2,
+   1
+  ],
+  "regrowDays": 3,
+  "xp": 14,
+  "art": "crop/eggplant"
+ },
+ "green_pepper": {
+  "name": "青椒",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   1,
+   2,
+   2,
+   2
+  ],
+  "regrowDays": 3,
+  "xp": 14,
+  "art": "crop/green_pepper"
+ },
+ "corn": {
+  "name": "玉米",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 13,
+  "art": "crop/corn"
+ },
+ "watermelon": {
+  "name": "西瓜",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   2,
+   3,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 14,
+  "art": "crop/watermelon"
+ },
+ "melon": {
+  "name": "哈密瓜",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   2,
+   3,
+   3,
+   3
+  ],
+  "regrowDays": 0,
+  "xp": 15,
+  "art": "crop/melon"
+ },
+ "pumpkin": {
+  "name": "南瓜",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 13,
+  "art": "crop/pumpkin"
+ },
+ "bitter_melon": {
+  "name": "苦瓜",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   2,
+   2,
+   2,
+   1
+  ],
+  "regrowDays": 3,
+  "xp": 14,
+  "art": "crop/bitter_melon"
+ },
+ "loofah": {
+  "name": "絲瓜",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   1,
+   2,
+   2,
+   2
+  ],
+  "regrowDays": 3,
+  "xp": 14,
+  "art": "crop/loofah"
+ },
+ "okra": {
+  "name": "秋葵",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   1,
+   2,
+   1,
+   1
+  ],
+  "regrowDays": 2,
+  "xp": 12,
+  "art": "crop/okra"
+ },
+ "chili": {
+  "name": "辣椒",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   1,
+   2,
+   2,
+   1
+  ],
+  "regrowDays": 3,
+  "xp": 13,
+  "art": "crop/chili"
+ },
+ "edamame": {
+  "name": "毛豆",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   1,
+   1,
+   2,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 9,
+  "art": "crop/edamame"
+ },
+ "green_bean": {
+  "name": "四季豆",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   1,
+   2,
+   2,
+   1
+  ],
+  "regrowDays": 2,
+  "xp": 13,
+  "art": "crop/green_bean"
+ },
+ "water_spinach": {
+  "name": "空心菜",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   1,
+   1,
+   1,
+   0
+  ],
+  "regrowDays": 0,
+  "xp": 7,
+  "art": "crop/water_spinach"
+ },
+ "amaranth": {
+  "name": "莧菜",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 8,
+  "art": "crop/amaranth"
+ },
+ "perilla": {
+  "name": "紫蘇",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   1,
+   1,
+   2,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 9,
+  "art": "crop/perilla"
+ },
+ "basil": {
+  "name": "九層塔",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 8,
+  "art": "crop/basil"
+ },
+ "mint": {
+  "name": "薄荷",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   1,
+   1,
+   1,
+   0
+  ],
+  "regrowDays": 0,
+  "xp": 7,
+  "art": "crop/mint"
+ },
+ "sunflower": {
+  "name": "向日葵",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   2,
+   2,
+   2,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 12,
+  "art": "crop/sunflower"
+ },
+ "blueberry": {
+  "name": "藍莓",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   2,
+   3,
+   3,
+   2
+  ],
+  "regrowDays": 3,
+  "xp": 17,
+  "art": "crop/blueberry"
+ },
+ "raspberry": {
+  "name": "覆盆子",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 3,
+  "xp": 16,
+  "art": "crop/raspberry"
+ },
+ "bell_pepper": {
+  "name": "甜椒",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   2,
+   2,
+   2,
+   2
+  ],
+  "regrowDays": 3,
+  "xp": 15,
+  "art": "crop/bell_pepper"
+ },
+ "winter_melon": {
+  "name": "冬瓜",
+  "seasons": [
+   "summer"
+  ],
+  "stageDays": [
+   2,
+   3,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 14,
+  "art": "crop/winter_melon"
+ },
+ "sweet_potato": {
+  "name": "地瓜",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   1,
+   2,
+   2,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 10,
+  "art": "crop/sweet_potato"
+ },
+ "taro": {
+  "name": "芋頭",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 13,
+  "art": "crop/taro"
+ },
+ "yam": {
+  "name": "山藥",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   2,
+   3,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 14,
+  "art": "crop/yam"
+ },
+ "burdock": {
+  "name": "牛蒡",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   2,
+   2,
+   2,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 12,
+  "art": "crop/burdock"
+ },
+ "lotus_root": {
+  "name": "蓮藕",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   2,
+   3,
+   3,
+   3
+  ],
+  "regrowDays": 0,
+  "xp": 15,
+  "art": "crop/lotus_root"
+ },
+ "peanut": {
+  "name": "花生",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   1,
+   2,
+   2,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 11,
+  "art": "crop/peanut"
+ },
+ "soybean": {
+  "name": "黃豆",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   1,
+   2,
+   2,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 10,
+  "art": "crop/soybean"
+ },
+ "red_bean": {
+  "name": "紅豆",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   1,
+   2,
+   2,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 11,
+  "art": "crop/red_bean"
+ },
+ "wheat": {
+  "name": "小麥",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   1,
+   1,
+   2,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 9,
+  "art": "crop/wheat"
+ },
+ "rice": {
+  "name": "稻米",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   2,
+   2,
+   2,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 12,
+  "art": "crop/rice"
+ },
+ "buckwheat": {
+  "name": "蕎麥",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 8,
+  "art": "crop/buckwheat"
+ },
+ "sorghum": {
+  "name": "高粱",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   1,
+   2,
+   2,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 10,
+  "art": "crop/sorghum"
+ },
+ "sesame": {
+  "name": "芝麻",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   1,
+   2,
+   1,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 9,
+  "art": "crop/sesame"
+ },
+ "napa": {
+  "name": "大白菜",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   2,
+   2,
+   2,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 12,
+  "art": "crop/napa"
+ },
+ "broccoli": {
+  "name": "青花菜",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 13,
+  "art": "crop/broccoli"
+ },
+ "red_spinach": {
+  "name": "紅鳳菜",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 8,
+  "art": "crop/red_spinach"
+ },
+ "water_bamboo": {
+  "name": "茭白筍",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   2,
+   2,
+   2,
+   1
+  ],
+  "regrowDays": 3,
+  "xp": 14,
+  "art": "crop/water_bamboo"
+ },
+ "water_caltrop": {
+  "name": "菱角",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   2,
+   2,
+   2,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 12,
+  "art": "crop/water_caltrop"
+ },
+ "big_pumpkin": {
+  "name": "大南瓜",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "regrowDays": 0,
+  "xp": 16,
+  "art": "crop/big_pumpkin"
+ },
+ "gourd": {
+  "name": "葫蘆",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 13,
+  "art": "crop/gourd"
+ },
+ "ginger": {
+  "name": "薑",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   2,
+   2,
+   2,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 11,
+  "art": "crop/ginger"
+ },
+ "garlic": {
+  "name": "蒜",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   1,
+   2,
+   2,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 10,
+  "art": "crop/garlic"
+ },
+ "shallot": {
+  "name": "紅蔥頭",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   1,
+   1,
+   2,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 9,
+  "art": "crop/shallot"
+ },
+ "cranberry": {
+  "name": "蔓越莓",
+  "seasons": [
+   "autumn"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 3,
+  "xp": 16,
+  "art": "crop/cranberry"
+ },
+ "garlic_sprout": {
+  "name": "大蒜苗",
+  "seasons": [
+   "winter"
+  ],
+  "stageDays": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 8,
+  "art": "crop/garlic_sprout"
+ },
+ "winter_radish": {
+  "name": "冬季蘿蔔",
+  "seasons": [
+   "winter"
+  ],
+  "stageDays": [
+   1,
+   2,
+   2,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 10,
+  "art": "crop/winter_radish"
+ },
+ "snow_mustard": {
+  "name": "雪裡紅",
+  "seasons": [
+   "winter"
+  ],
+  "stageDays": [
+   1,
+   1,
+   2,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 9,
+  "art": "crop/snow_mustard"
+ },
+ "kale": {
+  "name": "羽衣甘藍",
+  "seasons": [
+   "winter"
+  ],
+  "stageDays": [
+   2,
+   2,
+   2,
+   1
+  ],
+  "regrowDays": 3,
+  "xp": 14,
+  "art": "crop/kale"
+ },
+ "brussels": {
+  "name": "抱子甘藍",
+  "seasons": [
+   "winter"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 13,
+  "art": "crop/brussels"
+ },
+ "winter_scallion": {
+  "name": "冬蔥",
+  "seasons": [
+   "winter"
+  ],
+  "stageDays": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 8,
+  "art": "crop/winter_scallion"
+ },
+ "winter_spinach": {
+  "name": "耐寒菠菜",
+  "seasons": [
+   "winter"
+  ],
+  "stageDays": [
+   1,
+   1,
+   1,
+   0
+  ],
+  "regrowDays": 0,
+  "xp": 7,
+  "art": "crop/winter_spinach"
+ },
+ "sweet_pea": {
+  "name": "甜豌豆",
+  "seasons": [
+   "winter"
+  ],
+  "stageDays": [
+   1,
+   2,
+   2,
+   2
+  ],
+  "regrowDays": 2,
+  "xp": 14,
+  "art": "crop/sweet_pea"
+ },
+ "ice_plant": {
+  "name": "冰花菜",
+  "seasons": [
+   "winter"
+  ],
+  "stageDays": [
+   2,
+   2,
+   2,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 12,
+  "art": "crop/ice_plant"
+ },
+ "snow_lotus": {
+  "name": "雪蓮菜",
+  "seasons": [
+   "winter"
+  ],
+  "stageDays": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "regrowDays": 0,
+  "xp": 16,
+  "art": "crop/snow_lotus"
  }
 }

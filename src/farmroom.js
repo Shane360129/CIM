@@ -22,7 +22,7 @@ import EVENTS from '../public/games/farm/data/events/hearts.json';
 import FESTIVALS from '../public/games/farm/data/festivals.json';
 import RESTORE from '../public/games/farm/data/restore.json';
 import ACHIEVEMENTS from '../public/games/farm/data/achievements.json';
-import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelOf, rollQuality, invAdd, invTake, sellPrice, makeItems, matches, planTake, absMinute, animalPos, genFloor, monPos, mineMap, npcPos, giftTaste, seasonIndex } from '../public/games/farm/shared/rules.js';
+import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelOf, rollQuality, invAdd, invTake, sellPrice, makeItems, matches, planTake, shopItems, absMinute, animalPos, genFloor, monPos, mineMap, npcPos, giftTaste, seasonIndex } from '../public/games/farm/shared/rules.js';
 
 const ITEMS = makeItems(RAW_ITEMS, MACHINES); // 加工品（g:機器:原料）的名字和價錢是算出來的
 
@@ -242,7 +242,7 @@ export class FarmRoom {
       this.logEvent(a.id, 'ship', { id: s.id, n: k }); self(); farmChanged(); done();
     } else if (m.t === 'buy') { // 買東西：要站在那間店（或攤位）旁邊、營業時間內；錢是兩個人共用的
       const shop = SHOPS[m.shop || 'stall'], item = ITEMS[m.item], min = this.minuteNow(); if (!shop) return no('unknown'); if (!near(shop.use)) return no('far');
-      if (!item || !shop.items.includes(m.item)) return no('unknown');
+      if (!item || !shopItems(shop, seasonId(this.farm.day, BAL), CROPS).includes(m.item)) return no('unknown');
       if (min < shop.open || min >= shop.close + this.perk('shopHours')) return no('closed'); if (this.farm.money < item.buy * n) return no('money');
       if (!invAdd(p.inv, BAL.invSlots, m.item, n)) return no('full');
       this.farm.money -= item.buy * n; this.logEvent(a.id, 'buy', { id: m.item, n }); self(); farmChanged(); done();

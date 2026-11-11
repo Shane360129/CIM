@@ -5,16 +5,42 @@
   "open": 360,
   "close": 1080,
   "items": [
-   "seed_carrot",
-   "seed_spinach",
-   "seed_scallion",
-   "seed_lettuce",
-   "seed_cabbage",
-   "seed_strawberry",
    "fertilizer",
    "hay"
   ],
-  "hint": "路邊的小攤，只有幾樣最常用的。種類齊全的在小鎮的雜貨店。"
+  "hint": "路邊的小攤，只有幾樣最常用的。種類齊全的在小鎮的雜貨店。",
+  "seeds": {
+   "spring": [
+    "seed_carrot",
+    "seed_spinach",
+    "seed_scallion",
+    "seed_lettuce",
+    "seed_cabbage",
+    "seed_strawberry"
+   ],
+   "summer": [
+    "seed_tomato",
+    "seed_cucumber",
+    "seed_corn",
+    "seed_edamame",
+    "seed_water_spinach",
+    "seed_watermelon"
+   ],
+   "autumn": [
+    "seed_sweet_potato",
+    "seed_wheat",
+    "seed_peanut",
+    "seed_napa",
+    "seed_buckwheat",
+    "seed_taro"
+   ],
+   "winter": [
+    "seed_garlic_sprout",
+    "seed_winter_radish",
+    "seed_winter_scallion",
+    "seed_winter_spinach"
+   ]
+  }
  },
  "store": {
   "name": "雜貨店",
@@ -23,28 +49,13 @@
   "open": 480,
   "close": 1080,
   "items": [
-   "seed_carrot",
-   "seed_daikon",
-   "seed_cabbage",
-   "seed_potato",
-   "seed_strawberry",
-   "seed_spinach",
-   "seed_lettuce",
-   "seed_pea",
-   "seed_fava",
-   "seed_asparagus",
-   "seed_scallion",
-   "seed_cauliflower",
-   "seed_komatsuna",
-   "seed_beet",
-   "seed_tulip",
-   "seed_rapeseed",
    "fertilizer",
    "fertilizer_gold",
    "hay",
    "brush"
   ],
-  "hint": "阿禾的店。種子要種在翻過的土上；現在賣的都是春天的作物。"
+  "hint": "阿禾的店。種子要種在翻過的土上；每一季賣的種子不一樣，換季前沒收成的作物會枯掉。",
+  "seeds": "season"
  },
  "tackle": {
   "name": "漁具店",

@@ -18,6 +18,7 @@ export const loading = {
       ]);
       data.rawItems = data.items; data.items = makeItems(data.items, data.machines); // 加工品的名字和價錢是算出來的
       data.maps = { farm: data.map_farm, house: data.map_house, road: data.map_road, lake: data.map_lake, town: data.map_town };
+      await loadAtlas('b6');
       await loadAtlas('b4');
       await loadAtlas('b3');
       await loadAtlas('b2'); // 第 2 批素材（目前是縮圖做的，畫質是暫時的）；載不到就全部用暫代圖

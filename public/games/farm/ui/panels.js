@@ -1,6 +1,6 @@
 // 遊戲裡的面板：背包、出貨箱、倉庫箱、種子攤。都是一般的網頁元素，蓋在畫面中間；內容每次有變化就整個重畫。
 import { iconEl } from '../render/sprites.js';
-import { sellPrice, planTake, levelOf, hearts } from '../shared/rules.js';
+import { sellPrice, planTake, levelOf, hearts, shopItems } from '../shared/rules.js';
 const mk = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
 
 // 一個物品的小圖：有圖用圖（種子是「種子袋＋作物」疊起來），沒有圖用名字的第一個字
@@ -114,7 +114,7 @@ export function openPanel(ctx, mode, arg = {}) {
       const shop = ctx.data.shops[arg.shop || 'stall'], min = W.minute(), open = min >= shop.open && min < shop.close, hm = (m) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
       root.append(mk('p', 'hint', open ? shop.hint : `現在沒有營業（${hm(shop.open)}～${hm(shop.close)}）。`));
       const list = mk('div', 'shoplist');
-      for (const id of shop.items) {
+      for (const id of shopItems(shop, W.farm.season, ctx.data.crops)) {
         const it = items[id], row = mk('div', 'shoprow'); row.dataset.item = id;
         const crop = it.crop && ctx.data.crops[it.crop], days = crop ? crop.stageDays.reduce((a, b) => a + b, 0) : 0;
         row.append(itemIcon(items, id), mk('span', 'sname', it.name), mk('span', 'sdesc', crop ? `${days} 天${crop.regrowDays ? '・會再長' : ''}・賣 ${items[it.crop].sell}` : it.desc || (it.energy ? `體力 +${it.energy}` : '')), mk('span', 'sprice', `${it.buy} 元`));
