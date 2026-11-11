@@ -69,3 +69,86 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #1d2a1f; col
 .swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #5a3d22; padding: 0; cursor: pointer; }
 .swatch.on { box-shadow: 0 0 0 3px #fff, 0 0 0 5px #e8872e; }
 .minput { flex: 1; min-width: 0; font: inherit; font-size: 16px; padding: 8px 10px; border-radius: 10px; border: 2px solid #5a3d22; background: #fffaf0; -webkit-user-select: text; user-select: text; }
+
+/* 階段 4：錢、體力、背包、面板、物品圖示 */
+.chips { position: absolute; left: calc(10px + env(safe-area-inset-left)); top: calc(62px + env(safe-area-inset-top)); display: flex; gap: 6px; align-items: center; }
+.chip { padding: 5px 10px; border-radius: 999px; background: #f3e6c8; border: 2px solid #5a3d22; font: inherit; font-size: 14px; font-weight: 700; color: #3b2f22; display: inline-flex; align-items: center; gap: 4px; }
+button.chip { cursor: pointer; }
+.ebar { display: inline-block; width: 64px; height: 10px; border-radius: 5px; background: #d9c7a0; overflow: hidden; }
+.ebar i { display: block; height: 100%; background: #6fbf5a; }
+.chip.low .ebar i { background: #e5484d; }
+@media (pointer: coarse) { .hotbar { top: calc(108px + env(safe-area-inset-top)); } }
+.slot { display: flex; align-items: center; justify-content: center; padding: 0; }
+.slot .num { position: absolute; left: 3px; top: 1px; font-size: 10px; color: #b89a6a; }
+.icon { display: inline-block; background-repeat: no-repeat; }
+.iicon { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; }
+.iicon .over { position: absolute; left: 50%; top: 56%; transform: translate(-50%, -50%); }
+.ifallback { font-size: 15px; font-weight: 700; color: #5a3d22; }
+.count { position: absolute; right: 2px; bottom: 0; font-size: 11px; font-weight: 700; color: #3b2f22; text-shadow: 0 0 2px #fff, 0 0 2px #fff; }
+.qual { position: absolute; left: 2px; bottom: 0; font-size: 11px; }
+.q1 { color: #9aa3ad; } .q2 { color: #e0a81e; } .q3 { color: #c05ad8; } .q4 { color: #e5484d; }
+.panel { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(460px, calc(100% - 20px)); max-height: calc(100% - 40px); overflow-y: auto; padding: 14px 16px;
+  border-radius: 16px; background: #f3e6c8; border: 3px solid #5a3d22; box-shadow: 0 8px 0 rgba(60, 40, 20, .25); touch-action: pan-y; }
+.phead { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.phead h2 { margin: 0; font-size: 18px; flex: 1; } .panel h3 { margin: 10px 0 4px; font-size: 15px; }
+.phead .money { font-weight: 700; }
+.pclose { width: 34px; height: 34px; border-radius: 50%; border: 2px solid #5a3d22; background: #fffaf0; font-size: 15px; cursor: pointer; }
+.hint { margin: 4px 0; font-size: 13.5px; color: #6b5536; line-height: 1.5; }
+.grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin: 8px 0; }
+@media (min-width: 520px) { .grid { grid-template-columns: repeat(10, 1fr); } }
+.panel { width: min(520px, calc(100% - 20px)); }
+.cell { position: relative; aspect-ratio: 1; border-radius: 8px; background: #fffaf0; border: 2px solid #c9a877; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.cell.hot { background: #fbefcf; } .cell.on { border-color: #e8872e; box-shadow: 0 0 0 2px rgba(255, 220, 120, .9); }
+.shoplist { display: flex; flex-direction: column; gap: 4px; }
+.shoprow { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 10px; background: #fffaf0; border: 1px solid #dcc79c; font-size: 14px; }
+.sname { font-weight: 700; flex: none; width: 6.2em; } .sdesc { flex: 1; font-size: 12px; color: #7a6548; } .sprice { flex: none; font-weight: 700; }
+.pbtn { font: inherit; font-size: 13px; font-weight: 700; padding: 5px 9px; border-radius: 8px; border: 2px solid #5a3d22; background: #e8872e; color: #fff; cursor: pointer; }
+.pbtn:disabled { background: #d9c7a0; color: #8a7a5c; border-color: #b8a47c; cursor: default; }
+
+/* 階段 5：釣魚小遊戲 */
+.fishgame { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); width: min(340px, calc(100% - 40px)); padding: 12px 14px; border-radius: 14px; background: #f3e6c8; border: 3px solid #5a3d22; pointer-events: none; }
+.fglabel { font-weight: 700; font-size: 15px; text-align: center; margin-bottom: 8px; }
+.fgbar { position: relative; height: 26px; border-radius: 13px; background: #7cc6e6; border: 2px solid #5a3d22; overflow: hidden; }
+.fgzone { position: absolute; top: 0; bottom: 0; background: #6fbf5a; }
+.fgneedle { position: absolute; top: -2px; bottom: -2px; width: 6px; margin-left: -3px; border-radius: 3px; background: #e5484d; border: 1px solid #5a3d22; }
+
+.prow { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.pbtn.eat { margin-top: 6px; }
+
+.chip.hp .ebar i { background: #e5484d; }
+
+/* 階段 6：對話框 */
+.dialog { position: absolute; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(620px, calc(100% - 20px)); display: flex; gap: 12px; padding: 12px 14px;
+  border-radius: 16px; background: #f3e6c8; border: 3px solid #5a3d22; box-shadow: 0 8px 0 rgba(60, 40, 20, .25); z-index: 5; }
+.dface { flex: none; width: 96px; height: 96px; border-radius: 12px; background: #e3d2a8; border: 2px solid #5a3d22; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
+.dbody { flex: 1; min-width: 0; } .dbody h2 { margin: 0; font-size: 17px; display: inline-block; } .dsub { margin-left: 8px; color: #8a6a44; font-size: 13px; }
+.dtext { margin: 6px 0 8px; min-height: 3.2em; font-size: 15.5px; line-height: 1.6; }
+.dialog .row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.dialog button { font: inherit; font-weight: 700; padding: 7px 14px; border-radius: 12px; border: 2px solid #5a3d22; background: #e8872e; color: #fff; cursor: pointer; }
+.dialog button.ghost { background: #f3e6c8; color: #5a3d22; }
+@media (max-width: 520px) { .dface { width: 68px; height: 68px; } }
+
+/* 階段 6c：劇情的淡出旁白、節慶小遊戲 */
+.fade { position: absolute; inset: 0; background: #1d1712; color: #f3e6c8; display: flex; align-items: center; justify-content: center; padding: 24px; font-size: 18px; line-height: 1.8; text-align: center; opacity: 0; transition: opacity .4s; pointer-events: none; z-index: 6; }
+.fade.on { opacity: 1; }
+.timer { position: absolute; left: 50%; top: calc(12px + env(safe-area-inset-top)); transform: translateX(-50%); padding: 6px 16px; border-radius: 999px; background: #f3e6c8; border: 2px solid #5a3d22; font-weight: 700; font-size: 16px; }
+
+.frow { width: 100%; text-align: left; font: inherit; cursor: pointer; flex-wrap: wrap; } .frow.on { border-color: #e8872e; background: #fff3d6; } .frow .sname { width: auto; min-width: 8em; }
+
+.cell.unknown .icon, .cell.unknown .ifallback { filter: brightness(0); opacity: .28; } span.cell { cursor: default; }
+
+/* 階段 9：新手教學提示、設定面板、字體大小、左手模式 */
+.guide { position: absolute; left: calc(10px + env(safe-area-inset-left)); top: calc(100px + env(safe-area-inset-top)); max-width: min(300px, calc(100% - 70px)); padding: 5px 10px; border-radius: 10px;
+  background: rgba(255, 250, 235, .92); border: 2px solid #c79a3c; color: #5a3d22; font: inherit; font-size: 13px; font-weight: 700; text-align: left; cursor: pointer; }
+.setrow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 6px 0; border-bottom: 1px dashed #dcc79c; }
+.setlabel { flex: 1 1 150px; font-size: 14px; font-weight: 700; }
+.setlabel small { display: block; font-weight: 400; font-size: 12px; color: #8a6a44; }
+.setrow input[type=range] { width: 150px; accent-color: #e8872e; }
+.seg { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+.seg button { font: inherit; font-size: 13px; padding: 5px 9px; border-radius: 8px; border: 2px solid #5a3d22; background: #f3e6c8; color: #5a3d22; cursor: pointer; }
+.seg button.on { background: #e8872e; color: #fff; }
+#ui.font-s .panel, #ui.font-s .card, #ui.font-s .dialog, #ui.font-s .guide, #ui.font-s .clock { zoom: .9; }
+#ui.font-l .panel, #ui.font-l .card, #ui.font-l .dialog, #ui.font-l .guide, #ui.font-l .clock { zoom: 1.18; }
+#ui.lefty .stick { left: auto; right: calc(22px + env(safe-area-inset-right)); }
+#ui.lefty .act-btn { right: auto; left: calc(26px + env(safe-area-inset-left)); }
+@media (pointer: coarse) { .guide { top: calc(166px + env(safe-area-inset-top)); } }

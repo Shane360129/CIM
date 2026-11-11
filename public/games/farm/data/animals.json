@@ -1,0 +1,117 @@
+{
+ "livestock": {
+  "chicken": {
+   "name": "雞",
+   "home": "coop",
+   "price": 300,
+   "every": 1,
+   "product": "egg",
+   "growDays": 3,
+   "art": "animal/chicken",
+   "colors": [
+    "#ffffff",
+    "#e8c08a",
+    "#8a5a34",
+    "#3b3430"
+   ],
+   "size": 0.8
+  },
+  "duck": {
+   "name": "鴨",
+   "home": "coop",
+   "price": 1400,
+   "every": 2,
+   "product": "duck_egg",
+   "growDays": 4,
+   "art": "animal/duck",
+   "colors": [
+    "#ffffff",
+    "#f6e08a",
+    "#8a8f96"
+   ],
+   "size": 0.8
+  },
+  "cow": {
+   "name": "乳牛",
+   "home": "barn",
+   "price": 3500,
+   "every": 1,
+   "product": "milk",
+   "growDays": 6,
+   "art": "animal/cow",
+   "colors": [
+    "#ffffff",
+    "#8a5a34",
+    "#3b3430",
+    "#e8c08a"
+   ],
+   "size": 1.25
+  },
+  "sheep": {
+   "name": "綿羊",
+   "home": "barn",
+   "price": 5000,
+   "every": 3,
+   "product": "wool",
+   "growDays": 6,
+   "art": "animal/sheep",
+   "colors": [
+    "#ffffff",
+    "#3b3430",
+    "#c9a877",
+    "#f3c6c6"
+   ],
+   "size": 1.1
+  }
+ },
+ "pets": {
+  "dog": {
+   "name": "小狗",
+   "art": "animal/dog",
+   "colors": [
+    "#ffffff",
+    "#c98a3c",
+    "#8a5a34",
+    "#3b3430",
+    "#e8c66a",
+    "#b0b6bd"
+   ],
+   "size": 0.8
+  },
+  "cat": {
+   "name": "小貓",
+   "art": "animal/cat",
+   "colors": [
+    "#ffffff",
+    "#f0a04a",
+    "#3b3430",
+    "#b0b6bd",
+    "#e8c08a",
+    "#8a5a34"
+   ],
+   "size": 0.7
+  }
+ },
+ "traits": [
+  "愛吃",
+  "貪睡",
+  "活潑",
+  "害羞",
+  "愛乾淨",
+  "黏人",
+  "獨立",
+  "好奇",
+  "溫和",
+  "調皮",
+  "勤勞",
+  "長壽",
+  "早熟",
+  "多產",
+  "毛色亮",
+  "大嗓門",
+  "膽小",
+  "勇敢",
+  "愛撒嬌",
+  "愛曬太陽"
+ ]
+}

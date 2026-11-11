@@ -1,6 +1,8 @@
 // 載入畫面：讀設定和地圖、確認登入身分，畫一條進度條；出錯就停在這裡把原因寫出來
 import { loadAll } from '../core/assets.js';
 import { signIn } from '../net/auth.js';
+import { loadAtlas } from '../render/sprites.js';
+import { makeItems } from '../shared/rules.js';
 import { title } from './title.js';
 
 export const loading = {
@@ -10,10 +12,16 @@ export const loading = {
     try {
       const convId = Number(new URLSearchParams(location.search).get('conv')) || 0;
       const [data, session] = await Promise.all([
-        loadAll([['balance', 'data/balance.json'], ['objects', 'data/objects.json'], ['map', 'data/map-test.json'], ['parts', 'data/doll/parts.json']], (p) => { this.progress = p * 0.8; }),
+        loadAll([['balance', 'data/balance.json'], ['tutorial', 'data/tutorial.json'], ['music', 'data/music.json'], ['objects', 'data/objects.json'], ['parts', 'data/doll/parts.json'], ['items', 'data/items.json'], ['crops', 'data/crops.json'],
+          ['map_farm', 'data/maps/farm.json'], ['map_house', 'data/maps/house.json'], ['map_road', 'data/maps/road.json'], ['map_lake', 'data/maps/lake.json'], ['fish', 'data/fish.json'], ['machines', 'data/machines.json'], ['recipes', 'data/recipes.json'], ['animals', 'data/animals.json'], ['map_town', 'data/maps/town.json'], ['npcs', 'data/npcs/residents.json'], ['shops', 'data/shops.json'], ['events', 'data/events/hearts.json'], ['festivals', 'data/festivals.json'], ['restore', 'data/restore.json'], ['achievements', 'data/achievements.json']], (p) => { this.progress = p * 0.8; }),
         signIn(convId),
       ]);
-      Object.assign(ctx, { data, session });
+      data.rawItems = data.items; data.items = makeItems(data.items, data.machines); // 加工品的名字和價錢是算出來的
+      data.maps = { farm: data.map_farm, house: data.map_house, road: data.map_road, lake: data.map_lake, town: data.map_town };
+      await loadAtlas('b4');
+      await loadAtlas('b3');
+      await loadAtlas('b2'); // 第 2 批素材（目前是縮圖做的，畫質是暫時的）；載不到就全部用暫代圖
+      Object.assign(ctx, { data, session }); ctx.audio.setTracks(data.music.tracks);
       this.progress = 1;
       await ctx.scenes.go(title);
     } catch (e) { this.error = e.message || '載入失敗'; }

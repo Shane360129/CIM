@@ -1,0 +1,86 @@
+{
+ "stall": {
+  "name": "種子攤",
+  "use": "shop",
+  "open": 360,
+  "close": 1080,
+  "items": [
+   "seed_carrot",
+   "seed_spinach",
+   "seed_scallion",
+   "seed_lettuce",
+   "seed_cabbage",
+   "seed_strawberry",
+   "fertilizer",
+   "hay"
+  ],
+  "hint": "路邊的小攤，只有幾樣最常用的。種類齊全的在小鎮的雜貨店。"
+ },
+ "store": {
+  "name": "雜貨店",
+  "use": "store",
+  "owner": "ahe",
+  "open": 480,
+  "close": 1080,
+  "items": [
+   "seed_carrot",
+   "seed_daikon",
+   "seed_cabbage",
+   "seed_potato",
+   "seed_strawberry",
+   "seed_spinach",
+   "seed_lettuce",
+   "seed_pea",
+   "seed_fava",
+   "seed_asparagus",
+   "seed_scallion",
+   "seed_cauliflower",
+   "seed_komatsuna",
+   "seed_beet",
+   "seed_tulip",
+   "seed_rapeseed",
+   "fertilizer",
+   "fertilizer_gold",
+   "hay",
+   "brush"
+  ],
+  "hint": "阿禾的店。種子要種在翻過的土上；現在賣的都是春天的作物。"
+ },
+ "tackle": {
+  "name": "漁具店",
+  "use": "tackle",
+  "owner": "xiyin",
+  "open": 480,
+  "close": 840,
+  "items": [
+   "rod_fiber"
+  ],
+  "hint": "汐音的店，下午她就去釣魚了。"
+ },
+ "diner": {
+  "name": "餐館",
+  "use": "diner",
+  "owner": "chunshen",
+  "open": 420,
+  "close": 1260,
+  "items": [
+   "dish_veg_soup",
+   "dish_salad",
+   "dish_grilled_fish",
+   "dish_stew"
+  ],
+  "hint": "春嬸煮的，吃了補體力。自己煮比較便宜。"
+ },
+ "clinic": {
+  "name": "診所",
+  "use": "clinic",
+  "owner": "baizhi",
+  "open": 480,
+  "close": 1080,
+  "items": [
+   "tonic",
+   "bandage"
+  ],
+  "hint": "白芷醫生：累了就休息，別硬撐。"
+ }
+}

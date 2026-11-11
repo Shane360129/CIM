@@ -1,7 +1,563 @@
 {
-  "tree":  { "name": "樹",   "shape": "tree",  "solid": true,  "w": 1.7, "h": 2.4, "color": "#4f9a4a", "trunk": "#8a5a36" },
-  "rock":  { "name": "石頭", "shape": "blob",  "solid": true,  "w": 0.9, "h": 0.7, "color": "#a9a59c" },
-  "bush":  { "name": "草叢", "shape": "blob",  "solid": false, "w": 0.9, "h": 0.6, "color": "#6fb357" },
-  "house": { "name": "農舍", "shape": "block", "solid": true,  "w": 4,   "h": 3.4, "color": "#d9b98a", "roof": "#c8553d", "tiles": [4, 2] },
-  "bin":   { "name": "出貨箱", "shape": "block", "solid": true, "w": 1,  "h": 1,   "color": "#b98a5a" }
+ "tree": {
+  "name": "樹",
+  "shape": "tree",
+  "solid": true,
+  "w": 1.9,
+  "h": 2.5,
+  "color": "#4f9a4a",
+  "trunk": "#8a5a36",
+  "art": "tree/oak/{season}",
+  "tool": "axe",
+  "hp": 5,
+  "drops": {
+   "wood": 6,
+   "sap": 1
+  },
+  "energy": 3,
+  "xp": [
+   "foraging",
+   8
+  ]
+ },
+ "rock": {
+  "name": "石頭",
+  "shape": "blob",
+  "solid": true,
+  "w": 0.85,
+  "h": 0.7,
+  "color": "#a9a59c",
+  "art": "obj/stone_s",
+  "tool": "pick",
+  "hp": 2,
+  "drops": {
+   "stone": 2
+  },
+  "energy": 3,
+  "xp": [
+   "foraging",
+   3
+  ]
+ },
+ "branch": {
+  "name": "樹枝",
+  "shape": "blob",
+  "solid": true,
+  "w": 0.9,
+  "h": 0.5,
+  "color": "#9a6b42",
+  "art": "obj/branch",
+  "tool": "axe",
+  "hp": 1,
+  "drops": {
+   "branch": 1,
+   "wood": 1
+  },
+  "energy": 2,
+  "xp": [
+   "foraging",
+   2
+  ]
+ },
+ "weed": {
+  "name": "雜草",
+  "shape": "blob",
+  "solid": false,
+  "w": 0.85,
+  "h": 0.7,
+  "color": "#6fb357",
+  "art": "obj/weed",
+  "tool": "sickle",
+  "hp": 1,
+  "drops": {
+   "fiber": 1
+  },
+  "energy": 1,
+  "xp": [
+   "foraging",
+   1
+  ]
+ },
+ "bush": {
+  "name": "草叢",
+  "shape": "blob",
+  "solid": false,
+  "w": 0.95,
+  "h": 0.7,
+  "color": "#6fb357",
+  "art": "obj/grass_l"
+ },
+ "flower": {
+  "name": "小花",
+  "shape": "blob",
+  "solid": false,
+  "w": 0.8,
+  "h": 0.6,
+  "color": "#f6d34a",
+  "art": "obj/flower_yellow"
+ },
+ "house": {
+  "name": "農舍",
+  "shape": "block",
+  "solid": true,
+  "w": 4.4,
+  "h": 4.0,
+  "color": "#d9b98a",
+  "roof": "#c8553d",
+  "tiles": [
+   4,
+   2
+  ],
+  "art": "building/house1",
+  "use": "door"
+ },
+ "bin": {
+  "name": "出貨箱",
+  "shape": "block",
+  "solid": true,
+  "w": 1.15,
+  "h": 1.1,
+  "color": "#b98a5a",
+  "art": "obj/bin",
+  "use": "bin"
+ },
+ "mailbox": {
+  "name": "信箱",
+  "shape": "block",
+  "solid": true,
+  "w": 0.8,
+  "h": 1.1,
+  "color": "#e5484d",
+  "art": "obj/mailbox",
+  "use": "mail"
+ },
+ "well": {
+  "name": "水井",
+  "shape": "block",
+  "solid": true,
+  "w": 1.3,
+  "h": 1.5,
+  "color": "#a9a59c",
+  "art": "obj/well"
+ },
+ "scarecrow": {
+  "name": "稻草人",
+  "shape": "block",
+  "solid": true,
+  "w": 1.0,
+  "h": 1.4,
+  "color": "#e8c66a",
+  "art": "obj/scarecrow"
+ },
+ "bench": {
+  "name": "長椅",
+  "shape": "block",
+  "solid": true,
+  "w": 1.2,
+  "h": 0.9,
+  "color": "#b98a5a",
+  "art": "obj/bench"
+ },
+ "signpost": {
+  "name": "路標",
+  "shape": "block",
+  "solid": true,
+  "w": 0.9,
+  "h": 1.0,
+  "color": "#b98a5a",
+  "art": "obj/signpost"
+ },
+ "stall": {
+  "name": "種子攤",
+  "shape": "block",
+  "solid": true,
+  "w": 2.2,
+  "h": 1.8,
+  "color": "#f0a04a",
+  "roof": "#e5484d",
+  "tiles": [
+   2,
+   1
+  ],
+  "use": "shop"
+ },
+ "bed": {
+  "name": "床",
+  "shape": "block",
+  "solid": true,
+  "w": 1.6,
+  "h": 1.4,
+  "color": "#6aa8e8",
+  "tiles": [
+   2,
+   1
+  ],
+  "use": "bed"
+ },
+ "wardrobe": {
+  "name": "衣櫃",
+  "shape": "block",
+  "solid": true,
+  "w": 1.0,
+  "h": 1.6,
+  "color": "#8a5a34",
+  "use": "wardrobe"
+ },
+ "chest": {
+  "name": "倉庫箱",
+  "shape": "block",
+  "solid": true,
+  "w": 1.0,
+  "h": 0.9,
+  "color": "#c98a3c",
+  "art": "obj/crate",
+  "use": "chest"
+ },
+ "table": {
+  "name": "桌子",
+  "shape": "block",
+  "solid": true,
+  "w": 1.6,
+  "h": 0.9,
+  "color": "#b98a5a",
+  "tiles": [
+   2,
+   1
+  ]
+ },
+ "barrel": {
+  "name": "木桶",
+  "shape": "block",
+  "solid": true,
+  "w": 0.8,
+  "h": 0.95,
+  "color": "#9a6b42",
+  "art": "obj/barrel"
+ },
+ "forage": {
+  "name": "採集物",
+  "shape": "blob",
+  "solid": false,
+  "w": 0.7,
+  "h": 0.7,
+  "color": "#f6d34a",
+  "pickup": true
+ },
+ "machine": {
+  "name": "加工機",
+  "shape": "block",
+  "solid": true,
+  "w": 1.0,
+  "h": 1.25,
+  "color": "#b98a5a"
+ },
+ "stove": {
+  "name": "爐灶",
+  "shape": "block",
+  "solid": true,
+  "w": 1.0,
+  "h": 1.2,
+  "color": "#8a8f96",
+  "art": "machine/stove",
+  "use": "stove"
+ },
+ "workbench": {
+  "name": "製作台",
+  "shape": "block",
+  "solid": true,
+  "w": 1.1,
+  "h": 1.1,
+  "color": "#b98a5a",
+  "art": "machine/workbench",
+  "use": "workbench"
+ },
+ "coop": {
+  "name": "雞舍",
+  "shape": "block",
+  "solid": true,
+  "w": 4.2,
+  "h": 3.6,
+  "color": "#e8c08a",
+  "roof": "#8a5a34",
+  "tiles": [
+   4,
+   2
+  ],
+  "art": "building/coop1",
+  "use": "coop"
+ },
+ "barn": {
+  "name": "畜舍",
+  "shape": "block",
+  "solid": true,
+  "w": 4.4,
+  "h": 4.0,
+  "color": "#c8553d",
+  "roof": "#7a2e22",
+  "tiles": [
+   4,
+   2
+  ],
+  "art": "building/barn1",
+  "use": "barn"
+ },
+ "mine_entrance": {
+  "name": "礦坑入口",
+  "shape": "block",
+  "solid": true,
+  "w": 3.4,
+  "h": 3.2,
+  "color": "#8a8f96",
+  "roof": "#5a5f66",
+  "tiles": [
+   3,
+   2
+  ],
+  "art": "building/mine_entrance",
+  "use": "mine"
+ },
+ "store": {
+  "name": "雜貨店",
+  "shape": "block",
+  "solid": true,
+  "w": 4.6,
+  "h": 4.2,
+  "color": "#e8d0a0",
+  "roof": "#7dbb5a",
+  "tiles": [
+   4,
+   2
+  ],
+  "art": "building/store",
+  "use": "store"
+ },
+ "smith": {
+  "name": "鐵匠鋪",
+  "shape": "block",
+  "solid": true,
+  "w": 4.6,
+  "h": 4.2,
+  "color": "#a9a59c",
+  "roof": "#c8553d",
+  "tiles": [
+   4,
+   2
+  ],
+  "art": "building/smith",
+  "use": "smith"
+ },
+ "carpenter": {
+  "name": "木工屋",
+  "shape": "block",
+  "solid": true,
+  "w": 4.6,
+  "h": 4.2,
+  "color": "#b98a5a",
+  "roof": "#c8553d",
+  "tiles": [
+   4,
+   2
+  ],
+  "art": "building/carpenter",
+  "use": "carpenter"
+ },
+ "tackle": {
+  "name": "漁具店",
+  "shape": "block",
+  "solid": true,
+  "w": 4.6,
+  "h": 4.2,
+  "color": "#e8e0d0",
+  "roof": "#3b6ea8",
+  "tiles": [
+   4,
+   2
+  ],
+  "art": "building/tackle",
+  "use": "tackle"
+ },
+ "clinic": {
+  "name": "診所",
+  "shape": "block",
+  "solid": true,
+  "w": 4.6,
+  "h": 4.2,
+  "color": "#f3f0e8",
+  "roof": "#4f9a8a",
+  "tiles": [
+   4,
+   2
+  ],
+  "art": "building/clinic",
+  "use": "clinic"
+ },
+ "diner": {
+  "name": "餐館",
+  "shape": "block",
+  "solid": true,
+  "w": 4.6,
+  "h": 4.2,
+  "color": "#e8c08a",
+  "roof": "#c8553d",
+  "tiles": [
+   4,
+   2
+  ],
+  "art": "building/diner",
+  "use": "diner"
+ },
+ "home_a": {
+  "name": "民宅",
+  "shape": "block",
+  "solid": true,
+  "w": 4.6,
+  "h": 4.2,
+  "color": "#e8d0a0",
+  "roof": "#3b6ea8",
+  "tiles": [
+   4,
+   2
+  ],
+  "art": "building/home_a",
+  "use": "home"
+ },
+ "home_b": {
+  "name": "民宅",
+  "shape": "block",
+  "solid": true,
+  "w": 4.6,
+  "h": 4.2,
+  "color": "#e8d0a0",
+  "roof": "#e0b030",
+  "tiles": [
+   4,
+   2
+  ],
+  "art": "building/home_b",
+  "use": "home"
+ },
+ "fountain": {
+  "name": "噴水池",
+  "shape": "block",
+  "solid": true,
+  "w": 1.8,
+  "h": 1.8,
+  "color": "#b98a5a",
+  "art": "obj/fountain",
+  "tiles": [
+   2,
+   1
+  ]
+ },
+ "board": {
+  "name": "佈告欄",
+  "shape": "block",
+  "solid": true,
+  "w": 1.5,
+  "h": 1.5,
+  "color": "#b98a5a",
+  "art": "obj/fest_stall",
+  "use": "board"
+ },
+ "lamp": {
+  "name": "路燈",
+  "shape": "block",
+  "solid": true,
+  "w": 0.6,
+  "h": 1.7,
+  "color": "#b98a5a",
+  "art": "obj/lamp"
+ },
+ "town_bench": {
+  "name": "長椅",
+  "shape": "block",
+  "solid": true,
+  "w": 1.3,
+  "h": 0.9,
+  "color": "#b98a5a",
+  "art": "obj/town_bench"
+ },
+ "planter": {
+  "name": "花台",
+  "shape": "block",
+  "solid": true,
+  "w": 1.1,
+  "h": 0.9,
+  "color": "#b98a5a",
+  "art": "obj/planter"
+ },
+ "postbox": {
+  "name": "郵筒",
+  "shape": "block",
+  "solid": true,
+  "w": 0.7,
+  "h": 1.1,
+  "color": "#b98a5a",
+  "art": "obj/postbox"
+ },
+ "cart": {
+  "name": "攤販推車",
+  "shape": "block",
+  "solid": true,
+  "w": 1.6,
+  "h": 1.5,
+  "color": "#b98a5a",
+  "art": "obj/cart",
+  "tiles": [
+   2,
+   1
+  ]
+ },
+ "boulder": {
+  "name": "超大石頭",
+  "shape": "blob",
+  "solid": true,
+  "w": 1.7,
+  "h": 1.5,
+  "color": "#a9a59c",
+  "art": "obj/boulder",
+  "tool": "pick",
+  "hp": 1,
+  "duo": true,
+  "drops": {
+   "stone": 20,
+   "quartz": 1
+  },
+  "energy": 6,
+  "xp": [
+   "foraging",
+   25
+  ]
+ },
+ "bigroot": {
+  "name": "超大樹根",
+  "shape": "blob",
+  "solid": true,
+  "w": 1.7,
+  "h": 1.5,
+  "color": "#8a5a36",
+  "art": "obj/big_root",
+  "tool": "axe",
+  "hp": 1,
+  "duo": true,
+  "drops": {
+   "wood": 25,
+   "sap": 3
+  },
+  "energy": 6,
+  "xp": [
+   "foraging",
+   25
+  ]
+ },
+ "noteboard": {
+  "name": "便條板",
+  "shape": "block",
+  "solid": true,
+  "w": 1.2,
+  "h": 1.3,
+  "color": "#c9a877",
+  "art": "obj/board",
+  "use": "notes"
+ }
 }

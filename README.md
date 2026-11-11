@@ -222,8 +222,44 @@ scripts/gen-icons.mjs 產生 PNG 圖示的小工具（零相依）
 scripts/test-api.mjs  API 煙霧測試（成員可見性、權限、聊天功能、管理員、速度與備份上限）
 scripts/test-security.mjs  資安測試（攻擊者視角）
 scripts/test-farm.mjs 牧場規則測試（不用開伺服器）
+src/farmroom.js       晴耕谷的伺服器（每個一對一對話一個 Durable Object）
+public/games/farm/    晴耕谷的前端（ES modules + Canvas，data/ 是遊戲內容，assets/ 是圖集）
+tools/                晴耕谷的素材工具、地圖編輯器、平衡模擬
+docs/farm-game/       晴耕谷的規格、協定、進度、部署前檢查
 legacy-github-pages/  舊版（GitHub Pages + MQTT 端對端加密版）留存
 ```
+
+## 🌾 晴耕谷（一對一聊天裡的雙人農場）
+
+在一對一聊天的選單（右上角 ☰）點「我們的農場」，兩個人一起經營同一座農場：種田、釣魚、養動物、挖礦、認識小鎮居民、修復小鎮。群組和記事本裡的是另一款「家族牧場」，兩款互不影響。
+
+- **怎麼玩**：WASD／方向鍵走路、空白鍵動作、E 背包、T 說話、1～0 切快捷列；手機碰螢幕會出現搖桿和「動作」鈕。左上角的 📖 是新手教學，右邊的 ⚙️ 是設定（音量、省電畫質、字體、搖桿左右、一天的長度）。
+- **兩個人才做得到的事**：一起搬開大石頭和超大樹根、在家門口的便條板留言、站在一起時互送東西、📷 拍照傳到聊天室。
+- **資料放哪**：每個一對一對話一座農場，存在各自的 Durable Object（`FarmRoom`）裡，跟聊天資料完全分開；每天自動備份，最近 7 天可以回復。
+
+### 開發
+
+| 我想… | 怎麼做 |
+|---|---|
+| 在本機玩 | `npm run dev`，開兩個瀏覽器（一般＋無痕）登入兩個互為好友的帳號，進同一個一對一聊天 → ☰ → 我們的農場 |
+| 跑伺服器測試 | `rm -rf .wrangler/state && npm run dev`，另一個終端機 `npm run test:farmroom` |
+| 跑雙人瀏覽器驗收 | 需要 Playwright：`node scripts/test-farmgame-sync-e2e.cjs 截圖資料夾`（一樣要乾淨的資料庫） |
+| 改遊戲內容 | 全部在 `public/games/farm/data/*.json`（作物、物品、魚、料理、居民、節慶、成就、教學…），數值集中在 `balance.json`，不用改程式 |
+| 看經濟平衡 | `node tools/balance-sim.mjs`，說明在 `docs/farm-game/平衡.md` |
+| 編地圖 | 瀏覽器開 `tools/map-editor.html` |
+| 加背景音樂 | 檔案放 `public/games/farm/assets/music/`，在 `data/music.json` 登記（可依地圖和季節切換） |
+
+### 素材工具
+
+美術原圖放 `art-src/farm/第N批/N-XX.png`（不進 git），切圖規則寫在 `tools/farm-assets/sheets.json`，然後：
+
+```bash
+node tools/farm-assets/build.mjs
+```
+
+會去背、切圖、縮放、合成圖集到 `public/games/farm/assets/`。還沒有圖的東西遊戲會自動用色塊＋名稱暫代，照樣能玩。紙娃娃零件對位用 `tools/doll-align.html`。生圖清單和每張圖的狀況在 `art-src/farm/待生成/` 與 `art-src/farm/生圖紀錄.jsonl`。
+
+規格、協定、進度、部署前檢查清單都在 `docs/farm-game/`。
 
 ## 🔔 離線推播小抄
 

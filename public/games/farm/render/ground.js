@@ -4,10 +4,14 @@ const COLORS = {
   path: ['#e3cf9f', '#d8c290', '#ecdab0'],
   soil: ['#a9774c', '#9c6b42', '#b58457'],
   water: ['#7cc6e6', '#6db9dc', '#92d3ee'],
+  floor: ['#d9b98a', '#cfae7e', '#e3c598'],
+  cave: ['#6f6a66', '#625d59', '#7c7772'],
+  rug: ['#c8553d', '#b84a34', '#d9695a'],
 };
 const rnd = (s) => () => ((s = (s * 9301 + 49297) % 233280) / 233280);
 
-export function buildGround(map, tile) {
+export function buildGround(map, tile, unlocked = false) {
+  // 還沒開墾的田（locked）先當草地畫，上面蓋一層淡淡的土色，看得出以後可以開墾
   // 手機的畫布有大小上限：離線畫布每格最多 32 像素，畫的時候再放大（地面本來就是柔和的色塊，看不出來）
   const px = Math.min(tile, 32), c = document.createElement('canvas');
   c.width = map.w * px; c.height = map.h * px;
@@ -29,16 +33,10 @@ export function buildGround(map, tile) {
   fill(map.ground || 'grass', 0, 0, map.w, map.h, false);
   for (const p of map.patches || []) {
     // 邊緣：先畫一圈深色的邊，再畫本體，看起來像陷下去一點
-    g.fillStyle = 'rgba(70, 50, 30, 0.18)';
-    g.beginPath(); g.roundRect(p.x * px - 5, p.y * px - 4, p.w * px + 10, p.h * px + 10, px * 0.5); g.fill();
+    if (!p.locked || unlocked) { g.fillStyle = 'rgba(70, 50, 30, 0.18)'; g.beginPath(); g.roundRect(p.x * px - 5, p.y * px - 4, p.w * px + 10, p.h * px + 10, px * 0.5); g.fill(); }
+    if (p.locked && !unlocked) { g.fillStyle = 'rgba(150, 110, 70, 0.28)'; g.beginPath(); g.roundRect(p.x * px, p.y * px, p.w * px, p.h * px, px * 0.45); g.fill(); continue; }
     fill(p.type, p.x, p.y, p.w, p.h, true);
   }
   c.scale = tile / px;
   return c;
-}
-// 這一格是什麼地面（之後水不能走、田可以種，都從這裡問）
-export function groundAt(map, x, y) {
-  let type = map.ground || 'grass';
-  for (const p of map.patches || []) if (x >= p.x && x < p.x + p.w && y >= p.y && y < p.y + p.h) type = p.type;
-  return type;
 }

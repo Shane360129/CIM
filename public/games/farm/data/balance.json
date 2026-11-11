@@ -9,6 +9,7 @@
   "playerRadius": 0.3,
   "hotbarSlots": 10,
   "dayMinutesReal": 15,
+  "dayLenOptions": [10, 15, 20, 30],
   "dayStartMinute": 360,
   "dayEndMinute": 1560,
   "reach": 2.6,
@@ -24,25 +25,598 @@
     "❗",
     "🎵"
   ],
-  "hotbar": [
-    {
-      "kind": "till",
-      "name": "鋤頭"
-    },
-    {
-      "kind": "water",
-      "name": "澆水"
-    },
-    {
-      "kind": "clear",
-      "name": "鏟平"
-    }
-  ],
   "seasons": [
     "春",
     "夏",
     "秋",
     "冬"
   ],
-  "seasonDays": 28
+  "seasonDays": 28,
+  "invSlots": 30,
+  "chestSlots": 36,
+  "energyMax": 100,
+  "startMoney": 500,
+  "startItems": [
+    [
+      "hoe",
+      1
+    ],
+    [
+      "can",
+      1
+    ],
+    [
+      "axe",
+      1
+    ],
+    [
+      "pick",
+      1
+    ],
+    [
+      "sickle",
+      1
+    ],
+    [
+      "rod",
+      1
+    ],
+    [
+      "sword",
+      1
+    ],
+    [
+      "seed_carrot",
+      8
+    ],
+    [
+      "seed_spinach",
+      6
+    ]
+  ],
+  "energy": {
+    "hoe": 2,
+    "can": 1,
+    "harvest": 0
+  },
+  "sleepRestore": {
+    "early": 1.0,
+    "late": 0.75,
+    "passout": 0.5
+  },
+  "lateMinute": 1440,
+  "quality": {
+    "names": [
+      "普通",
+      "銀",
+      "金",
+      "虹",
+      "傳說"
+    ],
+    "mult": [
+      1,
+      1.25,
+      1.5,
+      2,
+      3
+    ],
+    "base": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "perFert": [
+      0.18,
+      0.08,
+      0.02,
+      0.0
+    ],
+    "perLevel": [
+      0.012,
+      0.006,
+      0.002,
+      0.0005
+    ]
+  },
+  "skills": {
+    "farming": "農耕",
+    "foraging": "採集",
+    "fishing": "釣魚",
+    "cooking": "料理",
+    "ranching": "畜牧",
+    "mining": "採礦",
+    "combat": "戰鬥"
+  },
+  "xpPerLevel": [
+    40,
+    1.12
+  ],
+  "weather": {
+    "spring": {
+      "sun": 0.6,
+      "cloud": 0.15,
+      "rain": 0.25
+    },
+    "summer": {
+      "sun": 0.6,
+      "cloud": 0.1,
+      "rain": 0.2,
+      "storm": 0.1
+    },
+    "autumn": {
+      "sun": 0.5,
+      "cloud": 0.25,
+      "rain": 0.2,
+      "wind": 0.05
+    },
+    "winter": {
+      "sun": 0.4,
+      "cloud": 0.25,
+      "snow": 0.35
+    }
+  },
+  "weatherNames": {
+    "sun": "☀️ 晴",
+    "cloud": "☁️ 陰",
+    "rain": "🌧️ 雨",
+    "storm": "⛈️ 雷雨",
+    "wind": "🍃 強風",
+    "snow": "❄️ 雪"
+  },
+  "seasonIds": [
+    "spring",
+    "summer",
+    "autumn",
+    "winter"
+  ],
+  "forage": {
+    "perMap": {
+      "farm": 3,
+      "road": 3,
+      "lake": 9
+    },
+    "weedsPerDay": 2,
+    "weedsMax": 34,
+    "xp": 3,
+    "bySeason": {
+      "spring": [
+        "wildberry",
+        "dandelion",
+        "wild_scallion",
+        "fern_shoot",
+        "bamboo_shoot"
+      ],
+      "summer": [
+        "wild_blueberry",
+        "coconut",
+        "cicada_shell",
+        "seashell"
+      ],
+      "autumn": [
+        "chestnut",
+        "hazelnut",
+        "wild_mushroom",
+        "persimmon",
+        "maple_leaf"
+      ],
+      "winter": [
+        "pinecone",
+        "winter_root",
+        "snowdrop",
+        "crystal_fruit"
+      ]
+    }
+  },
+  "fishing": {
+    "reach": 3.4,
+    "energy": 4,
+    "waitMs": [
+      1500,
+      5000
+    ],
+    "biteWindowMs": 1100,
+    "hitsNeeded": 3,
+    "missesAllowed": 2,
+    "xpPerDiff": 5,
+    "junkChance": 0.12
+  },
+  "cooking": {
+    "xp": 8,
+    "togetherReach": 3.5
+  },
+  "buffNames": {
+    "speed": "走路變快",
+    "fishing": "釣魚比較容易",
+    "luck": "好品質機會變高"
+  },
+  "buffs": {
+    "speed": 1.3,
+    "fishing": 0.06,
+    "luck": 1
+  },
+  "animals": {
+    "capacity": {
+      "coop": 4,
+      "barn": 4
+    },
+    "loveMax": 1000,
+    "heart": 200,
+    "pet": 15,
+    "brush": 10,
+    "fed": 5,
+    "hungry": -20,
+    "graze": 3,
+    "qualityAt": [
+      400,
+      700,
+      900
+    ],
+    "babyChance": 0.06,
+    "babyLove": 600,
+    "petLove": 12
+  },
+  "mine": {
+    "floors": 20,
+    "w": 20,
+    "h": 14,
+    "elevatorEvery": 5,
+    "hpMax": 100,
+    "energy": 2,
+    "rocks": [
+      34,
+      46
+    ],
+    "rockTypes": {
+      "stone": {
+        "name": "石頭",
+        "hp": 2,
+        "drops": {
+          "stone": 1
+        },
+        "from": 1,
+        "weight": 60,
+        "perFloor": -1.5,
+        "art": "mine/rock_s",
+        "xp": 2
+      },
+      "big": {
+        "name": "大石頭",
+        "hp": 4,
+        "drops": {
+          "stone": 3
+        },
+        "from": 1,
+        "weight": 14,
+        "perFloor": 0,
+        "art": "mine/rock_l",
+        "xp": 4
+      },
+      "coal": {
+        "name": "煤層",
+        "hp": 3,
+        "drops": {
+          "coal": 1
+        },
+        "from": 2,
+        "weight": 8,
+        "perFloor": 0.2,
+        "art": "mine/rock_l",
+        "xp": 4
+      },
+      "copper": {
+        "name": "銅礦石",
+        "hp": 3,
+        "drops": {
+          "copper_ore": 2
+        },
+        "from": 1,
+        "weight": 12,
+        "perFloor": 0.3,
+        "art": "mine/copper_node",
+        "xp": 5
+      },
+      "iron": {
+        "name": "鐵礦石",
+        "hp": 4,
+        "drops": {
+          "iron_ore": 2
+        },
+        "from": 6,
+        "weight": 6,
+        "perFloor": 0.8,
+        "art": "mine/iron_node",
+        "xp": 8
+      },
+      "gold": {
+        "name": "金礦石",
+        "hp": 5,
+        "drops": {
+          "gold_ore": 2
+        },
+        "from": 12,
+        "weight": 3,
+        "perFloor": 0.7,
+        "art": "mine/gold_node",
+        "xp": 12
+      },
+      "gem": {
+        "name": "寶石原石",
+        "hp": 4,
+        "gems": true,
+        "from": 3,
+        "weight": 2,
+        "perFloor": 0.25,
+        "art": "mine/gem_node",
+        "xp": 10
+      }
+    },
+    "gems": [
+      [
+        "quartz",
+        1,
+        40
+      ],
+      [
+        "topaz",
+        3,
+        18
+      ],
+      [
+        "amethyst",
+        5,
+        16
+      ],
+      [
+        "jade",
+        8,
+        12
+      ],
+      [
+        "fossil",
+        4,
+        10
+      ],
+      [
+        "ruby",
+        11,
+        8
+      ],
+      [
+        "sapphire",
+        13,
+        8
+      ],
+      [
+        "moonstone",
+        16,
+        4
+      ],
+      [
+        "diamond",
+        18,
+        2
+      ]
+    ],
+    "monsters": {
+      "jelly": {
+        "name": "果凍球",
+        "hp": 3,
+        "dmg": 8,
+        "from": 1,
+        "drops": {
+          "jelly_drop": 1
+        },
+        "xp": 6,
+        "art": "monster/jelly",
+        "size": 0.85
+      },
+      "stone_sprite": {
+        "name": "石頭小精靈",
+        "hp": 5,
+        "dmg": 12,
+        "from": 5,
+        "drops": {
+          "stone": 2,
+          "coal": 1
+        },
+        "xp": 10,
+        "art": "monster/stone_sprite",
+        "size": 0.9
+      },
+      "mushroom": {
+        "name": "蘑菇小怪",
+        "hp": 4,
+        "dmg": 10,
+        "from": 9,
+        "drops": {
+          "wild_mushroom": 1
+        },
+        "xp": 9,
+        "art": "monster/mushroom",
+        "size": 0.9
+      }
+    },
+    "monsterCount": [
+      1,
+      5
+    ],
+    "hurtEveryMs": 900,
+    "faintEnergy": 0.5
+  },
+  "friend": {
+    "heart": 250,
+    "max": 2500,
+    "talk": 20,
+    "gift": {
+      "love": 80,
+      "like": 45,
+      "neutral": 20,
+      "dislike": -20
+    },
+    "birthdayMult": 4,
+    "giftsPerWeek": 2,
+    "walkMinutes": 40
+  },
+  "tools": {
+    "levels": [
+      "木",
+      "銅",
+      "鐵",
+      "金"
+    ],
+    "upgradable": [
+      "hoe",
+      "can",
+      "axe",
+      "pick",
+      "sickle",
+      "sword"
+    ],
+    "cost": [
+      null,
+      {
+        "bar": "copper_bar",
+        "n": 5,
+        "money": 1000
+      },
+      {
+        "bar": "iron_bar",
+        "n": 5,
+        "money": 4000
+      },
+      {
+        "bar": "gold_bar",
+        "n": 5,
+        "money": 15000
+      }
+    ],
+    "energyCut": 0.2
+  },
+  "quest": {
+    "pool": [
+      "carrot",
+      "spinach",
+      "scallion",
+      "lettuce",
+      "potato",
+      "wildberry",
+      "dandelion",
+      "fern_shoot",
+      "wood",
+      "stone",
+      "fiber",
+      "copper_ore",
+      "fish_crucian",
+      "fish_goby",
+      "fish_bass",
+      "egg"
+    ],
+    "n": [
+      2,
+      5
+    ],
+    "rewardMult": 2.2,
+    "rewardAdd": 60,
+    "friend": 50
+  },
+  "mail": {
+    "welcome": {
+      "from": "ahe",
+      "day": 2,
+      "text": "歡迎搬來我們這裡！附上一點種子，店裡還有很多。有空來小鎮走走，沿著農場東邊的路一直走就到了。—— 雜貨店 阿禾",
+      "item": [
+        "seed_potato",
+        5
+      ]
+    },
+    "hearts": {
+      "2": "謝謝你常來找我聊天，這個送你，別客氣。",
+      "4": "認識你真好。這是我的一點心意。"
+    }
+  },
+  "restore": {
+    "allDone": {
+      "money": 30000,
+      "text": "八個設施都修好了！小鎮回到了以前熱鬧的樣子，大家合送了一份謝禮。"
+    }
+  },
+  "house": {
+    "levels": [
+      null,
+      {
+        "money": 3000,
+        "wood": 40,
+        "stone": 20
+      },
+      {
+        "money": 12000,
+        "wood": 80,
+        "stone": 50
+      },
+      {
+        "money": 40000,
+        "wood": 150,
+        "stone": 100,
+        "iron_bar": 10
+      },
+      {
+        "money": 120000,
+        "wood": 250,
+        "stone": 200,
+        "gold_bar": 10
+      },
+      {
+        "money": 400000,
+        "wood": 400,
+        "stone": 300,
+        "gold_bar": 25
+      }
+    ],
+    "perLevel": {
+      "chestSlots": 6,
+      "energyMax": 5
+    },
+    "names": [
+      "小農舍",
+      "有門廊的農舍",
+      "兩層樓的農舍",
+      "帶側屋的農舍",
+      "寬敞的農莊",
+      "氣派的莊園"
+    ]
+  },
+  "land": {
+    "field2": {
+      "name": "南邊的田",
+      "money": 8000,
+      "wood": 50,
+      "fiber": 30
+    }
+  },
+  "duo": {
+    "pushWindowMs": 5000,
+    "giveReach": 2.6, "fishReach": 5,
+    "noteMaxChars": 60,
+    "notesKeep": 20
+  },
+  "album": {
+    "harvest": "第一次收成",
+    "fish": "釣到第一條魚",
+    "animal-buy": "第一隻動物來到農場",
+    "adopt": "領養了第一隻寵物",
+    "cook": "第一次下廚",
+    "mine": "第一次在礦坑敲開石頭",
+    "restored": "修好了第一個設施",
+    "festival": "第一次參加節慶",
+    "craft": "做出第一台加工機",
+    "upgrade": "第一次升級工具",
+    "build": "第一次找桐伯動工",
+    "duo": "兩個人第一次合力搬開大傢伙",
+    "duofish": "兩個人一起釣到比翼魚",
+    "note": "在便條板留下第一張便條",
+    "born": "農場第一次有小動物出生",
+    "quest": "完成第一個委託",
+    "gift": "第一次送禮物給居民"
+  }
 }

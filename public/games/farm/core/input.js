@@ -53,6 +53,7 @@ export function createInput(canvas, ui) {
   if (matchMedia('(pointer: coarse)').matches) showTouchUi();
 
   return {
+    showTouch: showTouchUi, // 設定裡選「一直顯示搖桿」
     on(name, fn) { (handlers[name] ||= []).push(fn); return () => { handlers[name] = handlers[name].filter((f) => f !== fn); }; },
     clear() { for (const k of Object.keys(handlers)) delete handlers[k]; },
     // 往哪走：長度最多 1（斜著走不會比較快）

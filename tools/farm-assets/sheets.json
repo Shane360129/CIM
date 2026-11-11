@@ -20,6 +20,9 @@
   },
   "scene": {
    "max": 1536
+  },
+  "portrait": {
+   "max": 300
   }
  },
  "sheets": {
@@ -554,6 +557,687 @@
    "names": [
     "scene/title"
    ]
+  },
+  "3-01": {
+   "kind": "object",
+   "names": [
+    [
+     "animal/chicken/front",
+     "animal/chicken/back",
+     "animal/chicken/side"
+    ],
+    [
+     "animal/chicken/rest",
+     "animal/chicken/eat",
+     "animal/chicken/happy"
+    ],
+    [
+     "animal/chicken/baby_front",
+     "animal/chicken/baby_side",
+     "item/egg"
+    ]
+   ]
+  },
+  "3-02": {
+   "kind": "object",
+   "names": [
+    [
+     "animal/duck/front",
+     "animal/duck/back",
+     "animal/duck/side"
+    ],
+    [
+     "animal/duck/rest",
+     "animal/duck/eat",
+     "animal/duck/happy"
+    ],
+    [
+     "animal/duck/baby_front",
+     "animal/duck/baby_side",
+     "item/duck_egg"
+    ]
+   ]
+  },
+  "3-03": {
+   "kind": "object",
+   "names": [
+    [
+     "animal/cow/front",
+     "animal/cow/back",
+     "animal/cow/side"
+    ],
+    [
+     "animal/cow/rest",
+     "animal/cow/eat",
+     "animal/cow/happy"
+    ],
+    [
+     "animal/cow/baby_front",
+     "animal/cow/baby_side",
+     "item/milk"
+    ]
+   ]
+  },
+  "3-04": {
+   "kind": "object",
+   "names": [
+    [
+     "animal/sheep/front",
+     "animal/sheep/back",
+     "animal/sheep/side"
+    ],
+    [
+     "animal/sheep/rest",
+     "animal/sheep/eat",
+     "animal/sheep/happy"
+    ],
+    [
+     "animal/sheep/baby_front",
+     "animal/sheep/baby_side",
+     "item/wool"
+    ]
+   ]
+  },
+  "3-05": {
+   "kind": "object",
+   "names": [
+    [
+     "animal/dog/front",
+     "animal/dog/back",
+     "animal/dog/side"
+    ],
+    [
+     "animal/dog/rest",
+     "animal/dog/eat",
+     "animal/dog/happy"
+    ],
+    [
+     "animal/dog/baby_front",
+     "animal/dog/baby_side",
+     "item/dog_bowl"
+    ]
+   ]
+  },
+  "3-06": {
+   "kind": "object",
+   "names": [
+    [
+     "animal/cat/front",
+     "animal/cat/back",
+     "animal/cat/side"
+    ],
+    [
+     "animal/cat/rest",
+     "animal/cat/eat",
+     "animal/cat/happy"
+    ],
+    [
+     "animal/cat/baby_front",
+     "animal/cat/baby_side",
+     "item/yarn"
+    ]
+   ]
+  },
+  "3-07": {
+   "kind": "object",
+   "names": [
+    [
+     "obj/feeder",
+     "obj/hay",
+     "obj/incubator"
+    ],
+    [
+     "obj/milk_pail",
+     "obj/shears",
+     "obj/brush"
+    ],
+    [
+     "obj/pitchfork",
+     "obj/pet_bed",
+     "obj/bucket"
+    ]
+   ]
+  },
+  "3-08": {
+   "kind": "building",
+   "names": [
+    [
+     "building/coop1"
+    ]
+   ],
+   "gap": 6
+  },
+  "3-09": {
+   "kind": "building",
+   "names": [
+    [
+     "building/barn1"
+    ]
+   ],
+   "gap": 6
+  },
+  "3-13": {
+   "kind": "building",
+   "names": [
+    [
+     "building/mine_entrance"
+    ]
+   ],
+   "gap": 6
+  },
+  "3-10": {
+   "kind": "icon",
+   "names": [
+    [
+     "fish/crucian",
+     "fish/carp",
+     "fish/tilapia",
+     "fish/bass"
+    ],
+    [
+     "fish/trout",
+     "fish/ayu",
+     "fish/catfish",
+     "fish/loach"
+    ],
+    [
+     "fish/river_shrimp",
+     "fish/hairy_crab",
+     "fish/horse_mackerel",
+     "fish/sardine"
+    ],
+    [
+     "fish/mackerel",
+     "fish/sea_bream",
+     "fish/flounder",
+     "fish/octopus"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "3-11": {
+   "kind": "icon",
+   "names": [
+    [
+     "fish/squid",
+     "fish/eel",
+     "fish/saury",
+     "fish/salmon"
+    ],
+    [
+     "fish/tuna",
+     "fish/pufferfish",
+     "fish/sea_urchin",
+     "fish/clam"
+    ],
+    [
+     "fish/baby_shark",
+     "fish/swordfish",
+     "fish/rainbow_trout",
+     "fish/koi"
+    ],
+    [
+     "fish/goldfish",
+     "fish/hermit_crab",
+     "fish/starfish",
+     "fish/goby"
+    ]
+   ]
+  },
+  "3-12": {
+   "kind": "object",
+   "names": [
+    [
+     "mine/rock_s",
+     "mine/rock_l",
+     "mine/copper_node"
+    ],
+    [
+     "mine/iron_node",
+     "mine/gold_node",
+     "mine/gem_node"
+    ],
+    [
+     "mine/stairs_down",
+     "mine/elevator",
+     "mine/support"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "3-14": {
+   "kind": "object",
+   "names": [
+    [
+     "monster/jelly/front",
+     "monster/jelly/side",
+     "monster/jelly/hit"
+    ],
+    [
+     "monster/stone_sprite/front",
+     "monster/stone_sprite/side",
+     "monster/stone_sprite/hit"
+    ],
+    [
+     "monster/mushroom/front",
+     "monster/mushroom/side",
+     "monster/mushroom/hit"
+    ]
+   ]
+  },
+  "3-15": {
+   "kind": "icon",
+   "names": [
+    [
+     "item/copper_ore",
+     "item/iron_ore",
+     "item/gold_ore",
+     "item/coal"
+    ],
+    [
+     "item/quartz",
+     "item/amethyst",
+     "item/jade",
+     "item/ruby"
+    ],
+    [
+     "item/sapphire",
+     "item/topaz",
+     "item/moonstone",
+     "item/diamond"
+    ],
+    [
+     "item/copper_bar",
+     "item/iron_bar",
+     "item/gold_bar",
+     "item/fossil"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "3-16": {
+   "kind": "icon",
+   "names": [
+    [
+     "item/seashell",
+     "item/coral",
+     "item/coconut",
+     "item/wild_blueberry"
+    ],
+    [
+     "item/chestnut",
+     "item/hazelnut",
+     "item/wild_mushroom",
+     "item/maple_leaf"
+    ],
+    [
+     "item/persimmon",
+     "item/pinecone",
+     "item/winter_root",
+     "item/snowdrop"
+    ],
+    [
+     "item/crystal_fruit",
+     "item/cicada_shell",
+     "item/butterfly",
+     "item/beetle"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "3-17": {
+   "kind": "icon",
+   "names": [
+    [
+     "dish/fried_egg",
+     "dish/salad",
+     "dish/baked_potato",
+     "dish/strawberry_cake"
+    ],
+    [
+     "dish/veg_soup",
+     "dish/omurice",
+     "dish/stir_fry",
+     "dish/salmon_onigiri"
+    ],
+    [
+     "dish/grilled_fish",
+     "dish/corn_soup",
+     "dish/pancake",
+     "dish/jam_toast"
+    ],
+    [
+     "dish/cream_stew",
+     "dish/carrot_cake",
+     "dish/potato_salad",
+     "dish/mushroom_soup"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "3-21": {
+   "kind": "icon",
+   "names": [
+    [
+     "dish/egg_soup",
+     "dish/tomato_pasta",
+     "dish/curry_rice",
+     "dish/strawberry_milk"
+    ],
+    [
+     "dish/grilled_corn",
+     "dish/pumpkin_pie",
+     "dish/apple_pie",
+     "dish/crepe"
+    ],
+    [
+     "dish/stew",
+     "dish/chicken_leg",
+     "dish/sushi_roll",
+     "dish/seafood_soup"
+    ],
+    [
+     "dish/cocoa",
+     "dish/gingerbread",
+     "dish/chestnut_rice",
+     "dish/smoothie"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "3-18": {
+   "kind": "object",
+   "names": [
+    [
+     "machine/jam",
+     "machine/pickle",
+     "machine/cheese"
+    ],
+    [
+     "machine/mayo",
+     "machine/keg",
+     "machine/smoker"
+    ],
+    [
+     "machine/dryer",
+     "machine/oil",
+     "machine/hive"
+    ]
+   ]
+  },
+  "3-19": {
+   "kind": "object",
+   "names": [
+    [
+     "machine/seed_maker",
+     "machine/furnace",
+     "machine/workbench"
+    ],
+    [
+     "machine/stove",
+     "machine/fridge",
+     "machine/storage"
+    ],
+    [
+     "machine/carpenter",
+     "machine/composter",
+     "machine/crab_pot"
+    ]
+   ]
+  },
+  "3-20": {
+   "kind": "icon",
+   "names": [
+    [
+     "good/jam",
+     "good/pickle",
+     "good/juice",
+     "good/wine"
+    ],
+    [
+     "good/cheese",
+     "good/mayo",
+     "good/smoked",
+     "good/dried"
+    ],
+    [
+     "good/oil",
+     "good/honey",
+     "good/tea",
+     "good/flour"
+    ],
+    [
+     "good/butter",
+     "good/yogurt",
+     "good/icecream",
+     "good/cakebox"
+    ]
+   ]
+  },
+  "4-01": {
+   "kind": "portrait",
+   "names": [
+    [
+     "portrait/ahe/normal",
+     "portrait/ahe/happy",
+     "portrait/ahe/angry",
+     "portrait/ahe/sad",
+     "portrait/ahe/shy"
+    ]
+   ],
+   "gap": 3,
+   "splitCols": 5
+  },
+  "4-02": {
+   "kind": "portrait",
+   "names": [
+    [
+     "portrait/xiaoman/normal",
+     "portrait/xiaoman/happy",
+     "portrait/xiaoman/angry",
+     "portrait/xiaoman/sad",
+     "portrait/xiaoman/shy"
+    ]
+   ],
+   "gap": 3,
+   "splitCols": 5
+  },
+  "4-03": {
+   "kind": "portrait",
+   "names": [
+    [
+     "portrait/shilei/normal",
+     "portrait/shilei/happy",
+     "portrait/shilei/angry",
+     "portrait/shilei/sad",
+     "portrait/shilei/shy"
+    ]
+   ],
+   "gap": 3,
+   "splitCols": 5
+  },
+  "4-04": {
+   "kind": "portrait",
+   "names": [
+    [
+     "portrait/tongbo/normal",
+     "portrait/tongbo/happy",
+     "portrait/tongbo/angry",
+     "portrait/tongbo/sad",
+     "portrait/tongbo/shy"
+    ]
+   ],
+   "gap": 3,
+   "splitCols": 5
+  },
+  "4-05": {
+   "kind": "portrait",
+   "names": [
+    [
+     "portrait/xiyin/normal",
+     "portrait/xiyin/happy",
+     "portrait/xiyin/angry",
+     "portrait/xiyin/sad",
+     "portrait/xiyin/shy"
+    ]
+   ],
+   "gap": 3,
+   "splitCols": 5
+  },
+  "4-06": {
+   "kind": "portrait",
+   "names": [
+    [
+     "portrait/baizhi/normal",
+     "portrait/baizhi/happy",
+     "portrait/baizhi/angry",
+     "portrait/baizhi/sad",
+     "portrait/baizhi/shy"
+    ]
+   ],
+   "gap": 3,
+   "splitCols": 5
+  },
+  "4-07": {
+   "kind": "portrait",
+   "names": [
+    [
+     "portrait/chunshen/normal",
+     "portrait/chunshen/happy",
+     "portrait/chunshen/angry",
+     "portrait/chunshen/sad",
+     "portrait/chunshen/shy"
+    ]
+   ],
+   "gap": 3,
+   "splitCols": 5
+  },
+  "4-08": {
+   "kind": "portrait",
+   "names": [
+    [
+     "portrait/xiaoshu/normal",
+     "portrait/xiaoshu/happy",
+     "portrait/xiaoshu/angry",
+     "portrait/xiaoshu/sad",
+     "portrait/xiaoshu/shy"
+    ]
+   ],
+   "gap": 3,
+   "splitCols": 5
+  },
+  "4-13": {
+   "kind": "building",
+   "names": [
+    [
+     "building/store"
+    ]
+   ],
+   "gap": 6
+  },
+  "4-14": {
+   "kind": "building",
+   "names": [
+    [
+     "building/smith"
+    ]
+   ],
+   "gap": 6
+  },
+  "4-15": {
+   "kind": "building",
+   "names": [
+    [
+     "building/carpenter"
+    ]
+   ],
+   "gap": 6
+  },
+  "4-16": {
+   "kind": "building",
+   "names": [
+    [
+     "building/tackle"
+    ]
+   ],
+   "gap": 6
+  },
+  "4-17": {
+   "kind": "building",
+   "names": [
+    [
+     "building/clinic"
+    ]
+   ],
+   "gap": 6
+  },
+  "4-18": {
+   "kind": "building",
+   "names": [
+    [
+     "building/diner"
+    ]
+   ],
+   "gap": 6
+  },
+  "4-19": {
+   "kind": "building",
+   "names": [
+    [
+     "building/home_a"
+    ]
+   ],
+   "gap": 6
+  },
+  "4-20": {
+   "kind": "building",
+   "names": [
+    [
+     "building/home_b"
+    ]
+   ],
+   "gap": 6
+  },
+  "4-21": {
+   "kind": "object",
+   "names": [
+    [
+     "obj/fountain",
+     "obj/board",
+     "obj/lamp"
+    ],
+    [
+     "obj/town_bench",
+     "obj/planter",
+     "obj/postbox"
+    ],
+    [
+     "obj/cart",
+     "obj/trash",
+     "obj/bus_stop"
+    ]
+   ]
+  },
+  "4-22": {
+   "kind": "object",
+   "names": [
+    [
+     "obj/bunting",
+     "obj/lantern",
+     "obj/flower_arch"
+    ],
+    [
+     "obj/stage",
+     "obj/fest_stall",
+     "obj/pumpkin_lamp"
+    ],
+    [
+     "obj/star_tree",
+     "obj/firework",
+     "obj/balloons"
+    ]
+   ],
+   "bg": "#00ffff"
   }
  }
 }

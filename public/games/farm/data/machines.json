@@ -1,0 +1,173 @@
+{
+ "jam": {
+  "name": "果醬機",
+  "in": [
+   "fruit"
+  ],
+  "minutes": 480,
+  "out": "{src}果醬",
+  "mult": 2,
+  "add": 40,
+  "art": "machine/jam",
+  "good": "good/jam",
+  "craft": {
+   "wood": 20,
+   "stone": 10
+  }
+ },
+ "pickle": {
+  "name": "醃漬桶",
+  "in": [
+   "veg"
+  ],
+  "minutes": 600,
+  "out": "醃{src}",
+  "mult": 2,
+  "add": 30,
+  "art": "machine/pickle",
+  "good": "good/pickle",
+  "craft": {
+   "wood": 15,
+   "fiber": 10
+  }
+ },
+ "keg": {
+  "name": "釀造桶",
+  "in": [
+   "fruit",
+   "veg"
+  ],
+  "minutes": 1200,
+  "out": "{src}汁",
+  "mult": 2.4,
+  "add": 20,
+  "art": "machine/keg",
+  "good": "good/juice",
+  "craft": {
+   "wood": 25,
+   "sap": 3
+  }
+ },
+ "dryer": {
+  "name": "乾燥架",
+  "in": [
+   "forage",
+   "fish"
+  ],
+  "minutes": 900,
+  "out": "{src}乾",
+  "mult": 1.8,
+  "add": 25,
+  "art": "machine/dryer",
+  "good": "good/dried",
+  "craft": {
+   "wood": 12,
+   "branch": 6
+  }
+ },
+ "smoker": {
+  "name": "熏製爐",
+  "in": [
+   "fish"
+  ],
+  "minutes": 360,
+  "out": "煙燻{src}",
+  "mult": 2,
+  "add": 35,
+  "art": "machine/smoker",
+  "good": "good/smoked",
+  "craft": {
+   "wood": 15,
+   "stone": 15
+  }
+ },
+ "oil": {
+  "name": "榨油機",
+  "in": [
+   "flower"
+  ],
+  "minutes": 480,
+  "out": "{src}油",
+  "mult": 2.2,
+  "add": 30,
+  "art": "machine/oil",
+  "good": "good/oil",
+  "craft": {
+   "wood": 15,
+   "stone": 10
+  }
+ },
+ "mayo": {
+  "name": "美乃滋機",
+  "in": [
+   "egg"
+  ],
+  "minutes": 180,
+  "out": "{src}美乃滋",
+  "mult": 2,
+  "add": 50,
+  "art": "machine/mayo",
+  "good": "good/mayo",
+  "craft": {
+   "wood": 15,
+   "stone": 15
+  }
+ },
+ "cheese": {
+  "name": "起司機",
+  "in": [
+   "milk"
+  ],
+  "minutes": 300,
+  "out": "{src}起司",
+  "mult": 2,
+  "add": 60,
+  "art": "machine/cheese",
+  "good": "good/cheese",
+  "craft": {
+   "wood": 15,
+   "stone": 20
+  }
+ },
+ "seed_maker": {
+  "name": "種子機",
+  "in": [
+   "@crop"
+  ],
+  "minutes": 120,
+  "seeds": 2,
+  "art": "machine/seed_maker",
+  "craft": {
+   "wood": 10,
+   "stone": 10,
+   "fiber": 5
+  }
+ },
+ "hive": {
+  "name": "蜂箱",
+  "in": [],
+  "minutes": 2400,
+  "gives": "honey",
+  "art": "machine/hive",
+  "craft": {
+   "wood": 20,
+   "sap": 2
+  }
+ },
+ "furnace": {
+  "name": "熔爐",
+  "in": [
+   "ore"
+  ],
+  "minutes": 180,
+  "map": {
+   "copper_ore": "copper_bar",
+   "iron_ore": "iron_bar",
+   "gold_ore": "gold_bar"
+  },
+  "art": "machine/furnace",
+  "craft": {
+   "stone": 25
+  }
+ }
+}

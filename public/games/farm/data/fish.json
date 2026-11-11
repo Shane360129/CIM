@@ -1,0 +1,699 @@
+{
+ "crucian": {
+  "name": "鯽魚",
+  "maps": [
+   "farm",
+   "lake"
+  ],
+  "seasons": [
+   "spring",
+   "summer",
+   "autumn",
+   "winter"
+  ],
+  "time": [
+   360,
+   1560
+  ],
+  "rain": false,
+  "weight": 30,
+  "size": [
+   8,
+   25
+  ],
+  "diff": 1
+ },
+ "carp": {
+  "name": "鯉魚",
+  "maps": [
+   "farm",
+   "lake"
+  ],
+  "seasons": [
+   "spring",
+   "summer",
+   "autumn",
+   "winter"
+  ],
+  "time": [
+   360,
+   1560
+  ],
+  "rain": false,
+  "weight": 22,
+  "size": [
+   20,
+   70
+  ],
+  "diff": 2
+ },
+ "tilapia": {
+  "name": "吳郭魚",
+  "maps": [
+   "farm",
+   "lake"
+  ],
+  "seasons": [
+   "spring",
+   "summer",
+   "autumn"
+  ],
+  "time": [
+   360,
+   1200
+  ],
+  "rain": false,
+  "weight": 26,
+  "size": [
+   12,
+   40
+  ],
+  "diff": 1
+ },
+ "loach": {
+  "name": "泥鰍",
+  "maps": [
+   "farm"
+  ],
+  "seasons": [
+   "spring",
+   "summer"
+  ],
+  "time": [
+   360,
+   1560
+  ],
+  "rain": true,
+  "weight": 18,
+  "size": [
+   6,
+   18
+  ],
+  "diff": 1
+ },
+ "goldfish": {
+  "name": "金魚",
+  "maps": [
+   "farm"
+  ],
+  "seasons": [
+   "spring",
+   "summer",
+   "autumn",
+   "winter"
+  ],
+  "time": [
+   540,
+   1080
+  ],
+  "rain": false,
+  "weight": 5,
+  "size": [
+   4,
+   15
+  ],
+  "diff": 2
+ },
+ "koi": {
+  "name": "錦鯉",
+  "maps": [
+   "farm"
+  ],
+  "seasons": [
+   "spring",
+   "summer",
+   "autumn",
+   "winter"
+  ],
+  "time": [
+   360,
+   720
+  ],
+  "rain": false,
+  "weight": 2,
+  "size": [
+   30,
+   90
+  ],
+  "diff": 4
+ },
+ "bass": {
+  "name": "鱸魚",
+  "maps": [
+   "lake"
+  ],
+  "seasons": [
+   "spring",
+   "summer",
+   "autumn",
+   "winter"
+  ],
+  "time": [
+   360,
+   1560
+  ],
+  "rain": false,
+  "weight": 20,
+  "size": [
+   20,
+   60
+  ],
+  "diff": 2
+ },
+ "trout": {
+  "name": "鱒魚",
+  "maps": [
+   "lake"
+  ],
+  "seasons": [
+   "spring",
+   "autumn",
+   "winter"
+  ],
+  "time": [
+   360,
+   1080
+  ],
+  "rain": false,
+  "weight": 16,
+  "size": [
+   18,
+   50
+  ],
+  "diff": 3
+ },
+ "ayu": {
+  "name": "香魚",
+  "maps": [
+   "lake"
+  ],
+  "seasons": [
+   "spring",
+   "summer"
+  ],
+  "time": [
+   360,
+   900
+  ],
+  "rain": false,
+  "weight": 14,
+  "size": [
+   10,
+   25
+  ],
+  "diff": 2
+ },
+ "catfish": {
+  "name": "鯰魚",
+  "maps": [
+   "lake"
+  ],
+  "seasons": [
+   "spring",
+   "summer",
+   "autumn"
+  ],
+  "time": [
+   1080,
+   1560
+  ],
+  "rain": false,
+  "weight": 12,
+  "size": [
+   25,
+   80
+  ],
+  "diff": 3
+ },
+ "river_shrimp": {
+  "name": "溪蝦",
+  "maps": [
+   "lake"
+  ],
+  "seasons": [
+   "spring",
+   "summer",
+   "autumn",
+   "winter"
+  ],
+  "time": [
+   1020,
+   1560
+  ],
+  "rain": false,
+  "weight": 16,
+  "size": [
+   4,
+   12
+  ],
+  "diff": 1
+ },
+ "hairy_crab": {
+  "name": "毛蟹",
+  "maps": [
+   "lake"
+  ],
+  "seasons": [
+   "autumn"
+  ],
+  "time": [
+   360,
+   1560
+  ],
+  "rain": false,
+  "weight": 12,
+  "size": [
+   6,
+   14
+  ],
+  "diff": 2
+ },
+ "eel": {
+  "name": "鰻魚",
+  "maps": [
+   "lake"
+  ],
+  "seasons": [
+   "summer",
+   "autumn"
+  ],
+  "time": [
+   1080,
+   1560
+  ],
+  "rain": true,
+  "weight": 6,
+  "size": [
+   30,
+   100
+  ],
+  "diff": 4
+ },
+ "rainbow_trout": {
+  "name": "虹鱒",
+  "maps": [
+   "lake"
+  ],
+  "seasons": [
+   "spring",
+   "winter"
+  ],
+  "time": [
+   360,
+   720
+  ],
+  "rain": false,
+  "weight": 5,
+  "size": [
+   25,
+   60
+  ],
+  "diff": 4
+ },
+ "goby": {
+  "name": "蝦虎魚",
+  "maps": [
+   "lake"
+  ],
+  "seasons": [
+   "spring",
+   "summer",
+   "autumn",
+   "winter"
+  ],
+  "time": [
+   360,
+   1560
+  ],
+  "rain": false,
+  "weight": 22,
+  "size": [
+   4,
+   10
+  ],
+  "diff": 1
+ },
+ "salmon": {
+  "name": "鮭魚",
+  "maps": [
+   "lake"
+  ],
+  "seasons": [
+   "autumn"
+  ],
+  "time": [
+   360,
+   1080
+  ],
+  "rain": false,
+  "weight": 8,
+  "size": [
+   40,
+   100
+  ],
+  "diff": 3
+ },
+ "horse_mackerel": {
+  "name": "竹莢魚",
+  "maps": [
+   "beach"
+  ],
+  "seasons": [
+   "spring",
+   "summer",
+   "autumn",
+   "winter"
+  ],
+  "time": [
+   360,
+   1560
+  ],
+  "rain": false,
+  "weight": 26,
+  "size": [
+   12,
+   35
+  ],
+  "diff": 1
+ },
+ "sardine": {
+  "name": "沙丁魚",
+  "maps": [
+   "beach"
+  ],
+  "seasons": [
+   "spring",
+   "summer",
+   "autumn",
+   "winter"
+  ],
+  "time": [
+   360,
+   1080
+  ],
+  "rain": false,
+  "weight": 28,
+  "size": [
+   8,
+   20
+  ],
+  "diff": 1
+ },
+ "mackerel": {
+  "name": "鯖魚",
+  "maps": [
+   "beach"
+  ],
+  "seasons": [
+   "spring",
+   "autumn",
+   "winter"
+  ],
+  "time": [
+   360,
+   1560
+  ],
+  "rain": false,
+  "weight": 20,
+  "size": [
+   20,
+   45
+  ],
+  "diff": 2
+ },
+ "sea_bream": {
+  "name": "鯛魚",
+  "maps": [
+   "beach"
+  ],
+  "seasons": [
+   "spring",
+   "summer"
+  ],
+  "time": [
+   360,
+   1080
+  ],
+  "rain": false,
+  "weight": 12,
+  "size": [
+   20,
+   60
+  ],
+  "diff": 3
+ },
+ "flounder": {
+  "name": "比目魚",
+  "maps": [
+   "beach"
+  ],
+  "seasons": [
+   "autumn",
+   "winter"
+  ],
+  "time": [
+   360,
+   1560
+  ],
+  "rain": false,
+  "weight": 12,
+  "size": [
+   20,
+   60
+  ],
+  "diff": 3
+ },
+ "octopus": {
+  "name": "章魚",
+  "maps": [
+   "beach"
+  ],
+  "seasons": [
+   "summer",
+   "autumn"
+  ],
+  "time": [
+   1020,
+   1560
+  ],
+  "rain": false,
+  "weight": 8,
+  "size": [
+   20,
+   80
+  ],
+  "diff": 3
+ },
+ "squid": {
+  "name": "烏賊",
+  "maps": [
+   "beach"
+  ],
+  "seasons": [
+   "spring",
+   "summer"
+  ],
+  "time": [
+   1080,
+   1560
+  ],
+  "rain": false,
+  "weight": 12,
+  "size": [
+   15,
+   45
+  ],
+  "diff": 2
+ },
+ "saury": {
+  "name": "秋刀魚",
+  "maps": [
+   "beach"
+  ],
+  "seasons": [
+   "autumn"
+  ],
+  "time": [
+   360,
+   1560
+  ],
+  "rain": false,
+  "weight": 18,
+  "size": [
+   20,
+   38
+  ],
+  "diff": 2
+ },
+ "tuna": {
+  "name": "鮪魚",
+  "maps": [
+   "beach"
+  ],
+  "seasons": [
+   "summer",
+   "winter"
+  ],
+  "time": [
+   360,
+   900
+  ],
+  "rain": false,
+  "weight": 3,
+  "size": [
+   80,
+   250
+  ],
+  "diff": 5
+ },
+ "pufferfish": {
+  "name": "河豚",
+  "maps": [
+   "beach"
+  ],
+  "seasons": [
+   "winter"
+  ],
+  "time": [
+   360,
+   1080
+  ],
+  "rain": false,
+  "weight": 8,
+  "size": [
+   15,
+   40
+  ],
+  "diff": 3
+ },
+ "sea_urchin": {
+  "name": "海膽",
+  "maps": [
+   "beach"
+  ],
+  "seasons": [
+   "summer"
+  ],
+  "time": [
+   360,
+   1560
+  ],
+  "rain": false,
+  "weight": 10,
+  "size": [
+   5,
+   12
+  ],
+  "diff": 1
+ },
+ "clam": {
+  "name": "蛤蜊",
+  "maps": [
+   "beach"
+  ],
+  "seasons": [
+   "spring",
+   "summer",
+   "autumn",
+   "winter"
+  ],
+  "time": [
+   360,
+   1560
+  ],
+  "rain": false,
+  "weight": 26,
+  "size": [
+   3,
+   8
+  ],
+  "diff": 1
+ },
+ "baby_shark": {
+  "name": "小鯊魚",
+  "maps": [
+   "beach"
+  ],
+  "seasons": [
+   "summer"
+  ],
+  "time": [
+   1080,
+   1560
+  ],
+  "rain": false,
+  "weight": 3,
+  "size": [
+   60,
+   150
+  ],
+  "diff": 5
+ },
+ "swordfish": {
+  "name": "劍魚",
+  "maps": [
+   "beach"
+  ],
+  "seasons": [
+   "autumn",
+   "winter"
+  ],
+  "time": [
+   360,
+   900
+  ],
+  "rain": false,
+  "weight": 2,
+  "size": [
+   120,
+   300
+  ],
+  "diff": 5
+ },
+ "hermit_crab": {
+  "name": "寄居蟹",
+  "maps": [
+   "beach"
+  ],
+  "seasons": [
+   "spring",
+   "summer",
+   "autumn"
+  ],
+  "time": [
+   360,
+   1560
+  ],
+  "rain": false,
+  "weight": 16,
+  "size": [
+   3,
+   9
+  ],
+  "diff": 1
+ },
+ "starfish": {
+  "name": "海星",
+  "maps": [
+   "beach"
+  ],
+  "seasons": [
+   "spring",
+   "summer",
+   "autumn",
+   "winter"
+  ],
+  "time": [
+   360,
+   1560
+  ],
+  "rain": false,
+  "weight": 14,
+  "size": [
+   6,
+   20
+  ],
+  "diff": 1
+ },
+ "twin": {"name":"比翼魚","maps":["farm","lake"],"seasons":["spring","summer","autumn","winter"],"time":[360,1560],"rain":false,"weight":0,"size":[45,80],"diff":4,"duo":true}
+}

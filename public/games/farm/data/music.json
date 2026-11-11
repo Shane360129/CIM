@@ -1,0 +1,4 @@
+{
+  "_說明": "背景音樂：把檔案放進 public/games/farm/assets/music/，在 tracks 登記。鍵可以是「地圖:季節」（例如 farm:spring）、地圖（farm、house、road、lake、town、mine）、季節（spring、summer、autumn、winter）或 default；越前面的寫法越優先。",
+  "tracks": {}
+}

@@ -1,0 +1,1386 @@
+{
+ "carrot": {
+  "name": "紅蘿蔔",
+  "kind": "crop",
+  "sell": 45,
+  "art": "item/carrot",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_carrot": {
+  "name": "紅蘿蔔種子",
+  "kind": "seed",
+  "crop": "carrot",
+  "buy": 20,
+  "sell": 5,
+  "art": "item/seedbag",
+  "overlay": "item/carrot"
+ },
+ "daikon": {
+  "name": "白蘿蔔",
+  "kind": "crop",
+  "sell": 60,
+  "art": "item/daikon",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_daikon": {
+  "name": "白蘿蔔種子",
+  "kind": "seed",
+  "crop": "daikon",
+  "buy": 25,
+  "sell": 6,
+  "art": "item/seedbag",
+  "overlay": "item/daikon"
+ },
+ "cabbage": {
+  "name": "高麗菜",
+  "kind": "crop",
+  "sell": 140,
+  "art": "item/cabbage",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_cabbage": {
+  "name": "高麗菜種子",
+  "kind": "seed",
+  "crop": "cabbage",
+  "buy": 50,
+  "sell": 12,
+  "art": "item/seedbag",
+  "overlay": "item/cabbage"
+ },
+ "potato": {
+  "name": "馬鈴薯",
+  "kind": "crop",
+  "sell": 85,
+  "art": "item/potato",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_potato": {
+  "name": "馬鈴薯種子",
+  "kind": "seed",
+  "crop": "potato",
+  "buy": 35,
+  "sell": 8,
+  "art": "item/seedbag",
+  "overlay": "item/potato"
+ },
+ "strawberry": {
+  "name": "草莓",
+  "kind": "crop",
+  "sell": 70,
+  "art": "item/strawberry",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "seed_strawberry": {
+  "name": "草莓種子",
+  "kind": "seed",
+  "crop": "strawberry",
+  "buy": 90,
+  "sell": 22,
+  "art": "item/seedbag",
+  "overlay": "item/strawberry"
+ },
+ "spinach": {
+  "name": "菠菜",
+  "kind": "crop",
+  "sell": 30,
+  "art": "item/spinach",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_spinach": {
+  "name": "菠菜種子",
+  "kind": "seed",
+  "crop": "spinach",
+  "buy": 15,
+  "sell": 3,
+  "art": "item/seedbag",
+  "overlay": "item/spinach"
+ },
+ "lettuce": {
+  "name": "萵苣",
+  "kind": "crop",
+  "sell": 48,
+  "art": "item/lettuce",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_lettuce": {
+  "name": "萵苣種子",
+  "kind": "seed",
+  "crop": "lettuce",
+  "buy": 20,
+  "sell": 5,
+  "art": "item/seedbag",
+  "overlay": "item/lettuce"
+ },
+ "pea": {
+  "name": "豌豆",
+  "kind": "crop",
+  "sell": 40,
+  "art": "item/pea",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_pea": {
+  "name": "豌豆種子",
+  "kind": "seed",
+  "crop": "pea",
+  "buy": 60,
+  "sell": 15,
+  "art": "item/seedbag",
+  "overlay": "item/pea"
+ },
+ "fava": {
+  "name": "蠶豆",
+  "kind": "crop",
+  "sell": 46,
+  "art": "item/fava",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_fava": {
+  "name": "蠶豆種子",
+  "kind": "seed",
+  "crop": "fava",
+  "buy": 65,
+  "sell": 16,
+  "art": "item/seedbag",
+  "overlay": "item/fava"
+ },
+ "asparagus": {
+  "name": "蘆筍",
+  "kind": "crop",
+  "sell": 55,
+  "art": "item/asparagus",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_asparagus": {
+  "name": "蘆筍種子",
+  "kind": "seed",
+  "crop": "asparagus",
+  "buy": 80,
+  "sell": 20,
+  "art": "item/seedbag",
+  "overlay": "item/asparagus"
+ },
+ "scallion": {
+  "name": "青蔥",
+  "kind": "crop",
+  "sell": 42,
+  "art": "item/scallion",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_scallion": {
+  "name": "青蔥種子",
+  "kind": "seed",
+  "crop": "scallion",
+  "buy": 18,
+  "sell": 4,
+  "art": "item/seedbag",
+  "overlay": "item/scallion"
+ },
+ "cauliflower": {
+  "name": "花椰菜",
+  "kind": "crop",
+  "sell": 175,
+  "art": "item/cauliflower",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_cauliflower": {
+  "name": "花椰菜種子",
+  "kind": "seed",
+  "crop": "cauliflower",
+  "buy": 60,
+  "sell": 15,
+  "art": "item/seedbag",
+  "overlay": "item/cauliflower"
+ },
+ "komatsuna": {
+  "name": "小松菜",
+  "kind": "crop",
+  "sell": 32,
+  "art": "item/komatsuna",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_komatsuna": {
+  "name": "小松菜種子",
+  "kind": "seed",
+  "crop": "komatsuna",
+  "buy": 15,
+  "sell": 3,
+  "art": "item/seedbag",
+  "overlay": "item/komatsuna"
+ },
+ "beet": {
+  "name": "甜菜根",
+  "kind": "crop",
+  "sell": 68,
+  "art": "item/beet",
+  "tags": [
+   "veg"
+  ]
+ },
+ "seed_beet": {
+  "name": "甜菜根種子",
+  "kind": "seed",
+  "crop": "beet",
+  "buy": 28,
+  "sell": 7,
+  "art": "item/seedbag",
+  "overlay": "item/beet"
+ },
+ "tulip": {
+  "name": "鬱金香",
+  "kind": "crop",
+  "sell": 75,
+  "art": "item/tulip",
+  "tags": [
+   "flower"
+  ]
+ },
+ "seed_tulip": {
+  "name": "鬱金香種子",
+  "kind": "seed",
+  "crop": "tulip",
+  "buy": 30,
+  "sell": 7,
+  "art": "item/seedbag",
+  "overlay": "item/tulip"
+ },
+ "rapeseed": {
+  "name": "油菜花",
+  "kind": "crop",
+  "sell": 52,
+  "art": "item/rapeseed",
+  "tags": [
+   "flower"
+  ]
+ },
+ "seed_rapeseed": {
+  "name": "油菜花種子",
+  "kind": "seed",
+  "crop": "rapeseed",
+  "buy": 22,
+  "sell": 5,
+  "art": "item/seedbag",
+  "overlay": "item/rapeseed"
+ },
+ "hoe": {
+  "name": "鋤頭",
+  "kind": "tool",
+  "tool": "hoe",
+  "desc": "翻土",
+  "art": "tool/hoe"
+ },
+ "can": {
+  "name": "澆水壺",
+  "kind": "tool",
+  "tool": "can",
+  "desc": "澆水",
+  "art": "tool/can"
+ },
+ "axe": {
+  "name": "斧頭",
+  "kind": "tool",
+  "tool": "axe",
+  "desc": "砍樹、劈樹枝",
+  "art": "tool/axe"
+ },
+ "pick": {
+  "name": "十字鎬",
+  "kind": "tool",
+  "tool": "pick",
+  "desc": "敲石頭、整平翻過的土",
+  "art": "tool/pick"
+ },
+ "sickle": {
+  "name": "鐮刀",
+  "kind": "tool",
+  "tool": "sickle",
+  "desc": "割雜草、清掉枯掉的作物",
+  "art": "tool/sickle"
+ },
+ "wood": {
+  "name": "木材",
+  "kind": "material",
+  "sell": 8,
+  "art": "item/wood"
+ },
+ "stone": {
+  "name": "石頭",
+  "kind": "material",
+  "sell": 6,
+  "art": "item/stone"
+ },
+ "fiber": {
+  "name": "纖維",
+  "kind": "material",
+  "sell": 3,
+  "art": "item/fiber"
+ },
+ "branch": {
+  "name": "樹枝",
+  "kind": "material",
+  "sell": 2,
+  "art": "item/branch"
+ },
+ "sap": {
+  "name": "樹液",
+  "kind": "material",
+  "sell": 10,
+  "art": "item/sap"
+ },
+ "fertilizer": {
+  "name": "肥料",
+  "kind": "fertilizer",
+  "power": 1,
+  "buy": 30,
+  "sell": 7,
+  "art": "item/fertilizer",
+  "desc": "撒在翻過的土上，收成比較容易有好品質"
+ },
+ "fertilizer_gold": {
+  "name": "高級肥料",
+  "kind": "fertilizer",
+  "power": 2,
+  "buy": 90,
+  "sell": 22,
+  "art": "item/fertilizer_gold",
+  "desc": "好品質的機會更高"
+ },
+ "rod": {
+  "name": "竹釣竿",
+  "kind": "tool",
+  "tool": "rod",
+  "desc": "對著水面用，看到「！」就按動作鍵",
+  "art": "tool/rod"
+ },
+ "fish_crucian": {
+  "name": "鯽魚",
+  "kind": "fish",
+  "fish": "crucian",
+  "sell": 30,
+  "art": "fish/crucian",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_carp": {
+  "name": "鯉魚",
+  "kind": "fish",
+  "fish": "carp",
+  "sell": 45,
+  "art": "fish/carp",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_tilapia": {
+  "name": "吳郭魚",
+  "kind": "fish",
+  "fish": "tilapia",
+  "sell": 35,
+  "art": "fish/tilapia",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_loach": {
+  "name": "泥鰍",
+  "kind": "fish",
+  "fish": "loach",
+  "sell": 40,
+  "art": "fish/loach",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_goldfish": {
+  "name": "金魚",
+  "kind": "fish",
+  "fish": "goldfish",
+  "sell": 120,
+  "art": "fish/goldfish",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_twin": {
+  "name": "比翼魚",
+  "kind": "fish",
+  "fish": "twin",
+  "sell": 600,
+  "art": "fish/twin",
+  "desc": "傳說總是成雙出現。兩個人並肩把竿子放進水裡才遇得到，一天一條。",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_koi": {
+  "name": "錦鯉",
+  "kind": "fish",
+  "fish": "koi",
+  "sell": 380,
+  "art": "fish/koi",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_bass": {
+  "name": "鱸魚",
+  "kind": "fish",
+  "fish": "bass",
+  "sell": 70,
+  "art": "fish/bass",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_trout": {
+  "name": "鱒魚",
+  "kind": "fish",
+  "fish": "trout",
+  "sell": 85,
+  "art": "fish/trout",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_ayu": {
+  "name": "香魚",
+  "kind": "fish",
+  "fish": "ayu",
+  "sell": 95,
+  "art": "fish/ayu",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_catfish": {
+  "name": "鯰魚",
+  "kind": "fish",
+  "fish": "catfish",
+  "sell": 110,
+  "art": "fish/catfish",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_river_shrimp": {
+  "name": "溪蝦",
+  "kind": "fish",
+  "fish": "river_shrimp",
+  "sell": 55,
+  "art": "fish/river_shrimp",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_hairy_crab": {
+  "name": "毛蟹",
+  "kind": "fish",
+  "fish": "hairy_crab",
+  "sell": 130,
+  "art": "fish/hairy_crab",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_eel": {
+  "name": "鰻魚",
+  "kind": "fish",
+  "fish": "eel",
+  "sell": 260,
+  "art": "fish/eel",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_rainbow_trout": {
+  "name": "虹鱒",
+  "kind": "fish",
+  "fish": "rainbow_trout",
+  "sell": 240,
+  "art": "fish/rainbow_trout",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_goby": {
+  "name": "蝦虎魚",
+  "kind": "fish",
+  "fish": "goby",
+  "sell": 25,
+  "art": "fish/goby",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_salmon": {
+  "name": "鮭魚",
+  "kind": "fish",
+  "fish": "salmon",
+  "sell": 210,
+  "art": "fish/salmon",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_horse_mackerel": {
+  "name": "竹莢魚",
+  "kind": "fish",
+  "fish": "horse_mackerel",
+  "sell": 40,
+  "art": "fish/horse_mackerel",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_sardine": {
+  "name": "沙丁魚",
+  "kind": "fish",
+  "fish": "sardine",
+  "sell": 28,
+  "art": "fish/sardine",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_mackerel": {
+  "name": "鯖魚",
+  "kind": "fish",
+  "fish": "mackerel",
+  "sell": 60,
+  "art": "fish/mackerel",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_sea_bream": {
+  "name": "鯛魚",
+  "kind": "fish",
+  "fish": "sea_bream",
+  "sell": 150,
+  "art": "fish/sea_bream",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_flounder": {
+  "name": "比目魚",
+  "kind": "fish",
+  "fish": "flounder",
+  "sell": 135,
+  "art": "fish/flounder",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_octopus": {
+  "name": "章魚",
+  "kind": "fish",
+  "fish": "octopus",
+  "sell": 180,
+  "art": "fish/octopus",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_squid": {
+  "name": "烏賊",
+  "kind": "fish",
+  "fish": "squid",
+  "sell": 100,
+  "art": "fish/squid",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_saury": {
+  "name": "秋刀魚",
+  "kind": "fish",
+  "fish": "saury",
+  "sell": 75,
+  "art": "fish/saury",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_tuna": {
+  "name": "鮪魚",
+  "kind": "fish",
+  "fish": "tuna",
+  "sell": 900,
+  "art": "fish/tuna",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_pufferfish": {
+  "name": "河豚",
+  "kind": "fish",
+  "fish": "pufferfish",
+  "sell": 220,
+  "art": "fish/pufferfish",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_sea_urchin": {
+  "name": "海膽",
+  "kind": "fish",
+  "fish": "sea_urchin",
+  "sell": 140,
+  "art": "fish/sea_urchin",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_clam": {
+  "name": "蛤蜊",
+  "kind": "fish",
+  "fish": "clam",
+  "sell": 22,
+  "art": "fish/clam",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_baby_shark": {
+  "name": "小鯊魚",
+  "kind": "fish",
+  "fish": "baby_shark",
+  "sell": 650,
+  "art": "fish/baby_shark",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_swordfish": {
+  "name": "劍魚",
+  "kind": "fish",
+  "fish": "swordfish",
+  "sell": 1200,
+  "art": "fish/swordfish",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_hermit_crab": {
+  "name": "寄居蟹",
+  "kind": "fish",
+  "fish": "hermit_crab",
+  "sell": 35,
+  "art": "fish/hermit_crab",
+  "tags": [
+   "fish"
+  ]
+ },
+ "fish_starfish": {
+  "name": "海星",
+  "kind": "fish",
+  "fish": "starfish",
+  "sell": 45,
+  "art": "fish/starfish",
+  "tags": [
+   "fish"
+  ]
+ },
+ "junk": {
+  "name": "水草",
+  "kind": "material",
+  "sell": 1,
+  "art": "item/weeds",
+  "desc": "釣上來的不是魚…"
+ },
+ "wildberry": {
+  "name": "野莓",
+  "kind": "forage",
+  "sell": 18,
+  "art": "item/wildberry",
+  "tags": [
+   "forage",
+   "fruit"
+  ]
+ },
+ "dandelion": {
+  "name": "蒲公英",
+  "kind": "forage",
+  "sell": 12,
+  "art": "item/dandelion",
+  "tags": [
+   "forage"
+  ]
+ },
+ "wild_scallion": {
+  "name": "野蔥",
+  "kind": "forage",
+  "sell": 14,
+  "art": "item/wild_scallion",
+  "tags": [
+   "forage"
+  ]
+ },
+ "fern_shoot": {
+  "name": "蕨菜",
+  "kind": "forage",
+  "sell": 16,
+  "art": "item/fern_shoot",
+  "tags": [
+   "forage"
+  ]
+ },
+ "bamboo_shoot": {
+  "name": "竹筍",
+  "kind": "forage",
+  "sell": 28,
+  "art": "item/bamboo_shoot",
+  "tags": [
+   "forage"
+  ]
+ },
+ "wild_blueberry": {
+  "name": "野生藍莓",
+  "kind": "forage",
+  "sell": 22,
+  "art": "item/wild_blueberry",
+  "tags": [
+   "forage",
+   "fruit"
+  ]
+ },
+ "coconut": {
+  "name": "椰子",
+  "kind": "forage",
+  "sell": 30,
+  "art": "item/coconut",
+  "tags": [
+   "forage",
+   "fruit"
+  ]
+ },
+ "cicada_shell": {
+  "name": "蟬殼",
+  "kind": "forage",
+  "sell": 15,
+  "art": "item/cicada_shell",
+  "tags": [
+   "forage"
+  ]
+ },
+ "seashell": {
+  "name": "貝殼",
+  "kind": "forage",
+  "sell": 20,
+  "art": "item/seashell",
+  "tags": [
+   "forage"
+  ]
+ },
+ "chestnut": {
+  "name": "栗子",
+  "kind": "forage",
+  "sell": 24,
+  "art": "item/chestnut",
+  "tags": [
+   "forage"
+  ]
+ },
+ "hazelnut": {
+  "name": "榛果",
+  "kind": "forage",
+  "sell": 22,
+  "art": "item/hazelnut",
+  "tags": [
+   "forage"
+  ]
+ },
+ "wild_mushroom": {
+  "name": "野菇",
+  "kind": "forage",
+  "sell": 26,
+  "art": "item/wild_mushroom",
+  "tags": [
+   "forage"
+  ]
+ },
+ "persimmon": {
+  "name": "柿子",
+  "kind": "forage",
+  "sell": 30,
+  "art": "item/persimmon",
+  "tags": [
+   "forage",
+   "fruit"
+  ]
+ },
+ "maple_leaf": {
+  "name": "楓葉",
+  "kind": "forage",
+  "sell": 10,
+  "art": "item/maple_leaf",
+  "tags": [
+   "forage"
+  ]
+ },
+ "pinecone": {
+  "name": "松果",
+  "kind": "forage",
+  "sell": 14,
+  "art": "item/pinecone",
+  "tags": [
+   "forage"
+  ]
+ },
+ "winter_root": {
+  "name": "冬季根莖",
+  "kind": "forage",
+  "sell": 28,
+  "art": "item/winter_root",
+  "tags": [
+   "forage"
+  ]
+ },
+ "snowdrop": {
+  "name": "雪花蓮",
+  "kind": "forage",
+  "sell": 32,
+  "art": "item/snowdrop",
+  "tags": [
+   "forage"
+  ]
+ },
+ "crystal_fruit": {
+  "name": "水晶果",
+  "kind": "forage",
+  "sell": 60,
+  "art": "item/crystal_fruit",
+  "tags": [
+   "forage",
+   "fruit"
+  ]
+ },
+ "egg": {
+  "name": "雞蛋",
+  "kind": "animal_product",
+  "sell": 30,
+  "art": "item/egg",
+  "tags": [
+   "egg"
+  ]
+ },
+ "duck_egg": {
+  "name": "鴨蛋",
+  "kind": "animal_product",
+  "sell": 45,
+  "art": "item/duck_egg",
+  "tags": [
+   "egg"
+  ]
+ },
+ "milk": {
+  "name": "牛奶",
+  "kind": "animal_product",
+  "sell": 70,
+  "art": "item/milk",
+  "tags": [
+   "milk"
+  ]
+ },
+ "wool": {
+  "name": "羊毛",
+  "kind": "animal_product",
+  "sell": 120,
+  "art": "item/wool",
+  "tags": [
+   "wool"
+  ]
+ },
+ "m_jam": {
+  "name": "果醬機",
+  "kind": "machine",
+  "machine": "jam",
+  "sell": 20,
+  "art": "machine/jam",
+  "desc": "放在農場的空地上"
+ },
+ "m_pickle": {
+  "name": "醃漬桶",
+  "kind": "machine",
+  "machine": "pickle",
+  "sell": 20,
+  "art": "machine/pickle",
+  "desc": "放在農場的空地上"
+ },
+ "m_keg": {
+  "name": "釀造桶",
+  "kind": "machine",
+  "machine": "keg",
+  "sell": 20,
+  "art": "machine/keg",
+  "desc": "放在農場的空地上"
+ },
+ "m_dryer": {
+  "name": "乾燥架",
+  "kind": "machine",
+  "machine": "dryer",
+  "sell": 20,
+  "art": "machine/dryer",
+  "desc": "放在農場的空地上"
+ },
+ "m_smoker": {
+  "name": "熏製爐",
+  "kind": "machine",
+  "machine": "smoker",
+  "sell": 20,
+  "art": "machine/smoker",
+  "desc": "放在農場的空地上"
+ },
+ "m_oil": {
+  "name": "榨油機",
+  "kind": "machine",
+  "machine": "oil",
+  "sell": 20,
+  "art": "machine/oil",
+  "desc": "放在農場的空地上"
+ },
+ "m_mayo": {
+  "name": "美乃滋機",
+  "kind": "machine",
+  "machine": "mayo",
+  "sell": 20,
+  "art": "machine/mayo",
+  "desc": "放在農場的空地上"
+ },
+ "m_cheese": {
+  "name": "起司機",
+  "kind": "machine",
+  "machine": "cheese",
+  "sell": 20,
+  "art": "machine/cheese",
+  "desc": "放在農場的空地上"
+ },
+ "m_seed_maker": {
+  "name": "種子機",
+  "kind": "machine",
+  "machine": "seed_maker",
+  "sell": 20,
+  "art": "machine/seed_maker",
+  "desc": "放在農場的空地上"
+ },
+ "m_hive": {
+  "name": "蜂箱",
+  "kind": "machine",
+  "machine": "hive",
+  "sell": 20,
+  "art": "machine/hive",
+  "desc": "放在農場的空地上"
+ },
+ "honey": {
+  "name": "蜂蜜",
+  "kind": "good",
+  "sell": 100,
+  "art": "good/honey",
+  "tags": [
+   "sweet"
+  ]
+ },
+ "dish_salad": {
+  "name": "生菜沙拉",
+  "kind": "dish",
+  "energy": 30,
+  "sell": 50,
+  "art": "dish/salad",
+  "buy": 150
+ },
+ "dish_baked_potato": {
+  "name": "烤馬鈴薯",
+  "kind": "dish",
+  "energy": 28,
+  "sell": 48,
+  "art": "dish/baked_potato"
+ },
+ "dish_veg_soup": {
+  "name": "蔬菜湯",
+  "kind": "dish",
+  "energy": 35,
+  "sell": 55,
+  "art": "dish/veg_soup",
+  "buy": 165
+ },
+ "dish_stir_fry": {
+  "name": "炒青菜",
+  "kind": "dish",
+  "energy": 32,
+  "sell": 52,
+  "art": "dish/stir_fry"
+ },
+ "dish_grilled_fish": {
+  "name": "鹽烤魚",
+  "kind": "dish",
+  "energy": 40,
+  "sell": 60,
+  "art": "dish/grilled_fish",
+  "buff": [
+   "fishing",
+   240
+  ],
+  "buy": 180
+ },
+ "dish_smoothie": {
+  "name": "野莓冰沙",
+  "kind": "dish",
+  "energy": 30,
+  "sell": 50,
+  "art": "dish/smoothie",
+  "buff": [
+   "speed",
+   180
+  ]
+ },
+ "dish_stew": {
+  "name": "燉菜",
+  "kind": "dish",
+  "energy": 55,
+  "sell": 75,
+  "art": "dish/stew",
+  "buy": 225
+ },
+ "dish_mushroom_soup": {
+  "name": "蘑菇濃湯",
+  "kind": "dish",
+  "energy": 45,
+  "sell": 65,
+  "art": "dish/mushroom_soup"
+ },
+ "dish_fried_egg": {
+  "name": "煎蛋",
+  "kind": "dish",
+  "energy": 20,
+  "sell": 40,
+  "art": "dish/fried_egg"
+ },
+ "dish_egg_soup": {
+  "name": "蛋花湯",
+  "kind": "dish",
+  "energy": 30,
+  "sell": 50,
+  "art": "dish/egg_soup"
+ },
+ "dish_seafood_soup": {
+  "name": "海鮮湯",
+  "kind": "dish",
+  "energy": 60,
+  "sell": 80,
+  "art": "dish/seafood_soup",
+  "buff": [
+   "fishing",
+   360
+  ]
+ },
+ "dish_salmon_onigiri": {
+  "name": "鮭魚飯糰",
+  "kind": "dish",
+  "energy": 55,
+  "sell": 75,
+  "art": "dish/salmon_onigiri"
+ },
+ "dish_potato_salad": {
+  "name": "馬鈴薯沙拉",
+  "kind": "dish",
+  "energy": 45,
+  "sell": 65,
+  "art": "dish/potato_salad"
+ },
+ "dish_omurice": {
+  "name": "蛋包飯",
+  "kind": "dish",
+  "energy": 60,
+  "sell": 80,
+  "art": "dish/omurice",
+  "buff": [
+   "speed",
+   240
+  ]
+ },
+ "dish_jam_toast": {
+  "name": "果醬吐司",
+  "kind": "dish",
+  "energy": 45,
+  "sell": 65,
+  "art": "dish/jam_toast"
+ },
+ "dish_pancake": {
+  "name": "鬆餅",
+  "kind": "dish",
+  "energy": 50,
+  "sell": 70,
+  "art": "dish/pancake",
+  "buff": [
+   "speed",
+   300
+  ]
+ },
+ "dish_strawberry_milk": {
+  "name": "草莓牛奶",
+  "kind": "dish",
+  "energy": 40,
+  "sell": 60,
+  "art": "dish/strawberry_milk",
+  "buff": [
+   "speed",
+   240
+  ]
+ },
+ "dish_carrot_cake": {
+  "name": "紅蘿蔔蛋糕",
+  "kind": "dish",
+  "energy": 60,
+  "sell": 80,
+  "art": "dish/carrot_cake",
+  "buff": [
+   "luck",
+   360
+  ]
+ },
+ "dish_cream_stew": {
+  "name": "奶油燉菜",
+  "kind": "dish",
+  "energy": 75,
+  "sell": 95,
+  "art": "dish/cream_stew"
+ },
+ "dish_strawberry_cake": {
+  "name": "草莓蛋糕",
+  "kind": "dish",
+  "energy": 80,
+  "sell": 100,
+  "art": "dish/strawberry_cake",
+  "buff": [
+   "luck",
+   480
+  ]
+ },
+ "hay": {
+  "name": "乾草",
+  "kind": "feed",
+  "buy": 20,
+  "sell": 5,
+  "art": "obj/hay",
+  "desc": "家畜一天吃一份"
+ },
+ "brush": {
+  "name": "動物刷",
+  "kind": "tool",
+  "tool": "brush",
+  "buy": 200,
+  "art": "obj/brush",
+  "desc": "幫家畜刷毛，牠會更喜歡你"
+ },
+ "copper_ore": {
+  "name": "銅礦",
+  "kind": "mineral",
+  "sell": 15,
+  "art": "item/copper_ore",
+  "tags": [
+   "ore"
+  ]
+ },
+ "iron_ore": {
+  "name": "鐵礦",
+  "kind": "mineral",
+  "sell": 30,
+  "art": "item/iron_ore",
+  "tags": [
+   "ore"
+  ]
+ },
+ "gold_ore": {
+  "name": "金礦",
+  "kind": "mineral",
+  "sell": 70,
+  "art": "item/gold_ore",
+  "tags": [
+   "ore"
+  ]
+ },
+ "coal": {
+  "name": "煤炭",
+  "kind": "mineral",
+  "sell": 12,
+  "art": "item/coal",
+  "tags": [
+   "gem"
+  ]
+ },
+ "quartz": {
+  "name": "石英",
+  "kind": "mineral",
+  "sell": 35,
+  "art": "item/quartz",
+  "tags": [
+   "gem"
+  ]
+ },
+ "amethyst": {
+  "name": "紫水晶",
+  "kind": "mineral",
+  "sell": 110,
+  "art": "item/amethyst",
+  "tags": [
+   "gem"
+  ]
+ },
+ "jade": {
+  "name": "翡翠",
+  "kind": "mineral",
+  "sell": 160,
+  "art": "item/jade",
+  "tags": [
+   "gem"
+  ]
+ },
+ "ruby": {
+  "name": "紅寶石",
+  "kind": "mineral",
+  "sell": 260,
+  "art": "item/ruby",
+  "tags": [
+   "gem"
+  ]
+ },
+ "sapphire": {
+  "name": "藍寶石",
+  "kind": "mineral",
+  "sell": 280,
+  "art": "item/sapphire",
+  "tags": [
+   "gem"
+  ]
+ },
+ "topaz": {
+  "name": "黃玉",
+  "kind": "mineral",
+  "sell": 140,
+  "art": "item/topaz",
+  "tags": [
+   "gem"
+  ]
+ },
+ "moonstone": {
+  "name": "月光石",
+  "kind": "mineral",
+  "sell": 420,
+  "art": "item/moonstone",
+  "tags": [
+   "gem"
+  ]
+ },
+ "diamond": {
+  "name": "鑽石",
+  "kind": "mineral",
+  "sell": 800,
+  "art": "item/diamond",
+  "tags": [
+   "gem"
+  ]
+ },
+ "fossil": {
+  "name": "化石碎片",
+  "kind": "mineral",
+  "sell": 90,
+  "art": "item/fossil",
+  "tags": [
+   "gem"
+  ]
+ },
+ "copper_bar": {
+  "name": "銅錠",
+  "kind": "material",
+  "sell": 60,
+  "art": "item/copper_bar"
+ },
+ "iron_bar": {
+  "name": "鐵錠",
+  "kind": "material",
+  "sell": 120,
+  "art": "item/iron_bar"
+ },
+ "gold_bar": {
+  "name": "金錠",
+  "kind": "material",
+  "sell": 260,
+  "art": "item/gold_bar"
+ },
+ "sword": {
+  "name": "木劍",
+  "kind": "tool",
+  "tool": "sword",
+  "desc": "在礦坑裡對著怪物揮",
+  "art": "tool/sword"
+ },
+ "jelly_drop": {
+  "name": "果凍塊",
+  "kind": "material",
+  "sell": 14,
+  "art": "item/sap"
+ },
+ "m_furnace": {
+  "name": "熔爐",
+  "kind": "machine",
+  "machine": "furnace",
+  "sell": 20,
+  "art": "machine/furnace",
+  "desc": "放在農場的空地上，把礦石煉成錠"
+ },
+ "rod_fiber": {
+  "name": "玻璃纖維釣竿",
+  "kind": "tool",
+  "tool": "rod",
+  "power": 1,
+  "buy": 800,
+  "desc": "綠色的地方比較寬，魚比較不會跑",
+  "art": "tool/rod_fiber"
+ },
+ "tonic": {
+  "name": "元氣補藥",
+  "kind": "dish",
+  "energy": 60,
+  "buy": 150,
+  "sell": 40,
+  "art": "good/juice",
+  "desc": "白芷醫生調的，喝了體力 +60"
+ },
+ "bandage": {
+  "name": "繃帶",
+  "kind": "dish",
+  "energy": 0,
+  "heal": 60,
+  "buy": 80,
+  "sell": 20,
+  "art": "item/fiber",
+  "desc": "在礦坑受傷時用，血 +60"
+ }
+}

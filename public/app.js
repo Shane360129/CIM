@@ -1655,6 +1655,7 @@ function closeFarmPanel() { if (farmPanel) farmPanel.close(); }
 function farmPanelNotify(m) {
   if (!farmPanel || !m || m.conversationId !== farmPanel.convId || m.type === 'system' || (state.me && m.senderId === state.me.id)) return;
   farmPanel.dot.classList.remove('hidden');
+  try { farmPanel.node.querySelector('iframe').contentWindow.postMessage({ type: 'chat-message' }, location.origin); } catch { /* 遊戲還沒載入好 */ } // 遊戲裡也提示一下
   farmPanel.dot.onclick = () => closeFarmPanel();
 }
 
