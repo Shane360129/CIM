@@ -7,7 +7,7 @@
    "max": 128
   },
   "crop": {
-   "max": 160
+   "max": 128
   },
   "object": {
    "max": 256
