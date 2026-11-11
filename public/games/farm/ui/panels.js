@@ -1,0 +1,64 @@
+// 遊戲裡的面板：背包、出貨箱、倉庫箱、種子攤。都是一般的網頁元素，蓋在畫面中間；內容每次有變化就整個重畫。
+import { iconEl } from '../render/sprites.js';
+import { sellPrice } from '../shared/rules.js';
+const mk = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+
+// 一個物品的小圖：有圖用圖（種子是「種子袋＋作物」疊起來），沒有圖用名字的第一個字
+export function itemIcon(items, id, size = 34) {
+  const it = items[id], box = mk('span', 'iicon'); if (!it) return box;
+  const base = iconEl(it.art, size);
+  if (base) { box.append(base); if (it.overlay) { const o = iconEl(it.overlay, size * 0.55); if (o) { o.classList.add('over'); box.append(o); } } }
+  else box.append(mk('span', 'ifallback', it.name.slice(0, 1)));
+  return box;
+}
+function slotEl(items, bal, s, onClick, extraCls = '') {
+  const b = mk('button', 'cell ' + extraCls); b.type = 'button';
+  if (s) { b.append(itemIcon(items, s.id)); if (s.n > 1) b.append(mk('span', 'count', String(s.n))); if (s.q) b.append(mk('span', 'qual q' + s.q, '★')); b.title = items[s.id].name + (s.q ? `（${bal.quality.names[s.q]}）` : ''); }
+  b.addEventListener('click', onClick); return b;
+}
+
+export function openPanel(ctx, mode) {
+  const { hud, world: W } = ctx, { items, balance: bal } = ctx.data, room = W.room;
+  const root = mk('div', 'panel'), title = { bag: '背包', ship: '出貨箱', chest: '倉庫箱', shop: '種子攤' }[mode];
+  let picked = -1, info = '';
+  const say = (r) => { if (r.t === 'no') hud.toast({ full: '放不下了', money: '錢不夠', closed: '現在沒有營業（6:00～18:00）', far: '太遠了', unsellable: '這個不能賣' }[r.reason] || '沒辦法', 1300); };
+  const grid = (list, n, onClick, cls) => { const g = mk('div', 'grid'); for (let i = 0; i < n; i++) g.append(slotEl(items, bal, list[i], () => onClick(i), (i === picked && cls === 'inv' ? 'on ' : '') + (i < bal.hotbarSlots && cls === 'inv' ? 'hot' : ''))); return g; };
+  function draw() {
+    root.textContent = '';
+    const head = mk('div', 'phead'); head.append(mk('h2', '', title), mk('span', 'money', `💰 ${W.farm.money}`));
+    const x = mk('button', 'pclose', '✕'); x.type = 'button'; x.setAttribute('aria-label', '關閉'); x.addEventListener('click', () => hud.closePanel()); head.append(x); root.append(head);
+    const inv = W.self.inv;
+    if (mode === 'shop') {
+      const min = W.minute(), open = min >= bal.shop.open && min < bal.shop.close;
+      root.append(mk('p', 'hint', open ? '種子要種在翻過的土上。現在是春天，這些都是春天的作物。' : '現在沒有營業（6:00～18:00）。'));
+      const list = mk('div', 'shoplist');
+      for (const id of bal.shop.items) {
+        const it = items[id], row = mk('div', 'shoprow'); row.dataset.item = id;
+        const crop = it.crop && ctx.data.crops[it.crop], days = crop ? crop.stageDays.reduce((a, b) => a + b, 0) : 0;
+        row.append(itemIcon(items, id), mk('span', 'sname', it.name), mk('span', 'sdesc', crop ? `${days} 天${crop.regrowDays ? '・會再長' : ''}・賣 ${items[it.crop].sell}` : it.desc || ''), mk('span', 'sprice', `${it.buy} 元`));
+        for (const n of [1, 5]) { const b = mk('button', 'pbtn', `買 ${n}`); b.type = 'button'; b.disabled = !open || W.farm.money < it.buy * n; b.addEventListener('click', async () => say(await room.req({ t: 'buy', item: id, n }))); row.append(b); }
+        list.append(row);
+      }
+      root.append(list);
+    } else {
+      if (mode === 'ship') {
+        const lines = W.farm.ship || [], total = lines.reduce((s, l) => s + sellPrice(items[l.id], l.q, bal) * l.n, 0);
+        root.append(mk('p', 'hint', '點背包裡的東西放進出貨箱，明天早上結算，錢兩個人共用。'));
+        root.append(mk('p', 'hint', lines.length ? `箱子裡：${lines.map((l) => `${items[l.id].name}${l.q ? '★' : ''}×${l.n}`).join('、')}（約 ${total} 元）` : '箱子裡還是空的。'));
+      }
+      if (mode === 'chest') { root.append(mk('p', 'hint', '倉庫箱兩個人共用。點一下就整疊搬過去。'), grid(W.farm.chest || [], bal.chestSlots, async (i) => say(await room.req({ t: 'chest', dir: 'out', slot: i, n: 999 })), 'chest'), mk('h3', '', '背包')); }
+      root.append(grid(inv, bal.invSlots, async (i) => {
+        const s = inv[i];
+        if (mode === 'ship') { if (s) say(await room.req({ t: 'ship', slot: i, n: 999 })); return; }
+        if (mode === 'chest') { if (s) say(await room.req({ t: 'chest', dir: 'in', slot: i, n: 999 })); return; }
+        if (picked < 0) { if (s) { picked = i; info = items[s.id].name + (items[s.id].desc ? '：' + items[s.id].desc : items[s.id].sell ? `（賣 ${sellPrice(items[s.id], s.q, bal)} 元）` : ''); draw(); } }
+        else { const a = picked; picked = -1; info = ''; if (a !== i) await room.req({ t: 'swap', slot: a, b: i }); else draw(); }
+      }, 'inv'));
+      if (mode === 'bag') root.append(mk('p', 'hint', info || '點一個東西再點另一格可以搬位置。第一排是快捷列。'));
+      if (mode === 'bag') { const sk = Object.entries(bal.skills).map(([k, name]) => `${name} ${ctx.level(k)} 級`).join('　'); root.append(mk('p', 'hint', sk)); }
+    }
+  }
+  draw();
+  const off = [W.on('self', draw), W.on('farm', draw)];
+  hud.openPanel(root, () => off.forEach((f) => f()));
+}

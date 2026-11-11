@@ -36,15 +36,24 @@ export function createHud(ui, slots) {
   const emotes = mk('div', 'emotes hidden'); ui.append(emotes);
   const say = mk('form', 'say hidden'), sayInput = mk('input'), sayBtn = mk('button', '', '送出');
   sayInput.type = 'text'; sayInput.placeholder = '說一句話…'; sayInput.autocomplete = 'off'; say.append(sayInput, sayBtn); ui.append(say);
-  let card = null, onSay = null, onEmote = null;
+  let card = null, panel = null, panelClose = null, onSay = null, onEmote = null;
+  const chips = mk('div', 'chips hidden'), chipMoney = mk('span', 'chip'), chipEnergy = mk('span', 'chip energy'), efill = mk('i'), btnBag = mk('button', 'chip', '🎒');
+  const ebar = mk('span', 'ebar'); ebar.append(efill); chipEnergy.append('⚡', ebar); btnBag.type = 'button'; btnBag.title = '背包（E）'; chips.append(chipMoney, chipEnergy, btnBag); ui.append(chips);
   const closeSay = () => { say.classList.add('hidden'); sayInput.blur(); };
   say.addEventListener('submit', (e) => { e.preventDefault(); const t = sayInput.value.trim(); sayInput.value = ''; closeSay(); if (t && onSay) onSay(t); });
   sayInput.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeSay(); e.stopPropagation(); } });
   btnSay.addEventListener('click', () => hud.openSay());
   btnEmote.addEventListener('click', () => emotes.classList.toggle('hidden'));
-  Object.assign(hud, {
-    showPlay(on) { for (const n of [clock, side]) n.classList.toggle('hidden', !on); if (!on) { emotes.classList.add('hidden'); closeSay(); hud.closeCard(); } },
-    setSlots(list) { cells.forEach((c, i) => { c.textContent = list[i] ? list[i].name : ''; }); },
+  // 用 defineProperties 而不是 Object.assign：後者會把 get typing 這種「每次問才算」的屬性當場算一次、變成固定的值
+  Object.defineProperties(hud, Object.getOwnPropertyDescriptors({
+    showPlay(on) { for (const n of [clock, side, chips]) n.classList.toggle('hidden', !on); if (!on) { emotes.classList.add('hidden'); closeSay(); hud.closeCard(); hud.closePanel(); } },
+    onBag(fn) { btnBag.onclick = fn; },
+    setStatus(money, energy, max) { const m = `💰 ${money}`; if (chipMoney.textContent !== m) chipMoney.textContent = m; efill.style.width = Math.round(100 * energy / max) + '%'; chipEnergy.classList.toggle('low', energy < max * 0.2); chipEnergy.title = `體力 ${energy}/${max}`; },
+    // 快捷列：背包的前 10 格。make(i) 回傳那一格要放的圖示（沒有東西回傳 null）
+    setHotbar(inv, make) { cells.forEach((c, i) => { c.textContent = ''; const s = inv[i]; if (s) { c.append(make(s)); if (s.n > 1) { const n = mk('span', 'count', String(s.n)); c.append(n); } } else c.append(mk('span', 'num', String((i + 1) % 10))); }); },
+    openPanel(node, onClose) { hud.closePanel(); panel = node; panelClose = onClose; ui.append(node); },
+    closePanel() { if (panel) { panel.remove(); panel = null; if (panelClose) panelClose(); panelClose = null; } },
+    get hasPanel() { return !!panel; },
     setClock(main, sub) { if (clockMain.textContent !== main) clockMain.textContent = main; if (clockSub.textContent !== sub) clockSub.textContent = sub; },
     setNet(text) { clockNet.textContent = text || ''; clockNet.classList.toggle('hidden', !text); },
     setChat({ maxChars, emoteList, say: s, emote: e }) {
@@ -64,8 +73,8 @@ export function createHud(ui, slots) {
       });
     },
     closeCard() { if (card) { card.remove(); const r = card.resolve; card = null; r(null); } },
-    get hasCard() { return !!card; },
-  });
+    get hasCard() { return !!card || !!panel; },
+  }));
   hud.select(0);
   return hud;
 }

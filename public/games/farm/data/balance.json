@@ -24,25 +24,160 @@
     "❗",
     "🎵"
   ],
-  "hotbar": [
-    {
-      "kind": "till",
-      "name": "鋤頭"
-    },
-    {
-      "kind": "water",
-      "name": "澆水"
-    },
-    {
-      "kind": "clear",
-      "name": "鏟平"
-    }
-  ],
   "seasons": [
     "春",
     "夏",
     "秋",
     "冬"
   ],
-  "seasonDays": 28
+  "seasonDays": 28,
+  "invSlots": 30,
+  "chestSlots": 36,
+  "energyMax": 100,
+  "startMoney": 500,
+  "startItems": [
+    [
+      "hoe",
+      1
+    ],
+    [
+      "can",
+      1
+    ],
+    [
+      "axe",
+      1
+    ],
+    [
+      "pick",
+      1
+    ],
+    [
+      "sickle",
+      1
+    ],
+    [
+      "seed_carrot",
+      8
+    ],
+    [
+      "seed_spinach",
+      6
+    ]
+  ],
+  "energy": {
+    "hoe": 2,
+    "can": 1,
+    "harvest": 0
+  },
+  "sleepRestore": {
+    "early": 1.0,
+    "late": 0.75,
+    "passout": 0.5
+  },
+  "lateMinute": 1440,
+  "quality": {
+    "names": [
+      "普通",
+      "銀",
+      "金",
+      "虹",
+      "傳說"
+    ],
+    "mult": [
+      1,
+      1.25,
+      1.5,
+      2,
+      3
+    ],
+    "base": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "perFert": [
+      0.18,
+      0.08,
+      0.02,
+      0.0
+    ],
+    "perLevel": [
+      0.012,
+      0.006,
+      0.002,
+      0.0005
+    ]
+  },
+  "skills": {
+    "farming": "農耕",
+    "foraging": "採集"
+  },
+  "xpPerLevel": [
+    40,
+    1.12
+  ],
+  "shop": {
+    "open": 360,
+    "close": 1080,
+    "items": [
+      "seed_carrot",
+      "seed_daikon",
+      "seed_cabbage",
+      "seed_potato",
+      "seed_strawberry",
+      "seed_spinach",
+      "seed_lettuce",
+      "seed_pea",
+      "seed_fava",
+      "seed_asparagus",
+      "seed_scallion",
+      "seed_cauliflower",
+      "seed_komatsuna",
+      "seed_beet",
+      "seed_tulip",
+      "seed_rapeseed",
+      "fertilizer",
+      "fertilizer_gold"
+    ]
+  },
+  "weather": {
+    "spring": {
+      "sun": 0.6,
+      "cloud": 0.15,
+      "rain": 0.25
+    },
+    "summer": {
+      "sun": 0.6,
+      "cloud": 0.1,
+      "rain": 0.2,
+      "storm": 0.1
+    },
+    "autumn": {
+      "sun": 0.5,
+      "cloud": 0.25,
+      "rain": 0.2,
+      "wind": 0.05
+    },
+    "winter": {
+      "sun": 0.4,
+      "cloud": 0.25,
+      "snow": 0.35
+    }
+  },
+  "weatherNames": {
+    "sun": "☀️ 晴",
+    "cloud": "☁️ 陰",
+    "rain": "🌧️ 雨",
+    "storm": "⛈️ 雷雨",
+    "wind": "🍃 強風",
+    "snow": "❄️ 雪"
+  },
+  "seasonIds": [
+    "spring",
+    "summer",
+    "autumn",
+    "winter"
+  ]
 }

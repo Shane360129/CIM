@@ -1,0 +1,242 @@
+{
+ "carrot": {
+  "name": "紅蘿蔔",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 6,
+  "art": "crop/carrot"
+ },
+ "daikon": {
+  "name": "白蘿蔔",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   1,
+   1,
+   2,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 7,
+  "art": "crop/daikon"
+ },
+ "cabbage": {
+  "name": "高麗菜",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   2,
+   2,
+   2,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 14,
+  "art": "crop/cabbage"
+ },
+ "potato": {
+  "name": "馬鈴薯",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   1,
+   2,
+   1,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 9,
+  "art": "crop/potato"
+ },
+ "strawberry": {
+  "name": "草莓",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   1,
+   2,
+   2,
+   2
+  ],
+  "regrowDays": 3,
+  "xp": 10,
+  "art": "crop/strawberry"
+ },
+ "spinach": {
+  "name": "菠菜",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   1,
+   1,
+   1,
+   0
+  ],
+  "regrowDays": 0,
+  "xp": 4,
+  "art": "crop/spinach"
+ },
+ "lettuce": {
+  "name": "萵苣",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 6,
+  "art": "crop/lettuce"
+ },
+ "pea": {
+  "name": "豌豆",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   1,
+   2,
+   2,
+   2
+  ],
+  "regrowDays": 2,
+  "xp": 7,
+  "art": "crop/pea"
+ },
+ "fava": {
+  "name": "蠶豆",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   2,
+   2,
+   2,
+   1
+  ],
+  "regrowDays": 3,
+  "xp": 8,
+  "art": "crop/fava"
+ },
+ "asparagus": {
+  "name": "蘆筍",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   2,
+   2,
+   2,
+   2
+  ],
+  "regrowDays": 3,
+  "xp": 9,
+  "art": "crop/asparagus"
+ },
+ "scallion": {
+  "name": "青蔥",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 5,
+  "art": "crop/scallion"
+ },
+ "cauliflower": {
+  "name": "花椰菜",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 16,
+  "art": "crop/cauliflower"
+ },
+ "komatsuna": {
+  "name": "小松菜",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   1,
+   1,
+   1,
+   0
+  ],
+  "regrowDays": 0,
+  "xp": 4,
+  "art": "crop/komatsuna"
+ },
+ "beet": {
+  "name": "甜菜根",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   1,
+   2,
+   1,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 7,
+  "art": "crop/beet"
+ },
+ "tulip": {
+  "name": "鬱金香",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   1,
+   2,
+   2,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 8,
+  "art": "crop/tulip"
+ },
+ "rapeseed": {
+  "name": "油菜花",
+  "seasons": [
+   "spring"
+  ],
+  "stageDays": [
+   1,
+   1,
+   2,
+   1
+  ],
+  "regrowDays": 0,
+  "xp": 6,
+  "art": "crop/rapeseed"
+ }
+}

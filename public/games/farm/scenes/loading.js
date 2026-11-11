@@ -1,6 +1,7 @@
 // 載入畫面：讀設定和地圖、確認登入身分，畫一條進度條；出錯就停在這裡把原因寫出來
 import { loadAll } from '../core/assets.js';
 import { signIn } from '../net/auth.js';
+import { loadAtlas } from '../render/sprites.js';
 import { title } from './title.js';
 
 export const loading = {
@@ -10,9 +11,12 @@ export const loading = {
     try {
       const convId = Number(new URLSearchParams(location.search).get('conv')) || 0;
       const [data, session] = await Promise.all([
-        loadAll([['balance', 'data/balance.json'], ['objects', 'data/objects.json'], ['map', 'data/map-test.json'], ['parts', 'data/doll/parts.json']], (p) => { this.progress = p * 0.8; }),
+        loadAll([['balance', 'data/balance.json'], ['objects', 'data/objects.json'], ['parts', 'data/doll/parts.json'], ['items', 'data/items.json'], ['crops', 'data/crops.json'],
+          ['map_farm', 'data/maps/farm.json'], ['map_house', 'data/maps/house.json'], ['map_road', 'data/maps/road.json']], (p) => { this.progress = p * 0.8; }),
         signIn(convId),
       ]);
+      data.maps = { farm: data.map_farm, house: data.map_house, road: data.map_road };
+      await loadAtlas('b2'); // 第 2 批素材（目前是縮圖做的，畫質是暫時的）；載不到就全部用暫代圖
       Object.assign(ctx, { data, session });
       this.progress = 1;
       await ctx.scenes.go(title);

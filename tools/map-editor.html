@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<title>晴耕谷地圖編輯器（只在本機用）</title>
+<style>
+  body { margin: 0; font-family: "Microsoft JhengHei", "PingFang TC", sans-serif; display: grid; grid-template-columns: 290px 1fr; height: 100vh; background: #f3e6c8; color: #3b2f22; }
+  aside { padding: 12px; overflow: auto; border-right: 2px solid #5a3d22; font-size: 14px; }
+  h1 { font-size: 17px; margin: 0 0 8px; } h2 { font-size: 14px; margin: 14px 0 6px; }
+  button, select, input { font: inherit; padding: 4px 8px; margin: 2px 0; } input[type=number] { width: 4.5em; }
+  .tools button.on { background: #ffd76a; }
+  #wrap { overflow: auto; background: #5a6b4a; } canvas { display: block; cursor: crosshair; }
+  small { color: #7a6548; line-height: 1.6; display: block; }
+</style>
+<aside>
+  <h1>地圖編輯器</h1>
+  <small>編輯 public/games/farm/data/maps/ 裡的地圖。先選 data/objects.json（東西的清單），再選要改的地圖檔，或直接開一張新的。</small>
+  <h2>1. 檔案</h2>
+  <label>objects.json <input type="file" id="fobj" accept=".json"></label>
+  <label>地圖檔 <input type="file" id="fmap" accept=".json"></label>
+  <div>新地圖：寬 <input type="number" id="nw" value="30"> 高 <input type="number" id="nh" value="20"> <button id="new">開新的</button></div>
+  <label>名字 <input type="text" id="name" value="新地圖"></label>
+  <label><input type="checkbox" id="outdoor" checked> 戶外（有天氣、作物看季節）</label>
+  <h2>2. 工具</h2>
+  <div class="tools">
+    <button data-tool="patch" class="on">畫地面（拖一個方塊）</button>
+    <select id="ground"><option value="path">小路</option><option value="soil">田</option><option value="water">水</option><option value="floor">地板</option><option value="rug">地毯</option></select>
+    <label><input type="checkbox" id="locked"> 還沒開墾</label><br>
+    <button data-tool="object">擺東西（點一格）</button> <select id="otype"></select><br>
+    <button data-tool="exit">出入口（拖一個方塊）</button><br>
+    <button data-tool="spawn">出生點（點一格）</button><br>
+    <button data-tool="erase">橡皮擦（點東西、地面或出入口）</button>
+  </div>
+  <small id="status">格子：—</small>
+  <h2>3. 出入口</h2>
+  <div id="exits"></div>
+  <h2>4. 存檔</h2>
+  <button id="save">下載地圖 JSON</button>
+  <small>存好的檔放回 data/maps/。要讓遊戲用到新的地圖，還要在 scenes/loading.js 和 src/farmroom.js 的地圖清單裡加上它。碰撞看的是 objects.json 裡每種東西的 solid。</small>
+</aside>
+<div id="wrap"><canvas id="c"></canvas></div>
+<script>
+const T = 28, $ = (id) => document.getElementById(id), cv = $('c'), g = cv.getContext('2d');
+const COLORS = { grass: '#8fca6b', path: '#e3cf9f', soil: '#a9774c', water: '#7cc6e6', floor: '#d9b98a', rug: '#c8553d' };
+let objects = {}, map = blank(30, 20), tool = 'patch', drag = null;
+function blank(w, h) { return { name: '新地圖', w, h, ground: 'grass', outdoor: true, spawn: { x: 2.5, y: 2.5 }, patches: [], objects: [], exits: [] }; }
+function draw() {
+  cv.width = map.w * T; cv.height = map.h * T;
+  g.fillStyle = COLORS[map.ground] || COLORS.grass; g.fillRect(0, 0, cv.width, cv.height);
+  for (const p of map.patches) { g.fillStyle = COLORS[p.type] || '#f0f'; g.globalAlpha = p.locked ? 0.4 : 1; g.fillRect(p.x * T, p.y * T, p.w * T, p.h * T); g.globalAlpha = 1; }
+  g.strokeStyle = 'rgba(0,0,0,.12)'; g.lineWidth = 1; g.beginPath();
+  for (let x = 0; x <= map.w; x++) { g.moveTo(x * T + .5, 0); g.lineTo(x * T + .5, cv.height); } for (let y = 0; y <= map.h; y++) { g.moveTo(0, y * T + .5); g.lineTo(cv.width, y * T + .5); } g.stroke();
+  for (const e of map.exits) { g.fillStyle = 'rgba(255,255,255,.55)'; g.fillRect(e.x * T, e.y * T, e.w * T, e.h * T); g.strokeStyle = '#e8872e'; g.lineWidth = 2; g.strokeRect(e.x * T, e.y * T, e.w * T, e.h * T); }
+  g.font = '11px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (const o of map.objects) {
+    const d = objects[o.type] || {}, [tw, th] = d.tiles || [1, 1];
+    g.fillStyle = d.color || '#888'; g.fillRect(o.x * T + 2, (o.y - th + 1) * T + 2, tw * T - 4, th * T - 4);
+    g.strokeStyle = d.solid ? '#5a3d22' : 'rgba(90,61,34,.35)'; g.lineWidth = 2; g.strokeRect(o.x * T + 2, (o.y - th + 1) * T + 2, tw * T - 4, th * T - 4);
+    g.fillStyle = '#fff'; g.fillText((d.name || o.type).slice(0, 2), (o.x + tw / 2) * T, (o.y - th / 2 + 1) * T);
+  }
+  g.fillStyle = '#e5484d'; g.beginPath(); g.arc(map.spawn.x * T, map.spawn.y * T, 6, 0, 7); g.fill();
+  if (drag) { g.strokeStyle = '#fff'; g.lineWidth = 2; const r = rect(drag); g.strokeRect(r.x * T, r.y * T, r.w * T, r.h * T); }
+  $('exits').innerHTML = '';
+  map.exits.forEach((e, i) => {
+    const row = document.createElement('div');
+    row.innerHTML = `#${i}（${e.x},${e.y}）到 <input type="text" size="6" placeholder="地圖" value="${e.to || ''}"> 位置 <input type="number" step="0.1" value="${e.tx ?? ''}"> <input type="number" step="0.1" value="${e.ty ?? ''}"> 說明 <input type="text" size="10" value="${e.label || ''}">`;
+    const [to, tx, ty, label] = row.querySelectorAll('input');
+    to.oninput = () => { e.to = to.value || null; }; tx.oninput = () => { e.tx = Number(tx.value); }; ty.oninput = () => { e.ty = Number(ty.value); }; label.oninput = () => { e.label = label.value; };
+    $('exits').append(row);
+  });
+  $('name').value = map.name; $('outdoor').checked = !!map.outdoor;
+}
+const rect = (d) => ({ x: Math.min(d.x0, d.x1), y: Math.min(d.y0, d.y1), w: Math.abs(d.x1 - d.x0) + 1, h: Math.abs(d.y1 - d.y0) + 1 });
+const cell = (e) => ({ x: Math.max(0, Math.min(map.w - 1, Math.floor(e.offsetX / T))), y: Math.max(0, Math.min(map.h - 1, Math.floor(e.offsetY / T))) });
+const inR = (r, x, y) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h;
+cv.onpointerdown = (e) => {
+  const c = cell(e);
+  if (tool === 'patch' || tool === 'exit') { drag = { x0: c.x, y0: c.y, x1: c.x, y1: c.y }; cv.setPointerCapture(e.pointerId); }
+  else if (tool === 'object') { map.objects = map.objects.filter((o) => !(o.x === c.x && o.y === c.y)); map.objects.push({ type: $('otype').value, x: c.x, y: c.y }); }
+  else if (tool === 'spawn') map.spawn = { x: c.x + 0.5, y: c.y + 0.5 };
+  else if (tool === 'erase') { // 先擦東西，再擦出入口，最後擦最上面那塊地面
+    const n = map.objects.length; map.objects = map.objects.filter((o) => { const [tw, th] = (objects[o.type] || {}).tiles || [1, 1]; return !inR({ x: o.x, y: o.y - th + 1, w: tw, h: th }, c.x, c.y); });
+    if (map.objects.length === n) { const i = map.exits.findIndex((x) => inR(x, c.x, c.y)); if (i >= 0) map.exits.splice(i, 1); else { for (let k = map.patches.length - 1; k >= 0; k--) if (inR(map.patches[k], c.x, c.y)) { map.patches.splice(k, 1); break; } } }
+  }
+  draw();
+};
+cv.onpointermove = (e) => { const c = cell(e); $('status').textContent = `格子：${c.x}, ${c.y}`; if (drag) { drag.x1 = c.x; drag.y1 = c.y; draw(); } };
+cv.onpointerup = () => {
+  if (!drag) return; const r = rect(drag); drag = null;
+  if (tool === 'patch') map.patches.push({ type: $('ground').value, ...r, ...($('locked').checked ? { locked: true } : {}) });
+  else map.exits.push({ ...r, to: null, tx: 1.5, ty: 1.5, label: '出入口' });
+  draw();
+};
+document.querySelectorAll('[data-tool]').forEach((b) => { b.onclick = () => { tool = b.dataset.tool; document.querySelectorAll('[data-tool]').forEach((x) => x.classList.toggle('on', x === b)); }; });
+$('fobj').onchange = async (e) => { objects = JSON.parse(await e.target.files[0].text()); $('otype').innerHTML = Object.entries(objects).map(([k, d]) => `<option value="${k}">${d.name}（${k}）</option>`).join(''); draw(); };
+$('fmap').onchange = async (e) => { map = { patches: [], objects: [], exits: [], ...JSON.parse(await e.target.files[0].text()) }; draw(); };
+$('new').onclick = () => { map = blank(Number($('nw').value) || 30, Number($('nh').value) || 20); draw(); };
+$('name').oninput = () => { map.name = $('name').value; }; $('outdoor').onchange = () => { map.outdoor = $('outdoor').checked; };
+$('save').onclick = () => { const b = new Blob([JSON.stringify(map)], { type: 'application/json' }), l = document.createElement('a'); l.href = URL.createObjectURL(b); l.download = 'map.json'; l.click(); };
+draw();
+</script>
+</html>

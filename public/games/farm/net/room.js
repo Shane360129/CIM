@@ -32,11 +32,11 @@ export function createRoom(convId) {
     connect,
     get online() { return !!ws && ws.readyState === 1; },
     send(msg) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(msg)); },
-    // 動作：送出請求，等伺服器說可以（ok）或不行（no）
-    act(kind, x, y) {
+    // 請求：送出去，等伺服器說可以（ok）或不行（no）。動作、買東西、出貨都走這裡
+    req(msg) {
       return new Promise((resolve) => {
         if (!ws || ws.readyState !== 1) return resolve({ t: 'no', reason: 'offline' });
-        const id = nextId++; pending.set(id, resolve); ws.send(JSON.stringify({ t: 'act', id, kind, x, y }));
+        const id = nextId++; pending.set(id, resolve); ws.send(JSON.stringify({ ...msg, id }));
         setTimeout(() => { if (pending.delete(id)) resolve({ t: 'no', reason: 'timeout' }); }, 6000);
       });
     },

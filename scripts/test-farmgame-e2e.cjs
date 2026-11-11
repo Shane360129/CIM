@@ -43,7 +43,7 @@ const p2=await pos(); ok(`方向鍵往下走 ${p1.y.toFixed(2)}→${p2.y.toFixed
 await p.keyboard.down('ArrowUp'); await p.waitForTimeout(3000); await p.keyboard.up('ArrowUp');
 const p3=await pos(); ok(`往上走會被房子／樹擋住 y=${p3.y.toFixed(2)}`, p3.y>2);
 await p.keyboard.press('Digit3'); ok('數字鍵切快捷列', await f.evaluate(()=>window.__game.hud.selected)===2);
-await p.keyboard.press('Space'); await p.waitForTimeout(200); ok('空白鍵動作有提示', (await f.locator('.toast').textContent()).length>0);
+await p.keyboard.press('KeyE'); await p.waitForTimeout(300); ok('E 打開背包，裡面有工具和種子', await f.locator('.panel .cell .iicon').count()>=7); await p.keyboard.press('KeyE'); await p.waitForTimeout(200); ok('再按一次關掉', await f.locator('.panel').count()===0);
 ok('相機跟著角色', await f.evaluate(()=>{const g=window.__game;const q=g.scenes.current.player;const c=g.camera;const sx=(q.x*64-c.x)*c.zoom;return sx>100&&sx<g.view.w-100}));
 await p.waitForTimeout(400); await p.screenshot({path:S+'/s1-play.png'});
 // 對方傳訊息 → 紅點

@@ -1,0 +1,325 @@
+{
+ "carrot": {
+  "name": "紅蘿蔔",
+  "kind": "crop",
+  "sell": 45,
+  "art": "item/carrot"
+ },
+ "seed_carrot": {
+  "name": "紅蘿蔔種子",
+  "kind": "seed",
+  "crop": "carrot",
+  "buy": 20,
+  "sell": 5,
+  "art": "item/seedbag",
+  "overlay": "item/carrot"
+ },
+ "daikon": {
+  "name": "白蘿蔔",
+  "kind": "crop",
+  "sell": 60,
+  "art": "item/daikon"
+ },
+ "seed_daikon": {
+  "name": "白蘿蔔種子",
+  "kind": "seed",
+  "crop": "daikon",
+  "buy": 25,
+  "sell": 6,
+  "art": "item/seedbag",
+  "overlay": "item/daikon"
+ },
+ "cabbage": {
+  "name": "高麗菜",
+  "kind": "crop",
+  "sell": 140,
+  "art": "item/cabbage"
+ },
+ "seed_cabbage": {
+  "name": "高麗菜種子",
+  "kind": "seed",
+  "crop": "cabbage",
+  "buy": 50,
+  "sell": 12,
+  "art": "item/seedbag",
+  "overlay": "item/cabbage"
+ },
+ "potato": {
+  "name": "馬鈴薯",
+  "kind": "crop",
+  "sell": 85,
+  "art": "item/potato"
+ },
+ "seed_potato": {
+  "name": "馬鈴薯種子",
+  "kind": "seed",
+  "crop": "potato",
+  "buy": 35,
+  "sell": 8,
+  "art": "item/seedbag",
+  "overlay": "item/potato"
+ },
+ "strawberry": {
+  "name": "草莓",
+  "kind": "crop",
+  "sell": 70,
+  "art": "item/strawberry"
+ },
+ "seed_strawberry": {
+  "name": "草莓種子",
+  "kind": "seed",
+  "crop": "strawberry",
+  "buy": 90,
+  "sell": 22,
+  "art": "item/seedbag",
+  "overlay": "item/strawberry"
+ },
+ "spinach": {
+  "name": "菠菜",
+  "kind": "crop",
+  "sell": 30,
+  "art": "item/spinach"
+ },
+ "seed_spinach": {
+  "name": "菠菜種子",
+  "kind": "seed",
+  "crop": "spinach",
+  "buy": 15,
+  "sell": 3,
+  "art": "item/seedbag",
+  "overlay": "item/spinach"
+ },
+ "lettuce": {
+  "name": "萵苣",
+  "kind": "crop",
+  "sell": 48,
+  "art": "item/lettuce"
+ },
+ "seed_lettuce": {
+  "name": "萵苣種子",
+  "kind": "seed",
+  "crop": "lettuce",
+  "buy": 20,
+  "sell": 5,
+  "art": "item/seedbag",
+  "overlay": "item/lettuce"
+ },
+ "pea": {
+  "name": "豌豆",
+  "kind": "crop",
+  "sell": 40,
+  "art": "item/pea"
+ },
+ "seed_pea": {
+  "name": "豌豆種子",
+  "kind": "seed",
+  "crop": "pea",
+  "buy": 60,
+  "sell": 15,
+  "art": "item/seedbag",
+  "overlay": "item/pea"
+ },
+ "fava": {
+  "name": "蠶豆",
+  "kind": "crop",
+  "sell": 46,
+  "art": "item/fava"
+ },
+ "seed_fava": {
+  "name": "蠶豆種子",
+  "kind": "seed",
+  "crop": "fava",
+  "buy": 65,
+  "sell": 16,
+  "art": "item/seedbag",
+  "overlay": "item/fava"
+ },
+ "asparagus": {
+  "name": "蘆筍",
+  "kind": "crop",
+  "sell": 55,
+  "art": "item/asparagus"
+ },
+ "seed_asparagus": {
+  "name": "蘆筍種子",
+  "kind": "seed",
+  "crop": "asparagus",
+  "buy": 80,
+  "sell": 20,
+  "art": "item/seedbag",
+  "overlay": "item/asparagus"
+ },
+ "scallion": {
+  "name": "青蔥",
+  "kind": "crop",
+  "sell": 42,
+  "art": "item/scallion"
+ },
+ "seed_scallion": {
+  "name": "青蔥種子",
+  "kind": "seed",
+  "crop": "scallion",
+  "buy": 18,
+  "sell": 4,
+  "art": "item/seedbag",
+  "overlay": "item/scallion"
+ },
+ "cauliflower": {
+  "name": "花椰菜",
+  "kind": "crop",
+  "sell": 175,
+  "art": "item/cauliflower"
+ },
+ "seed_cauliflower": {
+  "name": "花椰菜種子",
+  "kind": "seed",
+  "crop": "cauliflower",
+  "buy": 60,
+  "sell": 15,
+  "art": "item/seedbag",
+  "overlay": "item/cauliflower"
+ },
+ "komatsuna": {
+  "name": "小松菜",
+  "kind": "crop",
+  "sell": 32,
+  "art": "item/komatsuna"
+ },
+ "seed_komatsuna": {
+  "name": "小松菜種子",
+  "kind": "seed",
+  "crop": "komatsuna",
+  "buy": 15,
+  "sell": 3,
+  "art": "item/seedbag",
+  "overlay": "item/komatsuna"
+ },
+ "beet": {
+  "name": "甜菜根",
+  "kind": "crop",
+  "sell": 68,
+  "art": "item/beet"
+ },
+ "seed_beet": {
+  "name": "甜菜根種子",
+  "kind": "seed",
+  "crop": "beet",
+  "buy": 28,
+  "sell": 7,
+  "art": "item/seedbag",
+  "overlay": "item/beet"
+ },
+ "tulip": {
+  "name": "鬱金香",
+  "kind": "crop",
+  "sell": 75,
+  "art": "item/tulip"
+ },
+ "seed_tulip": {
+  "name": "鬱金香種子",
+  "kind": "seed",
+  "crop": "tulip",
+  "buy": 30,
+  "sell": 7,
+  "art": "item/seedbag",
+  "overlay": "item/tulip"
+ },
+ "rapeseed": {
+  "name": "油菜花",
+  "kind": "crop",
+  "sell": 52,
+  "art": "item/rapeseed"
+ },
+ "seed_rapeseed": {
+  "name": "油菜花種子",
+  "kind": "seed",
+  "crop": "rapeseed",
+  "buy": 22,
+  "sell": 5,
+  "art": "item/seedbag",
+  "overlay": "item/rapeseed"
+ },
+ "hoe": {
+  "name": "鋤頭",
+  "kind": "tool",
+  "tool": "hoe",
+  "desc": "翻土",
+  "art": "tool/hoe"
+ },
+ "can": {
+  "name": "澆水壺",
+  "kind": "tool",
+  "tool": "can",
+  "desc": "澆水",
+  "art": "tool/can"
+ },
+ "axe": {
+  "name": "斧頭",
+  "kind": "tool",
+  "tool": "axe",
+  "desc": "砍樹、劈樹枝",
+  "art": "tool/axe"
+ },
+ "pick": {
+  "name": "十字鎬",
+  "kind": "tool",
+  "tool": "pick",
+  "desc": "敲石頭、整平翻過的土",
+  "art": "tool/pick"
+ },
+ "sickle": {
+  "name": "鐮刀",
+  "kind": "tool",
+  "tool": "sickle",
+  "desc": "割雜草、清掉枯掉的作物",
+  "art": "tool/sickle"
+ },
+ "wood": {
+  "name": "木材",
+  "kind": "material",
+  "sell": 8,
+  "art": "item/wood"
+ },
+ "stone": {
+  "name": "石頭",
+  "kind": "material",
+  "sell": 6,
+  "art": "item/stone"
+ },
+ "fiber": {
+  "name": "纖維",
+  "kind": "material",
+  "sell": 3,
+  "art": "item/fiber"
+ },
+ "branch": {
+  "name": "樹枝",
+  "kind": "material",
+  "sell": 2,
+  "art": "item/branch"
+ },
+ "sap": {
+  "name": "樹液",
+  "kind": "material",
+  "sell": 10,
+  "art": "item/sap"
+ },
+ "fertilizer": {
+  "name": "肥料",
+  "kind": "fertilizer",
+  "power": 1,
+  "buy": 30,
+  "sell": 7,
+  "art": "item/fertilizer",
+  "desc": "撒在翻過的土上，收成比較容易有好品質"
+ },
+ "fertilizer_gold": {
+  "name": "高級肥料",
+  "kind": "fertilizer",
+  "power": 2,
+  "buy": 90,
+  "sell": 22,
+  "art": "item/fertilizer_gold",
+  "desc": "好品質的機會更高"
+ }
+}
