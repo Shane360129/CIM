@@ -91,6 +91,7 @@ export function openPanel(ctx, mode, arg = {}) {
       root.append(mk('p', 'hint', cook ? `料理等級 ${lv}。對方也站在旁邊的話，一起煮出來的比較好吃（★）。煮好的料理在背包裡點它、再按「吃」。` : '用材料做加工機，做好後拿在手上，對著農場的空地按動作鍵放下去。'));
       const list = mk('div', 'shoplist');
       for (const [id, rc] of Object.entries(cook ? ctx.data.recipes : ctx.data.machines)) {
+        if (!cook && !rc.craft) continue; // 果樹：買樹苗，不是在製作台做的
         const out = cook ? 'dish_' + id : 'm_' + id, it = items[out], need = cook ? rc.in : rc.craft, row = mk('div', 'shoprow'); row.dataset.item = id;
         const locked = cook && lv < rc.level, can = !locked && !!planTake(items, W.self.inv, need);
         row.append(itemIcon(items, out), mk('span', 'sname', it.name), mk('span', 'sdesc', locked ? `料理 ${rc.level} 級才會煮` : needText(need) + (cook ? `・體力 +${it.energy}${it.buff ? '・' + bal.buffNames[it.buff[0]] : ''}` : '')));

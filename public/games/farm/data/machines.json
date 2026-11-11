@@ -169,5 +169,225 @@
   "craft": {
    "stone": 25
   }
+ },
+ "tree_apple": {
+  "name": "蘋果樹",
+  "in": [],
+  "minutes": 3600,
+  "grow": 9600,
+  "gives": "apple",
+  "art": "ftree/apple",
+  "tree": true,
+  "w": 1.9,
+  "h": 2.5
+ },
+ "tree_peach": {
+  "name": "桃子樹",
+  "in": [],
+  "minutes": 3600,
+  "grow": 9600,
+  "gives": "peach",
+  "art": "ftree/peach",
+  "tree": true,
+  "w": 1.9,
+  "h": 2.5
+ },
+ "tree_cherry": {
+  "name": "櫻桃樹",
+  "in": [],
+  "minutes": 3600,
+  "grow": 9600,
+  "gives": "cherry",
+  "art": "ftree/cherry",
+  "tree": true,
+  "w": 1.9,
+  "h": 2.5
+ },
+ "tree_pear": {
+  "name": "梨子樹",
+  "in": [],
+  "minutes": 3600,
+  "grow": 9600,
+  "gives": "pear",
+  "art": "ftree/pear",
+  "tree": true,
+  "w": 1.9,
+  "h": 2.5
+ },
+ "tree_plum": {
+  "name": "李子樹",
+  "in": [],
+  "minutes": 3600,
+  "grow": 9600,
+  "gives": "plum",
+  "art": "ftree/plum",
+  "tree": true,
+  "w": 1.9,
+  "h": 2.5
+ },
+ "tree_persimmon": {
+  "name": "柿子樹",
+  "in": [],
+  "minutes": 3600,
+  "grow": 9600,
+  "gives": "persimmon",
+  "art": "ftree/persimmon",
+  "tree": true,
+  "w": 1.9,
+  "h": 2.5
+ },
+ "tree_orange": {
+  "name": "橘子樹",
+  "in": [],
+  "minutes": 3600,
+  "grow": 9600,
+  "gives": "orange",
+  "art": "ftree/orange",
+  "tree": true,
+  "w": 1.9,
+  "h": 2.5
+ },
+ "tree_lemon": {
+  "name": "檸檬樹",
+  "in": [],
+  "minutes": 3600,
+  "grow": 9600,
+  "gives": "lemon",
+  "art": "ftree/lemon",
+  "tree": true,
+  "w": 1.9,
+  "h": 2.5
+ },
+ "tree_pomelo": {
+  "name": "柚子樹",
+  "in": [],
+  "minutes": 3600,
+  "grow": 9600,
+  "gives": "pomelo",
+  "art": "ftree/pomelo",
+  "tree": true,
+  "w": 1.9,
+  "h": 2.5
+ },
+ "tree_mango": {
+  "name": "芒果樹",
+  "in": [],
+  "minutes": 3600,
+  "grow": 9600,
+  "gives": "mango",
+  "art": "ftree/mango",
+  "tree": true,
+  "w": 1.9,
+  "h": 2.5
+ },
+ "tree_banana": {
+  "name": "香蕉樹",
+  "in": [],
+  "minutes": 3600,
+  "grow": 9600,
+  "gives": "banana",
+  "art": "ftree/banana",
+  "tree": true,
+  "w": 1.9,
+  "h": 2.5
+ },
+ "tree_coconut": {
+  "name": "椰子樹",
+  "in": [],
+  "minutes": 3600,
+  "grow": 9600,
+  "gives": "coconut",
+  "art": "ftree/coconut",
+  "tree": true,
+  "w": 1.9,
+  "h": 2.5
+ },
+ "tree_lychee": {
+  "name": "荔枝樹",
+  "in": [],
+  "minutes": 3600,
+  "grow": 9600,
+  "gives": "lychee",
+  "art": "ftree/lychee",
+  "tree": true,
+  "w": 1.9,
+  "h": 2.5
+ },
+ "tree_longan": {
+  "name": "龍眼樹",
+  "in": [],
+  "minutes": 3600,
+  "grow": 9600,
+  "gives": "longan",
+  "art": "ftree/longan",
+  "tree": true,
+  "w": 1.9,
+  "h": 2.5
+ },
+ "tree_guava": {
+  "name": "芭樂樹",
+  "in": [],
+  "minutes": 3600,
+  "grow": 9600,
+  "gives": "guava",
+  "art": "ftree/guava",
+  "tree": true,
+  "w": 1.9,
+  "h": 2.5
+ },
+ "tree_loquat": {
+  "name": "枇杷樹",
+  "in": [],
+  "minutes": 3600,
+  "grow": 9600,
+  "gives": "loquat",
+  "art": "ftree/loquat",
+  "tree": true,
+  "w": 1.9,
+  "h": 2.5
+ },
+ "tree_fig": {
+  "name": "無花果樹",
+  "in": [],
+  "minutes": 3600,
+  "grow": 9600,
+  "gives": "fig",
+  "art": "ftree/fig",
+  "tree": true,
+  "w": 1.9,
+  "h": 2.5
+ },
+ "tree_pomegranate": {
+  "name": "石榴樹",
+  "in": [],
+  "minutes": 3600,
+  "grow": 9600,
+  "gives": "pomegranate",
+  "art": "ftree/pomegranate",
+  "tree": true,
+  "w": 1.9,
+  "h": 2.5
+ },
+ "tree_chestnut": {
+  "name": "栗子樹",
+  "in": [],
+  "minutes": 3600,
+  "grow": 9600,
+  "gives": "chestnut",
+  "art": "ftree/chestnut",
+  "tree": true,
+  "w": 1.9,
+  "h": 2.5
+ },
+ "tree_olive": {
+  "name": "橄欖樹",
+  "in": [],
+  "minutes": 3600,
+  "grow": 9600,
+  "gives": "olive",
+  "art": "ftree/olive",
+  "tree": true,
+  "w": 1.9,
+  "h": 2.5
  }
 }

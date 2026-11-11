@@ -93,5 +93,35 @@
    "bandage"
   ],
   "hint": "白芷醫生：累了就休息，別硬撐。"
+ },
+ "nursery": {
+  "name": "果樹苗圃",
+  "use": "store",
+  "owner": "ahe",
+  "open": 480,
+  "close": 1080,
+  "items": [
+   "m_tree_apple",
+   "m_tree_peach",
+   "m_tree_cherry",
+   "m_tree_pear",
+   "m_tree_plum",
+   "m_tree_persimmon",
+   "m_tree_orange",
+   "m_tree_lemon",
+   "m_tree_pomelo",
+   "m_tree_mango",
+   "m_tree_banana",
+   "m_tree_coconut",
+   "m_tree_lychee",
+   "m_tree_longan",
+   "m_tree_guava",
+   "m_tree_loquat",
+   "m_tree_fig",
+   "m_tree_pomegranate",
+   "m_tree_chestnut",
+   "m_tree_olive"
+  ],
+  "hint": "果樹苗種在農場的空地上（不是田裡）。8 天長大，之後一年四季每 3 天結一次果，不用澆水。"
  }
 }

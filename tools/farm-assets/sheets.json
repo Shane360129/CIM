@@ -2873,6 +2873,359 @@
     ]
    ],
    "bg": "#00ffff"
+  },
+  "6-52": {
+   "kind": "tree",
+   "names": [
+    [
+     "ftree/apple/sapling",
+     "ftree/apple/small",
+     "ftree/apple/stump",
+     "ftree/apple/fruit"
+    ],
+    [
+     "ftree/apple/spring",
+     "ftree/apple/summer",
+     "ftree/apple/autumn",
+     "ftree/apple/winter"
+    ]
+   ]
+  },
+  "6-53": {
+   "kind": "tree",
+   "names": [
+    [
+     "ftree/peach/sapling",
+     "ftree/peach/small",
+     "ftree/peach/stump",
+     "ftree/peach/fruit"
+    ],
+    [
+     "ftree/peach/spring",
+     "ftree/peach/summer",
+     "ftree/peach/autumn",
+     "ftree/peach/winter"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "6-54": {
+   "kind": "tree",
+   "names": [
+    [
+     "ftree/cherry/sapling",
+     "ftree/cherry/small",
+     "ftree/cherry/stump",
+     "ftree/cherry/fruit"
+    ],
+    [
+     "ftree/cherry/spring",
+     "ftree/cherry/summer",
+     "ftree/cherry/autumn",
+     "ftree/cherry/winter"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "6-55": {
+   "kind": "tree",
+   "names": [
+    [
+     "ftree/pear/sapling",
+     "ftree/pear/small",
+     "ftree/pear/stump",
+     "ftree/pear/fruit"
+    ],
+    [
+     "ftree/pear/spring",
+     "ftree/pear/summer",
+     "ftree/pear/autumn",
+     "ftree/pear/winter"
+    ]
+   ],
+   "splitCols": 4
+  },
+  "6-56": {
+   "kind": "tree",
+   "names": [
+    [
+     "ftree/plum/sapling",
+     "ftree/plum/small",
+     "ftree/plum/stump",
+     "ftree/plum/fruit"
+    ],
+    [
+     "ftree/plum/spring",
+     "ftree/plum/summer",
+     "ftree/plum/autumn",
+     "ftree/plum/winter"
+    ]
+   ],
+   "bg": "#00ffff",
+   "splitCols": 4
+  },
+  "6-57": {
+   "kind": "tree",
+   "names": [
+    [
+     "ftree/persimmon/sapling",
+     "ftree/persimmon/small",
+     "ftree/persimmon/stump",
+     "ftree/persimmon/fruit"
+    ],
+    [
+     "ftree/persimmon/spring",
+     "ftree/persimmon/summer",
+     "ftree/persimmon/autumn",
+     "ftree/persimmon/winter"
+    ]
+   ],
+   "splitCols": 4
+  },
+  "6-58": {
+   "kind": "tree",
+   "names": [
+    [
+     "ftree/orange/sapling",
+     "ftree/orange/small",
+     "ftree/orange/stump",
+     "ftree/orange/fruit"
+    ],
+    [
+     "ftree/orange/spring",
+     "ftree/orange/summer",
+     "ftree/orange/autumn",
+     "ftree/orange/winter"
+    ]
+   ]
+  },
+  "6-59": {
+   "kind": "tree",
+   "names": [
+    [
+     "ftree/lemon/sapling",
+     "ftree/lemon/small",
+     "ftree/lemon/stump",
+     "ftree/lemon/fruit"
+    ],
+    [
+     "ftree/lemon/spring",
+     "ftree/lemon/summer",
+     "ftree/lemon/autumn",
+     "ftree/lemon/winter"
+    ]
+   ]
+  },
+  "6-60": {
+   "kind": "tree",
+   "names": [
+    [
+     "ftree/pomelo/sapling",
+     "ftree/pomelo/small",
+     "ftree/pomelo/stump",
+     "ftree/pomelo/fruit"
+    ],
+    [
+     "ftree/pomelo/spring",
+     "ftree/pomelo/summer",
+     "ftree/pomelo/autumn",
+     "ftree/pomelo/winter"
+    ]
+   ]
+  },
+  "6-61": {
+   "kind": "tree",
+   "names": [
+    [
+     "ftree/mango/sapling",
+     "ftree/mango/small",
+     "ftree/mango/stump",
+     "ftree/mango/fruit"
+    ],
+    [
+     "ftree/mango/spring",
+     "ftree/mango/summer",
+     "ftree/mango/autumn",
+     "ftree/mango/winter"
+    ]
+   ]
+  },
+  "6-62": {
+   "kind": "tree",
+   "names": [
+    [
+     "ftree/banana/sapling",
+     "ftree/banana/small",
+     "ftree/banana/stump",
+     "ftree/banana/fruit"
+    ],
+    [
+     "ftree/banana/spring",
+     "ftree/banana/summer",
+     "ftree/banana/autumn",
+     "ftree/banana/winter"
+    ]
+   ]
+  },
+  "6-63": {
+   "kind": "tree",
+   "names": [
+    [
+     "ftree/coconut/sapling",
+     "ftree/coconut/small",
+     "ftree/coconut/stump",
+     "ftree/coconut/fruit"
+    ],
+    [
+     "ftree/coconut/spring",
+     "ftree/coconut/summer",
+     "ftree/coconut/autumn",
+     "ftree/coconut/winter"
+    ]
+   ]
+  },
+  "6-64": {
+   "kind": "tree",
+   "names": [
+    [
+     "ftree/lychee/sapling",
+     "ftree/lychee/small",
+     "ftree/lychee/stump",
+     "ftree/lychee/fruit"
+    ],
+    [
+     "ftree/lychee/spring",
+     "ftree/lychee/summer",
+     "ftree/lychee/autumn",
+     "ftree/lychee/winter"
+    ]
+   ],
+   "splitCols": 4
+  },
+  "6-65": {
+   "kind": "tree",
+   "names": [
+    [
+     "ftree/longan/sapling",
+     "ftree/longan/small",
+     "ftree/longan/stump",
+     "ftree/longan/fruit"
+    ],
+    [
+     "ftree/longan/spring",
+     "ftree/longan/summer",
+     "ftree/longan/autumn",
+     "ftree/longan/winter"
+    ]
+   ],
+   "splitCols": 4
+  },
+  "6-66": {
+   "kind": "tree",
+   "names": [
+    [
+     "ftree/guava/sapling",
+     "ftree/guava/small",
+     "ftree/guava/stump",
+     "ftree/guava/fruit"
+    ],
+    [
+     "ftree/guava/spring",
+     "ftree/guava/summer",
+     "ftree/guava/autumn",
+     "ftree/guava/winter"
+    ]
+   ],
+   "splitCols": 4
+  },
+  "6-67": {
+   "kind": "tree",
+   "names": [
+    [
+     "ftree/loquat/sapling",
+     "ftree/loquat/small",
+     "ftree/loquat/stump",
+     "ftree/loquat/fruit"
+    ],
+    [
+     "ftree/loquat/spring",
+     "ftree/loquat/summer",
+     "ftree/loquat/autumn",
+     "ftree/loquat/winter"
+    ]
+   ],
+   "splitCols": 4
+  },
+  "6-68": {
+   "kind": "tree",
+   "names": [
+    [
+     "ftree/fig/sapling",
+     "ftree/fig/small",
+     "ftree/fig/stump",
+     "ftree/fig/fruit"
+    ],
+    [
+     "ftree/fig/spring",
+     "ftree/fig/summer",
+     "ftree/fig/autumn",
+     "ftree/fig/winter"
+    ]
+   ],
+   "splitCols": 4
+  },
+  "6-69": {
+   "kind": "tree",
+   "names": [
+    [
+     "ftree/pomegranate/sapling",
+     "ftree/pomegranate/small",
+     "ftree/pomegranate/stump",
+     "ftree/pomegranate/fruit"
+    ],
+    [
+     "ftree/pomegranate/spring",
+     "ftree/pomegranate/summer",
+     "ftree/pomegranate/autumn",
+     "ftree/pomegranate/winter"
+    ]
+   ]
+  },
+  "6-70": {
+   "kind": "tree",
+   "names": [
+    [
+     "ftree/chestnut/sapling",
+     "ftree/chestnut/small",
+     "ftree/chestnut/stump",
+     "ftree/chestnut/fruit"
+    ],
+    [
+     "ftree/chestnut/spring",
+     "ftree/chestnut/summer",
+     "ftree/chestnut/autumn",
+     "ftree/chestnut/winter"
+    ]
+   ],
+   "splitCols": 4
+  },
+  "6-71": {
+   "kind": "tree",
+   "names": [
+    [
+     "ftree/olive/sapling",
+     "ftree/olive/small",
+     "ftree/olive/stump",
+     "ftree/olive/fruit"
+    ],
+    [
+     "ftree/olive/spring",
+     "ftree/olive/summer",
+     "ftree/olive/autumn",
+     "ftree/olive/winter"
+    ]
+   ],
+   "splitCols": 4
   }
  }
 }

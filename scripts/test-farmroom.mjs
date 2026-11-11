@@ -232,6 +232,7 @@ await go(A, 0.6, 15.5); await req(A, { t: 'warp', i: 0 });
 check('從小鎮西邊走回路上', A.log.filter((m) => m.t === 'warp' && m.id === a.user.id).pop().map === 'road');
 check('離攤位太遠不能買', (await req(A, { t: 'buy', item: 'seed_cabbage', n: 1 })).reason === 'far');
 await go(A, 14, 6.6);
+check('果樹不能在製作台做（要買樹苗）；果樹苗圃的東西在種子攤買不到', ['unknown', 'far'].includes((await req(A, { t: 'craft', kind: 'tree_apple' })).reason) && (await req(A, { t: 'buy', item: 'm_tree_apple', n: 1 })).reason === 'unknown');
 check('種子照季節賣：春天買不到夏天的番茄種子，攤子上也沒有雜貨店才有的花椰菜種子', (await req(A, { t: 'buy', item: 'seed_tomato', n: 1 })).reason === 'unknown' && (await req(A, { t: 'buy', item: 'seed_cauliflower', n: 1 })).reason === 'unknown');
 check('買種子：錢是共用的（兩個人都看到變少），背包多了種子', (await req(A, { t: 'buy', item: 'seed_strawberry', n: 2 })).t === 'ok' && has(A, 'seed_strawberry') === 2 && A.farm.money === 320 && !!(await Bc.wait('farm', (m) => m.money === 320)));
 check('錢不夠買不了、清單以外的東西買不了', (await req(A, { t: 'buy', item: 'seed_strawberry', n: 50 })).reason === 'money' && (await req(A, { t: 'buy', shop: 'nowhere', item: 'hay', n: 1 })).reason === 'unknown' && (await req(A, { t: 'buy', item: 'seed_cauliflower', n: 1 })).reason === 'unknown' && (await req(A, { t: 'buy', item: 'hoe', n: 1 })).reason === 'unknown');

@@ -2714,5 +2714,338 @@
   "tags": [
    "flower"
   ]
+ },
+ "apple": {
+  "name": "蘋果",
+  "kind": "crop",
+  "sell": 130,
+  "art": "item/apple",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "m_tree_apple": {
+  "name": "蘋果樹苗",
+  "kind": "machine",
+  "machine": "tree_apple",
+  "buy": 1150,
+  "sell": 287,
+  "art": "ftree/apple/sapling",
+  "desc": "種在農場的空地上。8 天長大，之後每 3 天結一次果"
+ },
+ "peach": {
+  "name": "桃子",
+  "kind": "crop",
+  "sell": 150,
+  "art": "item/peach",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "m_tree_peach": {
+  "name": "桃子樹苗",
+  "kind": "machine",
+  "machine": "tree_peach",
+  "buy": 1350,
+  "sell": 337,
+  "art": "ftree/peach/sapling",
+  "desc": "種在農場的空地上。8 天長大，之後每 3 天結一次果"
+ },
+ "cherry": {
+  "name": "櫻桃",
+  "kind": "crop",
+  "sell": 110,
+  "art": "item/cherry",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "m_tree_cherry": {
+  "name": "櫻桃樹苗",
+  "kind": "machine",
+  "machine": "tree_cherry",
+  "buy": 1000,
+  "sell": 250,
+  "art": "ftree/cherry/sapling",
+  "desc": "種在農場的空地上。8 天長大，之後每 3 天結一次果"
+ },
+ "pear": {
+  "name": "梨子",
+  "kind": "crop",
+  "sell": 130,
+  "art": "item/pear",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "m_tree_pear": {
+  "name": "梨子樹苗",
+  "kind": "machine",
+  "machine": "tree_pear",
+  "buy": 1150,
+  "sell": 287,
+  "art": "ftree/pear/sapling",
+  "desc": "種在農場的空地上。8 天長大，之後每 3 天結一次果"
+ },
+ "plum": {
+  "name": "李子",
+  "kind": "crop",
+  "sell": 115,
+  "art": "item/plum",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "m_tree_plum": {
+  "name": "李子樹苗",
+  "kind": "machine",
+  "machine": "tree_plum",
+  "buy": 1050,
+  "sell": 262,
+  "art": "ftree/plum/sapling",
+  "desc": "種在農場的空地上。8 天長大，之後每 3 天結一次果"
+ },
+ "m_tree_persimmon": {
+  "name": "柿子樹苗",
+  "kind": "machine",
+  "machine": "tree_persimmon",
+  "buy": 250,
+  "sell": 62,
+  "art": "ftree/persimmon/sapling",
+  "desc": "種在農場的空地上。8 天長大，之後每 3 天結一次果"
+ },
+ "orange": {
+  "name": "橘子",
+  "kind": "crop",
+  "sell": 120,
+  "art": "item/orange",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "m_tree_orange": {
+  "name": "橘子樹苗",
+  "kind": "machine",
+  "machine": "tree_orange",
+  "buy": 1100,
+  "sell": 275,
+  "art": "ftree/orange/sapling",
+  "desc": "種在農場的空地上。8 天長大，之後每 3 天結一次果"
+ },
+ "lemon": {
+  "name": "檸檬",
+  "kind": "crop",
+  "sell": 110,
+  "art": "item/lemon",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "m_tree_lemon": {
+  "name": "檸檬樹苗",
+  "kind": "machine",
+  "machine": "tree_lemon",
+  "buy": 1000,
+  "sell": 250,
+  "art": "ftree/lemon/sapling",
+  "desc": "種在農場的空地上。8 天長大，之後每 3 天結一次果"
+ },
+ "pomelo": {
+  "name": "柚子",
+  "kind": "crop",
+  "sell": 160,
+  "art": "item/pomelo",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "m_tree_pomelo": {
+  "name": "柚子樹苗",
+  "kind": "machine",
+  "machine": "tree_pomelo",
+  "buy": 1450,
+  "sell": 362,
+  "art": "ftree/pomelo/sapling",
+  "desc": "種在農場的空地上。8 天長大，之後每 3 天結一次果"
+ },
+ "mango": {
+  "name": "芒果",
+  "kind": "crop",
+  "sell": 180,
+  "art": "item/mango",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "m_tree_mango": {
+  "name": "芒果樹苗",
+  "kind": "machine",
+  "machine": "tree_mango",
+  "buy": 1600,
+  "sell": 400,
+  "art": "ftree/mango/sapling",
+  "desc": "種在農場的空地上。8 天長大，之後每 3 天結一次果"
+ },
+ "banana": {
+  "name": "香蕉",
+  "kind": "crop",
+  "sell": 125,
+  "art": "item/banana",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "m_tree_banana": {
+  "name": "香蕉樹苗",
+  "kind": "machine",
+  "machine": "tree_banana",
+  "buy": 1100,
+  "sell": 275,
+  "art": "ftree/banana/sapling",
+  "desc": "種在農場的空地上。8 天長大，之後每 3 天結一次果"
+ },
+ "m_tree_coconut": {
+  "name": "椰子樹苗",
+  "kind": "machine",
+  "machine": "tree_coconut",
+  "buy": 250,
+  "sell": 62,
+  "art": "ftree/coconut/sapling",
+  "desc": "種在農場的空地上。8 天長大，之後每 3 天結一次果"
+ },
+ "lychee": {
+  "name": "荔枝",
+  "kind": "crop",
+  "sell": 150,
+  "art": "item/lychee",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "m_tree_lychee": {
+  "name": "荔枝樹苗",
+  "kind": "machine",
+  "machine": "tree_lychee",
+  "buy": 1350,
+  "sell": 337,
+  "art": "ftree/lychee/sapling",
+  "desc": "種在農場的空地上。8 天長大，之後每 3 天結一次果"
+ },
+ "longan": {
+  "name": "龍眼",
+  "kind": "crop",
+  "sell": 135,
+  "art": "item/longan",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "m_tree_longan": {
+  "name": "龍眼樹苗",
+  "kind": "machine",
+  "machine": "tree_longan",
+  "buy": 1200,
+  "sell": 300,
+  "art": "ftree/longan/sapling",
+  "desc": "種在農場的空地上。8 天長大，之後每 3 天結一次果"
+ },
+ "guava": {
+  "name": "芭樂",
+  "kind": "crop",
+  "sell": 115,
+  "art": "item/guava",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "m_tree_guava": {
+  "name": "芭樂樹苗",
+  "kind": "machine",
+  "machine": "tree_guava",
+  "buy": 1050,
+  "sell": 262,
+  "art": "ftree/guava/sapling",
+  "desc": "種在農場的空地上。8 天長大，之後每 3 天結一次果"
+ },
+ "loquat": {
+  "name": "枇杷",
+  "kind": "crop",
+  "sell": 125,
+  "art": "item/loquat",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "m_tree_loquat": {
+  "name": "枇杷樹苗",
+  "kind": "machine",
+  "machine": "tree_loquat",
+  "buy": 1100,
+  "sell": 275,
+  "art": "ftree/loquat/sapling",
+  "desc": "種在農場的空地上。8 天長大，之後每 3 天結一次果"
+ },
+ "fig": {
+  "name": "無花果",
+  "kind": "crop",
+  "sell": 140,
+  "art": "item/fig",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "m_tree_fig": {
+  "name": "無花果樹苗",
+  "kind": "machine",
+  "machine": "tree_fig",
+  "buy": 1250,
+  "sell": 312,
+  "art": "ftree/fig/sapling",
+  "desc": "種在農場的空地上。8 天長大，之後每 3 天結一次果"
+ },
+ "pomegranate": {
+  "name": "石榴",
+  "kind": "crop",
+  "sell": 155,
+  "art": "item/pomegranate",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "m_tree_pomegranate": {
+  "name": "石榴樹苗",
+  "kind": "machine",
+  "machine": "tree_pomegranate",
+  "buy": 1400,
+  "sell": 350,
+  "art": "ftree/pomegranate/sapling",
+  "desc": "種在農場的空地上。8 天長大，之後每 3 天結一次果"
+ },
+ "m_tree_chestnut": {
+  "name": "栗子樹苗",
+  "kind": "machine",
+  "machine": "tree_chestnut",
+  "buy": 200,
+  "sell": 50,
+  "art": "ftree/chestnut/sapling",
+  "desc": "種在農場的空地上。8 天長大，之後每 3 天結一次果"
+ },
+ "olive": {
+  "name": "橄欖",
+  "kind": "crop",
+  "sell": 105,
+  "art": "item/olive",
+  "tags": [
+   "fruit"
+  ]
+ },
+ "m_tree_olive": {
+  "name": "橄欖樹苗",
+  "kind": "machine",
+  "machine": "tree_olive",
+  "buy": 950,
+  "sell": 237,
+  "art": "ftree/olive/sapling",
+  "desc": "種在農場的空地上。8 天長大，之後每 3 天結一次果"
  }
 }

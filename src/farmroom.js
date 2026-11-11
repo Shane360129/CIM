@@ -301,7 +301,7 @@ export class FarmRoom {
       invTake(from, slot, k); self(); farmChanged(); done();
     } else if (m.t === 'warp') this.onWarp(ws, a, p, m, { no, done });
     else if (m.t === 'craft') { // 製作台：用材料做加工機
-      const mc = MACHINES[m.kind]; if (!near('workbench')) return no('far'); if (!mc) return no('unknown');
+      const mc = MACHINES[m.kind]; if (!near('workbench')) return no('far'); if (!mc || !mc.craft) return no('unknown'); // 果樹不是做出來的，要買樹苗
       const plan = planTake(ITEMS, p.inv, mc.craft); if (!plan) return no('materials');
       const inv = JSON.parse(JSON.stringify(p.inv)); for (const [i, k] of plan) invTake(inv, i, k);
       if (!invAdd(inv, BAL.invSlots, 'm_' + m.kind, 1)) return no('full');
@@ -648,7 +648,7 @@ export class FarmRoom {
     if (item && item.kind === 'machine') { // 把加工機放在農場的空地上
       if (a.map !== 'farm' || !['grass', 'path'].includes(ground) || tile || STATIC[a.map].has(x + ',' + y)) return bad('place');
       const mc = MACHINES[item.machine]; invTake(p.inv, Math.floor(Number(m.slot)), 1);
-      this.objs.set(k, { type: 'machine', kind: item.machine, hp: 1, ...(mc.gives ? { out: mc.gives, n: 1, doneAt: this.absNow() + mc.minutes } : {}) });
+      this.objs.set(k, { type: 'machine', kind: item.machine, hp: 1, ...(mc.gives ? { out: mc.gives, n: 1, doneAt: this.absNow() + (mc.grow || mc.minutes) } : {}) }); // 果樹第一次要先長大（grow），之後每隔 minutes 結一次果
       this.dirtyObjs.add(k); self(); fx('plant'); this.broadcast({ t: 'objs', by: a.id, list: [this.pubObj(k)] }); return done();
     }
     if (item && item.kind === 'fertilizer') { if (!tile) return bad('untilled'); if (tile.f) return bad('already'); if (crop && cropStage(def, crop.g) > 0) return bad('late'); invTake(p.inv, Math.floor(Number(m.slot)), 1); tile.f = item.power; return changed('fertilize'); }
