@@ -70,6 +70,10 @@ const { chromium } = require('playwright');
   await tp(pa, 12.5, 10.4, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
   await pa.locator('.panel .cell').nth(25).click(); await pb.waitForTimeout(500);
   ok('對著出貨箱按空白鍵打開，點纖維放進去：B 也看得到箱子裡有東西', (await st(pb)).ship.length === 1 && (await count(pa, 'fiber')) === 0); await pa.keyboard.press('Escape');
+  // 製作台
+  await tp(pa, 14.5, 10.4, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
+  ok('對著製作台按空白鍵：列出 10 種加工機和要的材料，材料不夠的按不下去', (await pa.locator('.panel .shoprow').count()) === 10 && (await pa.locator('.panel .shoprow .pbtn:disabled').count()) === 10 && /木材×20/.test(await pa.locator('.panel .shoprow[data-item=jam]').textContent()));
+  await pa.screenshot({ path: S + '/s5-craft.png' }); await pa.keyboard.press('Escape');
   // 斷線重連
   await pa.evaluate(() => window.__game.world.room.drop()); await pb.waitForTimeout(500);
   ok('A 斷線：B 那邊 A 消失', (await st(pb)).n === 0);
@@ -113,6 +117,9 @@ const { chromium } = require('playwright');
   await pa.locator('.maker [data-next=hat]').click(); await pa.locator('.maker [data-act=done]').click(); await pb.waitForTimeout(600);
   sa = await st(pa); sb = await st(pb);
   ok('衣櫃換裝（戴上草帽），B 馬上看到；回到農舍畫面時看得到 B 剛翻的土', sa.me.look.hat === 'straw' && sb.other.look.hat === 'straw' && sa.tiles.length === 2);
+  await tp(pa, 8.5, 2.5, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
+  ok('對著爐灶按空白鍵：列出 20 道料理，等級不夠的會寫幾級才會煮', (await pa.locator('.panel .shoprow').count()) === 20 && /料理 8 級才會煮/.test(await pa.locator('.panel .shoprow[data-item=strawberry_cake]').textContent()));
+  await pa.screenshot({ path: S + '/s5-cook.png' }); await pa.keyboard.press('Escape');
   await tp(pa, 6.5, 2.5, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
   await pa.locator('.panel .grid').last().locator('.cell').nth(await slotOf(pa, 'seed_spinach')).click(); await pb.waitForTimeout(500);
   ok('倉庫箱：A 把菠菜種子放進去，B 那邊也看得到（共用）', (await st(pb)).chest.length === 1 && (await count(pa, 'seed_spinach')) === 0); await pa.keyboard.press('Escape');

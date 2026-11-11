@@ -17,6 +17,9 @@ export function createWorld(session, bal) {
     setObjs(list) { for (const o of list) { if (o.type) w.objs.set(key(o.map, o.x, o.y), o); else w.objs.delete(key(o.map, o.x, o.y)); } w.objsVersion = (w.objsVersion || 0) + 1; },
     tile(map, x, y) { return w.tiles.get(key(map, x, y)); }, obj(map, x, y) { return w.objs.get(key(map, x, y)); },
     // 現在幾點：伺服器每 10 秒說一次，中間自己照速度往前推
+    // 絕對時間（遊戲分鐘）：加工機什麼時候好、料理效果什麼時候結束都用它比
+    abs() { const f = w.farm; return f ? (f.day - 1) * (f.dayEnd - f.dayStart) + (w.minute() - f.dayStart) : 0; },
+    buff(k) { return ((w.self.buffs || {})[k] || 0) > w.abs(); },
     minute() { const f = w.farm; return f ? Math.min(f.dayEnd, f.minute + (w.ready ? (performance.now() - f.at) / 1000 * f.minutesPerSecond : 0)) : 0; },
     setLook(look, name) { w.me.look = look; if (name) w.me.name = name; room.send({ t: 'look', look, name }); },
     who(id) { return id === w.me.id ? w.me : w.others.get(id); },
@@ -35,7 +38,7 @@ export function createWorld(session, bal) {
   room.on('move', (m) => { const o = w.others.get(m.id); if (!o) return; if (o.map !== m.map) { o.map = m.map; o.x = m.x; o.y = m.y; } Object.assign(o, { tx: m.x, ty: m.y, vx: m.vx, vy: m.vy, dir: m.dir }); if (Math.hypot(o.x - m.x, o.y - m.y) > 4) { o.x = m.x; o.y = m.y; } });
   room.on('tiles', (m) => { w.setTiles(m.list); emit('tiles', m); });
   room.on('objs', (m) => { w.setObjs(m.list); emit('objs', m); });
-  room.on('self', (m) => { w.self = { inv: m.inv, energy: m.energy, energyMax: m.energyMax, skills: m.skills, fishRec: m.fishRec || {} }; emit('self', m); });
+  room.on('self', (m) => { w.self = { inv: m.inv, energy: m.energy, energyMax: m.energyMax, skills: m.skills, fishRec: m.fishRec || {}, buffs: m.buffs || {} }; emit('self', m); });
   room.on('farm', (m) => { if (w.farm) Object.assign(w.farm, { money: m.money, ship: m.ship, chest: m.chest }); emit('farm', m); });
   room.on('warp', (m) => {
     const who = w.who(m.id); if (!who) return;
@@ -45,10 +48,10 @@ export function createWorld(session, bal) {
   // 有人做了動作：播他的動作（揮工具、澆水），收成的時候頭上冒出收到的東西
   room.on('fx', (m) => {
     const who = w.who(m.id); if (!who) return;
-    who.action = m.kind === 'water' ? 'water' : m.kind === 'cast' ? 'cast' : m.kind === 'harvest' || m.kind === 'plant' || m.kind === 'fertilize' ? 'eat' : 'swing'; who.actionT = 0; who.tool = m.kind;
+    who.action = m.kind === 'water' ? 'water' : m.kind === 'cast' ? 'cast' : m.kind === 'eat' || m.kind === 'cook' ? 'eat' : m.kind === 'harvest' || m.kind === 'plant' || m.kind === 'fertilize' ? 'eat' : 'swing'; who.actionT = 0; who.tool = m.kind;
     if (m.id !== w.me.id && m.map === w.me.map) w.mark = { x: m.x, y: m.y, life: 0.6, color: '#ffd76a' };
     who.fishing = m.kind === 'cast' ? { x: m.x, y: m.y } : null; // 對方在釣魚：看得到他的浮標
-    if (m.kind === 'harvest') w.floaters.push({ map: m.map, x: m.x + 0.5, y: m.y, item: m.item, q: m.q, life: 1.1 });
+    if (m.kind === 'harvest' || m.kind === 'cook') w.floaters.push({ map: m.map, x: m.x + 0.5, y: m.y, item: m.item, q: m.q, life: 1.1 });
   });
   room.on('no', (m) => { if (m.tile) w.setTiles([m.tile]); if (m.obj) w.setObjs([m.obj]); });
   room.on('look', (m) => { const who = w.who(m.id); if (who) { who.look = m.look; who.name = m.name; } });

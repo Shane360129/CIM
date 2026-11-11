@@ -204,3 +204,5 @@
 {"id": "6-69", "name": "樹：石榴樹（果樹）", "batch": 6, "status": "ok", "media_id": "MAHak0dxstk", "link": "https://www.canva.com/M/MAHak0dxstk?utm_source=OC-AaBlKuT9h240&utm_campaign=agent_connector_create_image_asset_opened", "attempts": 1, "note": "符合"}
 {"id": "6-70", "name": "樹：栗子樹（果樹）", "batch": 6, "status": "ok", "media_id": "MAHak3n4zco", "link": "https://www.canva.com/M/MAHak3n4zco?utm_source=OC-AaBlKuT9h240&utm_campaign=agent_connector_create_image_asset_opened", "attempts": 1, "note": "符合"}
 {"id": "6-71", "name": "樹：橄欖樹（果樹）", "batch": 6, "status": "quota", "media_id": null, "link": null, "attempts": 1, "note": "Canva 回 quota_cooldown（額度冷卻中，請稍後再試），停止"}
+{"id": "6-59", "name": "樹：檸檬樹（果樹）", "batch": 6, "status": "ok", "media_id": "MAHak0YwXuY", "link": "https://www.canva.com/M/MAHak0YwXuY?utm_source=OC-AaBlKuT9h240&utm_campaign=agent_connector_create_image_asset_opened", "attempts": 1, "note": "符合"}
+{"id": "6-60", "name": "樹：柚子樹（果樹）", "batch": 6, "status": "quota", "media_id": null, "link": null, "attempts": 1, "note": "Canva 回 quota_cooldown（額度冷卻中，請稍後再試），停止"}

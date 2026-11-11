@@ -1,6 +1,6 @@
 // 遊戲裡的面板：背包、出貨箱、倉庫箱、種子攤。都是一般的網頁元素，蓋在畫面中間；內容每次有變化就整個重畫。
 import { iconEl } from '../render/sprites.js';
-import { sellPrice } from '../shared/rules.js';
+import { sellPrice, planTake, levelOf } from '../shared/rules.js';
 const mk = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
 
 // 一個物品的小圖：有圖用圖（種子是「種子袋＋作物」疊起來），沒有圖用名字的第一個字
@@ -19,16 +19,30 @@ function slotEl(items, bal, s, onClick, extraCls = '') {
 
 export function openPanel(ctx, mode) {
   const { hud, world: W } = ctx, { items, balance: bal } = ctx.data, room = W.room;
-  const root = mk('div', 'panel'), title = { bag: '背包', ship: '出貨箱', chest: '倉庫箱', shop: '種子攤' }[mode];
+  const root = mk('div', 'panel'), title = { bag: '背包', ship: '出貨箱', chest: '倉庫箱', shop: '種子攤', cook: '爐灶', craft: '製作台' }[mode];
   let picked = -1, info = '';
-  const say = (r) => { if (r.t === 'no') hud.toast({ full: '放不下了', money: '錢不夠', closed: '現在沒有營業（6:00～18:00）', far: '太遠了', unsellable: '這個不能賣' }[r.reason] || '沒辦法', 1300); };
+  const say = (r) => { if (r.t === 'no') hud.toast({ full: '放不下了', money: '錢不夠', materials: '材料不夠', level: '料理等級還不夠', closed: '現在沒有營業（6:00～18:00）', far: '太遠了', unsellable: '這個不能賣' }[r.reason] || '沒辦法', 1300); };
   const grid = (list, n, onClick, cls) => { const g = mk('div', 'grid'); for (let i = 0; i < n; i++) g.append(slotEl(items, bal, list[i], () => onClick(i), (i === picked && cls === 'inv' ? 'on ' : '') + (i < bal.hotbarSlots && cls === 'inv' ? 'hot' : ''))); return g; };
   function draw() {
     root.textContent = '';
     const head = mk('div', 'phead'); head.append(mk('h2', '', title), mk('span', 'money', `💰 ${W.farm.money}`));
     const x = mk('button', 'pclose', '✕'); x.type = 'button'; x.setAttribute('aria-label', '關閉'); x.addEventListener('click', () => hud.closePanel()); head.append(x); root.append(head);
     const inv = W.self.inv;
-    if (mode === 'shop') {
+    const needText = (need) => Object.entries(need).map(([spec, n]) => `${spec === '@crop' ? '任何作物' : spec.startsWith('@') ? { veg: '蔬菜', fruit: '水果', fish: '魚', egg: '蛋', milk: '牛奶', forage: '採集物', flower: '花' }[spec.slice(1)] || spec : spec.startsWith('g:') ? ctx.data.machines[spec.slice(2)].name + '做的' : items[spec].name}×${n}`).join('、');
+    if (mode === 'cook' || mode === 'craft') {
+      const cook = mode === 'cook', lv = levelOf(W.self.skills.cooking || 0, bal).lv;
+      root.append(mk('p', 'hint', cook ? `料理等級 ${lv}。對方也站在旁邊的話，一起煮出來的比較好吃（★）。煮好的料理在背包裡點它、再按「吃」。` : '用材料做加工機，做好後拿在手上，對著農場的空地按動作鍵放下去。'));
+      const list = mk('div', 'shoplist');
+      for (const [id, rc] of Object.entries(cook ? ctx.data.recipes : ctx.data.machines)) {
+        const out = cook ? 'dish_' + id : 'm_' + id, it = items[out], need = cook ? rc.in : rc.craft, row = mk('div', 'shoprow'); row.dataset.item = id;
+        const locked = cook && lv < rc.level, can = !locked && !!planTake(items, W.self.inv, need);
+        row.append(itemIcon(items, out), mk('span', 'sname', it.name), mk('span', 'sdesc', locked ? `料理 ${rc.level} 級才會煮` : needText(need) + (cook ? `・體力 +${it.energy}${it.buff ? '・' + bal.buffNames[it.buff[0]] : ''}` : '')));
+        const b = mk('button', 'pbtn', cook ? '煮' : '做'); b.type = 'button'; b.disabled = !can;
+        b.addEventListener('click', async () => { const r = await room.req(cook ? { t: 'cook', recipe: id } : { t: 'craft', kind: id }); if (r.t === 'ok') hud.toast(cook ? `煮好了 ${it.name}${r.together ? ' ★（一起煮的）' : ''}` : `做好了 ${it.name}`, 1400); else say(r); });
+        row.append(b); list.append(row);
+      }
+      root.append(list);
+    } else if (mode === 'shop') {
       const min = W.minute(), open = min >= bal.shop.open && min < bal.shop.close;
       root.append(mk('p', 'hint', open ? '種子要種在翻過的土上。現在是春天，這些都是春天的作物。' : '現在沒有營業（6:00～18:00）。'));
       const list = mk('div', 'shoplist');
@@ -55,6 +69,12 @@ export function openPanel(ctx, mode) {
         else { const a = picked; picked = -1; info = ''; if (a !== i) await room.req({ t: 'swap', slot: a, b: i }); else draw(); }
       }, 'inv'));
       if (mode === 'bag') root.append(mk('p', 'hint', info || '點一個東西再點另一格可以搬位置。第一排是快捷列。'));
+      if (mode === 'bag' && picked >= 0 && inv[picked] && items[inv[picked].id].kind === 'dish') { // 選到料理：可以吃
+        const it = items[inv[picked].id], b = mk('button', 'pbtn eat', `吃（體力 +${it.energy}${it.buff ? '・' + bal.buffNames[it.buff[0]] : ''}）`); b.type = 'button';
+        b.addEventListener('click', async () => { const a = picked; picked = -1; info = ''; const r = await room.req({ t: 'eat', slot: a }); if (r.t === 'ok') hud.toast(r.buff ? `好吃！${bal.buffNames[r.buff[0]]}` : '好吃！', 1400); });
+        root.append(b);
+      }
+      const buffs = Object.keys(bal.buffNames).filter((k) => W.buff(k)).map((k) => bal.buffNames[k]); if (mode === 'bag' && buffs.length) root.append(mk('p', 'hint', '料理的效果：' + buffs.join('、')));
       if (mode === 'bag') { const sk = Object.entries(bal.skills).map(([k, name]) => `${name} ${ctx.level(k)} 級`).join('　'); root.append(mk('p', 'hint', sk)); }
     }
   }

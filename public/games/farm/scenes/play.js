@@ -9,7 +9,7 @@ import { create } from './create.js';
 import { createFishing } from '../systems/fishing.js';
 
 const NO_TEXT = { far: '太遠了，走近一點', ground: '這裡不行', locked: '這塊地還沒開墾（之後才能用）', already: '這裡已經弄好了', untilled: '要先用鋤頭翻土', offline: '連線中斷，稍等一下', timeout: '伺服器沒有回應',
-  tired: '太累了，體力不夠', gone: '魚跑掉了', full: '背包滿了', season: '這個季節種不活', crop: '上面還有作物', late: '已經發芽了，來不及施肥', nothing: '', out: '', unknown: '', closed: '那邊還沒開放' };
+  tired: '太累了，體力不夠', gone: '魚跑掉了', machine: '這個放不進這台機器', place: '加工機要放在農場的空地上', full: '背包滿了', season: '這個季節種不活', crop: '上面還有作物', late: '已經發芽了，來不及施肥', nothing: '', out: '', unknown: '', closed: '那邊還沒開放' };
 const TOOL_NAME = { axe: '斧頭', pick: '十字鎬', sickle: '鐮刀', rod: '釣竿' };
 const ACT_NAME = { till: '翻土', water: '澆水', plant: '播種', harvest: '收成', clear: '清理', ship: '出貨', buy: '買東西', forage: '採集', fish: '釣魚' };
 const DIR = (dx, dy, cur) => (Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : dy < 0 ? 'up' : dy > 0 ? 'down' : cur);
@@ -125,6 +125,8 @@ export const play = {
       if (use === 'bin') return openPanel(this.ctx, 'ship');
       if (use === 'chest') return openPanel(this.ctx, 'chest');
       if (use === 'shop') return openPanel(this.ctx, 'shop');
+      if (use === 'stove') return openPanel(this.ctx, 'cook');
+      if (use === 'workbench') return openPanel(this.ctx, 'craft');
       if (use === 'wardrobe') return this.ctx.scenes.go(create, { edit: true });
       if (use === 'bed') return this.bed();
       return;
@@ -141,6 +143,7 @@ export const play = {
     }
     const r = await this.room.req({ t: 'use', slot: hud.selected, x: t.x, y: t.y });
     if (r.t === 'ok' && r.got) hud.toast(`收成了 ${data.items[r.got.id].name}${r.got.q ? `（${this.bal.quality.names[r.got.q]}）` : ''}`, 1200);
+    if (r.t === 'no' && r.reason === 'busy') return hud.toast(`還在做，大約還要 ${r.left >= 60 ? Math.round(r.left / 60) + ' 小時' : r.left + ' 分鐘'}`, 1300);
     if (r.t === 'no') { const tool = r.reason.startsWith('tool:') && TOOL_NAME[r.reason.slice(5)]; const text = tool ? `這個要用${tool}` : NO_TEXT[r.reason]; if (text) hud.toast(text, 1300); }
   },
   // 上床睡覺：兩個人都在線時，要兩個人都上床才換日
@@ -154,7 +157,7 @@ export const play = {
   },
 
   update(dt) {
-    const { ctx } = this, W = this.world, p = this.player, hud = ctx.hud, a = hud.typing || hud.hasCard || !W.ready || this.fishing.state === 'game' ? { x: 0, y: 0 } : ctx.input.axis(), sp = this.bal.walkSpeed * dt;
+    const { ctx } = this, W = this.world, p = this.player, hud = ctx.hud, a = hud.typing || hud.hasCard || !W.ready || this.fishing.state === 'game' ? { x: 0, y: 0 } : ctx.input.axis(), sp = this.bal.walkSpeed * dt * (W.buff('speed') ? this.bal.buffs.speed : 1);
     this.fishing.update(dt); if ((a.x || a.y) && this.fishing.active) this.fishing.cancel(); // 一走動就收竿
     p.px = p.x; p.py = p.y;
     // 左右、上下分開試：斜著撞到牆會沿著牆滑過去，不會整個卡住
@@ -220,14 +223,19 @@ export const play = {
     for (const e of this.map.exits || []) { g.font = `700 ${T * 0.22}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = 'rgba(255,255,255,.85)'; g.fillText(e.label, clampX((e.x + e.w / 2) * T, this.map.w * T, T * 1.6), (e.y + e.h / 2) * T - T * 1.1 * (e.h > 1 ? 1 : 0.2)); }
     // 只畫看得到的，依腳的位置由遠到近畫
     for (const t of this.things) if (t.fx > x0 && t.fx < x1 && t.fy > y0 && t.fy < y1) list.push({ y: t.fy, t });
-    for (const o of W.objs.values()) if (o.map === mapId && o.x > x0 && o.x < x1 && o.y > y0 && o.y < y1) list.push({ y: o.y + 0.92, t: { def: o.item ? { ...data.objects[o.type], art: data.items[o.item].art, name: data.items[o.item].name } : data.objects[o.type], fx: o.x + 0.5, fy: o.y + 0.92 } });
+    for (const o of W.objs.values()) if (o.map === mapId && o.x > x0 && o.x < x1 && o.y > y0 && o.y < y1) list.push({ y: o.y + 0.92, o, t: { def: o.item ? { ...data.objects[o.type], art: data.items[o.item].art, name: data.items[o.item].name } : o.kind ? { ...data.objects[o.type], art: data.machines[o.kind].art, name: data.machines[o.kind].name } : data.objects[o.type], fx: o.x + 0.5, fy: o.y + 0.92 } });
     const people = [{ q: me, color: '#f0a04a' }, ...[...W.others.values()].filter((o) => o.map === mapId).map((o) => ({ q: lerp(o), color: '#6aa8e8' }))];
     for (const pp of people) list.push({ y: pp.q.y, pp });
     list.sort((u, v) => u.y - v.y);
     const parts = data.parts, U = T * 0.62;
     for (const it of list) {
       if (it.crop) { this.drawCrop(g, it.crop, T); continue; }
-      if (it.t) { const d = it.t.def; if (!(d.art && drawSprite(g, d.art.replace('{season}', season), it.t.fx * T, it.t.fy * T, d.w * T, d.h * T))) drawObject(g, d, it.t.fx * T, it.t.fy * T, T); continue; }
+      if (it.t) {
+        const d = it.t.def; if (!(d.art && drawSprite(g, d.art.replace('{season}', season), it.t.fx * T, it.t.fy * T, d.w * T, d.h * T))) drawObject(g, d, it.t.fx * T, it.t.fy * T, T);
+        // 加工機：做好了頭上冒出成品，還在做就冒小點點
+        if (it.o && it.o.kind && it.o.out) { if (W.abs() >= it.o.doneAt) { const oi = data.items[it.o.out]; drawBubble(g, ' ', it.t.fx * T, it.t.fy * T - T * 1.25, T, true); if (!drawSprite(g, oi.art, it.t.fx * T, it.t.fy * T - T * 1.38, T * 0.5, T * 0.5)) drawName(g, '好了', it.t.fx * T, it.t.fy * T - T * 1.6, T); } else drawName(g, '・'.repeat(1 + Math.floor(performance.now() / 500) % 3), it.t.fx * T, it.t.fy * T - T * 1.35, T); }
+        continue;
+      }
       const q = it.pp.q;
       if (!q.look) { drawPlayer(g, q, T, it.pp.color); continue; } // 對方還在建立角色：先畫暫代的圓圓人
       drawShadow(g, q.x * T, q.y * T, T * 0.62);

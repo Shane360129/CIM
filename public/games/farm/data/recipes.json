@@ -1,0 +1,154 @@
+{
+ "salad": {
+  "name": "生菜沙拉",
+  "in": {
+   "lettuce": 1,
+   "carrot": 1
+  },
+  "level": 1
+ },
+ "baked_potato": {
+  "name": "烤馬鈴薯",
+  "in": {
+   "potato": 1
+  },
+  "level": 1
+ },
+ "veg_soup": {
+  "name": "蔬菜湯",
+  "in": {
+   "@veg": 2
+  },
+  "level": 1
+ },
+ "stir_fry": {
+  "name": "炒青菜",
+  "in": {
+   "@veg": 1,
+   "scallion": 1
+  },
+  "level": 1
+ },
+ "grilled_fish": {
+  "name": "鹽烤魚",
+  "in": {
+   "@fish": 1
+  },
+  "level": 1
+ },
+ "smoothie": {
+  "name": "野莓冰沙",
+  "in": {
+   "wildberry": 2
+  },
+  "level": 1
+ },
+ "stew": {
+  "name": "燉菜",
+  "in": {
+   "@veg": 3
+  },
+  "level": 1
+ },
+ "mushroom_soup": {
+  "name": "蘑菇濃湯",
+  "in": {
+   "wild_mushroom": 2
+  },
+  "level": 1
+ },
+ "fried_egg": {
+  "name": "煎蛋",
+  "in": {
+   "@egg": 1
+  },
+  "level": 2
+ },
+ "egg_soup": {
+  "name": "蛋花湯",
+  "in": {
+   "@egg": 1,
+   "scallion": 1
+  },
+  "level": 2
+ },
+ "seafood_soup": {
+  "name": "海鮮湯",
+  "in": {
+   "@fish": 2
+  },
+  "level": 3
+ },
+ "salmon_onigiri": {
+  "name": "鮭魚飯糰",
+  "in": {
+   "fish_salmon": 1
+  },
+  "level": 3
+ },
+ "potato_salad": {
+  "name": "馬鈴薯沙拉",
+  "in": {
+   "potato": 1,
+   "@egg": 1
+  },
+  "level": 3
+ },
+ "omurice": {
+  "name": "蛋包飯",
+  "in": {
+   "@egg": 2,
+   "@veg": 1
+  },
+  "level": 4
+ },
+ "jam_toast": {
+  "name": "果醬吐司",
+  "in": {
+   "g:jam": 1
+  },
+  "level": 4
+ },
+ "pancake": {
+  "name": "鬆餅",
+  "in": {
+   "@egg": 1,
+   "@milk": 1
+  },
+  "level": 5
+ },
+ "strawberry_milk": {
+  "name": "草莓牛奶",
+  "in": {
+   "strawberry": 1,
+   "@milk": 1
+  },
+  "level": 5
+ },
+ "carrot_cake": {
+  "name": "紅蘿蔔蛋糕",
+  "in": {
+   "carrot": 2,
+   "@egg": 1
+  },
+  "level": 6
+ },
+ "cream_stew": {
+  "name": "奶油燉菜",
+  "in": {
+   "@milk": 1,
+   "potato": 1,
+   "carrot": 1
+  },
+  "level": 7
+ },
+ "strawberry_cake": {
+  "name": "草莓蛋糕",
+  "in": {
+   "strawberry": 2,
+   "@egg": 1,
+   "@milk": 1
+  },
+  "level": 8
+ }
+}

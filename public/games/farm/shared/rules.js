@@ -33,3 +33,35 @@ export function invAdd(inv, slots, id, n = 1, q = 0, max = 99) {
 }
 export function invTake(inv, slot, n = 1) { const s = inv[slot]; if (!s || s.n < n) return false; s.n -= n; if (s.n <= 0) inv[slot] = null; return true; }
 export const sellPrice = (item, q, bal) => Math.round((item.sell || 0) * bal.quality.mult[q || 0]);
+
+// 物品查詢：一般物品直接查表；加工品是「機器＋原料」拼出來的（id 長得像 g:jam:strawberry），名字、價錢、圖示在這裡算出來，所以不用一種一種寫
+export function makeItems(items, machines) {
+  const cache = new Map();
+  return new Proxy(items, { get(t, id) {
+    if (typeof id !== 'string' || !id.startsWith('g:')) return t[id];
+    if (cache.has(id)) return cache.get(id);
+    const [, mid, src] = id.split(':'), m = machines[mid], s = t[src];
+    const it = m && s && m.out ? { name: m.out.replace('{src}', s.name), kind: 'good', machine: mid, src, sell: Math.round((s.sell || 0) * m.mult + m.add), art: m.good, tint: src, tags: ['good'] } : undefined;
+    cache.set(id, it); return it;
+  } });
+}
+// 這個東西算不算某一種材料：物品 id、@類別（tags）、g:機器（那台機器做的加工品）
+export function matches(items, id, spec) {
+  const it = items[id]; if (!it) return false;
+  if (spec === '@crop') return it.kind === 'crop';
+  if (spec.startsWith('@')) return (it.tags || []).includes(spec.slice(1));
+  if (spec.startsWith('g:') && spec.split(':').length === 2) return id.startsWith(spec + ':');
+  return id === spec;
+}
+// 背包裡夠不夠做這個（回傳要從哪幾格各拿幾個；不夠回傳 null）。品質好的留到最後才用
+export function planTake(items, inv, need) {
+  const plan = [], left = inv.map((s) => (s ? s.n : 0));
+  for (const [spec, n] of Object.entries(need)) {
+    let want = n; const idx = inv.map((s, i) => i).filter((i) => inv[i] && matches(items, inv[i].id, spec)).sort((a, b) => (inv[a].q || 0) - (inv[b].q || 0));
+    for (const i of idx) { const k = Math.min(want, left[i]); if (k > 0) { plan.push([i, k]); left[i] -= k; want -= k; } if (!want) break; }
+    if (want > 0) return null;
+  }
+  return plan;
+}
+// 現在的絕對時間（遊戲分鐘）：加工機、料理效果用它記什麼時候好、什麼時候結束
+export const absMinute = (day, minute, bal) => (day - 1) * (bal.dayEndMinute - bal.dayStartMinute) + (minute - bal.dayStartMinute);

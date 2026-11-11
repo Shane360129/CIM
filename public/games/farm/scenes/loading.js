@@ -2,6 +2,7 @@
 import { loadAll } from '../core/assets.js';
 import { signIn } from '../net/auth.js';
 import { loadAtlas } from '../render/sprites.js';
+import { makeItems } from '../shared/rules.js';
 import { title } from './title.js';
 
 export const loading = {
@@ -12,9 +13,10 @@ export const loading = {
       const convId = Number(new URLSearchParams(location.search).get('conv')) || 0;
       const [data, session] = await Promise.all([
         loadAll([['balance', 'data/balance.json'], ['objects', 'data/objects.json'], ['parts', 'data/doll/parts.json'], ['items', 'data/items.json'], ['crops', 'data/crops.json'],
-          ['map_farm', 'data/maps/farm.json'], ['map_house', 'data/maps/house.json'], ['map_road', 'data/maps/road.json'], ['map_lake', 'data/maps/lake.json'], ['fish', 'data/fish.json']], (p) => { this.progress = p * 0.8; }),
+          ['map_farm', 'data/maps/farm.json'], ['map_house', 'data/maps/house.json'], ['map_road', 'data/maps/road.json'], ['map_lake', 'data/maps/lake.json'], ['fish', 'data/fish.json'], ['machines', 'data/machines.json'], ['recipes', 'data/recipes.json']], (p) => { this.progress = p * 0.8; }),
         signIn(convId),
       ]);
+      data.items = makeItems(data.items, data.machines); // 加工品的名字和價錢是算出來的
       data.maps = { farm: data.map_farm, house: data.map_house, road: data.map_road, lake: data.map_lake };
       await loadAtlas('b3');
       await loadAtlas('b2'); // 第 2 批素材（目前是縮圖做的，畫質是暫時的）；載不到就全部用暫代圖

@@ -13,7 +13,7 @@ export function createFishing(ctx, onDone) {
   };
   function startGame() {
     f.state = 'game'; f.hits = 0; f.misses = 0; f.pos = 0; f.dir = 1;
-    const w = Math.max(0.14, 0.3 - f.diff * 0.035), a = 0.15 + Math.random() * (0.7 - w); f.zone = [a, a + w]; // 越難的魚，綠色的地方越窄
+    const w = Math.max(0.14, 0.3 - f.diff * 0.035) + (ctx.world.buff('fishing') ? ctx.data.balance.buffs.fishing : 0), a = 0.15 + Math.random() * (0.7 - w); f.zone = [a, a + w]; // 越難的魚，綠色的地方越窄
     f.el = mk('div', 'fishgame'); f.label = mk('div', 'fglabel', '指針到綠色的地方就按！'); f.bar = mk('div', 'fgbar'); f.zoneEl = mk('i', 'fgzone'); f.needle = mk('i', 'fgneedle');
     f.zoneEl.style.left = f.zone[0] * 100 + '%'; f.zoneEl.style.width = w * 100 + '%';
     f.bar.append(f.zoneEl, f.needle); f.el.append(f.label, f.bar); ui.append(f.el);

@@ -241,5 +241,33 @@
   "h": 0.7,
   "color": "#f6d34a",
   "pickup": true
+ },
+ "machine": {
+  "name": "加工機",
+  "shape": "block",
+  "solid": true,
+  "w": 1.0,
+  "h": 1.25,
+  "color": "#b98a5a"
+ },
+ "stove": {
+  "name": "爐灶",
+  "shape": "block",
+  "solid": true,
+  "w": 1.0,
+  "h": 1.2,
+  "color": "#8a8f96",
+  "art": "machine/stove",
+  "use": "stove"
+ },
+ "workbench": {
+  "name": "製作台",
+  "shape": "block",
+  "solid": true,
+  "w": 1.1,
+  "h": 1.1,
+  "color": "#b98a5a",
+  "art": "machine/workbench",
+  "use": "workbench"
  }
 }

@@ -132,6 +132,20 @@ check('上鉤後拉上來：背包多一條（魚有尺寸和紀錄，釣魚有�
 const cf3 = await req(A, { t: 'fish', slot: slot(A, 'rod'), x: 32, y: 6 }); await sleep(cf3.wait + 120); const n3 = A.self.inv.filter(Boolean).reduce((n, x) => n + x.n, 0);
 check('小遊戲沒過：什麼都沒拿到', (await req(A, { t: 'reel', win: false })).got === null && A.self.inv.filter(Boolean).reduce((n, x) => n + x.n, 0) === n3);
 check('沒有拋竿就收竿：不算', (await req(A, { t: 'reel', win: true })).reason === 'gone');
+// ---- 製作台、加工機 ----
+// 乾燥架要木材 12、樹枝 6：再砍一棵樹、劈六根樹枝
+const tree2 = sa.objs.filter((o) => o.map === 'farm' && o.type === 'tree' && !(o.x === tree.x && o.y === tree.y)).sort((p, q) => Math.hypot(p.x - 20, p.y - 16) - Math.hypot(q.x - 20, q.y - 16))[0];
+await go(A, tree2.x + 0.5, tree2.y + 1.4); for (let i = 0; i < 5; i++) await use(A, 'axe', tree2.x, tree2.y);
+for (const br of sa.objs.filter((o) => o.map === 'farm' && o.type === 'branch').slice(0, 6)) { await go(A, br.x + 0.5, br.y + 1.4); await use(A, 'axe', br.x, br.y); }
+check('離製作台太遠不能做、沒有的機器不能做', (await req(A, { t: 'craft', kind: 'dryer' })).reason === 'far' && (await (async () => { await go(A, 14.5, 10.4); return req(A, { t: 'craft', kind: 'robot' }); })()).reason === 'unknown');
+check('材料不夠不能做', (await req(A, { t: 'craft', kind: 'jam' })).reason === 'materials');
+const w0 = has(A, 'wood'); check('做乾燥架：木材少 12、樹枝少 6，背包多一台', (await req(A, { t: 'craft', kind: 'dryer' })).t === 'ok' && has(A, 'm_dryer') === 1 && has(A, 'wood') === w0 - 12 && has(A, 'branch') === 0, `${w0} → ${has(A, 'wood')}`);
+check('加工機不能放在田裡', (await (async () => { await go(A, F.x + 0.5, F.y - 0.5); return use(A, 'm_dryer', F.x + 2, F.y); })()).reason === 'place');
+await go(A, 16.5, 10.4); Bc.clear();
+check('放在空地上：對方看得到多了一台機器', (await use(A, 'm_dryer', 16, 10)).t === 'ok' && has(A, 'm_dryer') === 0 && !!(await Bc.wait('objs', (m) => m.list[0].type === 'machine' && m.list[0].kind === 'dryer' && m.list[0].x === 16)));
+const wrong = await use(A, 'stone', 16, 10); check('不對的原料放不進去', wrong.reason === 'machine', JSON.stringify(wrong).slice(0, 200) + ' 石頭在第 ' + slot(A, 'stone') + ' 格');
+const put = await use(A, fo.item, 16, 10); check('放採集物進去開始曬：背包少一個，機器記下什麼時候好 ' + JSON.stringify(put).slice(0, 160) + ' 有 ' + has(A, fo.item), put.t === 'ok' && has(A, fo.item) === 0 && !!(await Bc.wait('objs', (m) => m.list[0].out === `g:dryer:${fo.item}` && m.list[0].doneAt > 0)));
+const busy = await use(A, 'hoe', 16, 10); check('還沒好不能拿，會說還要多久', busy.reason === 'busy' && busy.left > 800 && busy.left <= 900, String(busy.left));
 // 背包搬位置
 const s1 = slot(A, 'wood'); await req(A, { t: 'swap', slot: s1, b: 20 }); check('背包可以搬位置', A.self.inv[20] && A.self.inv[20].id === 'wood' && !A.self.inv[s1]);
 
@@ -195,7 +209,7 @@ A.clear(); Bc.clear(); A.send({ t: 'sleep', on: true }); Bc.send({ t: 'sleep', o
 
 // ---- 離線：一個人照顧作物到收成 ----
 Bc.clear(); A.ws.close(); check('離線時對方收到通知', !!(await Bc.wait('leave', (m) => m.id === a.user.id)));
-const outAndWater = async () => { await go(Bc, 5, 7.6); await req(Bc, { t: 'warp', i: 0 }); await go(Bc, F.x + 0.5, F.y - 0.5); const r = await use(Bc, 'can', F.x, F.y); await enter(Bc); await go(Bc, 2.6, 3.4); return r; };
+const outAndWater = async () => { await go(Bc, 5, 7.6); await req(Bc, { t: 'warp', i: 0 }); await go(Bc, F.x + 0.5, F.y - 0.5); const r = await use(Bc, 'can', F.x, F.y); await use(Bc, 'can', F.x + 1, F.y); await enter(Bc); await go(Bc, 2.6, 3.4); return r; };
 let lastND = null, rainy = 0;
 for (let d = 0; d < 4; d++) { const r = await outAndWater(); if (r.t === 'no' && r.reason === 'already') rainy++; Bc.clear(); const sr = await req(Bc, { t: 'sleep', on: true }); const ndx = await Bc.wait('newday'); if (process.env.DEBUG) console.log('day loop', d, JSON.stringify(r).slice(0, 80), JSON.stringify(sr), ndx && ndx.farm.day, JSON.stringify(Bc.log.filter((m) => m.t === 'warp' || m.t === 'no').slice(-4))); if (ndx) lastND = ndx; }
 check('只有一個人在線：他自己睡就換日（連續 4 天）', !!lastND && lastND.farm.day === 6, lastND && `第 ${lastND.farm.day} 天，其中 ${rainy} 天下雨不用澆`);
@@ -203,10 +217,28 @@ check('紅蘿蔔 4 天成熟（每天有澆水或下雨）', !!lastND && tileOf(
 await go(Bc, 5, 7.6); await req(Bc, { t: 'warp', i: 0 }); await go(Bc, F.x + 0.5, F.y - 0.5);
 const hv = await use(Bc, 'hoe', F.x, F.y);
 check('收成：拿到紅蘿蔔、農耕有經驗、那一格變回空的翻過的土', hv.t === 'ok' && hv.got.id === 'carrot' && has(Bc, 'carrot') === 1 && Bc.self.skills.farming === 6 && Bc.log.some((m) => m.t === 'tiles' && m.kind === 'harvest' && m.list[0].t === 1 && !m.list[0].c));
+// ---- 加工品、料理 ----
+await go(Bc, 16.5, 10.9); const col = await use(Bc, 'hoe', 16, 10);
+check('過了幾天乾燥架做好了：拿到加工品（名字和價錢是算出來的）', col.t === 'ok' && !!col.got && col.got.id === `g:dryer:${fo.item}` && has(Bc, col.got.id) === 1, JSON.stringify(col));
+const gid = `g:dryer:${fo.item}`; await go(Bc, 12.5, 10.4); Bc.clear(); await req(Bc, { t: 'ship', slot: slot(Bc, gid), n: 1 });
+check('加工品可以出貨', Bc.farm.ship.some((l) => l.id === gid));
+await go(Bc, F.x + 1.5, F.y - 0.5); const hv2 = await use(Bc, 'hoe', F.x + 1, F.y);
+check('第二格紅蘿蔔（第 3 天種回來的話會晚一點）：有就收', hv2.t === 'ok' || hv2.reason === 'nothing', JSON.stringify(hv2).slice(0, 80));
+await enter(Bc);
+check('離爐灶太遠不能煮', (await req(Bc, { t: 'cook', recipe: 'veg_soup' })).reason === 'far');
+await go(Bc, 8.5, 2.5);
+check('材料不夠不能煮、等級不夠的食譜不能煮', (await req(Bc, { t: 'cook', recipe: 'stew' })).reason === 'materials' && (await req(Bc, { t: 'cook', recipe: 'strawberry_cake' })).reason === 'level');
+if (has(Bc, 'carrot') >= 2) {
+  const ck = await req(Bc, { t: 'cook', recipe: 'veg_soup' });
+  check('兩根紅蘿蔔煮蔬菜湯：材料用掉、背包多一碗、料理有經驗', ck.t === 'ok' && has(Bc, 'carrot') === 0 && has(Bc, 'dish_veg_soup') === 1 && Bc.self.skills.cooking === 8);
+  const e1 = Bc.self.energy; await use(Bc, 'hoe', 0, 0); const et = await req(Bc, { t: 'eat', slot: slot(Bc, 'dish_veg_soup') });
+  check('吃掉：料理少一碗、體力不會超過上限', et.t === 'ok' && has(Bc, 'dish_veg_soup') === 0 && Bc.self.energy >= e1 && Bc.self.energy <= 100);
+} else check('（這次紅蘿蔔不到兩根，煮湯的檢查跳過）', true);
+check('不是料理的東西不能吃', (await req(Bc, { t: 'eat', slot: slot(Bc, 'hoe') })).reason === 'slot');
 const A2 = open(dm.id, a.token); const s2 = await A2.wait('snapshot');
 check('重新上線：造型和名字還在', !!s2 && !!s2.you.look && s2.you.look.hair === 'twin' && s2.you.name.startsWith('晴b晴'));
 check('重新上線：人還在農舍裡、背包還在、看得到離線時的變化', !!s2 && s2.you.map === 'house' && s2.self.inv.some((x) => x && x.id === 'seed_strawberry') && s2.farm.day === 6);
-check('「你不在時發生的事」：過了 4 天、對方澆水和收成', !!s2 && !!s2.summary && s2.summary.days === 4 && s2.summary.acts.harvest === 1 && s2.summary.acts.water >= 1, s2 && JSON.stringify(s2.summary));
+check('「你不在時發生的事」：過了 4 天、對方澆水和收成', !!s2 && !!s2.summary && s2.summary.days === 4 && s2.summary.acts.harvest >= 1 && s2.summary.acts.water >= 1, s2 && JSON.stringify(s2.summary));
 const A3 = open(dm.id, a.token); await A3.wait('snapshot'); await sleep(300);
 check('同一個人開第二個分頁：舊的收到 replaced，對方不會以為他離開', A2.log.some((m) => m.t === 'replaced') && !Bc.log.some((m) => m.t === 'leave' && m.id === a.user.id));
 // 時鐘只在有人的時候走

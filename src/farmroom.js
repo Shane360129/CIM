@@ -4,7 +4,9 @@
 // 內容（地圖、作物、物品、數值）都讀 public/games/farm/data/ 的 JSON，跟畫面用同一份；規則的計算在 shared/rules.js。
 import BAL from '../public/games/farm/data/balance.json';
 import PARTS from '../public/games/farm/data/doll/parts.json';
-import ITEMS from '../public/games/farm/data/items.json';
+import RAW_ITEMS from '../public/games/farm/data/items.json';
+import MACHINES from '../public/games/farm/data/machines.json';
+import RECIPES from '../public/games/farm/data/recipes.json';
 import CROPS from '../public/games/farm/data/crops.json';
 import OBJECTS from '../public/games/farm/data/objects.json';
 import MAP_FARM from '../public/games/farm/data/maps/farm.json';
@@ -12,7 +14,9 @@ import MAP_HOUSE from '../public/games/farm/data/maps/house.json';
 import MAP_ROAD from '../public/games/farm/data/maps/road.json';
 import MAP_LAKE from '../public/games/farm/data/maps/lake.json';
 import FISH from '../public/games/farm/data/fish.json';
-import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelOf, rollQuality, invAdd, invTake, sellPrice } from '../public/games/farm/shared/rules.js';
+import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelOf, rollQuality, invAdd, invTake, sellPrice, makeItems, matches, planTake, absMinute } from '../public/games/farm/shared/rules.js';
+
+const ITEMS = makeItems(RAW_ITEMS, MACHINES); // 加工品（g:機器:原料）的名字和價錢是算出來的
 
 const MAPS = { farm: MAP_FARM, house: MAP_HOUSE, road: MAP_ROAD, lake: MAP_LAKE };
 // 每張地圖上不會動的東西（房子、長椅…）佔了哪些格子：採集物、雜草不會長在這些格子上
@@ -119,8 +123,9 @@ export class FarmRoom {
   }
   logEvent(userId, type, data) { this.sql.exec(`INSERT INTO events (ts, day, user_id, type, data) VALUES (?, ?, ?, ?, ?)`, Date.now(), this.farm.day, userId, type, data ? JSON.stringify(data) : null); }
   pubTile(k) { const v = this.tiles.get(k), t = unK(k); return v ? { ...t, t: 1, w: v.w === this.farm.day ? 1 : 0, f: v.f || 0, c: v.c ? { id: v.c.id, s: v.c.dead ? -1 : cropStage(CROPS[v.c.id], v.c.g) } : null } : { ...t, t: 0 }; }
-  pubObj(k) { const o = this.objs.get(k); return o ? { ...unK(k), type: o.type, hp: o.hp, ...(o.item ? { item: o.item } : {}) } : { ...unK(k), type: null }; }
-  pubSelf(a) { const p = this.player(a.id); return { inv: p.inv, energy: p.energy, energyMax: BAL.energyMax, skills: p.skills, fishRec: p.fishRec || {} }; }
+  pubObj(k) { const o = this.objs.get(k); return o ? { ...unK(k), type: o.type, hp: o.hp, ...(o.item ? { item: o.item } : {}), ...(o.kind ? { kind: o.kind, out: o.out || null, doneAt: o.doneAt || 0 } : {}) } : { ...unK(k), type: null }; }
+  absNow() { return absMinute(this.farm.day, this.minuteNow(), BAL); }
+  pubSelf(a) { const p = this.player(a.id); return { inv: p.inv, energy: p.energy, energyMax: BAL.energyMax, skills: p.skills, fishRec: p.fishRec || {}, buffs: p.buffs || {} }; }
 
   // ---------- 連線 ----------
   sockets() { return this.ctx.getWebSockets(); }
@@ -218,6 +223,28 @@ export class FarmRoom {
       if (!invAdd(to, cap, s.id, k, s.q || 0)) return no('full');
       invTake(from, slot, k); self(); farmChanged(); done();
     } else if (m.t === 'warp') this.onWarp(ws, a, p, m, { no, done });
+    else if (m.t === 'craft') { // 製作台：用材料做加工機
+      const mc = MACHINES[m.kind]; if (!near('workbench')) return no('far'); if (!mc) return no('unknown');
+      const plan = planTake(ITEMS, p.inv, mc.craft); if (!plan) return no('materials');
+      const inv = JSON.parse(JSON.stringify(p.inv)); for (const [i, k] of plan) invTake(inv, i, k);
+      if (!invAdd(inv, BAL.invSlots, 'm_' + m.kind, 1)) return no('full');
+      p.inv = inv; this.logEvent(a.id, 'craft', { kind: m.kind }); self(); done();
+    } else if (m.t === 'cook') { // 爐灶：照食譜煮。料理等級夠才會煮；對方也在旁邊的話，一起煮出來的比較好吃
+      const rc = RECIPES[m.recipe]; if (!near('stove')) return no('far'); if (!rc) return no('unknown');
+      if (levelOf(p.skills.cooking || 0, BAL).lv < rc.level) return no('level');
+      const plan = planTake(ITEMS, p.inv, rc.in); if (!plan) return no('materials');
+      const inv = JSON.parse(JSON.stringify(p.inv)); for (const [i, k] of plan) invTake(inv, i, k);
+      const together = this.online().some((s) => s.a.id !== a.id && s.a.map === a.map && Math.hypot(s.a.x - a.x, s.a.y - a.y) <= BAL.cooking.togetherReach);
+      if (!invAdd(inv, BAL.invSlots, 'dish_' + m.recipe, 1, together ? 1 : 0)) return no('full');
+      p.inv = inv; p.skills.cooking = (p.skills.cooking || 0) + BAL.cooking.xp; this.logEvent(a.id, 'cook', { id: m.recipe });
+      self(); this.broadcast({ t: 'fx', id: a.id, kind: 'cook', map: a.map, x: Math.floor(a.x), y: Math.floor(a.y), item: 'dish_' + m.recipe }); done({ together });
+    } else if (m.t === 'eat') { // 吃料理：補體力，有些有一段時間的效果
+      const sl = p.inv[slot], it = sl && ITEMS[sl.id]; if (!it || it.kind !== 'dish') return no('slot');
+      const k = 1 + 0.25 * (sl.q || 0); invTake(p.inv, slot, 1);
+      p.energy = Math.min(BAL.energyMax, p.energy + Math.round(it.energy * k));
+      if (it.buff) { p.buffs ||= {}; p.buffs[it.buff[0]] = this.absNow() + Math.round(it.buff[1] * k); }
+      self(); this.broadcast({ t: 'fx', id: a.id, kind: 'eat', map: a.map, x: Math.floor(a.x), y: Math.floor(a.y) }); done({ buff: it.buff || null });
+    }
     else if (m.t === 'fish') this.onFish(a, p, m, { no, done, self });
     else if (m.t === 'reel') this.onReel(a, p, m, { no, done, self });
     else if (m.t === 'look') { // 建立角色、換裝：存起來，對方馬上看到
@@ -303,6 +330,21 @@ export class FarmRoom {
       this.objs.delete(k); this.dirtyObjs.add(k); xp('foraging', BAL.forage.xp); this.logEvent(a.id, 'forage', { id: obj.item }); self(); fx('harvest', { item: obj.item });
       this.broadcast({ t: 'objs', by: a.id, list: [this.pubObj(k)], drops: { [obj.item]: 1 } }); return done();
     }
+    if (obj && obj.type === 'machine') { // 加工機：好了就拿、空的就放原料進去、拿斧頭或十字鎬對著空的機器可以收回背包
+      const mc = MACHINES[obj.kind], now = this.absNow(), upd = (kind) => { this.dirtyObjs.add(k); self(); fx(kind); this.broadcast({ t: 'objs', by: a.id, list: [this.pubObj(k)] }); done(); };
+      if (obj.out && now >= obj.doneAt) {
+        if (!invAdd(p.inv, BAL.invSlots, obj.out, obj.n || 1)) return bad('full');
+        this.logEvent(a.id, 'collect', { id: obj.out }); const got = obj.out;
+        if (mc.gives) obj.doneAt = now + mc.minutes; else { obj.out = null; obj.doneAt = 0; }
+        this.dirtyObjs.add(k); self(); fx('harvest', { item: got }); this.broadcast({ t: 'objs', by: a.id, list: [this.pubObj(k)] }); return done({ got: { id: got, q: 0 } });
+      }
+      if (obj.out) return no('busy', { left: Math.ceil(obj.doneAt - now) });
+      if ((tool === 'axe' || tool === 'pick') && !mc.gives) { if (!invAdd(p.inv, BAL.invSlots, 'm_' + obj.kind, 1)) return bad('full'); this.objs.delete(k); return upd('clear'); }
+      const fit = held && mc.in.some((spec) => matches(ITEMS, held.id, spec.startsWith('@') ? spec : '@' + spec)); if (!fit) return bad('machine'); // 機器收的是「類別」，所以前面補上 @
+      const src = held.id; invTake(p.inv, Math.floor(Number(m.slot)), 1);
+      if (mc.seeds) { obj.out = 'seed_' + src; obj.n = mc.seeds; } else { obj.out = `g:${obj.kind}:${src}`; obj.n = 1; }
+      obj.doneAt = now + mc.minutes; this.logEvent(a.id, 'process', { kind: obj.kind }); return upd('plant');
+    }
     if (obj) { // 樹、石頭、樹枝、雜草：要用對的工具，打到沒血就清掉、掉材料
       const d = OBJECTS[obj.type]; if (tool !== d.tool) return bad('tool:' + d.tool);
       if (obj.hp <= 1) { const inv = JSON.parse(JSON.stringify(p.inv)); for (const [id, n] of Object.entries(d.drops)) if (!invAdd(inv, BAL.invSlots, id, n)) return bad('full'); if (!spend(d.energy)) return bad('tired'); p.inv = inv; this.objs.delete(k); xp(d.xp[0], d.xp[1]); this.logEvent(a.id, 'clear', { type: obj.type }); }
@@ -314,7 +356,8 @@ export class FarmRoom {
     const mature = crop && !crop.dead && cropStage(def, crop.g) === 4;
     if (tool === 'can' && tile && tile.w !== day) { if (!spend(BAL.energy.can)) return bad('tired'); tile.w = day; return changed('water'); }
     if (mature) { // 收成：品質看肥料和農耕等級
-      const q = rollQuality(Math.random, tile.f, level('farming'), BAL);
+      const lucky = p.buffs && p.buffs.luck > this.absNow() ? BAL.buffs.luck : 0; // 吃了有運氣效果的料理：等於多一層肥料
+      const q = rollQuality(Math.random, (tile.f || 0) + lucky, level('farming'), BAL);
       if (!invAdd(p.inv, BAL.invSlots, crop.id, 1, q)) return bad('full');
       xp('farming', def.xp); if (def.regrowDays) crop.g = cropTotal(def) - def.regrowDays; else { tile.c = null; tile.f = 0; }
       this.touch(a.map, x, y); this.logEvent(a.id, 'harvest', { id: crop.id, q }); self(); fx('harvest', { item: crop.id, q });
@@ -328,6 +371,12 @@ export class FarmRoom {
       if (!tile) return bad('untilled'); if (crop) return bad('already');
       if (map.outdoor && !CROPS[item.crop].seasons.includes(seasonId(day, BAL))) return bad('season');
       invTake(p.inv, Math.floor(Number(m.slot)), 1); tile.c = { id: item.crop, g: 0 }; return changed('plant');
+    }
+    if (item && item.kind === 'machine') { // 把加工機放在農場的空地上
+      if (a.map !== 'farm' || !['grass', 'path'].includes(ground) || tile || STATIC[a.map].has(x + ',' + y)) return bad('place');
+      const mc = MACHINES[item.machine]; invTake(p.inv, Math.floor(Number(m.slot)), 1);
+      this.objs.set(k, { type: 'machine', kind: item.machine, hp: 1, ...(mc.gives ? { out: mc.gives, n: 1, doneAt: this.absNow() + mc.minutes } : {}) });
+      this.dirtyObjs.add(k); self(); fx('plant'); this.broadcast({ t: 'objs', by: a.id, list: [this.pubObj(k)] }); return done();
     }
     if (item && item.kind === 'fertilizer') { if (!tile) return bad('untilled'); if (tile.f) return bad('already'); if (crop && cropStage(def, crop.g) > 0) return bad('late'); invTake(p.inv, Math.floor(Number(m.slot)), 1); tile.f = item.power; return changed('fertilize'); }
     return bad('nothing');
