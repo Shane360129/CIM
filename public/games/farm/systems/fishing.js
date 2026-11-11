@@ -29,6 +29,7 @@ export function createFishing(ctx, onDone) {
       const r = await ctx.world.room.req({ t: 'fish', slot, x, y });
       if (r.t !== 'ok') { f.state = 'idle'; return r; }
       Object.assign(f, { state: 'wait', x, y, t: 0, wait: r.wait / 1000, diff: r.diff });
+      if (r.duo) ctx.hud.toast('水面下有兩道影子並排游過來…', 2200);
       return r;
     },
     // 按了動作鍵（或點畫面）

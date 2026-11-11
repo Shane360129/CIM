@@ -143,6 +143,13 @@ check('拋竿：伺服器回多久上鉤和難度，對方看得到你在釣魚'
 check('還沒上鉤就說釣到了：不算', (await req(A, { t: 'reel', win: true })).reason === 'gone');
 const c2 = await req(A, { t: 'fish', slot: slot(A, 'rod'), x: 32, y: 6 }); await sleep(c2.wait + 120); const rl = await req(A, { t: 'reel', win: true });
 check('上鉤後拉上來：背包多一條（魚有尺寸和紀錄，釣魚有經驗；也可能是水草）', rl.t === 'ok' && !!rl.got && has(A, rl.got.id) === 1 && (rl.got.id === 'junk' || (rl.got.size > 0 && rl.got.record && A.self.fishRec[rl.got.id.slice(5)] === rl.got.size && A.self.skills.fishing > 0)), JSON.stringify(rl.got));
+// 兩個人才釣得到的魚：對方在旁邊也放了竿，後下竿的那個人這一竿就是比翼魚；一天一條
+const cA = await req(A, { t: 'fish', slot: slot(A, 'rod'), x: 32, y: 6 }); await go(Bc, 31.5, 5.5, 'right');
+const cB = await req(Bc, { t: 'fish', slot: slot(Bc, 'rod'), x: 32, y: 5 }); await sleep(Math.max(cA.wait, cB.wait) + 150);
+const rB = await req(Bc, { t: 'reel', win: true }); await req(A, { t: 'reel', win: false });
+check('兩個人並肩下竿：先下的那竿照常，後下的那竿是比翼魚（難度 4），拉上來記進紀念冊', cA.duo === false && cB.duo === true && cB.diff === 4 && rB.t === 'ok' && rB.got.id === 'fish_twin' && rB.got.size >= 45 && !!(await A.wait('stat', (m) => m.key === 'duofish')), JSON.stringify([cA, cB, rB.got]));
+const cA2 = await req(A, { t: 'fish', slot: slot(A, 'rod'), x: 32, y: 6 }), cB2 = await req(Bc, { t: 'fish', slot: slot(Bc, 'rod'), x: 32, y: 5 }); await sleep(Math.max(cA2.wait, cB2.wait) + 150);
+check('比翼魚一天只有一條：同一天再一起下竿就是普通的魚', cB2.duo === false && (await req(Bc, { t: 'reel', win: false })).t === 'ok' && (await req(A, { t: 'reel', win: false })).t === 'ok');
 const cf3 = await req(A, { t: 'fish', slot: slot(A, 'rod'), x: 32, y: 6 }); await sleep(cf3.wait + 120); const n3 = A.self.inv.filter(Boolean).reduce((n, x) => n + x.n, 0);
 check('小遊戲沒過：什麼都沒拿到', (await req(A, { t: 'reel', win: false })).got === null && A.self.inv.filter(Boolean).reduce((n, x) => n + x.n, 0) === n3);
 check('沒有拋竿就收竿：不算', (await req(A, { t: 'reel', win: true })).reason === 'gone');

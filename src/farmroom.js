@@ -531,12 +531,16 @@ export class FarmRoom {
     p.energy -= F.energy;
     // 這裡、這一季、這個天氣、這個時間釣得到的魚，照稀有度抽一條
     const f = this.farm, season = seasonId(f.day, BAL), wet = isWet(weatherOf(f.seed, f.day, BAL)), min = this.minuteNow();
-    const pool = Object.entries(FISH).filter(([, d]) => d.maps.includes(a.map) && d.seasons.includes(season) && min >= d.time[0] && min < d.time[1] && (!d.rain || wet));
+    const pool = Object.entries(FISH).filter(([, d]) => !d.duo && d.maps.includes(a.map) && d.seasons.includes(season) && min >= d.time[0] && min < d.time[1] && (!d.rain || wet));
     let pick = null; if (pool.length && (this.perk('fishSize') || Math.random() >= F.junkChance)) { let r = Math.random() * pool.reduce((s, [, d]) => s + d.weight, 0); for (const [id, d] of pool) { r -= d.weight; if (r <= 0) { pick = id; break; } } }
+    // 兩個人才釣得到的魚：對方就在旁邊、也正把竿子放在水裡，而且今天還沒釣到過，這一竿就是牠
+    const mate = this.online().find((s) => s.a.id !== a.id && s.a.map === a.map && Math.hypot(s.a.x - a.x, s.a.y - a.y) <= BAL.duo.fishReach), mc = mate && this.casts && this.casts.get(mate.a.id);
+    const duoFish = mc && Date.now() - mc.at < mc.wait + 20000 && f.duoFishDay !== f.day && Object.entries(FISH).find(([, d]) => d.duo && d.maps.includes(a.map) && d.seasons.includes(season));
+    if (duoFish) pick = duoFish[0];
     const wait = Math.round(F.waitMs[0] + Math.random() * (F.waitMs[1] - F.waitMs[0]));
     (this.casts ||= new Map()).set(a.id, { fish: pick, at: Date.now(), wait, x, y });
     self(); this.broadcast({ t: 'fx', id: a.id, kind: 'cast', map: a.map, x, y });
-    done({ wait, diff: pick ? FISH[pick].diff : 1 });
+    done({ wait, diff: pick ? FISH[pick].diff : 1, duo: !!duoFish });
   }
   onReel(a, p, m, { no, done, self }) {
     const c = this.casts && this.casts.get(a.id), F = BAL.fishing; if (!c) return no('gone');
@@ -547,7 +551,7 @@ export class FarmRoom {
     if (!invAdd(p.inv, BAL.invSlots, item, 1)) return no('full');
     let size = 0, record = false;
     if (d) { size = Math.round((d.size[0] + Math.min(1, Math.pow(Math.random(), 1.6) + this.perk('fishSize')) * (d.size[1] - d.size[0])) * 10) / 10; p.fishRec ||= {}; record = size > (p.fishRec[c.fish] || 0); if (record) p.fishRec[c.fish] = size; p.skills.fishing = (p.skills.fishing || 0) + d.diff * F.xpPerDiff; }
-    this.logEvent(a.id, 'fish', { id: item, size }); self();
+    this.logEvent(a.id, 'fish', { id: item, size }); if (d && d.duo) { this.farm.duoFishDay = this.farm.day; this.farmDirty = true; this.logEvent(a.id, 'duofish', { size }); } self();
     this.broadcast({ t: 'fx', id: a.id, kind: 'harvest', map: a.map, x: c.x, y: c.y, item });
     done({ got: { id: item, size, record } });
   }

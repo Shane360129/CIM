@@ -596,7 +596,7 @@
   },
   "duo": {
     "pushWindowMs": 5000,
-    "giveReach": 2.6,
+    "giveReach": 2.6, "fishReach": 5,
     "noteMaxChars": 60,
     "notesKeep": 20
   },
@@ -613,6 +613,7 @@
     "upgrade": "第一次升級工具",
     "build": "第一次找桐伯動工",
     "duo": "兩個人第一次合力搬開大傢伙",
+    "duofish": "兩個人一起釣到比翼魚",
     "note": "在便條板留下第一張便條",
     "born": "農場第一次有小動物出生",
     "quest": "完成第一個委託",

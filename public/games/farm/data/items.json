@@ -427,6 +427,17 @@
    "fish"
   ]
  },
+ "fish_twin": {
+  "name": "比翼魚",
+  "kind": "fish",
+  "fish": "twin",
+  "sell": 600,
+  "art": "fish/twin",
+  "desc": "傳說總是成雙出現。兩個人並肩把竿子放進水裡才遇得到，一天一條。",
+  "tags": [
+   "fish"
+  ]
+ },
  "fish_koi": {
   "name": "錦鯉",
   "kind": "fish",
