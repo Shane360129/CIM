@@ -21,7 +21,7 @@ function slotEl(items, bal, s, onClick, extraCls = '') {
 
 export function openPanel(ctx, mode, arg = {}) {
   const { hud, world: W } = ctx, { items, balance: bal } = ctx.data, room = W.room;
-  const root = mk('div', 'panel'), title = { bag: '背包', ship: '出貨箱', chest: '倉庫箱', cook: '爐灶', craft: '製作台', coop: '雞舍', barn: '畜舍', smith: '鐵匠鋪', restore: '修復小鎮' }[mode] || (mode === 'shop' && ctx.data.shops[arg.shop || 'stall'].name);
+  const root = mk('div', 'panel'), title = { bag: '背包', ship: '出貨箱', chest: '倉庫箱', cook: '爐灶', craft: '製作台', coop: '雞舍', barn: '畜舍', smith: '鐵匠鋪', restore: '修復小鎮', build: '木工屋', codex: '圖鑑與成就' }[mode] || (mode === 'shop' && ctx.data.shops[arg.shop || 'stall'].name);
   let picked = -1, info = '', fac = arg.fac || null;
   const say = (r) => { if (r.t === 'no') hud.toast({ full: '放不下了', money: '錢不夠', max: '已經是最高級了', unneeded: '這個設施不需要這個（或已經夠了）', closed: '現在沒有營業', materials: '材料不夠', level: '料理等級還不夠', housefull: '住滿了', nohay: '沒有乾草了（種子攤有賣）', already: '已經弄好了', far: '太遠了', unsellable: '這個不能賣' }[r.reason] || '沒辦法', 1300); };
   const grid = (list, n, onClick, cls) => { const g = mk('div', 'grid'); for (let i = 0; i < n; i++) g.append(slotEl(items, bal, list[i], () => onClick(i), (i === picked && cls === 'inv' ? 'on ' : '') + (i < bal.hotbarSlots && cls === 'inv' ? 'hot' : ''))); return g; };
@@ -31,7 +31,24 @@ export function openPanel(ctx, mode, arg = {}) {
     const x = mk('button', 'pclose', '✕'); x.type = 'button'; x.setAttribute('aria-label', '關閉'); x.addEventListener('click', () => hud.closePanel()); head.append(x); root.append(head);
     const inv = W.self.inv;
     const needText = (need) => Object.entries(need).map(([spec, n]) => `${spec === '@crop' ? '任何作物' : spec.startsWith('@') ? { veg: '蔬菜', fruit: '水果', fish: '魚', egg: '蛋', milk: '牛奶', forage: '採集物', flower: '花' }[spec.slice(1)] || spec : spec.startsWith('g:') ? ctx.data.machines[spec.slice(2)].name + '做的' : items[spec].name}×${n}`).join('、');
-    if (mode === 'restore') {
+    if (mode === 'build') {
+      const f = W.farm, H = bal.house, lv = f.houseLv || 1, next = H.levels[lv], costText = (c) => Object.entries(c).filter(([k]) => k !== 'money' && k !== 'name').map(([k, n]) => `${items[k].name}×${n}`).join('、') + `、${c.money} 元`;
+      const can = (c) => f.money >= c.money && !!planTake(items, W.self.inv, Object.fromEntries(Object.entries(c).filter(([k]) => k !== 'money' && k !== 'name')));
+      root.append(mk('p', 'hint', '桐伯：蓋房子、開墾，交給我！材料要帶在身上。'));
+      const list = mk('div', 'shoplist'), row = (name, desc, cost, what) => { const r = mk('div', 'shoprow'); r.dataset.item = what; r.append(mk('span', 'sname', name), mk('span', 'sdesc', desc)); const b = mk('button', 'pbtn', '動工'); b.type = 'button'; b.disabled = !cost || !can(cost); b.addEventListener('click', async () => { const x = await room.req({ t: 'build', what }); if (x.t === 'ok') hud.toast('完工了！', 1500); else say(x); }); r.append(b); list.append(r); };
+      row(`農舍（現在：${H.names[lv - 1]}）`, next ? `擴建成「${H.names[lv]}」：${costText(next)}。倉庫箱多 ${H.perLevel.chestSlots} 格、體力上限 +${H.perLevel.energyMax}` : '已經是最大的了', next, 'house');
+      for (const [id, c] of Object.entries(bal.land)) row(c.name, (f.land || {})[id] ? '已經開墾好了' : `開墾：${costText(c)}。多一塊可以翻土的田`, (f.land || {})[id] ? null : c, id);
+      root.append(list);
+    } else if (mode === 'codex') {
+      const f = W.farm, cx = f.codex || {}, groups = { 作物: 'crop', 魚: 'fish', 採集物: 'forage', 礦物: 'mineral', 料理: 'dish', 畜產: 'animal_product' };
+      root.append(mk('p', 'hint', '拿到過的東西會記在圖鑑裡（兩個人共用）。成就達成時，獎金會在隔天早上進錢包。'));
+      for (const [label, kind] of Object.entries(groups)) {
+        const all = Object.keys(ctx.data.rawItems).filter((k) => ctx.data.rawItems[k].kind === kind), got = all.filter((k) => cx[k]);
+        root.append(mk('h3', '', `${label} ${got.length}／${all.length}`)); const g2 = mk('div', 'grid'); for (const k of all) { const c = mk('span', 'cell' + (cx[k] ? '' : ' unknown')); c.title = cx[k] ? items[k].name : '？？？'; c.append(itemIcon(items, k)); g2.append(c); } root.append(g2);
+      }
+      const ach = ctx.data.achievements, done = ach.filter((a) => (f.achieved || {})[a.id]); root.append(mk('h3', '', `成就 ${done.length}／${ach.length}`));
+      const al = mk('div', 'shoplist'); for (const a of ach) { const r = mk('div', 'shoprow'); r.append(mk('span', 'sname', ((f.achieved || {})[a.id] ? '✔ ' : '') + a.name), mk('span', 'sdesc', a.desc), mk('span', 'sprice', `${a.money} 元`)); al.append(r); } root.append(al);
+    } else if (mode === 'restore') {
       const R = ctx.data.restore, st = W.farm.restore || {}, doneN = Object.keys(R).filter((id) => st[id] && st[id].done).length;
       root.append(mk('p', 'hint', `小鎮有八個年久失修的地方，已經修好 ${doneN} 個。先點一個設施，再點下面背包裡的東西捐給它（一次捐整疊，多的不會收）。兩個人捐的算在一起。`));
       const list = mk('div', 'shoplist');
@@ -124,6 +141,7 @@ export function openPanel(ctx, mode, arg = {}) {
         root.append(b);
       }
       const buffs = Object.keys(bal.buffNames).filter((k) => W.buff(k)).map((k) => bal.buffNames[k]); if (mode === 'bag' && buffs.length) root.append(mk('p', 'hint', '料理的效果：' + buffs.join('、')));
+      if (mode === 'bag') { const cb = mk('button', 'pbtn', '圖鑑與成就'); cb.type = 'button'; cb.dataset.act = 'codex'; cb.addEventListener('click', () => { hud.closePanel(); openPanel(ctx, 'codex'); }); root.append(cb); }
       if (mode === 'bag') { const sk = Object.entries(bal.skills).map(([k, name]) => `${name} ${ctx.level(k)} 級`).join('　'); root.append(mk('p', 'hint', sk)); }
     }
   }

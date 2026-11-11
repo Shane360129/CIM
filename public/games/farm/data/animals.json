@@ -19,7 +19,7 @@
   "duck": {
    "name": "鴨",
    "home": "coop",
-   "price": 500,
+   "price": 1400,
    "every": 2,
    "product": "duck_egg",
    "growDays": 4,
@@ -34,7 +34,7 @@
   "cow": {
    "name": "乳牛",
    "home": "barn",
-   "price": 1200,
+   "price": 3500,
    "every": 1,
    "product": "milk",
    "growDays": 6,
@@ -50,7 +50,7 @@
   "sheep": {
    "name": "綿羊",
    "home": "barn",
-   "price": 1500,
+   "price": 5000,
    "every": 3,
    "product": "wool",
    "growDays": 6,

@@ -209,7 +209,7 @@
   },
   "fishing": {
     "reach": 3.4,
-    "energy": 2,
+    "energy": 4,
     "waitMs": [
       1500,
       5000
@@ -477,17 +477,17 @@
       {
         "bar": "copper_bar",
         "n": 5,
-        "money": 300
+        "money": 1000
       },
       {
         "bar": "iron_bar",
         "n": 5,
-        "money": 800
+        "money": 4000
       },
       {
         "bar": "gold_bar",
         "n": 5,
-        "money": 2000
+        "money": 15000
       }
     ],
     "energyCut": 0.2
@@ -536,8 +536,61 @@
   },
   "restore": {
     "allDone": {
-      "money": 5000,
+      "money": 30000,
       "text": "八個設施都修好了！小鎮回到了以前熱鬧的樣子，大家合送了一份謝禮。"
+    }
+  },
+  "house": {
+    "levels": [
+      null,
+      {
+        "money": 3000,
+        "wood": 40,
+        "stone": 20
+      },
+      {
+        "money": 12000,
+        "wood": 80,
+        "stone": 50
+      },
+      {
+        "money": 40000,
+        "wood": 150,
+        "stone": 100,
+        "iron_bar": 10
+      },
+      {
+        "money": 120000,
+        "wood": 250,
+        "stone": 200,
+        "gold_bar": 10
+      },
+      {
+        "money": 400000,
+        "wood": 400,
+        "stone": 300,
+        "gold_bar": 25
+      }
+    ],
+    "perLevel": {
+      "chestSlots": 6,
+      "energyMax": 5
+    },
+    "names": [
+      "小農舍",
+      "有門廊的農舍",
+      "兩層樓的農舍",
+      "帶側屋的農舍",
+      "寬敞的農莊",
+      "氣派的莊園"
+    ]
+  },
+  "land": {
+    "field2": {
+      "name": "南邊的田",
+      "money": 8000,
+      "wood": 50,
+      "fiber": 30
     }
   }
 }

@@ -54,6 +54,7 @@ export const play = {
       W.on('map', (id) => { this.fishing.cancel(); this.setMap(id); hud.closePanel(); refresh(); }),
       W.on('self', refresh), W.on('farm', refresh),
       W.on('toast', (t) => hud.toast(t)),
+      W.on('built', (m) => { this.setMap(this.mapId); refresh(); if (m.by !== W.me.id) hud.toast(m.what === 'house' ? '農舍擴建好了！' : '新的田開墾好了！', 1800); }),
       W.on('restored', (m) => { const r = ctx.data.restore[m.fac]; hud.closePanel(); hud.card(`「${r.name}」修好了！`, [r.perkText, ...(m.all ? [balance.restore.allDone.text + `（${balance.restore.allDone.money} 元）`] : [])], [{ label: '太好了', value: true }]); }),
       W.on('faint', () => hud.card('昏倒了…', ['被怪物打到沒力氣，醒來已經在礦坑外面。東西都還在，只是體力剩一半。'], [{ label: '好', value: true }])),
       W.on('mine-upd', (m) => { if (m.by === W.me.id && m.drops) hud.toast('拿到 ' + Object.entries(m.drops).map(([id, n]) => `${ctx.data.items[id].name}×${n}`).join('、'), 1300); if (m.stairs && m.stairs.open && m.rock && m.rock.x === m.stairs.x && m.rock.y === m.stairs.y) hud.toast('石頭下面有往下的樓梯！', 1600); }),
@@ -67,7 +68,7 @@ export const play = {
   // 換地圖：地面重畫，不會動的東西（房子、家具）和它們擋住的格子、可以互動的格子重算。樹、石頭這些會被清掉的在 world.objs 裡
   setMap(id) {
     const { ctx } = this, mine = id === 'mine' && this.world.mine, map = mine ? mineMap(this.bal, mine.floor) : ctx.data.maps[id] || ctx.data.maps.farm, objects = ctx.data.objects;
-    this.mapId = mine ? 'mine' : ctx.data.maps[id] ? id : 'farm'; this.map = map; this.ground = buildGround(map, this.T);
+    this.mapId = mine ? 'mine' : ctx.data.maps[id] ? id : 'farm'; this.map = map; this.ground = buildGround(map, this.T, !!(this.world.farm && (this.world.farm.land || {}).field2));
     this.solid = new Set(); this.useAt = new Map(); this.things = [];
     for (const o of map.objects) {
       const def = objects[o.type]; if (def.tool) continue;
@@ -92,6 +93,7 @@ export const play = {
     const { hud, data } = this.ctx, f = m.farm, W = this.world, born = (f.newborn || []).length ? [`${f.newborn.join('、')} 出生了！`] : [];
     const head = m.reason === 'late' ? '太晚了，累得昏倒了… 已經是隔天早上' : m.reason === 'restore' ? '農場回復到備份的樣子了' : `早安！第 ${f.day} 天`;
     const lines = [`今天的天氣：${this.bal.weatherNames[f.weather]}`];
+    for (const id of f.newAchievements || []) { const a = data.achievements.find((x) => x.id === id); if (a) lines.push(`🏆 達成成就「${a.name}」：${a.desc}，獎金 ${a.money} 元`); }
     if (f.festival) lines.push(`今天是${data.festivals[f.festival].name}！到小鎮廣場的舞台參加活動。`);
     if (f.lastShip && f.lastShip.day === f.day - 1 && m.reason !== 'restore') {
       for (const l of f.lastShip.lines) lines.push(`${l.by === W.me.id ? '你' : (W.partner && W.partner.name) || '對方'}：${data.items[l.id].name}${l.q ? `（${this.bal.quality.names[l.q]}）` : ''}×${l.n} → ${l.sum} 元`);
@@ -137,7 +139,7 @@ export const play = {
       if (use === 'shop') return openPanel(this.ctx, 'shop', { shop: 'stall' });
       if (data.shops[use]) return openPanel(this.ctx, 'shop', { shop: use });
       if (use === 'smith') return openPanel(this.ctx, 'smith');
-      if (use === 'carpenter') return hud.toast('桐伯：蓋房子、擴建的生意還在準備，過陣子再來！', 1600);
+      if (use === 'carpenter') return openPanel(this.ctx, 'build');
       if (use === 'board') return this.board();
       if (use === 'mail') return this.mail();
       if (use === 'stove') return openPanel(this.ctx, 'cook');

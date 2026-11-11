@@ -10,7 +10,7 @@ const COLORS = {
 };
 const rnd = (s) => () => ((s = (s * 9301 + 49297) % 233280) / 233280);
 
-export function buildGround(map, tile) {
+export function buildGround(map, tile, unlocked = false) {
   // 還沒開墾的田（locked）先當草地畫，上面蓋一層淡淡的土色，看得出以後可以開墾
   // 手機的畫布有大小上限：離線畫布每格最多 32 像素，畫的時候再放大（地面本來就是柔和的色塊，看不出來）
   const px = Math.min(tile, 32), c = document.createElement('canvas');
@@ -33,8 +33,8 @@ export function buildGround(map, tile) {
   fill(map.ground || 'grass', 0, 0, map.w, map.h, false);
   for (const p of map.patches || []) {
     // 邊緣：先畫一圈深色的邊，再畫本體，看起來像陷下去一點
-    if (!p.locked) { g.fillStyle = 'rgba(70, 50, 30, 0.18)'; g.beginPath(); g.roundRect(p.x * px - 5, p.y * px - 4, p.w * px + 10, p.h * px + 10, px * 0.5); g.fill(); }
-    if (p.locked) { g.fillStyle = 'rgba(150, 110, 70, 0.28)'; g.beginPath(); g.roundRect(p.x * px, p.y * px, p.w * px, p.h * px, px * 0.45); g.fill(); continue; }
+    if (!p.locked || unlocked) { g.fillStyle = 'rgba(70, 50, 30, 0.18)'; g.beginPath(); g.roundRect(p.x * px - 5, p.y * px - 4, p.w * px + 10, p.h * px + 10, px * 0.5); g.fill(); }
+    if (p.locked && !unlocked) { g.fillStyle = 'rgba(150, 110, 70, 0.28)'; g.beginPath(); g.roundRect(p.x * px, p.y * px, p.w * px, p.h * px, px * 0.45); g.fill(); continue; }
     fill(p.type, p.x, p.y, p.w, p.h, true);
   }
   c.scale = tile / px;

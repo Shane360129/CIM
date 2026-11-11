@@ -182,6 +182,11 @@ check('鐵匠鋪：沒有的工具不能升、沒有錠不能升', (await req(A,
 await go(A, 25.5, 14.4); const quest = A.farm.quest, qd = await req(A, { t: 'quest-done' });
 check('佈告欄有今天的委託（哪位居民要幾個什麼、報酬多少）；東西不夠交不了', !!quest && !!quest.npc && quest.n >= 2 && quest.reward > 0 && (qd.reason === 'materials' || qd.t === 'ok'), JSON.stringify(quest) + ' ' + JSON.stringify(qd));
 if (qd.t === 'ok') A.farm.money -= quest.reward;
+// 木工屋：擴建、開墾
+check('不在木工屋旁邊不能動工', (await req(A, { t: 'build', what: 'house' })).reason === 'far');
+await go(A, 37, 9.7);
+check('錢不夠不能擴建農舍、不能開墾；沒有的項目不能做', (await req(A, { t: 'build', what: 'house' })).reason === 'money' && (await req(A, { t: 'build', what: 'field2' })).reason === 'money' && (await req(A, { t: 'build', what: 'castle' })).reason === 'unknown');
+await go(A, 25.5, 14.4);
 // 修復小鎮：捐東西
 check('沒有的設施不能捐、設施不需要的東西不收', (await req(A, { t: 'donate', fac: 'castle', slot: 0, n: 1 })).reason === 'unknown' && (await req(A, { t: 'donate', fac: 'clocktower', slot: slot(A, 'hoe'), n: 1 })).reason === 'unneeded');
 const wd = has(A, 'wood'); Bc.clear(); const dnt = await req(A, { t: 'donate', fac: 'clocktower', slot: slot(A, 'wood'), n: 1 });
@@ -340,6 +345,7 @@ const A2 = open(dm.id, a.token); const s2 = await A2.wait('snapshot');
 check('重新上線：造型和名字還在', !!s2 && !!s2.you.look && s2.you.look.hair === 'twin' && s2.you.name.startsWith('晴b晴'));
 check('重新上線：人還在農舍裡、背包還在、看得到離線時的變化', !!s2 && s2.you.map === 'house' && s2.self.inv.some((x) => x && x.id === 'seed_strawberry') && s2.farm.day === 10 && s2.farm.animals.length === 1 && s2.farm.pets.length === 1);
 check('「你不在時發生的事」：過了 8 天、對方澆水和收成', !!s2 && !!s2.summary && s2.summary.days === 8 && s2.summary.acts.harvest >= 1 && s2.summary.acts.water >= 1, s2 && JSON.stringify(s2.summary));
+check('圖鑑記下拿到過的東西、統計記下做過的事（兩個人共用）', Object.keys(s2.farm.codex).length >= 15 && !!s2.farm.codex.carrot && s2.farm.stats.harvest >= 1 && s2.farm.stats.fish >= 1 && s2.farm.houseLv === 1, `圖鑑 ${Object.keys(s2.farm.codex).length} 種`);
 const A3 = open(dm.id, a.token); await A3.wait('snapshot'); await sleep(300);
 check('同一個人開第二個分頁：舊的收到 replaced，對方不會以為他離開', A2.log.some((m) => m.t === 'replaced') && !Bc.log.some((m) => m.t === 'leave' && m.id === a.user.id));
 // 時鐘只在有人的時候走

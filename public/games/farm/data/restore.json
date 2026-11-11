@@ -3,11 +3,11 @@
   "name": "小鎮鐘樓",
   "about": "鐘壞了很多年，鎮上的人都靠太陽看時間。",
   "need": {
-   "wood": 40,
-   "stone": 40,
-   "copper_bar": 5,
-   "iron_bar": 3,
-   "quartz": 2
+   "wood": 120,
+   "stone": 120,
+   "copper_bar": 10,
+   "iron_bar": 6,
+   "quartz": 4
   },
   "perk": {
    "type": "shopHours",
@@ -19,12 +19,12 @@
   "name": "圖書館與博物館",
   "about": "屋頂漏水，書和標本都搬走了。",
   "need": {
-   "wood": 30,
-   "fossil": 2,
-   "amethyst": 1,
-   "@forage": 10,
-   "fish_carp": 2,
-   "copper_ore": 10
+   "wood": 90,
+   "fossil": 4,
+   "amethyst": 2,
+   "@forage": 30,
+   "fish_carp": 4,
+   "copper_ore": 30
   },
   "perk": {
    "type": "xp",
@@ -36,11 +36,11 @@
   "name": "溫泉澡堂",
   "about": "泉水還在流，但是澡堂的木頭都爛了。",
   "need": {
-   "wood": 50,
-   "stone": 30,
-   "coal": 8,
-   "@fish": 6,
-   "milk": 3
+   "wood": 150,
+   "stone": 90,
+   "coal": 16,
+   "@fish": 12,
+   "milk": 6
   },
   "perk": {
    "type": "energyMax",
@@ -52,11 +52,11 @@
   "name": "火車站",
   "about": "鐵軌還在，只是很久沒有火車停靠了。",
   "need": {
-   "iron_bar": 8,
-   "stone": 50,
-   "coal": 15,
-   "wood": 30,
-   "@veg": 20
+   "iron_bar": 16,
+   "stone": 150,
+   "coal": 45,
+   "wood": 90,
+   "@veg": 60
   },
   "perk": {
    "type": "ship",
@@ -68,12 +68,12 @@
   "name": "港口燈塔",
   "about": "燈不亮了，漁船晚上不敢出海。",
   "need": {
-   "quartz": 3,
-   "copper_bar": 8,
-   "g:keg": 3,
-   "fish_bass": 3,
-   "fish_eel": 1,
-   "stone": 40
+   "quartz": 6,
+   "copper_bar": 16,
+   "g:keg": 6,
+   "fish_bass": 6,
+   "fish_eel": 2,
+   "stone": 120
   },
   "perk": {
    "type": "fishSize",
@@ -85,11 +85,11 @@
   "name": "市集廣場的大棚架",
   "about": "以前每個週末這裡都擠滿了人。",
   "need": {
-   "wood": 60,
-   "fiber": 30,
-   "@good": 8,
-   "egg": 10,
-   "honey": 2
+   "wood": 180,
+   "fiber": 90,
+   "@good": 16,
+   "egg": 30,
+   "honey": 4
   },
   "perk": {
    "type": "questReward",
@@ -101,11 +101,11 @@
   "name": "山上的神木小祠",
   "about": "小祠被藤蔓蓋住了，神木還很健康。",
   "need": {
-   "wood": 20,
-   "@flower": 6,
-   "dandelion": 5,
-   "jade": 1,
-   "dish_veg_soup": 3
+   "wood": 60,
+   "@flower": 12,
+   "dandelion": 10,
+   "jade": 2,
+   "dish_veg_soup": 6
   },
   "perk": {
    "type": "luck",
@@ -117,11 +117,11 @@
   "name": "學校",
   "about": "黑板還在，就是沒有學生和老師。",
   "need": {
-   "wood": 40,
-   "stone": 20,
-   "@crop": 30,
-   "wool": 2,
-   "dish_salad": 2
+   "wood": 120,
+   "stone": 60,
+   "@crop": 90,
+   "wool": 4,
+   "dish_salad": 4
   },
   "perk": {
    "type": "talk",

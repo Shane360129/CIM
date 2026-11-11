@@ -1,0 +1,434 @@
+[
+ {
+  "id": "harvest1",
+  "name": "豐收 Ⅰ",
+  "stat": "harvest",
+  "need": 10,
+  "desc": "收成 10 次",
+  "money": 100
+ },
+ {
+  "id": "harvest2",
+  "name": "豐收 Ⅱ",
+  "stat": "harvest",
+  "need": 100,
+  "desc": "收成 100 次",
+  "money": 500
+ },
+ {
+  "id": "harvest3",
+  "name": "豐收 Ⅲ",
+  "stat": "harvest",
+  "need": 500,
+  "desc": "收成 500 次",
+  "money": 1500
+ },
+ {
+  "id": "harvest4",
+  "name": "豐收 Ⅳ",
+  "stat": "harvest",
+  "need": 2000,
+  "desc": "收成 2000 次",
+  "money": 5000
+ },
+ {
+  "id": "harvest5",
+  "name": "豐收 Ⅴ",
+  "stat": "harvest",
+  "need": 10000,
+  "desc": "收成 10000 次",
+  "money": 20000
+ },
+ {
+  "id": "ship1",
+  "name": "生意人 Ⅰ",
+  "stat": "shipMoney",
+  "need": 1000,
+  "desc": "出貨收入累積 1000 元",
+  "money": 200
+ },
+ {
+  "id": "ship2",
+  "name": "生意人 Ⅱ",
+  "stat": "shipMoney",
+  "need": 10000,
+  "desc": "出貨收入累積 10000 元",
+  "money": 1000
+ },
+ {
+  "id": "ship3",
+  "name": "生意人 Ⅲ",
+  "stat": "shipMoney",
+  "need": 100000,
+  "desc": "出貨收入累積 100000 元",
+  "money": 5000
+ },
+ {
+  "id": "ship4",
+  "name": "生意人 Ⅳ",
+  "stat": "shipMoney",
+  "need": 1000000,
+  "desc": "出貨收入累積 1000000 元",
+  "money": 30000
+ },
+ {
+  "id": "fish1",
+  "name": "釣客 Ⅰ",
+  "stat": "fish",
+  "need": 5,
+  "desc": "釣到 5 條魚",
+  "money": 100
+ },
+ {
+  "id": "fish2",
+  "name": "釣客 Ⅱ",
+  "stat": "fish",
+  "need": 50,
+  "desc": "釣到 50 條魚",
+  "money": 500
+ },
+ {
+  "id": "fish3",
+  "name": "釣客 Ⅲ",
+  "stat": "fish",
+  "need": 300,
+  "desc": "釣到 300 條魚",
+  "money": 2000
+ },
+ {
+  "id": "fish4",
+  "name": "釣客 Ⅳ",
+  "stat": "fish",
+  "need": 1500,
+  "desc": "釣到 1500 條魚",
+  "money": 8000
+ },
+ {
+  "id": "mine1",
+  "name": "礦工 Ⅰ",
+  "stat": "mine",
+  "need": 20,
+  "desc": "敲碎 20 顆石頭",
+  "money": 100
+ },
+ {
+  "id": "mine2",
+  "name": "礦工 Ⅱ",
+  "stat": "mine",
+  "need": 200,
+  "desc": "敲碎 200 顆石頭",
+  "money": 500
+ },
+ {
+  "id": "mine3",
+  "name": "礦工 Ⅲ",
+  "stat": "mine",
+  "need": 1000,
+  "desc": "敲碎 1000 顆石頭",
+  "money": 2000
+ },
+ {
+  "id": "mine4",
+  "name": "礦工 Ⅳ",
+  "stat": "mine",
+  "need": 5000,
+  "desc": "敲碎 5000 顆石頭",
+  "money": 8000
+ },
+ {
+  "id": "deep1",
+  "name": "探險 Ⅰ",
+  "stat": "mineDeepest",
+  "need": 5,
+  "desc": "到達礦坑第 5 層",
+  "money": 300
+ },
+ {
+  "id": "deep2",
+  "name": "探險 Ⅱ",
+  "stat": "mineDeepest",
+  "need": 10,
+  "desc": "到達礦坑第 10 層",
+  "money": 800
+ },
+ {
+  "id": "deep3",
+  "name": "探險 Ⅲ",
+  "stat": "mineDeepest",
+  "need": 15,
+  "desc": "到達礦坑第 15 層",
+  "money": 2000
+ },
+ {
+  "id": "deep4",
+  "name": "探險 Ⅳ",
+  "stat": "mineDeepest",
+  "need": 20,
+  "desc": "到達礦坑第 20 層",
+  "money": 5000
+ },
+ {
+  "id": "monster1",
+  "name": "除怪 Ⅰ",
+  "stat": "monster",
+  "need": 5,
+  "desc": "打倒 5 隻怪物",
+  "money": 200
+ },
+ {
+  "id": "monster2",
+  "name": "除怪 Ⅱ",
+  "stat": "monster",
+  "need": 50,
+  "desc": "打倒 50 隻怪物",
+  "money": 800
+ },
+ {
+  "id": "monster3",
+  "name": "除怪 Ⅲ",
+  "stat": "monster",
+  "need": 300,
+  "desc": "打倒 300 隻怪物",
+  "money": 3000
+ },
+ {
+  "id": "cook1",
+  "name": "廚師 Ⅰ",
+  "stat": "cook",
+  "need": 5,
+  "desc": "煮了 5 道料理",
+  "money": 200
+ },
+ {
+  "id": "cook2",
+  "name": "廚師 Ⅱ",
+  "stat": "cook",
+  "need": 50,
+  "desc": "煮了 50 道料理",
+  "money": 800
+ },
+ {
+  "id": "cook3",
+  "name": "廚師 Ⅲ",
+  "stat": "cook",
+  "need": 300,
+  "desc": "煮了 300 道料理",
+  "money": 3000
+ },
+ {
+  "id": "forage1",
+  "name": "採集家 Ⅰ",
+  "stat": "forage",
+  "need": 10,
+  "desc": "撿了 10 個採集物",
+  "money": 100
+ },
+ {
+  "id": "forage2",
+  "name": "採集家 Ⅱ",
+  "stat": "forage",
+  "need": 100,
+  "desc": "撿了 100 個採集物",
+  "money": 500
+ },
+ {
+  "id": "forage3",
+  "name": "採集家 Ⅲ",
+  "stat": "forage",
+  "need": 500,
+  "desc": "撿了 500 個採集物",
+  "money": 2000
+ },
+ {
+  "id": "clear1",
+  "name": "開墾 Ⅰ",
+  "stat": "clear",
+  "need": 20,
+  "desc": "清掉 20 個樹、石頭、雜草",
+  "money": 100
+ },
+ {
+  "id": "clear2",
+  "name": "開墾 Ⅱ",
+  "stat": "clear",
+  "need": 100,
+  "desc": "清掉 100 個樹、石頭、雜草",
+  "money": 400
+ },
+ {
+  "id": "clear3",
+  "name": "開墾 Ⅲ",
+  "stat": "clear",
+  "need": 400,
+  "desc": "清掉 400 個樹、石頭、雜草",
+  "money": 1500
+ },
+ {
+  "id": "codex1",
+  "name": "收藏家 Ⅰ",
+  "stat": "codex",
+  "need": 20,
+  "desc": "圖鑑收集到 20 種",
+  "money": 300
+ },
+ {
+  "id": "codex2",
+  "name": "收藏家 Ⅱ",
+  "stat": "codex",
+  "need": 50,
+  "desc": "圖鑑收集到 50 種",
+  "money": 1000
+ },
+ {
+  "id": "codex3",
+  "name": "收藏家 Ⅲ",
+  "stat": "codex",
+  "need": 90,
+  "desc": "圖鑑收集到 90 種",
+  "money": 3000
+ },
+ {
+  "id": "codex4",
+  "name": "收藏家 Ⅳ",
+  "stat": "codex",
+  "need": 130,
+  "desc": "圖鑑收集到 130 種",
+  "money": 10000
+ },
+ {
+  "id": "gift1",
+  "name": "好鄰居 Ⅰ",
+  "stat": "gift",
+  "need": 5,
+  "desc": "送出 5 份禮物",
+  "money": 200
+ },
+ {
+  "id": "gift2",
+  "name": "好鄰居 Ⅱ",
+  "stat": "gift",
+  "need": 30,
+  "desc": "送出 30 份禮物",
+  "money": 800
+ },
+ {
+  "id": "gift3",
+  "name": "好鄰居 Ⅲ",
+  "stat": "gift",
+  "need": 100,
+  "desc": "送出 100 份禮物",
+  "money": 3000
+ },
+ {
+  "id": "quest1",
+  "name": "熱心 Ⅰ",
+  "stat": "quest",
+  "need": 3,
+  "desc": "完成 3 個委託",
+  "money": 300
+ },
+ {
+  "id": "quest2",
+  "name": "熱心 Ⅱ",
+  "stat": "quest",
+  "need": 20,
+  "desc": "完成 20 個委託",
+  "money": 1000
+ },
+ {
+  "id": "quest3",
+  "name": "熱心 Ⅲ",
+  "stat": "quest",
+  "need": 60,
+  "desc": "完成 60 個委託",
+  "money": 4000
+ },
+ {
+  "id": "restore1",
+  "name": "修復小鎮 Ⅰ",
+  "stat": "restored",
+  "need": 1,
+  "desc": "修好 1 個設施",
+  "money": 1000
+ },
+ {
+  "id": "restore2",
+  "name": "修復小鎮 Ⅱ",
+  "stat": "restored",
+  "need": 4,
+  "desc": "修好 4 個設施",
+  "money": 4000
+ },
+ {
+  "id": "restore3",
+  "name": "修復小鎮 Ⅲ",
+  "stat": "restored",
+  "need": 8,
+  "desc": "修好 8 個設施",
+  "money": 15000
+ },
+ {
+  "id": "day1",
+  "name": "農場歲月 Ⅰ",
+  "stat": "day",
+  "need": 28,
+  "desc": "農場經營到第 28 天",
+  "money": 500
+ },
+ {
+  "id": "day2",
+  "name": "農場歲月 Ⅱ",
+  "stat": "day",
+  "need": 112,
+  "desc": "農場經營到第 112 天",
+  "money": 3000
+ },
+ {
+  "id": "day3",
+  "name": "農場歲月 Ⅲ",
+  "stat": "day",
+  "need": 336,
+  "desc": "農場經營到第 336 天",
+  "money": 10000
+ },
+ {
+  "id": "animal1",
+  "name": "牧場主人 Ⅰ",
+  "stat": "collect",
+  "need": 10,
+  "desc": "收了 10 次產品（蛋、奶、毛、加工品）",
+  "money": 200
+ },
+ {
+  "id": "animal2",
+  "name": "牧場主人 Ⅱ",
+  "stat": "collect",
+  "need": 100,
+  "desc": "收了 100 次產品（蛋、奶、毛、加工品）",
+  "money": 800
+ },
+ {
+  "id": "animal3",
+  "name": "牧場主人 Ⅲ",
+  "stat": "collect",
+  "need": 500,
+  "desc": "收了 500 次產品（蛋、奶、毛、加工品）",
+  "money": 3000
+ },
+ {
+  "id": "festival1",
+  "name": "節慶常客 Ⅰ",
+  "stat": "festival",
+  "need": 1,
+  "desc": "參加 1 次節慶",
+  "money": 300
+ },
+ {
+  "id": "festival2",
+  "name": "節慶常客 Ⅱ",
+  "stat": "festival",
+  "need": 4,
+  "desc": "參加 4 次節慶",
+  "money": 1500
+ }
+]

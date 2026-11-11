@@ -40,8 +40,8 @@ export function createWorld(session, bal) {
   room.on('move', (m) => { const o = w.others.get(m.id); if (!o) return; if (o.map !== m.map) { o.map = m.map; o.x = m.x; o.y = m.y; } Object.assign(o, { tx: m.x, ty: m.y, vx: m.vx, vy: m.vy, dir: m.dir }); if (Math.hypot(o.x - m.x, o.y - m.y) > 4) { o.x = m.x; o.y = m.y; } });
   room.on('tiles', (m) => { w.setTiles(m.list); emit('tiles', m); });
   room.on('objs', (m) => { w.setObjs(m.list); emit('objs', m); });
-  room.on('self', (m) => { w.self = { inv: m.inv, energy: m.energy, energyMax: m.energyMax, skills: m.skills, fishRec: m.fishRec || {}, buffs: m.buffs || {}, hp: m.hp, hpMax: m.hpMax, friend: m.friend || {}, toolLv: m.toolLv || {}, mail: m.mail || [], events: m.events || {}, fest: m.fest || {} }; emit('self', m); });
-  room.on('farm', (m) => { if (w.farm) Object.assign(w.farm, { money: m.money, ship: m.ship, chest: m.chest, quest: m.quest, restore: m.restore || w.farm.restore }); emit('farm', m); });
+  room.on('self', (m) => { if (w.farm) { const cx = (w.farm.codex ||= {}); for (const it of m.inv) if (it && !cx[it.id]) cx[it.id] = w.farm.day; } w.self = { inv: m.inv, energy: m.energy, energyMax: m.energyMax, skills: m.skills, fishRec: m.fishRec || {}, buffs: m.buffs || {}, hp: m.hp, hpMax: m.hpMax, friend: m.friend || {}, toolLv: m.toolLv || {}, mail: m.mail || [], events: m.events || {}, fest: m.fest || {} }; emit('self', m); });
+  room.on('farm', (m) => { if (w.farm) Object.assign(w.farm, { money: m.money, ship: m.ship, chest: m.chest, quest: m.quest, restore: m.restore || w.farm.restore, houseLv: m.houseLv || w.farm.houseLv, land: m.land || w.farm.land }); emit('farm', m); });
   room.on('animals', (m) => { if (w.farm) Object.assign(w.farm, { animals: m.animals, pets: m.pets, graze: m.graze, money: m.money }); emit('farm', m); });
   room.on('mine', (m) => { w.mine = m.state; if (w.farm) w.farm.mineDeepest = m.deepest; emit('map', 'mine'); });
   room.on('mine-upd', (m) => {
@@ -52,6 +52,7 @@ export function createWorld(session, bal) {
     emit('mine-upd', m);
   });
   room.on('restored', (m) => emit('restored', m));
+  room.on('built', (m) => { if (w.farm) Object.assign(w.farm, { houseLv: m.houseLv, land: m.land }); emit('built', m); });
   room.on('fest', (m) => { const who = w.who(m.id); if (who && m.id !== w.me.id) emit('toast', `${who.name} 在節慶活動拿到 ${m.score} 分！`); });
   room.on('warp', (m) => {
     const who = w.who(m.id); if (!who) return;
