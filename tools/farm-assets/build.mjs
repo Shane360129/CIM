@@ -124,7 +124,7 @@ for (const s of list) {
 const AH = y + rowH + PAD, atlas = Buffer.alloc(AW * AH * 4);
 for (const s of list) { const [sx, sy] = map[s.name]; for (let r = 0; r < s.h; r++) s.px.copy(atlas, ((sy + r) * AW + sx) * 4, r * s.w * 4, (r + 1) * s.w * 4); }
 await mkdir(OUT, { recursive: true });
-const webp = await sharp(atlas, { raw: { width: AW, height: AH, channels: 4 } }).webp({ lossless: true }).toBuffer();
+const webp = await sharp(atlas, { raw: { width: AW, height: AH, channels: 4 } }).webp({ quality: 88, alphaQuality: 100, effort: 5 }).toBuffer();
 await writeFile(path.join(OUT, `b${batch}.webp`), webp);
 await writeFile(path.join(OUT, `b${batch}.json`), JSON.stringify({ image: `b${batch}.webp`, w: AW, h: AH, quality: usedThumb ? 'thumb' : 'full', sprites: map }) + '\n');
 // 預覽頁（只在本機看，不部署）：每張小圖、名字、大小，方便挑要重畫的

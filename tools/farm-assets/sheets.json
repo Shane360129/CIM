@@ -447,8 +447,8 @@
      "obj/picket_h"
     ]
    ],
-   "gap": 3,
-   "minArea": 45
+   "gap": 6,
+   "minArea": 40
   },
   "2-15": {
    "kind": "object",
