@@ -15,6 +15,24 @@ self.addEventListener('fetch', (e) => {
   if (url.pathname === '/sw.js') return;              // service worker 自己不進快取
   if (url.pathname.startsWith('/api/') || !STATIC.test(url.pathname)) return;
 
+  // 晴耕谷（/games/farm/）：先連網路拿最新的，連不上才用快取。
+  // 遊戲是很多個互相 import 的模組，新舊版混在一起會壞掉，所以不能用「先回快取」的做法
+  if (url.pathname.startsWith('/games/farm/')) {
+    e.respondWith((async () => {
+      const cache = await caches.open(CACHE);
+      try {
+        const res = await fetch(req, { cache: 'no-cache' });
+        if (res && res.ok) cache.put(req, res.clone()).catch(() => {});
+        return res;
+      } catch (err) {
+        const hit = await cache.match(req);
+        if (hit) return hit;
+        throw err;
+      }
+    })());
+    return;
+  }
+
   e.respondWith((async () => {
     const cache = await caches.open(CACHE);
     const hit = await cache.match(req);

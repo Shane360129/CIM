@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<title>紙娃娃對位工具（只在本機用）</title>
+<style>
+  body { margin: 0; font-family: "Microsoft JhengHei", "PingFang TC", sans-serif; display: grid; grid-template-columns: 300px 1fr; height: 100vh; background: #f3e6c8; color: #3b2f22; }
+  aside { padding: 12px; overflow: auto; border-right: 2px solid #5a3d22; font-size: 14px; }
+  h1 { font-size: 17px; margin: 0 0 8px; } h2 { font-size: 14px; margin: 14px 0 6px; }
+  button, select, input[type=text] { font: inherit; padding: 4px 8px; margin: 2px 0; }
+  #list button { display: block; width: 100%; text-align: left; } #list button.on { background: #ffd76a; }
+  canvas { width: 100%; height: 100%; display: block; background: #cfe8b0; cursor: grab; }
+  small { color: #7a6548; line-height: 1.6; display: block; }
+</style>
+<aside>
+  <h1>紙娃娃對位工具</h1>
+  <small>把素材工具做出來的圖集（public/games/farm/assets/bN.json 和同名的 .webp）選進來，把每個零件拖到素體上對齊，再存成 JSON。</small>
+  <h2>1. 選圖集</h2>
+  <input type="file" id="files" multiple accept=".json,.webp,.png">
+  <h2>2. 角度</h2>
+  <select id="view"><option value="front">正面</option><option value="back">背面</option><option value="side">側面（面向右）</option></select>
+  <h2>3. 零件（點一下選取／放上去）</h2>
+  <input type="text" id="filter" placeholder="篩選名字">
+  <div id="list"></div>
+  <h2>4. 選到的零件</h2>
+  <label>圖層 <select id="layer"></select></label><br>
+  <label>換色 <select id="tint"><option value="">不換色</option><option value="skin">膚色</option><option value="hair">髮色</option><option value="top">上衣色</option><option value="bottom">下身色</option><option value="shoes">鞋子色</option><option value="hat">帽子色</option></select></label><br>
+  <button id="remove">從這個角度拿掉</button>
+  <small>拖曳：移動。滾輪：縮放。Shift＋滾輪：旋轉。Alt＋點一下：設定旋轉軸心（肩膀、腳根）。方向鍵：微調 1 像素。</small>
+  <h2>5. 存檔</h2>
+  <button id="save">下載 align.json</button> <button id="load">載入舊的 align.json</button><input type="file" id="old" accept=".json" hidden>
+  <small>存好的檔放到 public/games/farm/data/doll/align.json。分區換色的遮罩這個版本還沒有做。</small>
+</aside>
+<canvas id="c"></canvas>
+<script>
+const LAYERS = ['hairBack', 'armBack', 'body', 'bottom', 'shoes', 'top', 'armFront', 'face', 'hairFront', 'hat', 'acc', 'tool'];
+const $ = (id) => document.getElementById(id), cv = $('c'), g = cv.getContext('2d');
+let atlas = {}, img = null, align = { front: {}, back: {}, side: {} }, sel = null, drag = null;
+$('layer').innerHTML = LAYERS.map((l) => `<option>${l}</option>`).join('');
+const view = () => $('view').value, cur = () => align[view()], U = 150; // U：一個頭的直徑在畫面上幾個像素
+function fit() { cv.width = cv.clientWidth; cv.height = cv.clientHeight; draw(); }
+function origin() { return [cv.width / 2, cv.height * 0.82]; } // 腳底中心
+function draw() {
+  g.clearRect(0, 0, cv.width, cv.height); const [ox, oy] = origin();
+  // 參考線：腳底、屁股、肩膀、頭（跟遊戲裡程式畫的暫代娃娃同一套比例）
+  g.strokeStyle = 'rgba(90,61,34,.35)'; g.lineWidth = 1;
+  for (const y of [0, -0.62, -1.24, -1.76]) { g.beginPath(); g.moveTo(ox - 200, oy + y * U); g.lineTo(ox + 200, oy + y * U); g.stroke(); }
+  g.beginPath(); g.arc(ox, oy - 1.76 * U, U / 2, 0, 7); g.stroke(); g.strokeRect(ox - 0.3 * U, oy - 1.24 * U, 0.6 * U, 0.74 * U);
+  g.beginPath(); g.moveTo(ox, oy - 2.4 * U); g.lineTo(ox, oy + 20); g.stroke();
+  if (!img) return;
+  const items = Object.entries(cur()).sort((a, b) => LAYERS.indexOf(a[1].layer) - LAYERS.indexOf(b[1].layer));
+  for (const [name, a] of items) {
+    const r = atlas[name]; if (!r) continue;
+    g.save(); g.translate(ox + a.x * U, oy + a.y * U); g.rotate(a.rot); g.scale(a.scale * U / 100, a.scale * U / 100);
+    g.drawImage(img, r[0], r[1], r[2], r[3], -a.pivot[0] * r[2], -a.pivot[1] * r[3], r[2], r[3]);
+    if (name === sel) { g.strokeStyle = '#e8872e'; g.lineWidth = 2 / (a.scale * U / 100); g.strokeRect(-a.pivot[0] * r[2], -a.pivot[1] * r[3], r[2], r[3]); g.fillStyle = '#e5484d'; g.beginPath(); g.arc(0, 0, 4 / (a.scale * U / 100), 0, 7); g.fill(); }
+    g.restore();
+  }
+}
+function list() {
+  const f = $('filter').value.trim();
+  $('list').innerHTML = '';
+  for (const name of Object.keys(atlas).filter((n) => !f || n.includes(f)).sort()) {
+    const b = document.createElement('button'); b.textContent = (cur()[name] ? '● ' : '○ ') + name; b.className = name === sel ? 'on' : '';
+    b.onclick = () => { if (!cur()[name]) cur()[name] = { layer: 'top', x: 0, y: -1, scale: 1, rot: 0, pivot: [0.5, 0.5], tint: '' }; pick(name); };
+    $('list').append(b);
+  }
+}
+function pick(name) { sel = name; const a = cur()[name]; if (a) { $('layer').value = a.layer; $('tint').value = a.tint || ''; } list(); draw(); }
+$('files').onchange = async (e) => {
+  for (const f of e.target.files) {
+    if (f.name.endsWith('.json')) atlas = JSON.parse(await f.text()).sprites || {};
+    else { img = new Image(); img.src = URL.createObjectURL(f); await img.decode(); }
+  }
+  list(); draw();
+};
+$('view').onchange = () => { sel = null; list(); draw(); }; $('filter').oninput = list;
+$('layer').onchange = () => { if (cur()[sel]) { cur()[sel].layer = $('layer').value; draw(); } };
+$('tint').onchange = () => { if (cur()[sel]) cur()[sel].tint = $('tint').value; };
+$('remove').onclick = () => { delete cur()[sel]; sel = null; list(); draw(); };
+cv.onpointerdown = (e) => {
+  const a = cur()[sel]; if (!a) return; const [ox, oy] = origin(), r = atlas[sel];
+  if (e.altKey && r) { // 把軸心移到點的地方，圖不動
+    const k = a.scale * U / 100, dx = e.offsetX - (ox + a.x * U), dy = e.offsetY - (oy + a.y * U), c = Math.cos(-a.rot), s = Math.sin(-a.rot);
+    const lx = (dx * c - dy * s) / k, ly = (dx * s + dy * c) / k; a.pivot = [a.pivot[0] + lx / r[2], a.pivot[1] + ly / r[3]]; a.x += dx / U; a.y += dy / U; draw(); return;
+  }
+  drag = { x: e.offsetX, y: e.offsetY, ax: a.x, ay: a.y }; cv.setPointerCapture(e.pointerId);
+};
+cv.onpointermove = (e) => { const a = cur()[sel]; if (!drag || !a) return; a.x = drag.ax + (e.offsetX - drag.x) / U; a.y = drag.ay + (e.offsetY - drag.y) / U; draw(); };
+cv.onpointerup = () => { drag = null; };
+cv.onwheel = (e) => { const a = cur()[sel]; if (!a) return; e.preventDefault(); if (e.shiftKey) a.rot += (e.deltaY || e.deltaX) > 0 ? 0.03 : -0.03; else a.scale *= e.deltaY > 0 ? 0.97 : 1.03; draw(); };
+window.onkeydown = (e) => { const a = cur()[sel], d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key]; if (!a || !d || e.target.tagName === 'INPUT') return; a.x += d[0] / U; a.y += d[1] / U; draw(); e.preventDefault(); };
+$('save').onclick = () => { const b = new Blob([JSON.stringify(align, null, 1)], { type: 'application/json' }), l = document.createElement('a'); l.href = URL.createObjectURL(b); l.download = 'align.json'; l.click(); };
+$('load').onclick = () => $('old').click();
+$('old').onchange = async (e) => { align = { front: {}, back: {}, side: {}, ...JSON.parse(await e.target.files[0].text()) }; list(); draw(); };
+window.onresize = fit; fit();
+</script>
+</html>

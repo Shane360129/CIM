@@ -1,0 +1,559 @@
+{
+ "kinds": {
+  "doll": {
+   "max": 256
+  },
+  "icon": {
+   "max": 128
+  },
+  "crop": {
+   "max": 160
+  },
+  "object": {
+   "max": 256
+  },
+  "tree": {
+   "max": 320
+  },
+  "building": {
+   "max": 512
+  },
+  "scene": {
+   "max": 1536
+  }
+ },
+ "sheets": {
+  "1-08": {
+   "kind": "doll",
+   "names": [
+    [
+     "top/tee/front",
+     "top/tee/back",
+     "top/tee/side"
+    ],
+    [
+     "top/stripe/front",
+     "top/stripe/back",
+     "top/stripe/side"
+    ],
+    [
+     "top/hoodie/front",
+     "top/hoodie/back",
+     "top/hoodie/side"
+    ]
+   ]
+  },
+  "1-09": {
+   "kind": "doll",
+   "names": [
+    [
+     "top/shirt/front",
+     "top/shirt/back",
+     "top/shirt/side"
+    ],
+    [
+     "top/sweater/front",
+     "top/sweater/back",
+     "top/sweater/side"
+    ],
+    [
+     "top/overalls/front",
+     "top/overalls/back",
+     "top/overalls/side"
+    ]
+   ]
+  },
+  "1-10": {
+   "kind": "doll",
+   "names": [
+    [
+     "bottom/shorts/front",
+     "bottom/shorts/back",
+     "bottom/shorts/side"
+    ],
+    [
+     "bottom/pants/front",
+     "bottom/pants/back",
+     "bottom/pants/side"
+    ],
+    [
+     "bottom/jeans/front",
+     "bottom/jeans/back",
+     "bottom/jeans/side"
+    ]
+   ]
+  },
+  "1-11": {
+   "kind": "doll",
+   "names": [
+    [
+     "bottom/skirt/front",
+     "bottom/skirt/back",
+     "bottom/skirt/side"
+    ],
+    [
+     "bottom/longskirt/front",
+     "bottom/longskirt/back",
+     "bottom/longskirt/side"
+    ],
+    [
+     "bottom/work/front",
+     "bottom/work/back",
+     "bottom/work/side"
+    ]
+   ]
+  },
+  "1-12": {
+   "kind": "doll",
+   "names": [
+    [
+     "shoes/sneaker/front",
+     "shoes/sneaker/back",
+     "shoes/sneaker/side"
+    ],
+    [
+     "shoes/boot/front",
+     "shoes/boot/back",
+     "shoes/boot/side"
+    ],
+    [
+     "shoes/rain/front",
+     "shoes/rain/back",
+     "shoes/rain/side"
+    ],
+    [
+     "shoes/sandal/front",
+     "shoes/sandal/back",
+     "shoes/sandal/side"
+    ],
+    [
+     "shoes/leather/front",
+     "shoes/leather/back",
+     "shoes/leather/side"
+    ]
+   ]
+  },
+  "1-13": {
+   "kind": "doll",
+   "names": [
+    [
+     "hat/straw/front",
+     "hat/straw/back",
+     "hat/straw/side"
+    ],
+    [
+     "hat/beanie/front",
+     "hat/beanie/back",
+     "hat/beanie/side"
+    ],
+    [
+     "hat/cap/front",
+     "hat/cap/back",
+     "hat/cap/side"
+    ]
+   ]
+  },
+  "2-01": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/carrot/0",
+     "crop/carrot/1",
+     "crop/carrot/2",
+     "crop/carrot/3",
+     "crop/carrot/4",
+     "item/carrot"
+    ],
+    [
+     "crop/daikon/0",
+     "crop/daikon/1",
+     "crop/daikon/2",
+     "crop/daikon/3",
+     "crop/daikon/4",
+     "item/daikon"
+    ]
+   ]
+  },
+  "2-02": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/cabbage/0",
+     "crop/cabbage/1",
+     "crop/cabbage/2",
+     "crop/cabbage/3",
+     "crop/cabbage/4",
+     "item/cabbage"
+    ],
+    [
+     "crop/potato/0",
+     "crop/potato/1",
+     "crop/potato/2",
+     "crop/potato/3",
+     "crop/potato/4",
+     "item/potato"
+    ]
+   ]
+  },
+  "2-03": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/strawberry/0",
+     "crop/strawberry/1",
+     "crop/strawberry/2",
+     "crop/strawberry/3",
+     "crop/strawberry/4",
+     "item/strawberry"
+    ],
+    [
+     "crop/spinach/0",
+     "crop/spinach/1",
+     "crop/spinach/2",
+     "crop/spinach/3",
+     "crop/spinach/4",
+     "item/spinach"
+    ]
+   ]
+  },
+  "2-04": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/lettuce/0",
+     "crop/lettuce/1",
+     "crop/lettuce/2",
+     "crop/lettuce/3",
+     "crop/lettuce/4",
+     "item/lettuce"
+    ],
+    [
+     "crop/pea/0",
+     "crop/pea/1",
+     "crop/pea/2",
+     "crop/pea/3",
+     "crop/pea/4",
+     "item/pea"
+    ]
+   ]
+  },
+  "2-05": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/fava/0",
+     "crop/fava/1",
+     "crop/fava/2",
+     "crop/fava/3",
+     "crop/fava/4",
+     "item/fava"
+    ],
+    [
+     "crop/asparagus/0",
+     "crop/asparagus/1",
+     "crop/asparagus/2",
+     "crop/asparagus/3",
+     "crop/asparagus/4",
+     "item/asparagus"
+    ]
+   ]
+  },
+  "2-06": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/scallion/0",
+     "crop/scallion/1",
+     "crop/scallion/2",
+     "crop/scallion/3",
+     "crop/scallion/4",
+     "item/scallion"
+    ],
+    [
+     "crop/cauliflower/0",
+     "crop/cauliflower/1",
+     "crop/cauliflower/2",
+     "crop/cauliflower/3",
+     "crop/cauliflower/4",
+     "item/cauliflower"
+    ]
+   ],
+   "gap": 1
+  },
+  "2-07": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/komatsuna/0",
+     "crop/komatsuna/1",
+     "crop/komatsuna/2",
+     "crop/komatsuna/3",
+     "crop/komatsuna/4",
+     "item/komatsuna"
+    ],
+    [
+     "crop/beet/0",
+     "crop/beet/1",
+     "crop/beet/2",
+     "crop/beet/3",
+     "crop/beet/4",
+     "item/beet"
+    ]
+   ]
+  },
+  "2-08": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/tulip/0",
+     "crop/tulip/1",
+     "crop/tulip/2",
+     "crop/tulip/3",
+     "crop/tulip/4",
+     "item/tulip"
+    ],
+    [
+     "crop/rapeseed/0",
+     "crop/rapeseed/1",
+     "crop/rapeseed/2",
+     "crop/rapeseed/3",
+     "crop/rapeseed/4",
+     "item/rapeseed"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "2-09": {
+   "kind": "tree",
+   "names": [
+    [
+     "tree/oak/sapling",
+     "tree/oak/young",
+     "tree/oak/stump",
+     "tree/oak/log"
+    ],
+    [
+     "tree/oak/spring",
+     "tree/oak/summer",
+     "tree/oak/autumn",
+     "tree/oak/winter"
+    ]
+   ],
+   "gap": 1
+  },
+  "2-10": {
+   "kind": "tree",
+   "names": [
+    [
+     "tree/maple/sapling",
+     "tree/maple/young",
+     "tree/maple/stump",
+     "tree/maple/log"
+    ],
+    [
+     "tree/maple/spring",
+     "tree/maple/summer",
+     "tree/maple/autumn",
+     "tree/maple/winter"
+    ]
+   ],
+   "gap": 1
+  },
+  "2-11": {
+   "kind": "tree",
+   "names": [
+    [
+     "tree/pine/sapling",
+     "tree/pine/young",
+     "tree/pine/stump",
+     "tree/pine/log"
+    ],
+    [
+     "tree/pine/spring",
+     "tree/pine/summer",
+     "tree/pine/autumn",
+     "tree/pine/winter"
+    ]
+   ]
+  },
+  "2-12": {
+   "kind": "object",
+   "names": [
+    [
+     "obj/grass_s",
+     "obj/grass_l",
+     "obj/weed",
+     "obj/flower_red"
+    ],
+    [
+     "obj/flower_yellow",
+     "obj/flower_white",
+     "obj/stone_s",
+     "obj/stone_m"
+    ],
+    [
+     "obj/branch",
+     "obj/stump_s",
+     "obj/mushrooms",
+     "obj/bush"
+    ],
+    [
+     "obj/fern",
+     "obj/fallen_log",
+     "obj/dandelion",
+     "obj/mossy_stone"
+    ]
+   ]
+  },
+  "2-13": {
+   "kind": "object",
+   "names": [
+    [
+     "obj/boulder",
+     "obj/big_root",
+     "obj/reeds"
+    ],
+    [
+     "obj/lotus_leaf",
+     "obj/stone_path",
+     "obj/gravel_path"
+    ],
+    [
+     "obj/boardwalk",
+     "obj/flowerbed",
+     "obj/signpost"
+    ]
+   ]
+  },
+  "2-14": {
+   "kind": "object",
+   "names": [
+    [
+     "obj/fence_post",
+     "obj/fence_h",
+     "obj/fence_v"
+    ],
+    [
+     "obj/gate_closed",
+     "obj/gate_open",
+     "obj/wall_post"
+    ],
+    [
+     "obj/wall_h",
+     "obj/wall_v",
+     "obj/picket_h"
+    ]
+   ],
+   "gap": 3,
+   "minArea": 45
+  },
+  "2-15": {
+   "kind": "object",
+   "names": [
+    [
+     "soil/dry",
+     "soil/wet"
+    ],
+    [
+     "soil/fert",
+     "soil/fert_gold"
+    ]
+   ]
+  },
+  "2-16": {
+   "kind": "building",
+   "names": [
+    [
+     "building/house1"
+    ]
+   ],
+   "gap": 6
+  },
+  "2-17": {
+   "kind": "object",
+   "names": [
+    [
+     "obj/bin",
+     "obj/mailbox",
+     "obj/well"
+    ],
+    [
+     "obj/crate",
+     "obj/scarecrow",
+     "obj/sprinkler"
+    ],
+    [
+     "obj/barrel",
+     "obj/compost",
+     "obj/bench"
+    ]
+   ]
+  },
+  "2-18": {
+   "kind": "icon",
+   "names": [
+    [
+     "tool/hoe",
+     "tool/can",
+     "tool/axe",
+     "tool/pick"
+    ],
+    [
+     "tool/sickle",
+     "tool/rod",
+     "tool/net",
+     "tool/sword"
+    ],
+    [
+     "tool/hoe_copper",
+     "tool/can_copper",
+     "tool/axe_copper",
+     "tool/pick_copper"
+    ],
+    [
+     "tool/sickle_copper",
+     "tool/rod_fiber",
+     "tool/net_copper",
+     "tool/sword_copper"
+    ]
+   ],
+   "gap": 3,
+   "minArea": 45
+  },
+  "2-19": {
+   "kind": "icon",
+   "names": [
+    [
+     "item/wood",
+     "item/stone",
+     "item/fiber",
+     "item/branch"
+    ],
+    [
+     "item/hardwood",
+     "item/clay",
+     "item/sap",
+     "item/seedbag"
+    ],
+    [
+     "item/fertilizer",
+     "item/fertilizer_gold",
+     "item/weeds",
+     "item/wildberry"
+    ],
+    [
+     "item/dandelion",
+     "item/wild_scallion",
+     "item/fern_shoot",
+     "item/bamboo_shoot"
+    ]
+   ]
+  },
+  "2-22": {
+   "kind": "scene",
+   "names": [
+    "scene/title"
+   ]
+  }
+ }
+}

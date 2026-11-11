@@ -1019,6 +1019,9 @@ export class ChatServer {
     let m;
 
     if (pathname === '/ws') return this.handleWs(request);
+    // 晴耕谷（FarmRoom）用的內部端點：Worker 不會把外面來的 /internal/* 轉進來，只有 src/index.js 自己會呼叫
+    if (pathname === '/internal/farm-auth') return this.farmRoomAuth(request, url);
+    if (method === 'POST' && pathname === '/internal/farm-say') return this.farmRoomSay(request);
 
     // 公開端點
     if (method === 'GET' && pathname === '/api/app-info') return this.appInfo();
@@ -2044,6 +2047,27 @@ export class ChatServer {
       throw new HttpError(403, '只能刪除自己新增的貼圖');
     this.sql.exec(`DELETE FROM stickers WHERE id = ?`, id);
     this.broadcastAll({ type: 'stickers-changed' });
+    return json({ ok: true });
+  }
+
+  // ---------- 晴耕谷：幫 FarmRoom 驗證身分、代發系統訊息 ----------
+  // 登入 token 只有這裡查得到。確認三件事：token 有效、這個對話是一對一、來的人是兩位成員之一
+  farmRoomAuth(request, url) {
+    const user = this.userByToken(request.headers.get('x-farm-token'));
+    if (!user) throw new HttpError(401, '請先登入');
+    const convId = Number(url.searchParams.get('conv')) || 0;
+    const conv = this.sql.exec(`SELECT id, type FROM conversations WHERE id = ?`, convId).toArray()[0];
+    const members = conv ? this.memberIds(convId) : [];
+    if (!conv || !members.includes(user.id)) throw new HttpError(403, '你不是這個聊天的成員');
+    if (conv.type !== 'dm' || members.length !== 2) throw new HttpError(403, '農場只開在一對一的好友聊天裡');
+    const partnerId = members.find((id) => id !== user.id);
+    const partner = this.sql.exec(`SELECT display_name FROM users WHERE id = ?`, partnerId).toArray()[0];
+    return json({ convId, user: { id: user.id, name: user.display_name, color: user.avatar_color }, partner: { id: partnerId, name: partner ? partner.display_name : '' } });
+  }
+  async farmRoomSay(request) {
+    const body = await this.readJson(request, 2000);
+    const convId = Number(body.convId) || 0, text = String(body.text || '').slice(0, 200);
+    if (convId && text && this.sql.exec(`SELECT id FROM conversations WHERE id = ? AND type = 'dm'`, convId).toArray()[0]) this.addSystemMessage(convId, text);
     return json({ ok: true });
   }
 

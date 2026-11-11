@@ -1,0 +1,31 @@
+{
+  "note": "紙娃娃的零件清單。art 是圖集裡的名字（素材到了才填）；沒有 art 的用程式畫的暫代零件（shape）。tint 是這個零件跟著哪個顏色換色。",
+  "layers": ["hairBack", "armBack", "body", "bottom", "shoes", "top", "armFront", "face", "hairFront", "hat", "acc", "tool"],
+  "colors": {
+    "skin": ["#ffe0bd", "#f6cfa3", "#e8b98a", "#c98e62", "#9a6541", "#6e4530"],
+    "hair": ["#2b2421", "#5a3d22", "#8a5a34", "#c98a3c", "#e8c66a", "#f3ead2", "#b0b6bd", "#d9544d", "#e88ab0", "#6aa8e8", "#5fae6a", "#8a6ad8"],
+    "cloth": ["#ffffff", "#f3e6c8", "#e5484d", "#f0a04a", "#f6d34a", "#7dbb5a", "#4f9a8a", "#6aa8e8", "#3b6ea8", "#8a6ad8", "#e88ab0", "#8a5a34", "#5a5f66", "#2b2421"]
+  },
+  "eyes":   [{ "id": "round", "name": "大圓眼" }, { "id": "soft", "name": "下垂眼" }, { "id": "sharp", "name": "上揚眼" }, { "id": "smile", "name": "瞇瞇眼" }, { "id": "lash", "name": "長睫毛" }, { "id": "cool", "name": "細長眼" }],
+  "brows":  [{ "id": "plain", "name": "普通眉" }, { "id": "thick", "name": "粗眉" }, { "id": "thin", "name": "細彎眉" }, { "id": "worry", "name": "八字眉" }],
+  "mouths": [{ "id": "smile", "name": "微笑" }, { "id": "open", "name": "大笑" }, { "id": "pout", "name": "嘟嘴" }, { "id": "o", "name": "驚訝" }],
+  "hair": [
+    { "id": "short", "name": "清爽短髮" }, { "id": "spiky", "name": "刺刺短髮" }, { "id": "curly", "name": "自然捲" },
+    { "id": "twin", "name": "雙馬尾" }, { "id": "bob", "name": "鮑伯短髮" }, { "id": "long", "name": "及腰長直髮" }
+  ],
+  "top": [
+    { "id": "tee", "name": "素面短袖 T 恤", "sleeve": "short" }, { "id": "stripe", "name": "條紋短袖 T 恤", "sleeve": "short" }, { "id": "hoodie", "name": "連帽衫", "sleeve": "long" },
+    { "id": "shirt", "name": "格子長袖襯衫", "sleeve": "long" }, { "id": "sweater", "name": "圓領毛衣", "sleeve": "long" }, { "id": "overalls", "name": "吊帶工作服", "sleeve": "short", "dress": true }
+  ],
+  "bottom": [
+    { "id": "shorts", "name": "短褲" }, { "id": "pants", "name": "長褲" }, { "id": "jeans", "name": "牛仔褲" },
+    { "id": "skirt", "name": "百褶短裙" }, { "id": "longskirt", "name": "A 字長裙" }, { "id": "work", "name": "工作褲" }
+  ],
+  "shoes": [{ "id": "sneaker", "name": "布鞋" }, { "id": "boot", "name": "短靴" }, { "id": "rain", "name": "雨鞋" }, { "id": "sandal", "name": "涼鞋" }, { "id": "leather", "name": "皮鞋" }],
+  "hat":   [{ "id": "none", "name": "不戴" }, { "id": "straw", "name": "寬邊草帽" }, { "id": "beanie", "name": "毛線帽" }, { "id": "cap", "name": "棒球帽" }],
+  "acc":   [{ "id": "none", "name": "沒有" }, { "id": "glasses", "name": "圓框眼鏡" }, { "id": "scarf", "name": "圍巾" }],
+  "presets": {
+    "boy":  { "gender": "boy",  "skin": "#ffe0bd", "eyes": "round", "brows": "plain", "mouths": "smile", "hair": "short", "hairColor": "#5a3d22", "top": "tee", "topColor": "#6aa8e8", "bottom": "shorts", "bottomColor": "#8a5a34", "shoes": "sneaker", "shoesColor": "#ffffff", "hat": "none", "hatColor": "#f6d34a", "acc": "none" },
+    "girl": { "gender": "girl", "skin": "#ffe0bd", "eyes": "lash",  "brows": "thin",  "mouths": "smile", "hair": "twin",  "hairColor": "#8a5a34", "top": "stripe", "topColor": "#e88ab0", "bottom": "skirt", "bottomColor": "#3b6ea8", "shoes": "boot", "shoesColor": "#8a5a34", "hat": "none", "hatColor": "#f6d34a", "acc": "none" }
+  }
+}
