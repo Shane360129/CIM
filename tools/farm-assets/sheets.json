@@ -23,6 +23,9 @@
   },
   "portrait": {
    "max": 300
+  },
+  "hair": {
+   "max": 420
   }
  },
  "sheets": {
@@ -2027,6 +2030,846 @@
      "crop/hydrangea/3",
      "crop/hydrangea/4",
      "item/hydrangea"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "1-05": {
+   "kind": "hair",
+   "names": [
+    [
+     "hair/short/ff",
+     "hair/short/fb",
+     "hair/short/bk",
+     "hair/short/sf",
+     "hair/short/sb"
+    ],
+    [
+     "hair/twin/ff",
+     "hair/twin/fb",
+     "hair/twin/bk",
+     "hair/twin/sf",
+     "hair/twin/sb"
+    ]
+   ]
+  },
+  "1-06": {
+   "kind": "hair",
+   "names": [
+    [
+     "hair/spiky/ff",
+     "hair/spiky/fb",
+     "hair/spiky/bk",
+     "hair/spiky/sf",
+     "hair/spiky/sb"
+    ],
+    [
+     "hair/bob/ff",
+     "hair/bob/fb",
+     "hair/bob/bk",
+     "hair/bob/sf",
+     "hair/bob/sb"
+    ]
+   ]
+  },
+  "1-07": {
+   "kind": "hair",
+   "names": [
+    [
+     "hair/curly/ff",
+     "hair/curly/fb",
+     "hair/curly/bk",
+     "hair/curly/sf",
+     "hair/curly/sb"
+    ],
+    [
+     "hair/long/ff",
+     "hair/long/fb",
+     "hair/long/bk",
+     "hair/long/sf",
+     "hair/long/sb"
+    ]
+   ]
+  },
+  "5-01": {
+   "kind": "hair",
+   "names": [
+    [
+     "hair/h01a/ff",
+     "hair/h01a/fb",
+     "hair/h01a/bk",
+     "hair/h01a/sf",
+     "hair/h01a/sb"
+    ],
+    [
+     "hair/h01b/ff",
+     "hair/h01b/fb",
+     "hair/h01b/bk",
+     "hair/h01b/sf",
+     "hair/h01b/sb"
+    ]
+   ]
+  },
+  "5-02": {
+   "kind": "hair",
+   "names": [
+    [
+     "hair/h02a/ff",
+     "hair/h02a/fb",
+     "hair/h02a/bk",
+     "hair/h02a/sf",
+     "hair/h02a/sb"
+    ],
+    [
+     "hair/h02b/ff",
+     "hair/h02b/fb",
+     "hair/h02b/bk",
+     "hair/h02b/sf",
+     "hair/h02b/sb"
+    ]
+   ]
+  },
+  "5-03": {
+   "kind": "hair",
+   "names": [
+    [
+     "hair/h03a/ff",
+     "hair/h03a/fb",
+     "hair/h03a/bk",
+     "hair/h03a/sf",
+     "hair/h03a/sb"
+    ],
+    [
+     "hair/h03b/ff",
+     "hair/h03b/fb",
+     "hair/h03b/bk",
+     "hair/h03b/sf",
+     "hair/h03b/sb"
+    ]
+   ]
+  },
+  "5-04": {
+   "kind": "hair",
+   "names": [
+    [
+     "hair/h04a/ff",
+     "hair/h04a/fb",
+     "hair/h04a/bk",
+     "hair/h04a/sf",
+     "hair/h04a/sb"
+    ],
+    [
+     "hair/h04b/ff",
+     "hair/h04b/fb",
+     "hair/h04b/bk",
+     "hair/h04b/sf",
+     "hair/h04b/sb"
+    ]
+   ]
+  },
+  "5-05": {
+   "kind": "hair",
+   "names": [
+    [
+     "hair/h05a/ff",
+     "hair/h05a/fb",
+     "hair/h05a/bk",
+     "hair/h05a/sf",
+     "hair/h05a/sb"
+    ],
+    [
+     "hair/h05b/ff",
+     "hair/h05b/fb",
+     "hair/h05b/bk",
+     "hair/h05b/sf",
+     "hair/h05b/sb"
+    ]
+   ]
+  },
+  "5-06": {
+   "kind": "hair",
+   "names": [
+    [
+     "hair/h06a/ff",
+     "hair/h06a/fb",
+     "hair/h06a/bk",
+     "hair/h06a/sf",
+     "hair/h06a/sb"
+    ],
+    [
+     "hair/h06b/ff",
+     "hair/h06b/fb",
+     "hair/h06b/bk",
+     "hair/h06b/sf",
+     "hair/h06b/sb"
+    ]
+   ]
+  },
+  "5-07": {
+   "kind": "hair",
+   "names": [
+    [
+     "hair/h07a/ff",
+     "hair/h07a/fb",
+     "hair/h07a/bk",
+     "hair/h07a/sf",
+     "hair/h07a/sb"
+    ],
+    [
+     "hair/h07b/ff",
+     "hair/h07b/fb",
+     "hair/h07b/bk",
+     "hair/h07b/sf",
+     "hair/h07b/sb"
+    ]
+   ]
+  },
+  "5-08": {
+   "kind": "hair",
+   "names": [
+    [
+     "hair/h08a/ff",
+     "hair/h08a/fb",
+     "hair/h08a/bk",
+     "hair/h08a/sf",
+     "hair/h08a/sb"
+    ],
+    [
+     "hair/h08b/ff",
+     "hair/h08b/fb",
+     "hair/h08b/bk",
+     "hair/h08b/sf",
+     "hair/h08b/sb"
+    ]
+   ],
+   "gap": 0
+  },
+  "5-09": {
+   "kind": "hair",
+   "names": [
+    [
+     "hair/h09a/ff",
+     "hair/h09a/fb",
+     "hair/h09a/bk",
+     "hair/h09a/sf",
+     "hair/h09a/sb"
+    ],
+    [
+     "hair/h09b/ff",
+     "hair/h09b/fb",
+     "hair/h09b/bk",
+     "hair/h09b/sf",
+     "hair/h09b/sb"
+    ]
+   ]
+  },
+  "5-10": {
+   "kind": "hair",
+   "names": [
+    [
+     "hair/h10a/ff",
+     "hair/h10a/fb",
+     "hair/h10a/bk",
+     "hair/h10a/sf",
+     "hair/h10a/sb"
+    ],
+    [
+     "hair/h10b/ff",
+     "hair/h10b/fb",
+     "hair/h10b/bk",
+     "hair/h10b/sf",
+     "hair/h10b/sb"
+    ]
+   ]
+  },
+  "5-11": {
+   "kind": "hair",
+   "names": [
+    [
+     "hair/h11a/ff",
+     "hair/h11a/fb",
+     "hair/h11a/bk",
+     "hair/h11a/sf",
+     "hair/h11a/sb"
+    ],
+    [
+     "hair/h11b/ff",
+     "hair/h11b/fb",
+     "hair/h11b/bk",
+     "hair/h11b/sf",
+     "hair/h11b/sb"
+    ]
+   ]
+  },
+  "5-12": {
+   "kind": "hair",
+   "names": [
+    [
+     "hair/h12a/ff",
+     "hair/h12a/fb",
+     "hair/h12a/bk",
+     "hair/h12a/sf",
+     "hair/h12a/sb"
+    ],
+    [
+     "hair/h12b/ff",
+     "hair/h12b/fb",
+     "hair/h12b/bk",
+     "hair/h12b/sf",
+     "hair/h12b/sb"
+    ]
+   ],
+   "gap": 0
+  },
+  "5-13": {
+   "kind": "doll",
+   "names": [
+    [
+     "top/t13a/front",
+     "top/t13a/back",
+     "top/t13a/side"
+    ],
+    [
+     "top/t13b/front",
+     "top/t13b/back",
+     "top/t13b/side"
+    ],
+    [
+     "top/t13c/front",
+     "top/t13c/back",
+     "top/t13c/side"
+    ]
+   ]
+  },
+  "5-14": {
+   "kind": "doll",
+   "names": [
+    [
+     "top/t14a/front",
+     "top/t14a/back",
+     "top/t14a/side"
+    ],
+    [
+     "top/t14b/front",
+     "top/t14b/back",
+     "top/t14b/side"
+    ],
+    [
+     "top/t14c/front",
+     "top/t14c/back",
+     "top/t14c/side"
+    ]
+   ]
+  },
+  "5-15": {
+   "kind": "doll",
+   "names": [
+    [
+     "top/t15a/front",
+     "top/t15a/back",
+     "top/t15a/side"
+    ],
+    [
+     "top/t15b/front",
+     "top/t15b/back",
+     "top/t15b/side"
+    ],
+    [
+     "top/t15c/front",
+     "top/t15c/back",
+     "top/t15c/side"
+    ]
+   ]
+  },
+  "5-16": {
+   "kind": "doll",
+   "names": [
+    [
+     "top/t16a/front",
+     "top/t16a/back",
+     "top/t16a/side"
+    ],
+    [
+     "top/t16b/front",
+     "top/t16b/back",
+     "top/t16b/side"
+    ],
+    [
+     "top/t16c/front",
+     "top/t16c/back",
+     "top/t16c/side"
+    ]
+   ]
+  },
+  "5-17": {
+   "kind": "doll",
+   "names": [
+    [
+     "top/t17a/front",
+     "top/t17a/back",
+     "top/t17a/side"
+    ],
+    [
+     "top/t17b/front",
+     "top/t17b/back",
+     "top/t17b/side"
+    ],
+    [
+     "top/t17c/front",
+     "top/t17c/back",
+     "top/t17c/side"
+    ]
+   ]
+  },
+  "5-18": {
+   "kind": "doll",
+   "names": [
+    [
+     "top/t18a/front",
+     "top/t18a/back",
+     "top/t18a/side"
+    ],
+    [
+     "top/t18b/front",
+     "top/t18b/back",
+     "top/t18b/side"
+    ],
+    [
+     "top/t18c/front",
+     "top/t18c/back",
+     "top/t18c/side"
+    ]
+   ]
+  },
+  "5-19": {
+   "kind": "doll",
+   "names": [
+    [
+     "top/t19a/front",
+     "top/t19a/back",
+     "top/t19a/side"
+    ],
+    [
+     "top/t19b/front",
+     "top/t19b/back",
+     "top/t19b/side"
+    ],
+    [
+     "top/t19c/front",
+     "top/t19c/back",
+     "top/t19c/side"
+    ]
+   ]
+  },
+  "5-20": {
+   "kind": "doll",
+   "names": [
+    [
+     "top/t20a/front",
+     "top/t20a/back",
+     "top/t20a/side"
+    ],
+    [
+     "top/t20b/front",
+     "top/t20b/back",
+     "top/t20b/side"
+    ],
+    [
+     "top/t20c/front",
+     "top/t20c/back",
+     "top/t20c/side"
+    ]
+   ]
+  },
+  "5-21": {
+   "kind": "doll",
+   "names": [
+    [
+     "top/t21a/front",
+     "top/t21a/back",
+     "top/t21a/side"
+    ],
+    [
+     "top/t21b/front",
+     "top/t21b/back",
+     "top/t21b/side"
+    ],
+    [
+     "top/t21c/front",
+     "top/t21c/back",
+     "top/t21c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-22": {
+   "kind": "doll",
+   "names": [
+    [
+     "top/t22a/front",
+     "top/t22a/back",
+     "top/t22a/side"
+    ],
+    [
+     "top/t22b/front",
+     "top/t22b/back",
+     "top/t22b/side"
+    ],
+    [
+     "top/t22c/front",
+     "top/t22c/back",
+     "top/t22c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-23": {
+   "kind": "doll",
+   "names": [
+    [
+     "top/t23a/front",
+     "top/t23a/back",
+     "top/t23a/side"
+    ],
+    [
+     "top/t23b/front",
+     "top/t23b/back",
+     "top/t23b/side"
+    ],
+    [
+     "top/t23c/front",
+     "top/t23c/back",
+     "top/t23c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-24": {
+   "kind": "doll",
+   "names": [
+    [
+     "top/t24a/front",
+     "top/t24a/back",
+     "top/t24a/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-25": {
+   "kind": "doll",
+   "names": [
+    [
+     "bottom/b25a/front",
+     "bottom/b25a/back",
+     "bottom/b25a/side"
+    ],
+    [
+     "bottom/b25b/front",
+     "bottom/b25b/back",
+     "bottom/b25b/side"
+    ],
+    [
+     "bottom/b25c/front",
+     "bottom/b25c/back",
+     "bottom/b25c/side"
+    ]
+   ]
+  },
+  "5-26": {
+   "kind": "doll",
+   "names": [
+    [
+     "bottom/b26a/front",
+     "bottom/b26a/back",
+     "bottom/b26a/side"
+    ],
+    [
+     "bottom/b26b/front",
+     "bottom/b26b/back",
+     "bottom/b26b/side"
+    ],
+    [
+     "bottom/b26c/front",
+     "bottom/b26c/back",
+     "bottom/b26c/side"
+    ]
+   ]
+  },
+  "5-27": {
+   "kind": "doll",
+   "names": [
+    [
+     "bottom/b27a/front",
+     "bottom/b27a/back",
+     "bottom/b27a/side"
+    ],
+    [
+     "bottom/b27b/front",
+     "bottom/b27b/back",
+     "bottom/b27b/side"
+    ],
+    [
+     "bottom/b27c/front",
+     "bottom/b27c/back",
+     "bottom/b27c/side"
+    ]
+   ]
+  },
+  "5-28": {
+   "kind": "doll",
+   "names": [
+    [
+     "bottom/b28a/front",
+     "bottom/b28a/back",
+     "bottom/b28a/side"
+    ],
+    [
+     "bottom/b28b/front",
+     "bottom/b28b/back",
+     "bottom/b28b/side"
+    ],
+    [
+     "bottom/b28c/front",
+     "bottom/b28c/back",
+     "bottom/b28c/side"
+    ]
+   ]
+  },
+  "5-29": {
+   "kind": "doll",
+   "names": [
+    [
+     "bottom/b29a/front",
+     "bottom/b29a/back",
+     "bottom/b29a/side"
+    ],
+    [
+     "bottom/b29b/front",
+     "bottom/b29b/back",
+     "bottom/b29b/side"
+    ],
+    [
+     "bottom/b29c/front",
+     "bottom/b29c/back",
+     "bottom/b29c/side"
+    ]
+   ]
+  },
+  "5-30": {
+   "kind": "doll",
+   "names": [
+    [
+     "bottom/b30a/front",
+     "bottom/b30a/back",
+     "bottom/b30a/side"
+    ],
+    [
+     "bottom/b30b/front",
+     "bottom/b30b/back",
+     "bottom/b30b/side"
+    ],
+    [
+     "bottom/b30c/front",
+     "bottom/b30c/back",
+     "bottom/b30c/side"
+    ]
+   ]
+  },
+  "5-31": {
+   "kind": "doll",
+   "names": [
+    [
+     "bottom/b31a/front",
+     "bottom/b31a/back",
+     "bottom/b31a/side"
+    ]
+   ]
+  },
+  "5-34": {
+   "kind": "doll",
+   "names": [
+    [
+     "hat/c34a/front",
+     "hat/c34a/back",
+     "hat/c34a/side"
+    ],
+    [
+     "hat/c34b/front",
+     "hat/c34b/back",
+     "hat/c34b/side"
+    ],
+    [
+     "hat/c34c/front",
+     "hat/c34c/back",
+     "hat/c34c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-35": {
+   "kind": "doll",
+   "names": [
+    [
+     "hat/c35a/front",
+     "hat/c35a/back",
+     "hat/c35a/side"
+    ],
+    [
+     "hat/c35b/front",
+     "hat/c35b/back",
+     "hat/c35b/side"
+    ],
+    [
+     "hat/c35c/front",
+     "hat/c35c/back",
+     "hat/c35c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-36": {
+   "kind": "doll",
+   "names": [
+    [
+     "hat/c36a/front",
+     "hat/c36a/back",
+     "hat/c36a/side"
+    ],
+    [
+     "hat/c36b/front",
+     "hat/c36b/back",
+     "hat/c36b/side"
+    ],
+    [
+     "hat/c36c/front",
+     "hat/c36c/back",
+     "hat/c36c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-37": {
+   "kind": "doll",
+   "names": [
+    [
+     "hat/c37a/front",
+     "hat/c37a/back",
+     "hat/c37a/side"
+    ],
+    [
+     "hat/c37b/front",
+     "hat/c37b/back",
+     "hat/c37b/side"
+    ],
+    [
+     "hat/c37c/front",
+     "hat/c37c/back",
+     "hat/c37c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-38": {
+   "kind": "doll",
+   "names": [
+    [
+     "hat/c38a/front",
+     "hat/c38a/back",
+     "hat/c38a/side"
+    ],
+    [
+     "hat/c38b/front",
+     "hat/c38b/back",
+     "hat/c38b/side"
+    ],
+    [
+     "hat/c38c/front",
+     "hat/c38c/back",
+     "hat/c38c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-39": {
+   "kind": "doll",
+   "names": [
+    [
+     "hat/c39a/front",
+     "hat/c39a/back",
+     "hat/c39a/side"
+    ],
+    [
+     "hat/c39b/front",
+     "hat/c39b/back",
+     "hat/c39b/side"
+    ],
+    [
+     "hat/c39c/front",
+     "hat/c39c/back",
+     "hat/c39c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-40": {
+   "kind": "doll",
+   "names": [
+    [
+     "hat/c40a/front",
+     "hat/c40a/back",
+     "hat/c40a/side"
+    ],
+    [
+     "hat/c40b/front",
+     "hat/c40b/back",
+     "hat/c40b/side"
+    ],
+    [
+     "hat/c40c/front",
+     "hat/c40c/back",
+     "hat/c40c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-41": {
+   "kind": "doll",
+   "names": [
+    [
+     "hat/c41a/front",
+     "hat/c41a/back",
+     "hat/c41a/side"
+    ],
+    [
+     "hat/c41b/front",
+     "hat/c41b/back",
+     "hat/c41b/side"
+    ],
+    [
+     "hat/c41c/front",
+     "hat/c41c/back",
+     "hat/c41c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-42": {
+   "kind": "doll",
+   "names": [
+    [
+     "hat/c42a/front",
+     "hat/c42a/back",
+     "hat/c42a/side"
+    ],
+    [
+     "hat/c42b/front",
+     "hat/c42b/back",
+     "hat/c42b/side"
+    ],
+    [
+     "hat/c42c/front",
+     "hat/c42c/back",
+     "hat/c42c/side"
     ]
    ],
    "bg": "#00ffff"

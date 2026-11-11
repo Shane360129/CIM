@@ -15,9 +15,9 @@ const { chromium } = require('playwright');
   const errs = [];
   const enter = async (tok, look) => {
     const cx = await br.newContext({ viewport: { width: 1000, height: 700 } }), p = await cx.newPage();
-    p.on('pageerror', (e) => errs.push(e.message)); p.on('console', (m) => { if (m.type() === 'error' && !/WebSocket|ERR_/.test(m.text())) errs.push(m.text()); });
+    p.on('pageerror', (e) => { errs.push(e.message); console.log('PAGEERROR ' + e.message); }); p.on('console', (m) => { if (m.type() === 'error' && !/WebSocket|ERR_/.test(m.text())) errs.push(m.text()); });
     await p.goto(B + '/games/farm/?test'); await p.evaluate((t) => localStorage.setItem('cim_token', t), tok);
-    await p.goto(B + `/games/farm/?conv=${dm.id}&test`); await p.waitForTimeout(1200);
+    await p.goto(B + `/games/farm/?conv=${dm.id}&test`); await p.waitForFunction(() => window.__game && window.__game.data, null, { timeout: 30000 }); await p.waitForTimeout(400); // 等圖集載完、標題畫面出來
     await p.locator('#stage').click({ position: { x: 300, y: 350 } }); await p.waitForTimeout(700);
     if (await p.locator('.maker').count()) { if (look) await look(p); await p.locator('.maker [data-act=done]').click(); }
     await p.waitForFunction(() => window.__game.scenes.current.ready === true, null, { timeout: 20000 });
