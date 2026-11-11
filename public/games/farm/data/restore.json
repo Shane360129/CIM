@@ -1,0 +1,132 @@
+{
+ "clocktower": {
+  "name": "小鎮鐘樓",
+  "about": "鐘壞了很多年，鎮上的人都靠太陽看時間。",
+  "need": {
+   "wood": 40,
+   "stone": 40,
+   "copper_bar": 5,
+   "iron_bar": 3,
+   "quartz": 2
+  },
+  "perk": {
+   "type": "shopHours",
+   "v": 120
+  },
+  "perkText": "鐘聲又響了：所有的店晚兩個小時關門。"
+ },
+ "library": {
+  "name": "圖書館與博物館",
+  "about": "屋頂漏水，書和標本都搬走了。",
+  "need": {
+   "wood": 30,
+   "fossil": 2,
+   "amethyst": 1,
+   "@forage": 10,
+   "fish_carp": 2,
+   "copper_ore": 10
+  },
+  "perk": {
+   "type": "xp",
+   "v": 0.2
+  },
+  "perkText": "書回到架上：所有技能的經驗多兩成。"
+ },
+ "spa": {
+  "name": "溫泉澡堂",
+  "about": "泉水還在流，但是澡堂的木頭都爛了。",
+  "need": {
+   "wood": 50,
+   "stone": 30,
+   "coal": 8,
+   "@fish": 6,
+   "milk": 3
+  },
+  "perk": {
+   "type": "energyMax",
+   "v": 20
+  },
+  "perkText": "泡完溫泉神清氣爽：體力上限 +20。"
+ },
+ "station": {
+  "name": "火車站",
+  "about": "鐵軌還在，只是很久沒有火車停靠了。",
+  "need": {
+   "iron_bar": 8,
+   "stone": 50,
+   "coal": 15,
+   "wood": 30,
+   "@veg": 20
+  },
+  "perk": {
+   "type": "ship",
+   "v": 0.1
+  },
+  "perkText": "火車把農產品載到城裡：出貨箱的收入多一成。"
+ },
+ "lighthouse": {
+  "name": "港口燈塔",
+  "about": "燈不亮了，漁船晚上不敢出海。",
+  "need": {
+   "quartz": 3,
+   "copper_bar": 8,
+   "g:keg": 3,
+   "fish_bass": 3,
+   "fish_eel": 1,
+   "stone": 40
+  },
+  "perk": {
+   "type": "fishSize",
+   "v": 0.25
+  },
+  "perkText": "燈塔照亮水面：釣到的魚比較大，不會再釣到水草。"
+ },
+ "market": {
+  "name": "市集廣場的大棚架",
+  "about": "以前每個週末這裡都擠滿了人。",
+  "need": {
+   "wood": 60,
+   "fiber": 30,
+   "@good": 8,
+   "egg": 10,
+   "honey": 2
+  },
+  "perk": {
+   "type": "questReward",
+   "v": 0.5
+  },
+  "perkText": "市集熱鬧起來：佈告欄委託的報酬多五成。"
+ },
+ "shrine": {
+  "name": "山上的神木小祠",
+  "about": "小祠被藤蔓蓋住了，神木還很健康。",
+  "need": {
+   "wood": 20,
+   "@flower": 6,
+   "dandelion": 5,
+   "jade": 1,
+   "dish_veg_soup": 3
+  },
+  "perk": {
+   "type": "luck",
+   "v": 1
+  },
+  "perkText": "神木保佑：收成比較容易有好品質。"
+ },
+ "school": {
+  "name": "學校",
+  "about": "黑板還在，就是沒有學生和老師。",
+  "need": {
+   "wood": 40,
+   "stone": 20,
+   "@crop": 30,
+   "wool": 2,
+   "dish_salad": 2
+  },
+  "perk": {
+   "type": "talk",
+   "v": 10
+  },
+  "perkText": "小鎮多了笑聲：每天第一次跟居民聊天，好感多 10。"
+ }
+}

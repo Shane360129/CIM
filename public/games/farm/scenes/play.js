@@ -54,6 +54,7 @@ export const play = {
       W.on('map', (id) => { this.fishing.cancel(); this.setMap(id); hud.closePanel(); refresh(); }),
       W.on('self', refresh), W.on('farm', refresh),
       W.on('toast', (t) => hud.toast(t)),
+      W.on('restored', (m) => { const r = ctx.data.restore[m.fac]; hud.closePanel(); hud.card(`「${r.name}」修好了！`, [r.perkText, ...(m.all ? [balance.restore.allDone.text + `（${balance.restore.allDone.money} 元）`] : [])], [{ label: '太好了', value: true }]); }),
       W.on('faint', () => hud.card('昏倒了…', ['被怪物打到沒力氣，醒來已經在礦坑外面。東西都還在，只是體力剩一半。'], [{ label: '好', value: true }])),
       W.on('mine-upd', (m) => { if (m.by === W.me.id && m.drops) hud.toast('拿到 ' + Object.entries(m.drops).map(([id, n]) => `${ctx.data.items[id].name}×${n}`).join('、'), 1300); if (m.stairs && m.stairs.open && m.rock && m.rock.x === m.stairs.x && m.rock.y === m.stairs.y) hud.toast('石頭下面有往下的樓梯！', 1600); }),
       W.on('objs', (m) => { if (m.by === W.me.id && m.drops) hud.toast('拿到 ' + Object.entries(m.drops).map(([id, n]) => `${ctx.data.items[id].name}×${n}`).join('、'), 1300); }),
@@ -219,6 +220,8 @@ export const play = {
   // 佈告欄：今天的委託（某位居民想要幾個某種東西）
   async board() {
     const { hud, data } = this.ctx, W = this.world, q = W.farm.quest;
+    const which = await hud.card('佈告欄', ['上面貼著今天的委託，旁邊是「修復小鎮」的募集清單。'], [{ label: '修復小鎮', value: 'restore', ghost: true }, { label: '今天的委託', value: 'quest' }]);
+    if (which === 'restore') return openPanel(this.ctx, 'restore'); if (which !== 'quest') return;
     if (!q || q.day !== W.farm.day) return hud.card('佈告欄', ['今天沒有委託。'], [{ label: '好', value: null }]);
     const npc = data.npcs[q.npc], it = data.items[q.item], have = W.self.inv.filter((s) => s && s.id === q.item).reduce((n, s) => n + s.n, 0);
     if (q.done) return hud.card('佈告欄', [`今天的委託已經完成了（${q.done === W.me.id ? '你' : '對方'}交的）。明天再來看看。`], [{ label: '好', value: null }]);

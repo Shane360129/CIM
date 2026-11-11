@@ -21,9 +21,9 @@ function slotEl(items, bal, s, onClick, extraCls = '') {
 
 export function openPanel(ctx, mode, arg = {}) {
   const { hud, world: W } = ctx, { items, balance: bal } = ctx.data, room = W.room;
-  const root = mk('div', 'panel'), title = { bag: '背包', ship: '出貨箱', chest: '倉庫箱', cook: '爐灶', craft: '製作台', coop: '雞舍', barn: '畜舍', smith: '鐵匠鋪' }[mode] || (mode === 'shop' && ctx.data.shops[arg.shop || 'stall'].name);
-  let picked = -1, info = '';
-  const say = (r) => { if (r.t === 'no') hud.toast({ full: '放不下了', money: '錢不夠', max: '已經是最高級了', closed: '現在沒有營業', materials: '材料不夠', level: '料理等級還不夠', housefull: '住滿了', nohay: '沒有乾草了（種子攤有賣）', already: '已經弄好了', far: '太遠了', unsellable: '這個不能賣' }[r.reason] || '沒辦法', 1300); };
+  const root = mk('div', 'panel'), title = { bag: '背包', ship: '出貨箱', chest: '倉庫箱', cook: '爐灶', craft: '製作台', coop: '雞舍', barn: '畜舍', smith: '鐵匠鋪', restore: '修復小鎮' }[mode] || (mode === 'shop' && ctx.data.shops[arg.shop || 'stall'].name);
+  let picked = -1, info = '', fac = arg.fac || null;
+  const say = (r) => { if (r.t === 'no') hud.toast({ full: '放不下了', money: '錢不夠', max: '已經是最高級了', unneeded: '這個設施不需要這個（或已經夠了）', closed: '現在沒有營業', materials: '材料不夠', level: '料理等級還不夠', housefull: '住滿了', nohay: '沒有乾草了（種子攤有賣）', already: '已經弄好了', far: '太遠了', unsellable: '這個不能賣' }[r.reason] || '沒辦法', 1300); };
   const grid = (list, n, onClick, cls) => { const g = mk('div', 'grid'); for (let i = 0; i < n; i++) g.append(slotEl(items, bal, list[i], () => onClick(i), (i === picked && cls === 'inv' ? 'on ' : '') + (i < bal.hotbarSlots && cls === 'inv' ? 'hot' : ''))); return g; };
   function draw() {
     root.textContent = '';
@@ -31,7 +31,19 @@ export function openPanel(ctx, mode, arg = {}) {
     const x = mk('button', 'pclose', '✕'); x.type = 'button'; x.setAttribute('aria-label', '關閉'); x.addEventListener('click', () => hud.closePanel()); head.append(x); root.append(head);
     const inv = W.self.inv;
     const needText = (need) => Object.entries(need).map(([spec, n]) => `${spec === '@crop' ? '任何作物' : spec.startsWith('@') ? { veg: '蔬菜', fruit: '水果', fish: '魚', egg: '蛋', milk: '牛奶', forage: '採集物', flower: '花' }[spec.slice(1)] || spec : spec.startsWith('g:') ? ctx.data.machines[spec.slice(2)].name + '做的' : items[spec].name}×${n}`).join('、');
-    if (mode === 'coop' || mode === 'barn') {
+    if (mode === 'restore') {
+      const R = ctx.data.restore, st = W.farm.restore || {}, doneN = Object.keys(R).filter((id) => st[id] && st[id].done).length;
+      root.append(mk('p', 'hint', `小鎮有八個年久失修的地方，已經修好 ${doneN} 個。先點一個設施，再點下面背包裡的東西捐給它（一次捐整疊，多的不會收）。兩個人捐的算在一起。`));
+      const list = mk('div', 'shoplist');
+      for (const [id, r] of Object.entries(R)) {
+        const s2 = st[id] || { given: {} }, row = mk('button', 'shoprow frow' + (fac === id ? ' on' : '')); row.type = 'button'; row.dataset.item = id;
+        const need = Object.entries(r.need).map(([spec, n]) => `${spec === '@crop' ? '任何作物' : spec === '@good' ? '加工品' : spec.startsWith('@') ? { veg: '蔬菜', fruit: '水果', fish: '魚', forage: '採集物', flower: '花' }[spec.slice(1)] : spec.startsWith('g:') ? ctx.data.machines[spec.slice(2)].name + '做的' : items[spec].name} ${Math.min(n, s2.given[spec] || 0)}/${n}`).join('、');
+        row.append(mk('span', 'sname', (s2.done ? '✔ ' : '') + r.name), mk('span', 'sdesc', s2.done ? r.perkText : (fac === id ? r.about + ' 需要：' : '') + need));
+        row.addEventListener('click', () => { fac = fac === id ? null : id; draw(); }); list.append(row);
+      }
+      root.append(list, mk('h3', '', fac ? `捐給「${R[fac].name}」` : '背包'));
+      root.append(grid(W.self.inv, bal.invSlots, async (i) => { if (!fac) return hud.toast('先點上面的一個設施', 1100); if (!W.self.inv[i]) return; const r = await room.req({ t: 'donate', fac, slot: i, n: 999 }); if (r.t === 'ok') hud.toast(r.done ? `「${R[fac].name}」的材料都齊了！` : `捐了 ${r.given} 個`, 1300); else say(r); }, 'inv'));
+    } else if (mode === 'coop' || mode === 'barn') {
       const A = ctx.data.animals, f = W.farm, here = (f.animals || []).filter((x) => A.livestock[x.kind].home === mode), cap = bal.animals.capacity[mode];
       root.append(mk('p', 'hint', `住了 ${here.length}／${cap} 隻。每天餵一份乾草、摸摸牠；越喜歡你，產品品質越好。走到牠旁邊按動作鍵就能摸、收產品。`));
       const list = mk('div', 'shoplist');

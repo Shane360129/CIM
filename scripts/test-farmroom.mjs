@@ -182,6 +182,10 @@ check('鐵匠鋪：沒有的工具不能升、沒有錠不能升', (await req(A,
 await go(A, 25.5, 14.4); const quest = A.farm.quest, qd = await req(A, { t: 'quest-done' });
 check('佈告欄有今天的委託（哪位居民要幾個什麼、報酬多少）；東西不夠交不了', !!quest && !!quest.npc && quest.n >= 2 && quest.reward > 0 && (qd.reason === 'materials' || qd.t === 'ok'), JSON.stringify(quest) + ' ' + JSON.stringify(qd));
 if (qd.t === 'ok') A.farm.money -= quest.reward;
+// 修復小鎮：捐東西
+check('沒有的設施不能捐、設施不需要的東西不收', (await req(A, { t: 'donate', fac: 'castle', slot: 0, n: 1 })).reason === 'unknown' && (await req(A, { t: 'donate', fac: 'clocktower', slot: slot(A, 'hoe'), n: 1 })).reason === 'unneeded');
+const wd = has(A, 'wood'); Bc.clear(); const dnt = await req(A, { t: 'donate', fac: 'clocktower', slot: slot(A, 'wood'), n: 1 });
+check('捐 1 個木材給鐘樓：背包少 1 個，兩個人都看得到進度', dnt.t === 'ok' && dnt.given === 1 && dnt.done === false && has(A, 'wood') === wd - 1 && (await Bc.wait('farm', (m) => m.restore && m.restore.clocktower && m.restore.clocktower.given.wood === 1)) !== null);
 await go(A, 0.6, 15.5); await req(A, { t: 'warp', i: 0 });
 check('從小鎮西邊走回路上', A.log.filter((m) => m.t === 'warp' && m.id === a.user.id).pop().map === 'road');
 check('離攤位太遠不能買', (await req(A, { t: 'buy', item: 'seed_cabbage', n: 1 })).reason === 'far');
