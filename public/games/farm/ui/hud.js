@@ -55,6 +55,22 @@ export function createHud(ui, slots) {
     openPanel(node, onClose) { hud.closePanel(); panel = node; panelClose = onClose; ui.append(node); },
     closePanel() { if (panel) { panel.remove(); panel = null; if (panelClose) panelClose(); panelClose = null; } },
     get hasPanel() { return !!panel; },
+    // 對話框：左邊大頭像、名字、一個字一個字跑出來的話（點一下或按動作鍵就全部顯示）、下面幾個按鈕。回傳按了哪一個
+    dialog({ portrait, name, sub, text, buttons = [{ label: '好', value: true }] }) {
+      hud.closeCard();
+      return new Promise((resolve) => {
+        card = mk('div', 'dialog'); const face = mk('div', 'dface'), body = mk('div', 'dbody'), txt = mk('p', 'dtext'), row = mk('div', 'row');
+        if (portrait) face.append(portrait); body.append(mk('h2', '', name), sub ? mk('small', 'dsub', sub) : '', txt, row); card.append(face, body);
+        let i = 0; const full = () => { i = text.length; txt.textContent = text; clearInterval(timer); row.classList.remove('hidden'); };
+        const timer = setInterval(() => { i += 1; txt.textContent = text.slice(0, i); if (i >= text.length) full(); }, 28);
+        row.classList.add('hidden'); card.typing = () => i < text.length; card.skip = full;
+        card.addEventListener('click', (e) => { if (i < text.length && e.target.tagName !== 'BUTTON') full(); });
+        for (const b of buttons) { const n = mk('button', b.ghost ? 'ghost' : '', b.label); n.type = 'button'; n.addEventListener('click', () => { clearInterval(timer); card.resolve = () => {}; hud.closeCard(); resolve(b.value); }); row.append(n); }
+        card.resolve = (v) => { clearInterval(timer); resolve(v); }; ui.append(card);
+      });
+    },
+    // 對話還在跑字的時候按動作鍵：先把整句顯示出來
+    skipDialog() { if (card && card.typing && card.typing()) { card.skip(); return true; } return false; },
     setClock(main, sub) { if (clockMain.textContent !== main) clockMain.textContent = main; if (clockSub.textContent !== sub) clockSub.textContent = sub; },
     setNet(text) { clockNet.textContent = text || ''; clockNet.classList.toggle('hidden', !text); },
     setChat({ maxChars, emoteList, say: s, emote: e }) {

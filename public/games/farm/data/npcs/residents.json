@@ -1,0 +1,864 @@
+{
+ "ahe": {
+  "name": "阿禾",
+  "age": 45,
+  "job": "雜貨店老闆",
+  "about": "溫和又愛碎念，什麼都想幫你記著。",
+  "birthday": [
+   0,
+   7
+  ],
+  "datable": false,
+  "portrait": "portrait/ahe",
+  "look": {
+   "gender": "boy",
+   "skin": "#f6cfa3",
+   "eyes": "soft",
+   "brows": "worry",
+   "mouths": "smile",
+   "hair": "curly",
+   "hairColor": "#3b3430",
+   "top": "shirt",
+   "topColor": "#7dbb5a",
+   "bottom": "pants",
+   "bottomColor": "#5a5f66",
+   "shoes": "sneaker",
+   "shoesColor": "#8a5a34",
+   "hat": "none",
+   "hatColor": "#f6d34a",
+   "acc": "glasses"
+  },
+  "schedule": [
+   [
+    360,
+    6.5,
+    24.5
+   ],
+   [
+    480,
+    7,
+    10.4
+   ],
+   [
+    1080,
+    20,
+    17.5
+   ],
+   [
+    1260,
+    6.5,
+    24.5
+   ]
+  ],
+  "loves": [
+   "cabbage",
+   "dish_veg_soup",
+   "@good"
+  ],
+  "likes": [
+   "@veg",
+   "egg",
+   "milk"
+  ],
+  "dislikes": [
+   "junk",
+   "stone",
+   "@ore"
+  ],
+  "talk": {
+   "first": "哎呀，是新搬來的農場主人吧？我是雜貨店的阿禾。缺什麼就來店裡，別客氣。",
+   "any": [
+    "今天進了新的種子，記得看看季節再買啊。",
+    "吃飽了沒？做農很耗體力，別空著肚子。",
+    "帽子要戴，太陽大。我講過了吧？再講一次。",
+    "你們兩個感情真好，一起種田多好。"
+   ],
+   "rain": [
+    "下雨天不用澆水，可以偷閒一下。不過別淋雨，會感冒。"
+   ],
+   "h3": [
+    "上次你送的東西我放在櫃台上，客人都問哪裡買的呢。",
+    "我年輕的時候也想過當農夫。後來發現我比較會算帳。"
+   ],
+   "h6": [
+    "其實這間店是我爸留下來的。看到你們把荒地種起來，我好像又看到這個小鎮以前的樣子。"
+   ],
+   "birthday": "你記得我生日？哎，我自己都忘了……謝謝你。",
+   "gift_love": "這個！你怎麼知道我最喜歡這個？",
+   "gift_like": "謝謝，剛好用得上。",
+   "gift_dislike": "呃……心意我收到了。這個我先……放著。"
+  },
+  "full": true
+ },
+ "xiaoman": {
+  "name": "小滿",
+  "age": 19,
+  "job": "餐館的麵包學徒",
+  "about": "開朗又冒失，夢想烤出全鎮最好吃的麵包。",
+  "birthday": [
+   0,
+   18
+  ],
+  "datable": true,
+  "portrait": "portrait/xiaoman",
+  "look": {
+   "gender": "girl",
+   "skin": "#ffe0bd",
+   "eyes": "round",
+   "brows": "plain",
+   "mouths": "open",
+   "hair": "twin",
+   "hairColor": "#a8502a",
+   "top": "tee",
+   "topColor": "#ffffff",
+   "bottom": "skirt",
+   "bottomColor": "#f6d34a",
+   "shoes": "sneaker",
+   "shoesColor": "#8a5a34",
+   "hat": "none",
+   "hatColor": "#f6d34a",
+   "acc": "none"
+  },
+  "schedule": [
+   [
+    360,
+    13.5,
+    24.5
+   ],
+   [
+    450,
+    14,
+    10.4
+   ],
+   [
+    900,
+    22,
+    13.5
+   ],
+   [
+    1140,
+    13.5,
+    24.5
+   ]
+  ],
+  "loves": [
+   "strawberry",
+   "dish_strawberry_cake",
+   "honey"
+  ],
+  "likes": [
+   "@fruit",
+   "egg",
+   "milk",
+   "@flower"
+  ],
+  "dislikes": [
+   "@fish",
+   "junk"
+  ],
+  "talk": {
+   "first": "哇！你就是新來的農夫！我是小滿，在春嬸的餐館學做麵包。以後有草莓要賣我喔！",
+   "any": [
+    "我今天又把麵粉打翻了……春嬸說再一次就要我去洗一個月的碗。",
+    "你聞到了嗎？剛出爐的！……啊，烤焦了。",
+    "要是有新鮮的雞蛋和牛奶，我就能做蛋糕了。",
+    "你們的農場現在種什麼呀？"
+   ],
+   "rain": [
+    "下雨天麵團發得比較慢，我也比較想睡……"
+   ],
+   "h3": [
+    "偷偷跟你說，我在研究一種新口味，還沒有人吃過。成功了第一個給你吃！",
+    "你來的時候我都會很開心。真的！"
+   ],
+   "h6": [
+    "我小時候迷路，是聞著麵包的香味走回家的。所以我想做出那種，會讓人想回家的麵包。"
+   ],
+   "birthday": "你記得！！我要哭了……不行，哭了麵包會鹹！",
+   "gift_love": "天啊天啊天啊！我最喜歡這個了！",
+   "gift_like": "謝謝你！我會好好用的！",
+   "gift_dislike": "啊……這個我有點怕……不過謝謝你。"
+  },
+  "full": true
+ },
+ "shilei": {
+  "name": "石磊",
+  "age": 32,
+  "job": "鐵匠",
+  "about": "沉默寡言但很可靠，打的工具用十年都不壞。",
+  "birthday": [
+   2,
+   12
+  ],
+  "datable": true,
+  "portrait": "portrait/shilei",
+  "look": {
+   "gender": "boy",
+   "skin": "#e8b98a",
+   "eyes": "cool",
+   "brows": "thick",
+   "mouths": "pout",
+   "hair": "short",
+   "hairColor": "#2b2421",
+   "top": "tee",
+   "topColor": "#5a5f66",
+   "bottom": "work",
+   "bottomColor": "#8a5a34",
+   "shoes": "boot",
+   "shoesColor": "#3b3430",
+   "hat": "beanie",
+   "hatColor": "#3b6ea8",
+   "acc": "none"
+  },
+  "schedule": [
+   [
+    360,
+    30,
+    10.6
+   ],
+   [
+    420,
+    29.5,
+    10.4
+   ],
+   [
+    1140,
+    24,
+    17.5
+   ],
+   [
+    1290,
+    30,
+    10.6
+   ]
+  ],
+  "loves": [
+   "gold_bar",
+   "iron_bar",
+   "dish_grilled_fish"
+  ],
+  "likes": [
+   "@ore",
+   "copper_bar",
+   "coal",
+   "stone"
+  ],
+  "dislikes": [
+   "@flower",
+   "dish_strawberry_cake"
+  ],
+  "talk": {
+   "first": "……石磊。打鐵的。工具鈍了拿來。",
+   "any": [
+    "……嗯。",
+    "礦坑深的地方有好礦。帶劍。",
+    "火候很重要。急不得。",
+    "工具要保養。"
+   ],
+   "rain": [
+    "下雨。爐子的火不能熄。"
+   ],
+   "h3": [
+    "你帶來的礦，品質不錯。",
+    "……你常來。不討厭。"
+   ],
+   "h6": [
+    "我不太會說話。但是你們來了以後，鎮上熱鬧了。這樣，很好。"
+   ],
+   "birthday": "……生日。謝謝。很久沒有人記得了。",
+   "gift_love": "……好東西。我會用它打一把最好的。",
+   "gift_like": "嗯。謝了。",
+   "gift_dislike": "……這個我用不到。"
+  },
+  "full": true
+ },
+ "tongbo": {
+  "name": "桐伯",
+  "age": 62,
+  "job": "木工師傅",
+  "about": "爽朗愛說笑，鎮上一半的房子是他蓋的。",
+  "birthday": [
+   1,
+   3
+  ],
+  "datable": false,
+  "portrait": "portrait/tongbo",
+  "look": {
+   "gender": "boy",
+   "skin": "#f6cfa3",
+   "eyes": "smile",
+   "brows": "thick",
+   "mouths": "open",
+   "hair": "short",
+   "hairColor": "#f3ead2",
+   "top": "shirt",
+   "topColor": "#e5484d",
+   "bottom": "work",
+   "bottomColor": "#3b6ea8",
+   "shoes": "boot",
+   "shoesColor": "#8a5a34",
+   "hat": "none",
+   "hatColor": "#f6d34a",
+   "acc": "none"
+  },
+  "schedule": [
+   [
+    360,
+    37,
+    10.6
+   ],
+   [
+    450,
+    36.5,
+    10.4
+   ],
+   [
+    1020,
+    21,
+    18.5
+   ],
+   [
+    1200,
+    37,
+    10.6
+   ]
+  ],
+  "loves": [
+   "wood",
+   "dish_stew",
+   "g:keg:strawberry"
+  ],
+  "likes": [
+   "branch",
+   "sap",
+   "@veg",
+   "honey"
+  ],
+  "dislikes": [
+   "junk",
+   "@gem"
+  ],
+  "talk": {
+   "first": "哈哈哈！新鄰居！我是桐伯，要蓋房子、修東西找我就對了！",
+   "any": [
+    "木頭會說話，你要聽它想變成什麼。……騙你的啦哈哈哈！",
+    "我這把年紀還能爬屋頂，你信不信？",
+    "農舍住得習慣嗎？哪天想擴建跟我說一聲。",
+    "年輕人多吃一點！"
+   ],
+   "rain": [
+    "下雨天不能上屋頂，只好在店裡刨木頭囉。"
+   ],
+   "h3": [
+    "你送的木材紋路真漂亮，我捨不得用。",
+    "我孫子在外地，很久沒回來了。看到你們就像看到他。"
+   ],
+   "h6": [
+    "鎮上那些壞掉的老房子，我一個人修不完。要是哪天大家一起動手……哈，我又在作夢了。"
+   ],
+   "birthday": "哈哈哈！還有人記得老頭子的生日！今天我請客！",
+   "gift_love": "好傢伙！這個我喜歡！",
+   "gift_like": "哎唷，這麼客氣！",
+   "gift_dislike": "這個嘛……給年輕人比較合適啦。"
+  },
+  "full": true
+ },
+ "xiyin": {
+  "name": "汐音",
+  "age": 27,
+  "job": "漁具店店主",
+  "about": "隨性愛自由，天氣好就關店去釣魚。",
+  "birthday": [
+   1,
+   20
+  ],
+  "datable": true,
+  "portrait": "portrait/xiyin",
+  "look": {
+   "gender": "girl",
+   "skin": "#c98e62",
+   "eyes": "sharp",
+   "brows": "plain",
+   "mouths": "smile",
+   "hair": "long",
+   "hairColor": "#26304a",
+   "top": "tee",
+   "topColor": "#ffffff",
+   "bottom": "work",
+   "bottomColor": "#3b6ea8",
+   "shoes": "rain",
+   "shoesColor": "#3b6ea8",
+   "hat": "none",
+   "hatColor": "#f6d34a",
+   "acc": "none"
+  },
+  "schedule": [
+   [
+    360,
+    36,
+    24.6
+   ],
+   [
+    480,
+    35.5,
+    25.4
+   ],
+   [
+    840,
+    39,
+    24.4
+   ],
+   [
+    1080,
+    22,
+    13.5
+   ],
+   [
+    1230,
+    36,
+    24.6
+   ]
+  ],
+  "loves": [
+   "fish_koi",
+   "fish_rainbow_trout",
+   "fish_eel"
+  ],
+  "likes": [
+   "@fish",
+   "dish_grilled_fish",
+   "dish_seafood_soup"
+  ],
+  "dislikes": [
+   "@flower",
+   "junk"
+  ],
+  "talk": {
+   "first": "嗨。新來的？我是汐音，開漁具店的。……大部分時間啦，天氣好我就不在。",
+   "any": [
+    "今天風向不錯，湖邊應該有魚。",
+    "釣魚不是在等魚，是在等自己靜下來。",
+    "你看到浮標抖的時候，別急。",
+    "我的店？門沒鎖，要什麼自己拿，錢放桌上。……開玩笑的。"
+   ],
+   "rain": [
+    "下雨天魚最好釣。泥鰍和鰻魚只有這種天氣才出來。"
+   ],
+   "h3": [
+    "你釣到過錦鯉嗎？農場的池塘早上偶爾會有。",
+    "跟你聊天不用想太多，我喜歡這樣。"
+   ],
+   "h6": [
+    "我以前在很大的港口工作，每天都很吵。後來搬來這裡，才發現我要的只是一片安靜的水。"
+   ],
+   "birthday": "……你記得啊。謝啦。今天提早關店，請你吃烤魚。",
+   "gift_love": "哇，這條！你在哪釣的？！",
+   "gift_like": "不錯嘛，謝了。",
+   "gift_dislike": "呃，這個我不太懂欣賞。"
+  },
+  "full": true
+ },
+ "baizhi": {
+  "name": "白芷",
+  "age": 35,
+  "job": "診所醫生",
+  "about": "冷靜細心，其實非常怕蟲。",
+  "birthday": [
+   3,
+   9
+  ],
+  "datable": true,
+  "portrait": "portrait/baizhi",
+  "look": {
+   "gender": "girl",
+   "skin": "#ffe0bd",
+   "eyes": "soft",
+   "brows": "thin",
+   "mouths": "smile",
+   "hair": "bob",
+   "hairColor": "#5a3d22",
+   "top": "sweater",
+   "topColor": "#ffffff",
+   "bottom": "longskirt",
+   "bottomColor": "#4f9a8a",
+   "shoes": "leather",
+   "shoesColor": "#3b3430",
+   "hat": "none",
+   "hatColor": "#f6d34a",
+   "acc": "glasses"
+  },
+  "schedule": [
+   [
+    360,
+    21,
+    10.6
+   ],
+   [
+    480,
+    20.5,
+    10.4
+   ],
+   [
+    1080,
+    19.5,
+    19.4
+   ],
+   [
+    1200,
+    21,
+    10.6
+   ]
+  ],
+  "loves": [
+   "honey",
+   "dish_mushroom_soup",
+   "g:dryer:dandelion"
+  ],
+  "likes": [
+   "dandelion",
+   "fern_shoot",
+   "wild_scallion",
+   "milk",
+   "@forage"
+  ],
+  "dislikes": [
+   "@ore",
+   "junk",
+   "jelly_drop"
+  ],
+  "talk": {
+   "first": "你好，我是白芷，鎮上的醫生。做農事要量力而為，累了就來診所休息。",
+   "any": [
+    "今天有按時吃飯嗎？",
+    "體力用完硬撐會昏倒的，別逞強。",
+    "蒲公英可以入藥，如果有多的可以帶給我。",
+    "……剛剛那是蟲嗎？不是？好，沒事。"
+   ],
+   "rain": [
+    "下雨天容易著涼，回去記得喝點熱的。"
+   ],
+   "h3": [
+    "你氣色比剛來的時候好多了，這裡的生活很適合你。",
+    "謝謝你常來。診所沒有病人是好事，但偶爾也會有點安靜。"
+   ],
+   "h6": [
+    "我選擇來小鎮，是因為想認識每一個病人的名字。在大醫院做不到這件事。"
+   ],
+   "birthday": "生日……我自己都沒放在心上。謝謝你，我很高興。",
+   "gift_love": "這個對身體很好，你真細心。",
+   "gift_like": "謝謝，我會好好使用。",
+   "gift_dislike": "這個……請不要拿太靠近我。"
+  },
+  "full": true
+ },
+ "chunshen": {
+  "name": "春嬸",
+  "age": 50,
+  "job": "餐館老闆娘",
+  "about": "熱情大嗓門，把全鎮的人都當自己小孩。",
+  "birthday": [
+   0,
+   25
+  ],
+  "datable": false,
+  "portrait": "portrait/chunshen",
+  "look": {
+   "gender": "girl",
+   "skin": "#f6cfa3",
+   "eyes": "smile",
+   "brows": "plain",
+   "mouths": "open",
+   "hair": "bob",
+   "hairColor": "#8a5a34",
+   "top": "sweater",
+   "topColor": "#c8553d",
+   "bottom": "longskirt",
+   "bottomColor": "#f3e6c8",
+   "shoes": "leather",
+   "shoesColor": "#8a5a34",
+   "hat": "beanie",
+   "hatColor": "#f0a04a",
+   "acc": "none"
+  },
+  "schedule": [
+   [
+    360,
+    15,
+    10.6
+   ],
+   [
+    420,
+    13.5,
+    10.6
+   ],
+   [
+    1260,
+    15,
+    10.6
+   ]
+  ],
+  "loves": [
+   "dish_cream_stew",
+   "cabbage",
+   "potato"
+  ],
+  "likes": [
+   "@veg",
+   "egg",
+   "milk",
+   "@fish"
+  ],
+  "dislikes": [
+   "junk",
+   "stone"
+  ],
+  "talk": {
+   "first": "唉唷！新來的農夫！瘦成這樣怎麼行，來來來，以後常來吃飯！我是春嬸！",
+   "any": [
+    "吃飽沒？沒吃的話坐下！",
+    "你們種的菜要是多的，賣給我，我算你好價錢！",
+    "小滿那孩子又把麵粉打翻了，唉。",
+    "做菜跟種田一樣，急不得，要用心。"
+   ],
+   "rain": [
+    "下雨天生意差，你來陪我聊天正好！"
+   ],
+   "h3": [
+    "你送的菜我煮給客人吃了，大家都說好吃，我說是你種的！",
+    "你們兩個啊，要互相照顧，知道嗎？"
+   ],
+   "h6": [
+    "這間餐館以前客人多到排到廣場去。我不是想賺錢，我是想再看到那麼多人一起吃飯的樣子。"
+   ],
+   "birthday": "哎唷喂！你怎麼知道！今天這頓春嬸請！",
+   "gift_love": "這個好！今天的招牌菜有著落了！",
+   "gift_like": "謝謝啊！你這孩子真懂事！",
+   "gift_dislike": "這……這個不能吃吧？"
+  },
+  "full": true
+ },
+ "xiaoshu": {
+  "name": "小樹",
+  "age": 10,
+  "job": "鎮上的小孩",
+  "about": "好奇又調皮，最愛抓蟲和探險。",
+  "birthday": [
+   1,
+   14
+  ],
+  "datable": false,
+  "portrait": "portrait/xiaoshu",
+  "look": {
+   "gender": "boy",
+   "skin": "#ffe0bd",
+   "eyes": "round",
+   "brows": "plain",
+   "mouths": "open",
+   "hair": "spiky",
+   "hairColor": "#8a5a34",
+   "top": "tee",
+   "topColor": "#f6d34a",
+   "bottom": "shorts",
+   "bottomColor": "#3b6ea8",
+   "shoes": "sneaker",
+   "shoesColor": "#8a5a34",
+   "hat": "none",
+   "hatColor": "#f6d34a",
+   "acc": "none"
+  },
+  "schedule": [
+   [
+    420,
+    7,
+    24.6
+   ],
+   [
+    540,
+    21.5,
+    18.6
+   ],
+   [
+    780,
+    9,
+    15.5
+   ],
+   [
+    960,
+    30,
+    15.5
+   ],
+   [
+    1080,
+    7,
+    24.6
+   ]
+  ],
+  "loves": [
+   "wildberry",
+   "fossil",
+   "dish_smoothie"
+  ],
+  "likes": [
+   "@fruit",
+   "jelly_drop",
+   "quartz",
+   "egg"
+  ],
+  "dislikes": [
+   "@veg",
+   "dish_veg_soup"
+  ],
+  "talk": {
+   "first": "你是新來的！我是小樹！你的農場有沒有蟲？有沒有青蛙？可以去玩嗎？",
+   "any": [
+    "我今天抓到一隻超大的！……牠跑掉了。",
+    "礦坑裡真的有怪物嗎？牠們可愛嗎？",
+    "我長大要當探險家！還是農夫？還是兩個都當！",
+    "你可以教我釣魚嗎？"
+   ],
+   "rain": [
+    "下雨天有好多蝸牛！你要不要看！"
+   ],
+   "h3": [
+    "這個秘密基地只告訴你喔，不可以跟別人說。",
+    "你是我最好的大人朋友！"
+   ],
+   "h6": [
+    "有時候我會想，為什麼鎮上都沒有其他小孩。不過現在有你們，就不無聊了。"
+   ],
+   "birthday": "哇！禮物！！你是最棒的！！",
+   "gift_love": "哇啊啊！這個超酷！",
+   "gift_like": "謝謝！我要拿去給大家看！",
+   "gift_dislike": "蔬菜……大人為什麼都喜歡蔬菜……"
+  },
+  "full": true
+ },
+ "yunxiu": {
+  "name": "雲岫",
+  "age": 24,
+  "job": "圖書館員",
+  "about": "安靜愛看書，其實很會吐槽",
+  "datable": true,
+  "full": false
+ },
+ "ayan": {
+  "name": "阿焱",
+  "age": 29,
+  "job": "溫泉澡堂的小老闆",
+  "about": "熱血又有點粗心",
+  "datable": true,
+  "full": false
+ },
+ "youzi": {
+  "name": "柚子",
+  "age": 22,
+  "job": "花店店員",
+  "about": "溫柔愛做夢",
+  "datable": true,
+  "full": false
+ },
+ "atie": {
+  "name": "阿鐵",
+  "age": 40,
+  "job": "火車站站長",
+  "about": "嚴肅守時但很疼小孩",
+  "datable": false,
+  "full": false
+ },
+ "haibo": {
+  "name": "海伯",
+  "age": 68,
+  "job": "燈塔看守人",
+  "about": "老船長，愛講海上的故事",
+  "datable": false,
+  "full": false
+ },
+ "yaya": {
+  "name": "芽芽",
+  "age": 8,
+  "job": "鎮上的小女孩",
+  "about": "害羞但喜歡動物",
+  "datable": false,
+  "full": false
+ },
+ "molaoshi": {
+  "name": "墨老師",
+  "age": 55,
+  "job": "學校老師",
+  "about": "博學溫和，愛種盆栽",
+  "datable": false,
+  "full": false
+ },
+ "maisui": {
+  "name": "麥穗",
+  "age": 26,
+  "job": "農會職員",
+  "about": "能幹又直爽",
+  "datable": true,
+  "full": false
+ },
+ "laosong": {
+  "name": "老松",
+  "age": 70,
+  "job": "山上小祠的守護人",
+  "about": "慢條斯理，懂很多古老傳說",
+  "datable": false,
+  "full": false
+ },
+ "liuli": {
+  "name": "琉璃",
+  "age": 30,
+  "job": "流浪商人",
+  "about": "神秘愛開玩笑，來去無蹤",
+  "datable": true,
+  "full": false
+ },
+ "apeng": {
+  "name": "阿椪",
+  "age": 18,
+  "job": "餐館的少年學徒",
+  "about": "貪吃又努力",
+  "datable": false,
+  "full": false
+ },
+ "qinglan": {
+  "name": "青嵐",
+  "age": 33,
+  "job": "登山嚮導兼採藥人",
+  "about": "冷靜可靠，不太說話",
+  "datable": true,
+  "full": false
+ },
+ "mipo": {
+  "name": "米婆",
+  "age": 75,
+  "job": "鎮上最年長的奶奶",
+  "about": "慈祥，最會醃菜",
+  "datable": false,
+  "full": false
+ },
+ "atuo": {
+  "name": "阿拓",
+  "age": 25,
+  "job": "礦工",
+  "about": "樂天大嗓門，力氣很大",
+  "datable": true,
+  "full": false
+ },
+ "xiaocheng": {
+  "name": "小澄",
+  "age": 20,
+  "job": "畫家",
+  "about": "害羞，隨身帶著素描本",
+  "datable": true,
+  "full": false
+ },
+ "awangshu": {
+  "name": "阿汪叔",
+  "age": 48,
+  "job": "寵物店老闆兼獸醫",
+  "about": "大嗓門，對動物超溫柔",
+  "datable": false,
+  "full": false
+ }
+}

@@ -20,6 +20,9 @@
   },
   "scene": {
    "max": 1536
+  },
+  "portrait": {
+   "max": 300
   }
  },
  "sheets": {
@@ -1010,6 +1013,231 @@
      "good/cakebox"
     ]
    ]
+  },
+  "4-01": {
+   "kind": "portrait",
+   "names": [
+    [
+     "portrait/ahe/normal",
+     "portrait/ahe/happy",
+     "portrait/ahe/angry",
+     "portrait/ahe/sad",
+     "portrait/ahe/shy"
+    ]
+   ],
+   "gap": 3,
+   "splitCols": 5
+  },
+  "4-02": {
+   "kind": "portrait",
+   "names": [
+    [
+     "portrait/xiaoman/normal",
+     "portrait/xiaoman/happy",
+     "portrait/xiaoman/angry",
+     "portrait/xiaoman/sad",
+     "portrait/xiaoman/shy"
+    ]
+   ],
+   "gap": 3,
+   "splitCols": 5
+  },
+  "4-03": {
+   "kind": "portrait",
+   "names": [
+    [
+     "portrait/shilei/normal",
+     "portrait/shilei/happy",
+     "portrait/shilei/angry",
+     "portrait/shilei/sad",
+     "portrait/shilei/shy"
+    ]
+   ],
+   "gap": 3,
+   "splitCols": 5
+  },
+  "4-04": {
+   "kind": "portrait",
+   "names": [
+    [
+     "portrait/tongbo/normal",
+     "portrait/tongbo/happy",
+     "portrait/tongbo/angry",
+     "portrait/tongbo/sad",
+     "portrait/tongbo/shy"
+    ]
+   ],
+   "gap": 3,
+   "splitCols": 5
+  },
+  "4-05": {
+   "kind": "portrait",
+   "names": [
+    [
+     "portrait/xiyin/normal",
+     "portrait/xiyin/happy",
+     "portrait/xiyin/angry",
+     "portrait/xiyin/sad",
+     "portrait/xiyin/shy"
+    ]
+   ],
+   "gap": 3,
+   "splitCols": 5
+  },
+  "4-06": {
+   "kind": "portrait",
+   "names": [
+    [
+     "portrait/baizhi/normal",
+     "portrait/baizhi/happy",
+     "portrait/baizhi/angry",
+     "portrait/baizhi/sad",
+     "portrait/baizhi/shy"
+    ]
+   ],
+   "gap": 3,
+   "splitCols": 5
+  },
+  "4-07": {
+   "kind": "portrait",
+   "names": [
+    [
+     "portrait/chunshen/normal",
+     "portrait/chunshen/happy",
+     "portrait/chunshen/angry",
+     "portrait/chunshen/sad",
+     "portrait/chunshen/shy"
+    ]
+   ],
+   "gap": 3,
+   "splitCols": 5
+  },
+  "4-08": {
+   "kind": "portrait",
+   "names": [
+    [
+     "portrait/xiaoshu/normal",
+     "portrait/xiaoshu/happy",
+     "portrait/xiaoshu/angry",
+     "portrait/xiaoshu/sad",
+     "portrait/xiaoshu/shy"
+    ]
+   ],
+   "gap": 3,
+   "splitCols": 5
+  },
+  "4-13": {
+   "kind": "building",
+   "names": [
+    [
+     "building/store"
+    ]
+   ],
+   "gap": 6
+  },
+  "4-14": {
+   "kind": "building",
+   "names": [
+    [
+     "building/smith"
+    ]
+   ],
+   "gap": 6
+  },
+  "4-15": {
+   "kind": "building",
+   "names": [
+    [
+     "building/carpenter"
+    ]
+   ],
+   "gap": 6
+  },
+  "4-16": {
+   "kind": "building",
+   "names": [
+    [
+     "building/tackle"
+    ]
+   ],
+   "gap": 6
+  },
+  "4-17": {
+   "kind": "building",
+   "names": [
+    [
+     "building/clinic"
+    ]
+   ],
+   "gap": 6
+  },
+  "4-18": {
+   "kind": "building",
+   "names": [
+    [
+     "building/diner"
+    ]
+   ],
+   "gap": 6
+  },
+  "4-19": {
+   "kind": "building",
+   "names": [
+    [
+     "building/home_a"
+    ]
+   ],
+   "gap": 6
+  },
+  "4-20": {
+   "kind": "building",
+   "names": [
+    [
+     "building/home_b"
+    ]
+   ],
+   "gap": 6
+  },
+  "4-21": {
+   "kind": "object",
+   "names": [
+    [
+     "obj/fountain",
+     "obj/board",
+     "obj/lamp"
+    ],
+    [
+     "obj/town_bench",
+     "obj/planter",
+     "obj/postbox"
+    ],
+    [
+     "obj/cart",
+     "obj/trash",
+     "obj/bus_stop"
+    ]
+   ]
+  },
+  "4-22": {
+   "kind": "object",
+   "names": [
+    [
+     "obj/bunting",
+     "obj/lantern",
+     "obj/flower_arch"
+    ],
+    [
+     "obj/stage",
+     "obj/fest_stall",
+     "obj/pumpkin_lamp"
+    ],
+    [
+     "obj/star_tree",
+     "obj/firework",
+     "obj/balloons"
+    ]
+   ],
+   "bg": "#00ffff"
   }
  }
 }

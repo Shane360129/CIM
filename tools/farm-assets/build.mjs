@@ -90,6 +90,8 @@ for (const id of ids) {
   const alpha = keyOut(data, w, h, hexRgb((sc && sc.bg) || '#ff00ff'), sc && sc.tolerance);
   const groups = order(findObjects(alpha, w, h, Math.round(((sc && sc.gap) ?? 2) * k), Math.round(((sc && sc.minArea) ?? 14) * k * k)), (sc && sc.order) || 'rows');
   if (onlyBoxes) { console.log(`${id}（${full ? '原圖' : '縮圖'} ${w}×${h}）：` + groups.map((g) => g.length).join(' + ') + ` = ${groups.flat().length} 個`); continue; }
+  // splitCols：一整列黏在一起（例如五個並排的大頭像）時，照欄數平均切開
+  if (sc.splitCols) for (let gi = 0; gi < groups.length; gi++) if (groups[gi].length === 1) { const b = groups[gi][0], cw = (b.x1 - b.x0 + 1) / sc.splitCols; groups[gi] = Array.from({ length: sc.splitCols }, (_, i) => ({ ...b, x0: Math.round(b.x0 + cw * i), x1: Math.round(b.x0 + cw * (i + 1)) - 1 })); }
   const want = sc.names.map((r) => r.length), got = groups.map((g) => g.length);
   if (want.join() !== got.join()) { problems.push(`${id}：sheets.json 寫的是每列 ${want.join('、')} 個，圖上找到的是 ${got.join('、')} 個 → 這張沒有處理`); continue; }
   groups.forEach((g, r) => g.forEach((b, c) => {

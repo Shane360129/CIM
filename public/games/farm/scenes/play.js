@@ -3,7 +3,8 @@ import { buildGround } from '../render/ground.js';
 import { drawObject, drawPlayer, drawBubble, drawTilled, drawShadow, drawName } from '../render/placeholder.js';
 import { drawDoll } from '../render/doll.js';
 import { drawSprite } from '../render/sprites.js';
-import { groundAt, levelOf, sellPrice, animalPos, hearts, mineMap, monPos } from '../shared/rules.js';
+import { groundAt, levelOf, sellPrice, animalPos, hearts, mineMap, monPos, npcPos, seasonIndex } from '../shared/rules.js';
+import { iconEl } from '../render/sprites.js';
 import { openPanel, itemIcon } from '../ui/panels.js';
 import { create } from './create.js';
 import { createFishing } from '../systems/fishing.js';
@@ -44,7 +45,7 @@ export const play = {
       ctx.input.on('bag', () => this.togglePanel('bag')),
       ctx.input.on('say', () => hud.openSay()),
       ctx.input.on('esc', () => { if (hud.hasPanel) hud.closePanel(); else if (hud.hasCard) hud.closeCard(); else if (window.parent !== window) window.parent.postMessage({ type: 'farm-close' }, location.origin); }),
-      ctx.input.on('action', () => { if (this.fishing.active) this.fishing.press(); else this.act(this.facingTile()); }),
+      ctx.input.on('action', () => { if (hud.skipDialog()) return; if (this.fishing.active) this.fishing.press(); else this.act(this.facingTile()); }),
       ctx.input.on('tap', (p) => { if (this.fishing.active) return this.fishing.press(); const w = ctx.camera.toWorld(p.x, p.y); this.act({ x: Math.floor(w.x / this.T), y: Math.floor(w.y / this.T) }); }),
       W.on('status', (s) => { net(s); if (s === 'replaced') hud.card('農場在別的地方打開了', ['同一個帳號一次只能在一個分頁玩。'], [{ label: '知道了', value: true }]); }),
       W.on('snapshot', (m) => { this.sent = { t: 0, vx: 0, vy: 0 }; this.setMap(W.me.map); refresh(); if (m.summary) this.showSummary(m.summary, m.partner); }),
@@ -139,6 +140,9 @@ export const play = {
     }
     pl.dir = DIR(t.x + 0.5 - pl.x, t.y + 0.5 - pl.y, pl.dir);
     const held = W.self.inv[hud.selected], heldDef = held && data.items[held.id];
+    // 對著居民：聊天或送禮
+    const folk = this.folks().find((n) => Math.hypot(n.x - (t.x + 0.5), n.y - 0.5 - (t.y + 0.5)) < 1.0);
+    if (folk) return this.talk(folk);
     // 對著動物：有產品先收，今天還沒摸就摸摸，手上拿刷子就刷毛
     const beast = this.beasts().find((b) => Math.hypot(b.x - (t.x + 0.5), b.y - 0.4 - (t.y + 0.5)) < 0.85);
     if (beast) {
@@ -183,6 +187,30 @@ export const play = {
     else if (s.stairs.open && s.stairs.x === t.x && s.stairs.y === t.y) r = await this.room.req({ t: 'mine-down' });
     else if (Math.abs(t.x - s.spawn.x) <= 1 && t.y >= s.spawn.y) return this.elevator(true);
     if (r && r.t === 'no') { const need = r.reason.startsWith('tool:') && TOOL_NAME[r.reason.slice(5)]; const text = need ? `這個要用${need}` : NO_TEXT[r.reason]; if (text) hud.toast(text, 1200); }
+  },
+  // 現在在小鎮上的居民和他們的位置（照行程用時間算）
+  folks() {
+    const W = this.world, npcs = this.ctx.data.npcs; if (this.mapId !== 'town' || !W.farm) return [];
+    const min = W.minute(), walk = this.bal.friend.walkMinutes;
+    return Object.entries(npcs).filter(([, n]) => n.full).map(([id, n]) => ({ id, n, ...npcPos(n, min, walk) }));
+  },
+  // 跟居民說話：每天第一次聊天加好感；可以把手上的東西送給他（一天一次、一週兩次）
+  async talk(folk) {
+    const { hud, data } = this.ctx, W = this.world, n = folk.n, F = this.bal.friend, pl = this.player;
+    if (Math.hypot(folk.x - pl.x, folk.y - pl.y) > this.bal.reach + 1) return hud.toast('走近一點再說話', 900);
+    const face = (expr) => iconEl(`${n.portrait}/${expr}`, 96) || iconEl(`${n.portrait}/normal`, 96);
+    const r = await this.room.req({ t: 'talk', npc: folk.id }); if (r.t !== 'ok') return hud.toast('他好像沒聽到', 900);
+    const fr = W.self.friend[folk.id] || { pts: 0 }, h = Math.floor(fr.pts / F.heart), wet = ['rain', 'storm'].includes(W.farm.weather);
+    const pool = [...n.talk.any, ...(wet ? n.talk.rain : []), ...(h >= 3 ? n.talk.h3 : []), ...(h >= 6 ? n.talk.h6 : [])];
+    const text = r.first ? n.talk.first : r.bday && r.daily ? n.talk.birthday : pool[(W.farm.day * 7 + folk.id.length * 3 + (this.talkN = (this.talkN || 0) + 1)) % pool.length];
+    const held = W.self.inv[hud.selected], it = held && data.items[held.id], canGift = it && it.kind !== 'tool';
+    const sub = `${n.job}・${'♥'.repeat(h)}${'♡'.repeat(Math.max(0, 10 - h))}`;
+    const pick = await hud.dialog({ portrait: face(r.bday ? 'happy' : 'normal'), name: n.name, sub, text, buttons: [...(canGift ? [{ label: `送他 ${it.name}`, value: 'gift', ghost: true }] : []), { label: '再見', value: null }] });
+    if (pick !== 'gift') return;
+    const g = await this.room.req({ t: 'gift', npc: folk.id, slot: hud.selected });
+    if (g.t !== 'ok') return hud.dialog({ portrait: face('normal'), name: n.name, sub, text: g.reason === 'giftday' ? '今天已經收過你的禮物了，明天再說吧。' : g.reason === 'giftweek' ? '這個星期收你太多東西了，不好意思再收啦。' : '……？' });
+    const line = g.taste === 'love' ? n.talk.gift_love : g.taste === 'like' ? n.talk.gift_like : g.taste === 'dislike' ? n.talk.gift_dislike : '謝謝你，我收下了。';
+    await hud.dialog({ portrait: face(g.taste === 'love' || g.taste === 'like' ? 'happy' : g.taste === 'dislike' ? 'sad' : 'normal'), name: n.name, sub: `${n.job}・${'♥'.repeat(Math.floor(g.pts / F.heart))}`, text: (g.bday ? n.talk.birthday + ' ' : '') + line });
   },
   // 現在這張地圖上的家畜和寵物在哪裡（位置是用時間算的，兩個人算出來一樣）
   beasts() {
@@ -277,6 +305,7 @@ export const play = {
     for (const t of this.things) if (t.fx > x0 && t.fx < x1 && t.fy > y0 && t.fy < y1) list.push({ y: t.fy, t });
     for (const o of W.objs.values()) if (o.map === mapId && o.x > x0 && o.x < x1 && o.y > y0 && o.y < y1) list.push({ y: o.y + 0.92, o, t: { def: o.item ? { ...data.objects[o.type], art: data.items[o.item].art, name: data.items[o.item].name } : o.kind ? { ...data.objects[o.type], art: data.machines[o.kind].art, name: data.machines[o.kind].name } : data.objects[o.type], fx: o.x + 0.5, fy: o.y + 0.92 } });
     for (const b of this.beasts()) list.push({ y: b.y, beast: b });
+    for (const n of this.folks()) list.push({ y: n.y, pp: { q: { id: 'npc:' + n.id, x: n.x, y: n.y, dir: n.dir, moving: n.moving, anim: performance.now() / 1000, look: n.n.look, name: n.n.name }, color: '#ccc' } });
     if (this.map.mine && W.mine) { // 礦坑：石頭、打開的樓梯、入口的梯子、怪物
       const s = W.mine, RT = this.bal.mine.rockTypes, MT = this.bal.mine.monsters, tnow = W.serverNow();
       g.fillStyle = '#3b2f22'; g.fillRect((s.spawn.x - 0.3) * T, (s.spawn.y + 1) * T, T * 1.6, T * 0.9); drawName(g, '梯子（出去／電梯）', (s.spawn.x + 0.5) * T, (s.spawn.y + 1.5) * T, T);

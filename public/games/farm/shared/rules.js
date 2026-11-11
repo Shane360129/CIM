@@ -95,3 +95,14 @@ export function genFloor(seed, floor, day, bal) {
 export function monPos(m, absMs) { const t = absMs / 1000, k = m.id * 1.7; return { x: m.x + Math.sin(t * 0.7 + k) * 1.3, y: m.y + Math.cos(t * 0.5 + k * 2) * 0.9 }; }
 // 礦坑那一層當成一張地圖（給走路、畫面用）
 export const mineMap = (bal, floor) => ({ name: `礦坑第 ${floor} 層`, w: bal.mine.w, h: bal.mine.h, ground: 'cave', outdoor: false, patches: [], objects: [], exits: [], mine: true });
+
+// 居民現在在哪：照每日行程（[幾點起, x, y]…），到了時間就花一小段時間走過去。只用時間算，兩個人看到的一樣
+export function npcPos(npc, minute, walk = 40) {
+  const sch = npc.schedule; let i = 0; for (let k = 0; k < sch.length; k++) if (minute >= sch[k][0]) i = k;
+  const cur = sch[i], prev = sch[i > 0 ? i - 1 : sch.length - 1], t = Math.min(1, Math.max(0, (minute - cur[0]) / walk));
+  if (minute < sch[0][0]) return { x: prev[1], y: prev[2], moving: false, dir: 'down' };
+  const x = prev[1] + (cur[1] - prev[1]) * t, y = prev[2] + (cur[2] - prev[2]) * t, dx = cur[1] - prev[1], dy = cur[2] - prev[2];
+  return { x, y, moving: t < 1, dir: t >= 1 ? 'down' : Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : dy < 0 ? 'up' : 'down' };
+}
+// 送這個東西給他，他的反應：love 最喜歡、like 喜歡、dislike 討厭、neutral 普通
+export function giftTaste(items, npc, id) { for (const k of ['loves', 'likes', 'dislikes']) if ((npc[k] || []).some((spec) => matches(items, id, spec))) return k === 'loves' ? 'love' : k === 'likes' ? 'like' : 'dislike'; return 'neutral'; }

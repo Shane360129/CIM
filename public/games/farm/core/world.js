@@ -40,7 +40,7 @@ export function createWorld(session, bal) {
   room.on('move', (m) => { const o = w.others.get(m.id); if (!o) return; if (o.map !== m.map) { o.map = m.map; o.x = m.x; o.y = m.y; } Object.assign(o, { tx: m.x, ty: m.y, vx: m.vx, vy: m.vy, dir: m.dir }); if (Math.hypot(o.x - m.x, o.y - m.y) > 4) { o.x = m.x; o.y = m.y; } });
   room.on('tiles', (m) => { w.setTiles(m.list); emit('tiles', m); });
   room.on('objs', (m) => { w.setObjs(m.list); emit('objs', m); });
-  room.on('self', (m) => { w.self = { inv: m.inv, energy: m.energy, energyMax: m.energyMax, skills: m.skills, fishRec: m.fishRec || {}, buffs: m.buffs || {}, hp: m.hp, hpMax: m.hpMax }; emit('self', m); });
+  room.on('self', (m) => { w.self = { inv: m.inv, energy: m.energy, energyMax: m.energyMax, skills: m.skills, fishRec: m.fishRec || {}, buffs: m.buffs || {}, hp: m.hp, hpMax: m.hpMax, friend: m.friend || {} }; emit('self', m); });
   room.on('farm', (m) => { if (w.farm) Object.assign(w.farm, { money: m.money, ship: m.ship, chest: m.chest }); emit('farm', m); });
   room.on('animals', (m) => { if (w.farm) Object.assign(w.farm, { animals: m.animals, pets: m.pets, graze: m.graze, money: m.money }); emit('farm', m); });
   room.on('mine', (m) => { w.mine = m.state; if (w.farm) w.farm.mineDeepest = m.deepest; emit('map', 'mine'); });

@@ -468,5 +468,19 @@
     ],
     "hurtEveryMs": 900,
     "faintEnergy": 0.5
+  },
+  "friend": {
+    "heart": 250,
+    "max": 2500,
+    "talk": 20,
+    "gift": {
+      "love": 80,
+      "like": 45,
+      "neutral": 20,
+      "dislike": -20
+    },
+    "birthdayMult": 4,
+    "giftsPerWeek": 2,
+    "walkMinutes": 40
   }
 }

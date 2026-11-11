@@ -116,3 +116,14 @@ button.chip { cursor: pointer; }
 .pbtn.eat { margin-top: 6px; }
 
 .chip.hp .ebar i { background: #e5484d; }
+
+/* 階段 6：對話框 */
+.dialog { position: absolute; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(620px, calc(100% - 20px)); display: flex; gap: 12px; padding: 12px 14px;
+  border-radius: 16px; background: #f3e6c8; border: 3px solid #5a3d22; box-shadow: 0 8px 0 rgba(60, 40, 20, .25); z-index: 5; }
+.dface { flex: none; width: 96px; height: 96px; border-radius: 12px; background: #e3d2a8; border: 2px solid #5a3d22; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
+.dbody { flex: 1; min-width: 0; } .dbody h2 { margin: 0; font-size: 17px; display: inline-block; } .dsub { margin-left: 8px; color: #8a6a44; font-size: 13px; }
+.dtext { margin: 6px 0 8px; min-height: 3.2em; font-size: 15.5px; line-height: 1.6; }
+.dialog .row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.dialog button { font: inherit; font-weight: 700; padding: 7px 14px; border-radius: 12px; border: 2px solid #5a3d22; background: #e8872e; color: #fff; cursor: pointer; }
+.dialog button.ghost { background: #f3e6c8; color: #5a3d22; }
+@media (max-width: 520px) { .dface { width: 68px; height: 68px; } }

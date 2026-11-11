@@ -159,7 +159,20 @@ Bc.clear(); check('木材放進出貨箱：背包少了，兩個人都看得到�
 check('沒走到出入口不能換地圖', (await req(A, { t: 'warp', i: 0 })).reason === 'far');
 await go(A, 42.5, 16); Bc.clear();
 check('走到東邊的出口：到「往小鎮的路」，對方看到你離開', (await req(A, { t: 'warp', i: 0 })).t === 'ok' && !!(await Bc.wait('warp', (m) => m.id === a.user.id && m.map === 'road')));
-check('還沒開放的出口過不去', (await (async () => { await go(A, 28.5, 7); return req(A, { t: 'warp', i: 1 }); })()).reason === 'closed');
+// ---- 小鎮與居民 ----
+await go(A, 28.5, 7);
+check('路的東邊通到小鎮', (await req(A, { t: 'warp', i: 1 })).t === 'ok' && A.log.some((m) => m.t === 'warp' && m.id === a.user.id && m.map === 'town'));
+check('沒有的居民、還沒寫好的居民不能聊；站太遠也不行', (await req(A, { t: 'talk', npc: 'nobody' })).reason === 'unknown' && (await req(A, { t: 'talk', npc: 'yunxiu' })).reason === 'unknown' && (await req(A, { t: 'talk', npc: 'ahe' })).reason === 'far');
+await go(A, 6.5, 25.5); // 早上 8 點前阿禾在家門口（6.5, 24.5）
+const tk = await req(A, { t: 'talk', npc: 'ahe' }), tk2 = await req(A, { t: 'talk', npc: 'ahe' });
+check('第一次見面：好感 +20；同一天再聊不會再加', tk.t === 'ok' && tk.first === true && tk.daily === true && tk.pts === 20 && tk2.first === false && tk2.daily === false && tk2.pts === 20 && A.self.friend.ahe.pts === 20);
+check('工具不能送', (await req(A, { t: 'gift', npc: 'ahe', slot: slot(A, 'hoe') })).reason === 'slot');
+const gf = await req(A, { t: 'gift', npc: 'ahe', slot: slot(A, 'stone') });
+check('送他討厭的東西（石頭）：東西少一個、好感倒扣', gf.t === 'ok' && gf.taste === 'dislike' && gf.pts === 0 && has(A, 'stone') === 1, JSON.stringify(gf));
+check('一天只能送一次', (await req(A, { t: 'gift', npc: 'ahe', slot: slot(A, 'stone') })).reason === 'giftday');
+check('好感是各算各的：另一個人沒有紀錄', !Bc.self.friend || !Bc.self.friend.ahe);
+await go(A, 0.6, 15.5); await req(A, { t: 'warp', i: 0 });
+check('從小鎮西邊走回路上', A.log.filter((m) => m.t === 'warp' && m.id === a.user.id).pop().map === 'road');
 check('離攤位太遠不能買', (await req(A, { t: 'buy', item: 'seed_cabbage', n: 1 })).reason === 'far');
 await go(A, 14, 6.6);
 check('買種子：錢是共用的（兩個人都看到變少），背包多了種子', (await req(A, { t: 'buy', item: 'seed_strawberry', n: 2 })).t === 'ok' && has(A, 'seed_strawberry') === 2 && A.farm.money === 320 && !!(await Bc.wait('farm', (m) => m.money === 320)));
@@ -172,9 +185,9 @@ const enter = async (c) => { await go(c, 9.5, 9.3, 'up'); return req(c, { t: 'wa
 check('從門口進農舍', (await enter(A)).t === 'ok' && A.log.some((m) => m.t === 'warp' && m.map === 'house'));
 check('離倉庫箱太遠不能用', (await req(A, { t: 'chest', dir: 'in', slot: slot(A, 'stone'), n: 99 })).reason === 'far');
 await go(A, 6.5, 2.5); Bc.clear();
-check('石頭放進倉庫箱：兩個人共用', (await req(A, { t: 'chest', dir: 'in', slot: slot(A, 'stone'), n: 99 })).t === 'ok' && has(A, 'stone') === 0 && !!(await Bc.wait('farm', (m) => m.chest[0] && m.chest[0].id === 'stone' && m.chest[0].n === 2)));
+check('石頭放進倉庫箱：兩個人共用', (await req(A, { t: 'chest', dir: 'in', slot: slot(A, 'stone'), n: 99 })).t === 'ok' && has(A, 'stone') === 0 && !!(await Bc.wait('farm', (m) => m.chest[0] && m.chest[0].id === 'stone' && m.chest[0].n === 1)));
 await enter(Bc); await go(Bc, 6.5, 2.5);
-check('另一個人可以拿出來', (await req(Bc, { t: 'chest', dir: 'out', slot: 0, n: 1 })).t === 'ok' && has(Bc, 'stone') === 1 && Bc.farm.chest[0].n === 1);
+check('另一個人可以拿出來', (await req(Bc, { t: 'chest', dir: 'out', slot: 0, n: 1 })).t === 'ok' && has(Bc, 'stone') === 1 && !Bc.farm.chest[0]);
 
 // ---- 泡泡、表情 ----
 Bc.clear(); A.send({ t: 'bubble', text: '  今天   種什麼？' + '好'.repeat(80) });
@@ -196,6 +209,7 @@ check('一個人上床：對方看得到，還不會換日', !!(await Bc.wait('s
 Bc.send({ t: 'sleep', on: true }); const nd = await A.wait('newday');
 const tileOf = (m, x, y) => m.tiles.find((t) => t.map === 'farm' && t.x === x && t.y === y);
 check('兩個人都上床才換日：第 2 天早上 6 點', !!nd && nd.farm.day === 2 && Math.abs(nd.farm.minute - 360) < 2, nd && `第 ${nd.farm.day} 天 ${nd.farm.minute}`);
+if (process.env.DEBUG) console.log('tiles', JSON.stringify(nd.tiles), JSON.stringify(F), nd.farm.weather);
 check('有澆水的作物長了一階段，沒澆水的沒長', !!nd && tileOf(nd, F.x, F.y).c.s === 1 && tileOf(nd, F.x + 1, F.y).c.s === 0);
 check('出貨箱結算：木材 4 個 32 元進共用的錢包，明細看得到是誰放的', !!nd && nd.farm.money === 352 && nd.farm.lastShip.total === 32 && nd.farm.lastShip.lines[0].by === a.user.id && nd.farm.ship.length === 0, nd && String(nd.farm.money));
 check('睡覺補滿體力', !!nd && nd.self.energy === 100);
@@ -209,7 +223,7 @@ A.clear(); Bc.clear(); A.send({ t: 'sleep', on: true }); Bc.send({ t: 'sleep', o
 
 // ---- 離線：一個人照顧作物到收成 ----
 Bc.clear(); A.ws.close(); check('離線時對方收到通知', !!(await Bc.wait('leave', (m) => m.id === a.user.id)));
-const outAndWater = async () => { await go(Bc, 5, 7.6); await req(Bc, { t: 'warp', i: 0 }); await go(Bc, F.x + 0.5, F.y - 0.5); const r = await use(Bc, 'can', F.x, F.y); await use(Bc, 'can', F.x + 1, F.y); await enter(Bc); await go(Bc, 2.6, 3.4); return r; };
+const outAndWater = async () => { await go(Bc, 5, 7.6); await req(Bc, { t: 'warp', i: 0 }); await go(Bc, F.x + 0.5, F.y - 0.5); const wet = ['rain', 'storm'].includes(Bc.farm.weather); /* 下雨天田已經是濕的：這時候拿澆水壺對成熟的作物按會變成收成，所以下雨天不澆 */ const r = wet ? { t: 'no', reason: 'already' } : await use(Bc, 'can', F.x, F.y); if (!wet) await use(Bc, 'can', F.x + 1, F.y); await enter(Bc); await go(Bc, 2.6, 3.4); return r; };
 let lastND = null, rainy = 0;
 for (let d = 0; d < 4; d++) { const r = await outAndWater(); if (r.t === 'no' && r.reason === 'already') rainy++; Bc.clear(); const sr = await req(Bc, { t: 'sleep', on: true }); const ndx = await Bc.wait('newday'); if (process.env.DEBUG) console.log('day loop', d, JSON.stringify(r).slice(0, 80), JSON.stringify(sr), ndx && ndx.farm.day, JSON.stringify(Bc.log.filter((m) => m.t === 'warp' || m.t === 'no').slice(-4))); if (ndx) lastND = ndx; }
 check('只有一個人在線：他自己睡就換日（連續 4 天）', !!lastND && lastND.farm.day === 6, lastND && `第 ${lastND.farm.day} 天，其中 ${rainy} 天下雨不用澆`);

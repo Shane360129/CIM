@@ -97,6 +97,22 @@ const { chromium } = require('playwright');
   await tp(pa, 14, 6.6, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300); await pa.screenshot({ path: S + '/s4-shop.png' });
   await pa.locator('.shoprow[data-item=seed_cabbage] .pbtn').first().click(); await pb.waitForTimeout(500);
   ok('種子攤買高麗菜種子：背包多一包，錢兩邊都變成 450', (await count(pa, 'seed_cabbage')) === 1 && (await st(pa)).money === 450 && (await st(pb)).money === 450); await pa.keyboard.press('Escape');
+  // 小鎮與居民
+  await tp(pa, 28.6, 7, 'right'); await pa.keyboard.down('KeyD'); await pa.waitForTimeout(500); await pa.keyboard.up('KeyD'); await pa.waitForTimeout(700);
+  ok('沿著路往東走到小鎮', (await st(pa)).me.map === 'town');
+  const folk = await pa.evaluate(() => window.__game.scenes.current.folks().map((f) => ({ id: f.id, x: f.x, y: f.y })));
+  ok('小鎮上有 8 位居民', folk.length === 8);
+  const ahe = folk.find((f) => f.id === 'ahe'); await tp(pa, ahe.x, ahe.y + 1.0, 'up'); await hold(pa, 'seed_carrot'); await pa.keyboard.press('Space'); await pa.waitForTimeout(600);
+  ok('走到阿禾旁邊按空白鍵：對話框有大頭像、名字、職業和愛心', (await pa.locator('.dialog').count()) === 1 && /阿禾/.test(await pa.locator('.dialog h2').textContent()) && /雜貨店老闆/.test(await pa.locator('.dialog .dsub').textContent()) && (await pa.locator('.dialog .dface .icon').count()) === 1);
+  await pa.keyboard.press('Space'); await pa.waitForTimeout(200); const hello = await pa.locator('.dialog .dtext').textContent();
+  ok('字是一個一個跑出來的，再按一次空白鍵整句顯示；第一次見面說的是自我介紹 → ' + hello.slice(0, 20), /我是雜貨店的阿禾/.test(hello));
+  await pa.screenshot({ path: S + '/s6-talk.png' });
+  await pa.locator('.dialog button', { hasText: '送他' }).click(); await pa.waitForTimeout(500); await pa.keyboard.press('Space'); await pa.waitForTimeout(200);
+  const thanks = await pa.locator('.dialog .dtext').textContent();
+  ok('把手上的東西送給他：他有反應，好感變多，種子少一包 → ' + thanks.slice(0, 20), thanks.length > 3 && (await pa.evaluate(() => window.__game.world.self.friend.ahe.pts)) === 40 && (await count(pa, 'seed_carrot')) === 6);
+  await pa.locator('.dialog button').last().click(); await pa.waitForTimeout(200);
+  await tp(pa, 0.7, 15.5, 'left'); await pa.keyboard.down('KeyA'); await pa.waitForTimeout(500); await pa.keyboard.up('KeyA'); await pa.waitForTimeout(700);
+  ok('往西走回路上', (await st(pa)).me.map === 'road');
   // 湖邊：採集、釣魚
   await tp(pa, 20.6, 0.7, 'up'); await pa.keyboard.down('KeyW'); await pa.waitForTimeout(500); await pa.keyboard.up('KeyW'); await pa.waitForTimeout(700);
   ok('從路上往北走到湖邊', (await st(pa)).me.map === 'lake');

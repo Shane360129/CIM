@@ -15,11 +15,13 @@ import MAP_HOUSE from '../public/games/farm/data/maps/house.json';
 import MAP_ROAD from '../public/games/farm/data/maps/road.json';
 import MAP_LAKE from '../public/games/farm/data/maps/lake.json';
 import FISH from '../public/games/farm/data/fish.json';
-import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelOf, rollQuality, invAdd, invTake, sellPrice, makeItems, matches, planTake, absMinute, animalPos, genFloor, monPos, mineMap } from '../public/games/farm/shared/rules.js';
+import MAP_TOWN from '../public/games/farm/data/maps/town.json';
+import NPCS from '../public/games/farm/data/npcs/residents.json';
+import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelOf, rollQuality, invAdd, invTake, sellPrice, makeItems, matches, planTake, absMinute, animalPos, genFloor, monPos, mineMap, npcPos, giftTaste, seasonIndex } from '../public/games/farm/shared/rules.js';
 
 const ITEMS = makeItems(RAW_ITEMS, MACHINES); // 加工品（g:機器:原料）的名字和價錢是算出來的
 
-const MAPS = { farm: MAP_FARM, house: MAP_HOUSE, road: MAP_ROAD, lake: MAP_LAKE };
+const MAPS = { farm: MAP_FARM, house: MAP_HOUSE, road: MAP_ROAD, lake: MAP_LAKE, town: MAP_TOWN };
 // 每張地圖上不會動的東西（房子、長椅…）佔了哪些格子：採集物、雜草不會長在這些格子上
 const STATIC = Object.fromEntries(Object.entries(MAPS).map(([id, m]) => [id, new Set(m.objects.flatMap((o) => { const [tw, th] = OBJECTS[o.type].tiles || [1, 1], out = []; for (let x = 0; x < tw; x++) for (let y = 0; y < th; y++) out.push((o.x + x) + ',' + (o.y - y)); return out; }))]));
 const TICK_MS = 10000;                 // 有人在線時，每 10 秒推進一次遊戲時鐘
@@ -127,7 +129,7 @@ export class FarmRoom {
   pubTile(k) { const v = this.tiles.get(k), t = unK(k); return v ? { ...t, t: 1, w: v.w === this.farm.day ? 1 : 0, f: v.f || 0, c: v.c ? { id: v.c.id, s: v.c.dead ? -1 : cropStage(CROPS[v.c.id], v.c.g) } : null } : { ...t, t: 0 }; }
   pubObj(k) { const o = this.objs.get(k); return o ? { ...unK(k), type: o.type, hp: o.hp, ...(o.item ? { item: o.item } : {}), ...(o.kind ? { kind: o.kind, out: o.out || null, doneAt: o.doneAt || 0 } : {}) } : { ...unK(k), type: null }; }
   absNow() { return absMinute(this.farm.day, this.minuteNow(), BAL); }
-  pubSelf(a) { const p = this.player(a.id); return { inv: p.inv, energy: p.energy, energyMax: BAL.energyMax, skills: p.skills, fishRec: p.fishRec || {}, buffs: p.buffs || {}, hp: p.hp ?? BAL.mine.hpMax, hpMax: BAL.mine.hpMax }; }
+  pubSelf(a) { const p = this.player(a.id); return { inv: p.inv, energy: p.energy, energyMax: BAL.energyMax, skills: p.skills, fishRec: p.fishRec || {}, buffs: p.buffs || {}, hp: p.hp ?? BAL.mine.hpMax, hpMax: BAL.mine.hpMax, friend: p.friend || {} }; }
 
   // ---------- 連線 ----------
   sockets() { return this.ctx.getWebSockets(); }
@@ -249,6 +251,7 @@ export class FarmRoom {
       self(); this.broadcast({ t: 'fx', id: a.id, kind: 'eat', map: a.map, x: Math.floor(a.x), y: Math.floor(a.y) }); done({ buff: it.buff || null });
     }
     else if (['animal-buy', 'animal', 'feed', 'graze', 'adopt', 'pet'].includes(m.t)) this.onAnimal(a, p, m, { no, done, self, near, farmChanged });
+    else if (m.t === 'talk' || m.t === 'gift') this.onNpc(a, p, m, { no, done, self });
     else if (m.t.startsWith('mine-') || m.t === 'mon-hit' || m.t === 'hurt') this.onMine(ws, a, p, m, { no, done, self, near });
     else if (m.t === 'fish') this.onFish(a, p, m, { no, done, self });
     else if (m.t === 'reel') this.onReel(a, p, m, { no, done, self });
@@ -265,6 +268,28 @@ export class FarmRoom {
     }
     this.flush();
   }
+  // ---------- 居民 ----------
+  // 好感是每個玩家各算各的。居民在哪裡是照行程用時間算的（shared/rules.js 的 npcPos），這裡只檢查你是不是站在他旁邊
+  onNpc(a, p, m, { no, done, self }) {
+    const npc = NPCS[m.npc], F = BAL.friend, f = this.farm; if (!npc || !npc.full) return no('unknown');
+    const pos = npcPos(npc, this.minuteNow(), F.walkMinutes); if (a.map !== 'town' || Math.hypot(pos.x - a.x, pos.y - a.y) > BAL.reach + 1.5) return no('far');
+    const fr = ((p.friend ||= {})[m.npc] ||= { pts: 0, talk: 0, giftDay: 0, week: 0, gifts: 0, met: false });
+    const bday = npc.birthday && npc.birthday[0] === seasonIndex(f.day, BAL) && npc.birthday[1] === ((f.day - 1) % BAL.seasonDays) + 1;
+    if (m.t === 'talk') { // 每天第一次聊天會增加好感
+      const first = !fr.met, daily = fr.talk !== f.day; fr.met = true;
+      if (daily) { fr.talk = f.day; fr.pts = clamp(fr.pts + F.talk, 0, F.max); this.logEvent(a.id, 'talk', { npc: m.npc }); }
+      self(); return done({ first, daily, pts: fr.pts, bday });
+    }
+    // 送禮：一天一次、一週兩次（生日那天好感加四倍）
+    const slot = Math.floor(Number(m.slot)), held = p.inv[slot], it = held && ITEMS[held.id]; if (!it || it.kind === 'tool') return no('slot');
+    const week = Math.floor((f.day - 1) / 7); if (fr.week !== week) { fr.week = week; fr.gifts = 0; }
+    if (fr.giftDay === f.day) return no('giftday'); if (fr.gifts >= F.giftsPerWeek) return no('giftweek');
+    const taste = giftTaste(ITEMS, npc, held.id), gain = F.gift[taste] * (bday ? F.birthdayMult : 1) * (1 + 0.25 * (held.q || 0));
+    invTake(p.inv, slot, 1); fr.met = true; fr.giftDay = f.day; fr.gifts += 1; fr.pts = clamp(fr.pts + Math.round(gain), 0, F.max);
+    this.logEvent(a.id, 'gift', { npc: m.npc, id: held.id }); self(); this.broadcast({ t: 'fx', id: a.id, kind: 'eat', map: a.map, x: Math.floor(a.x), y: Math.floor(a.y) });
+    return done({ taste, pts: fr.pts, bday });
+  }
+
   // ---------- 礦坑 ----------
   // 每一層用種子生成（shared/rules.js 的 genFloor），當天敲掉了哪些石頭記在農場上，隔天重新長出來。人在礦坑裡時 a.map 是 'mine'、a.floor 是第幾層
   floorState(n) { const f = this.farm; if (!f.mine || f.mine.day !== f.day) f.mine = { day: f.day, floors: {} }; return (f.mine.floors[n] ||= genFloor(f.seed, n, f.day, BAL)); }
