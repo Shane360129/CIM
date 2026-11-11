@@ -128,7 +128,8 @@
   "w": 0.8,
   "h": 1.1,
   "color": "#e5484d",
-  "art": "obj/mailbox"
+  "art": "obj/mailbox",
+  "use": "mail"
  },
  "well": {
   "name": "水井",

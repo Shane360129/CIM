@@ -131,32 +131,6 @@
     40,
     1.12
   ],
-  "shop": {
-    "open": 360,
-    "close": 1080,
-    "items": [
-      "seed_carrot",
-      "seed_daikon",
-      "seed_cabbage",
-      "seed_potato",
-      "seed_strawberry",
-      "seed_spinach",
-      "seed_lettuce",
-      "seed_pea",
-      "seed_fava",
-      "seed_asparagus",
-      "seed_scallion",
-      "seed_cauliflower",
-      "seed_komatsuna",
-      "seed_beet",
-      "seed_tulip",
-      "seed_rapeseed",
-      "fertilizer",
-      "fertilizer_gold",
-      "hay",
-      "brush"
-    ]
-  },
   "weather": {
     "spring": {
       "sun": 0.6,
@@ -482,5 +456,82 @@
     "birthdayMult": 4,
     "giftsPerWeek": 2,
     "walkMinutes": 40
+  },
+  "tools": {
+    "levels": [
+      "木",
+      "銅",
+      "鐵",
+      "金"
+    ],
+    "upgradable": [
+      "hoe",
+      "can",
+      "axe",
+      "pick",
+      "sickle",
+      "sword"
+    ],
+    "cost": [
+      null,
+      {
+        "bar": "copper_bar",
+        "n": 5,
+        "money": 300
+      },
+      {
+        "bar": "iron_bar",
+        "n": 5,
+        "money": 800
+      },
+      {
+        "bar": "gold_bar",
+        "n": 5,
+        "money": 2000
+      }
+    ],
+    "energyCut": 0.2
+  },
+  "quest": {
+    "pool": [
+      "carrot",
+      "spinach",
+      "scallion",
+      "lettuce",
+      "potato",
+      "wildberry",
+      "dandelion",
+      "fern_shoot",
+      "wood",
+      "stone",
+      "fiber",
+      "copper_ore",
+      "fish_crucian",
+      "fish_goby",
+      "fish_bass",
+      "egg"
+    ],
+    "n": [
+      2,
+      5
+    ],
+    "rewardMult": 2.2,
+    "rewardAdd": 60,
+    "friend": 50
+  },
+  "mail": {
+    "welcome": {
+      "from": "ahe",
+      "day": 2,
+      "text": "歡迎搬來我們這裡！附上一點種子，店裡還有很多。有空來小鎮走走，沿著農場東邊的路一直走就到了。—— 雜貨店 阿禾",
+      "item": [
+        "seed_potato",
+        5
+      ]
+    },
+    "hearts": {
+      "2": "謝謝你常來找我聊天，這個送你，別客氣。",
+      "4": "認識你真好。這是我的一點心意。"
+    }
   }
 }

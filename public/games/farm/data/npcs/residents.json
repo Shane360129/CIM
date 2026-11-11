@@ -88,7 +88,11 @@
    "gift_like": "謝謝，剛好用得上。",
    "gift_dislike": "呃……心意我收到了。這個我先……放著。"
   },
-  "full": true
+  "full": true,
+  "mailGift": [
+   "fertilizer",
+   5
+  ]
  },
  "xiaoman": {
   "name": "小滿",
@@ -179,7 +183,11 @@
    "gift_like": "謝謝你！我會好好用的！",
    "gift_dislike": "啊……這個我有點怕……不過謝謝你。"
   },
-  "full": true
+  "full": true,
+  "mailGift": [
+   "dish_smoothie",
+   1
+  ]
  },
  "shilei": {
   "name": "石磊",
@@ -270,7 +278,11 @@
    "gift_like": "嗯。謝了。",
    "gift_dislike": "……這個我用不到。"
   },
-  "full": true
+  "full": true,
+  "mailGift": [
+   "copper_bar",
+   3
+  ]
  },
  "tongbo": {
   "name": "桐伯",
@@ -361,7 +373,11 @@
    "gift_like": "哎唷，這麼客氣！",
    "gift_dislike": "這個嘛……給年輕人比較合適啦。"
   },
-  "full": true
+  "full": true,
+  "mailGift": [
+   "wood",
+   20
+  ]
  },
  "xiyin": {
   "name": "汐音",
@@ -456,7 +472,11 @@
    "gift_like": "不錯嘛，謝了。",
    "gift_dislike": "呃，這個我不太懂欣賞。"
   },
-  "full": true
+  "full": true,
+  "mailGift": [
+   "fish_bass",
+   2
+  ]
  },
  "baizhi": {
   "name": "白芷",
@@ -549,7 +569,11 @@
    "gift_like": "謝謝，我會好好使用。",
    "gift_dislike": "這個……請不要拿太靠近我。"
   },
-  "full": true
+  "full": true,
+  "mailGift": [
+   "tonic",
+   2
+  ]
  },
  "chunshen": {
   "name": "春嬸",
@@ -635,7 +659,11 @@
    "gift_like": "謝謝啊！你這孩子真懂事！",
    "gift_dislike": "這……這個不能吃吧？"
   },
-  "full": true
+  "full": true,
+  "mailGift": [
+   "dish_stew",
+   2
+  ]
  },
  "xiaoshu": {
   "name": "小樹",
@@ -731,7 +759,11 @@
    "gift_like": "謝謝！我要拿去給大家看！",
    "gift_dislike": "蔬菜……大人為什麼都喜歡蔬菜……"
   },
-  "full": true
+  "full": true,
+  "mailGift": [
+   "quartz",
+   1
+  ]
  },
  "yunxiu": {
   "name": "雲岫",

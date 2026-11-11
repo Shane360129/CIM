@@ -17,6 +17,7 @@ import MAP_LAKE from '../public/games/farm/data/maps/lake.json';
 import FISH from '../public/games/farm/data/fish.json';
 import MAP_TOWN from '../public/games/farm/data/maps/town.json';
 import NPCS from '../public/games/farm/data/npcs/residents.json';
+import SHOPS from '../public/games/farm/data/shops.json';
 import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelOf, rollQuality, invAdd, invTake, sellPrice, makeItems, matches, planTake, absMinute, animalPos, genFloor, monPos, mineMap, npcPos, giftTaste, seasonIndex } from '../public/games/farm/shared/rules.js';
 
 const ITEMS = makeItems(RAW_ITEMS, MACHINES); // 加工品（g:機器:原料）的名字和價錢是算出來的
@@ -95,7 +96,16 @@ export class FarmRoom {
     });
     const weeds = [...this.objs.values()].filter((o) => o.type === 'weed').length, rand = rng(f.seed + f.day * 977);
     if (f.day > 1) for (let i = 0; i < BAL.forage.weedsPerDay && weeds + i < BAL.forage.weedsMax; i++) place('farm', rand, { grounds: ['grass', 'soil'], obj: () => ({ type: 'weed', hp: OBJECTS.weed.hp }) });
+    // 佈告欄的每日委託：某位居民想要幾個某種東西（用種子算，同一天固定）
+    const Q = BAL.quest, qr = rng(f.seed + f.day * 613), ids = Object.keys(NPCS).filter((k) => NPCS[k].full), item = Q.pool[Math.floor(qr() * Q.pool.length)], qn = Q.n[0] + Math.floor(qr() * (Q.n[1] - Q.n[0] + 1));
+    f.quest = { day: f.day, npc: ids[Math.floor(qr() * ids.length)], item, n: qn, reward: Math.round((ITEMS[item].sell || 10) * qn * Q.rewardMult + Q.rewardAdd), done: 0 };
     f.forageDay = f.day; this.farmDirty = true;
+  }
+  // 該寄給這個玩家的信：歡迎信（第 2 天起）、跟居民好感到 2 心、4 心時的信（附禮物）
+  mailCheck(id, p) {
+    const f = this.farm, M = BAL.mail, flags = (p.mailFlags ||= {}), push = (key, from, text, item) => { if (flags[key]) return; flags[key] = 1; (p.mail ||= []).push({ id: (p.mailN = (p.mailN || 0) + 1), from, text, item: item || null, got: false, day: f.day }); this.dirtyPl.add(id); };
+    if (f.day >= M.welcome.day) push('welcome', M.welcome.from, M.welcome.text, M.welcome.item);
+    for (const [npc, fr] of Object.entries(p.friend || {})) for (const [h, text] of Object.entries(M.hearts)) if (fr.pts >= Number(h) * BAL.friend.heart && NPCS[npc]) push(`h${h}:${npc}`, npc, text, NPCS[npc].mailGift);
   }
   touch(map, x, y) { this.dirty.add(`${map}:${Math.floor(x / CHUNK)},${Math.floor(y / CHUNK)}`); }
   // 格子分區塊存（16×16 一塊）：一個動作、一次換日改很多格也只寫幾列，不會每格寫一次
@@ -129,7 +139,7 @@ export class FarmRoom {
   pubTile(k) { const v = this.tiles.get(k), t = unK(k); return v ? { ...t, t: 1, w: v.w === this.farm.day ? 1 : 0, f: v.f || 0, c: v.c ? { id: v.c.id, s: v.c.dead ? -1 : cropStage(CROPS[v.c.id], v.c.g) } : null } : { ...t, t: 0 }; }
   pubObj(k) { const o = this.objs.get(k); return o ? { ...unK(k), type: o.type, hp: o.hp, ...(o.item ? { item: o.item } : {}), ...(o.kind ? { kind: o.kind, out: o.out || null, doneAt: o.doneAt || 0 } : {}) } : { ...unK(k), type: null }; }
   absNow() { return absMinute(this.farm.day, this.minuteNow(), BAL); }
-  pubSelf(a) { const p = this.player(a.id); return { inv: p.inv, energy: p.energy, energyMax: BAL.energyMax, skills: p.skills, fishRec: p.fishRec || {}, buffs: p.buffs || {}, hp: p.hp ?? BAL.mine.hpMax, hpMax: BAL.mine.hpMax, friend: p.friend || {} }; }
+  pubSelf(a) { const p = this.player(a.id); return { inv: p.inv, energy: p.energy, energyMax: BAL.energyMax, skills: p.skills, fishRec: p.fishRec || {}, buffs: p.buffs || {}, hp: p.hp ?? BAL.mine.hpMax, hpMax: BAL.mine.hpMax, friend: p.friend || {}, toolLv: p.toolLv || {}, mail: p.mail || [] }; }
 
   // ---------- 連線 ----------
   sockets() { return this.ctx.getWebSockets(); }
@@ -168,6 +178,7 @@ export class FarmRoom {
     // 時鐘只在有人的時候走：第一個人進來，從現在開始算
     if (!others.length) { this.farm.lastTick = now; this.saveFarm(); await this.ctx.storage.setAlarm(now + TICK_MS); }
     const summary = row && row.last_seen ? this.summaryFor(me.id, p, row.last_seen) : null;
+    this.mailCheck(me.id, p);
     p.lastDay = this.farm.day; p.lastMoney = this.farm.money; this.dirtyPl.add(me.id); this.flush();
     this.sql.exec(`UPDATE players SET last_seen = ?, name = ? WHERE user_id = ?`, now, me.name, me.id);
     this.send(server, { t: 'snapshot', you: this.pub(a), self: this.pubSelf(a), partner: who.partner, players: others.map((s) => this.pub(s.a)), farm: this.pubFarm(),
@@ -181,7 +192,7 @@ export class FarmRoom {
   pubFarm() {
     const f = this.farm;
     return { day: f.day, minute: this.minuteNow(), money: f.money, season: seasonId(f.day, BAL), weather: weatherOf(f.seed, f.day, BAL), minutesPerSecond: MIN_PER_MS * 1000, dayStart: BAL.dayStartMinute, dayEnd: BAL.dayEndMinute,
-      now: Date.now(), mineDeepest: f.mineDeepest || 1, ship: f.ship, lastShip: f.lastShip, chest: f.chest, newborn: f.newborn || [], animals: f.animals || [], pets: f.pets || [], graze: !!f.graze };
+      quest: f.quest || null, now: Date.now(), mineDeepest: f.mineDeepest || 1, ship: f.ship, lastShip: f.lastShip, chest: f.chest, newborn: f.newborn || [], animals: f.animals || [], pets: f.pets || [], graze: !!f.graze };
   }
   // 「你不在時發生的事」：過了幾天、錢差多少、對方做了什麼
   summaryFor(userId, saved, lastSeen) {
@@ -202,7 +213,7 @@ export class FarmRoom {
     const no = (reason, extra) => this.send(ws, { t: 'no', id, reason, ...extra });
     const done = (extra) => { this.send(ws, { t: 'ok', id, ...extra }); };
     const self = () => { this.dirtyPl.add(a.id); this.send(ws, { t: 'self', ...this.pubSelf(a) }); };   // 背包、體力、技能變了：只告訴本人
-    const farmChanged = () => { this.farmDirty = true; this.broadcast({ t: 'farm', money: this.farm.money, ship: this.farm.ship, chest: this.farm.chest }); }; // 錢、出貨箱、倉庫是兩個人共用的
+    const farmChanged = () => { this.farmDirty = true; this.broadcast({ t: 'farm', money: this.farm.money, ship: this.farm.ship, chest: this.farm.chest, quest: this.farm.quest || null }); }; // 錢、出貨箱、倉庫是兩個人共用的
     const near = (use) => this.nearUse(a, use);
     const n = clamp(Math.floor(Number(m.n) || 1), 1, 999), slot = Math.floor(Number(m.slot));
     if (m.t === 'use') this.onUse(ws, a, p, m, { no, done, self });
@@ -216,11 +227,28 @@ export class FarmRoom {
       const k = Math.min(n, s.n), q = s.q || 0, line = this.farm.ship.find((l) => l.id === s.id && l.q === q && l.by === a.id);
       invTake(p.inv, slot, k); if (line) line.n += k; else this.farm.ship.push({ id: s.id, q, n: k, by: a.id });
       this.logEvent(a.id, 'ship', { id: s.id, n: k }); self(); farmChanged(); done();
-    } else if (m.t === 'buy') { // 種子攤：營業時間內才買得到，錢是兩個人共用的
-      const item = ITEMS[m.item], min = this.minuteNow(); if (!near('shop')) return no('far'); if (!item || !BAL.shop.items.includes(m.item)) return no('unknown');
-      if (min < BAL.shop.open || min >= BAL.shop.close) return no('closed'); if (this.farm.money < item.buy * n) return no('money');
+    } else if (m.t === 'buy') { // 買東西：要站在那間店（或攤位）旁邊、營業時間內；錢是兩個人共用的
+      const shop = SHOPS[m.shop || 'stall'], item = ITEMS[m.item], min = this.minuteNow(); if (!shop) return no('unknown'); if (!near(shop.use)) return no('far');
+      if (!item || !shop.items.includes(m.item)) return no('unknown');
+      if (min < shop.open || min >= shop.close) return no('closed'); if (this.farm.money < item.buy * n) return no('money');
       if (!invAdd(p.inv, BAL.invSlots, m.item, n)) return no('full');
       this.farm.money -= item.buy * n; this.logEvent(a.id, 'buy', { id: m.item, n }); self(); farmChanged(); done();
+    } else if (m.t === 'upgrade') { // 鐵匠鋪：用錠和錢把工具升一級（木 → 銅 → 鐵 → 金）。越高級越省體力，斧頭、十字鎬、鐮刀、劍一下打得比較多
+      const T = BAL.tools, tool = m.tool; if (!near('smith')) return no('far'); if (!T.upgradable.includes(tool) || !p.inv.some((x) => x && ITEMS[x.id].tool === tool)) return no('unknown');
+      const lv = (p.toolLv ||= {})[tool] || 1, cost = T.cost[lv]; if (!cost) return no('max');
+      if (this.farm.money < cost.money) return no('money'); const plan = planTake(ITEMS, p.inv, { [cost.bar]: cost.n }); if (!plan) return no('materials');
+      for (const [i, k] of plan) invTake(p.inv, i, k); this.farm.money -= cost.money; p.toolLv[tool] = lv + 1;
+      this.logEvent(a.id, 'upgrade', { tool, lv: lv + 1 }); self(); farmChanged(); done({ lv: lv + 1 });
+    } else if (m.t === 'quest-done') { // 佈告欄的每日委託：東西交齊就拿到報酬，交的人跟委託人的好感也會增加
+      const q = this.farm.quest; if (!near('board')) return no('far'); if (!q || q.day !== this.farm.day || q.done) return no('nothing');
+      const plan = planTake(ITEMS, p.inv, { [q.item]: q.n }); if (!plan) return no('materials');
+      for (const [i, k] of plan) invTake(p.inv, i, k); q.done = a.id; this.farm.money += q.reward;
+      const fr = ((p.friend ||= {})[q.npc] ||= { pts: 0, talk: 0, giftDay: 0, week: 0, gifts: 0, met: false }); fr.pts = clamp(fr.pts + BAL.quest.friend, 0, BAL.friend.max);
+      this.logEvent(a.id, 'quest', { npc: q.npc }); this.mailCheck(a.id, p); self(); farmChanged(); done({ reward: q.reward });
+    } else if (m.t === 'mail-open') { // 信箱：打開信，裡面附的東西放進背包
+      const mail = (p.mail || []).find((x) => x.id === Number(m.mid)); if (!near('mail')) return no('far'); if (!mail) return no('unknown');
+      if (mail.item && !mail.got) { if (!invAdd(p.inv, BAL.invSlots, mail.item[0], mail.item[1])) return no('full'); }
+      mail.got = true; self(); done();
     } else if (m.t === 'chest') { // 家裡的倉庫箱（兩個人共用）：in 放進去、out 拿出來
       if (!near('chest')) return no('far');
       const from = m.dir === 'in' ? p.inv : this.farm.chest, to = m.dir === 'in' ? this.farm.chest : p.inv, cap = m.dir === 'in' ? BAL.chestSlots : BAL.invSlots, s = from[slot];
@@ -246,7 +274,7 @@ export class FarmRoom {
     } else if (m.t === 'eat') { // 吃料理：補體力，有些有一段時間的效果
       const sl = p.inv[slot], it = sl && ITEMS[sl.id]; if (!it || it.kind !== 'dish') return no('slot');
       const k = 1 + 0.25 * (sl.q || 0); invTake(p.inv, slot, 1);
-      p.energy = Math.min(BAL.energyMax, p.energy + Math.round(it.energy * k));
+      p.energy = Math.min(BAL.energyMax, p.energy + Math.round(it.energy * k)); if (it.heal) p.hp = Math.min(BAL.mine.hpMax, (p.hp ?? BAL.mine.hpMax) + it.heal);
       if (it.buff) { p.buffs ||= {}; p.buffs[it.buff[0]] = this.absNow() + Math.round(it.buff[1] * k); }
       self(); this.broadcast({ t: 'fx', id: a.id, kind: 'eat', map: a.map, x: Math.floor(a.x), y: Math.floor(a.y) }); done({ buff: it.buff || null });
     }
@@ -278,7 +306,7 @@ export class FarmRoom {
     if (m.t === 'talk') { // 每天第一次聊天會增加好感
       const first = !fr.met, daily = fr.talk !== f.day; fr.met = true;
       if (daily) { fr.talk = f.day; fr.pts = clamp(fr.pts + F.talk, 0, F.max); this.logEvent(a.id, 'talk', { npc: m.npc }); }
-      self(); return done({ first, daily, pts: fr.pts, bday });
+      this.mailCheck(a.id, p); self(); return done({ first, daily, pts: fr.pts, bday });
     }
     // 送禮：一天一次、一週兩次（生日那天好感加四倍）
     const slot = Math.floor(Number(m.slot)), held = p.inv[slot], it = held && ITEMS[held.id]; if (!it || it.kind === 'tool') return no('slot');
@@ -286,7 +314,7 @@ export class FarmRoom {
     if (fr.giftDay === f.day) return no('giftday'); if (fr.gifts >= F.giftsPerWeek) return no('giftweek');
     const taste = giftTaste(ITEMS, npc, held.id), gain = F.gift[taste] * (bday ? F.birthdayMult : 1) * (1 + 0.25 * (held.q || 0));
     invTake(p.inv, slot, 1); fr.met = true; fr.giftDay = f.day; fr.gifts += 1; fr.pts = clamp(fr.pts + Math.round(gain), 0, F.max);
-    this.logEvent(a.id, 'gift', { npc: m.npc, id: held.id }); self(); this.broadcast({ t: 'fx', id: a.id, kind: 'eat', map: a.map, x: Math.floor(a.x), y: Math.floor(a.y) });
+    this.logEvent(a.id, 'gift', { npc: m.npc, id: held.id }); this.mailCheck(a.id, p); self(); this.broadcast({ t: 'fx', id: a.id, kind: 'eat', map: a.map, x: Math.floor(a.x), y: Math.floor(a.y) });
     return done({ taste, pts: fr.pts, bday });
   }
 
@@ -317,13 +345,13 @@ export class FarmRoom {
     if (m.t === 'mine-hit') { // 敲石頭：要用十字鎬。敲碎了掉石頭、礦石或寶石；樓梯藏在其中一顆下面
       const x = Math.floor(Number(m.x)), y = Math.floor(Number(m.y)), rock = st.rocks.find((r) => r.x === x && r.y === y); if (!rock) return no('nothing');
       if (tool !== 'pick') return no('tool:pick'); if (Math.hypot(x + 0.5 - a.x, y + 0.5 - a.y) > BAL.reach) return no('far');
-      const T = M.rockTypes[rock.type]; let drops = null;
-      if (rock.hp <= 1) {
+      const T = M.rockTypes[rock.type], pw = (p.toolLv && p.toolLv.pick) || 1; let drops = null;
+      if (rock.hp <= pw) {
         drops = T.gems ? (() => { const pool = M.gems.filter(([, from]) => a.floor >= from); let k = Math.random() * pool.reduce((s2, g) => s2 + g[2], 0); for (const [id, , w] of pool) { k -= w; if (k <= 0) return { [id]: 1 }; } return { quartz: 1 }; })() : T.drops;
         const inv = JSON.parse(JSON.stringify(p.inv)); for (const [id, n] of Object.entries(drops)) if (!invAdd(inv, BAL.invSlots, id, n)) return no('full');
         if (p.energy < M.energy) return no('tired'); p.energy -= M.energy; p.inv = inv; p.skills.mining = (p.skills.mining || 0) + T.xp;
         st.rocks = st.rocks.filter((r) => r !== rock); if (st.stairs.x === x && st.stairs.y === y) st.stairs.open = true; this.logEvent(a.id, 'mine', { type: rock.type });
-      } else { if (p.energy < M.energy) return no('tired'); p.energy -= M.energy; rock.hp -= 1; }
+      } else { if (p.energy < M.energy) return no('tired'); p.energy -= M.energy; rock.hp -= pw; }
       this.farmDirty = true; self(); this.broadcast({ t: 'fx', id: a.id, kind: 'pick', map: 'mine', x, y });
       this.toFloor(a.floor, { t: 'mine-upd', floor: a.floor, rock: { x, y, hp: drops ? 0 : rock.hp }, stairs: st.stairs, by: a.id, drops }); return done({ drops });
     }
@@ -331,7 +359,7 @@ export class FarmRoom {
     const D = M.monsters[mon.type], pos = monPos(mon, Date.now());
     if (m.t === 'mon-hit') { // 揮劍：打到沒血就不見、掉東西
       if (tool !== 'sword') return no('tool:sword'); if (Math.hypot(pos.x - a.x, pos.y - a.y) > BAL.reach + 0.8) return no('far');
-      mon.hp -= 1 + Math.floor(levelOf(p.skills.combat || 0, BAL).lv / 20); let drops = null;
+      mon.hp -= ((p.toolLv && p.toolLv.sword) || 1) + Math.floor(levelOf(p.skills.combat || 0, BAL).lv / 20); let drops = null;
       if (mon.hp <= 0) { drops = D.drops; for (const [id, n] of Object.entries(drops)) invAdd(p.inv, BAL.invSlots, id, n); st.mons = st.mons.filter((x) => x !== mon); p.skills.combat = (p.skills.combat || 0) + D.xp; this.logEvent(a.id, 'monster', { type: mon.type }); }
       this.farmDirty = true; self(); this.broadcast({ t: 'fx', id: a.id, kind: 'sword', map: 'mine', x: Math.floor(pos.x), y: Math.floor(pos.y) });
       this.toFloor(a.floor, { t: 'mine-upd', floor: a.floor, mon: { id: mon.id, hp: Math.max(0, mon.hp) }, by: a.id, drops }); return done({ drops });
@@ -478,7 +506,8 @@ export class FarmRoom {
     if (Math.hypot(x + 0.5 - a.x, y + 0.5 - a.y) > BAL.reach) return bad('far');
     const held = p.inv[Math.floor(Number(m.slot))] || null, item = held ? ITEMS[held.id] : null, tool = item && item.kind === 'tool' ? item.tool : null;
     const day = this.farm.day, level = (skill) => levelOf((p.skills[skill] || 0), BAL).lv;
-    const spend = (e) => { if (p.energy < e) return false; p.energy -= e; return true; };
+    const lvOf = (t) => (p.toolLv && p.toolLv[t]) || 1, power = tool ? lvOf(tool) : 1; // 工具等級：越高越省體力、一下打得比較多
+    const spend = (e) => { e = Math.max(1, Math.round(e * (1 - BAL.tools.energyCut * (power - 1)))); if (p.energy < e) return false; p.energy -= e; return true; };
     const xp = (skill, n) => { p.skills[skill] = (p.skills[skill] || 0) + n; };
     const fx = (kind, extra) => this.broadcast({ t: 'fx', id: a.id, kind, map: a.map, x, y, ...extra }); // 讓對方看到你在做什麼
     const obj = this.objs.get(k);
@@ -505,8 +534,8 @@ export class FarmRoom {
     }
     if (obj) { // 樹、石頭、樹枝、雜草：要用對的工具，打到沒血就清掉、掉材料
       const d = OBJECTS[obj.type]; if (tool !== d.tool) return bad('tool:' + d.tool);
-      if (obj.hp <= 1) { const inv = JSON.parse(JSON.stringify(p.inv)); for (const [id, n] of Object.entries(d.drops)) if (!invAdd(inv, BAL.invSlots, id, n)) return bad('full'); if (!spend(d.energy)) return bad('tired'); p.inv = inv; this.objs.delete(k); xp(d.xp[0], d.xp[1]); this.logEvent(a.id, 'clear', { type: obj.type }); }
-      else { if (!spend(d.energy)) return bad('tired'); obj.hp -= 1; }
+      if (obj.hp <= power) { const inv = JSON.parse(JSON.stringify(p.inv)); for (const [id, n] of Object.entries(d.drops)) if (!invAdd(inv, BAL.invSlots, id, n)) return bad('full'); if (!spend(d.energy)) return bad('tired'); p.inv = inv; this.objs.delete(k); xp(d.xp[0], d.xp[1]); this.logEvent(a.id, 'clear', { type: obj.type }); }
+      else { if (!spend(d.energy)) return bad('tired'); obj.hp -= power; }
       this.dirtyObjs.add(k); self(); fx(tool); this.broadcast({ t: 'objs', by: a.id, list: [this.pubObj(k)], drops: this.objs.has(k) ? null : d.drops }); return done();
     }
     const ground = groundAt(map, x, y), tile = this.tiles.get(k), crop = tile && tile.c, def = crop && CROPS[crop.id];
@@ -581,6 +610,7 @@ export class FarmRoom {
     }
     f.newborn = this.animalsNewDay(old).map((b) => b.name);
     this.spawnDaily();
+    for (const r of players) this.mailCheck(r.user_id, this.player(r.user_id));
     this.farmDirty = true; this.logEvent(0, 'newday', { reason, total });
     for (const { ws, a } of this.online()) {
       if (reason === 'late' && !a.asleep) { a.map = 'house'; a.x = MAPS.house.spawn.x; a.y = MAPS.house.spawn.y; Object.assign(this.player(a.id), { map: a.map, x: a.x, y: a.y }); } // 昏倒的人被送回家

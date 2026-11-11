@@ -4,9 +4,11 @@ import { sellPrice, planTake, levelOf, hearts } from '../shared/rules.js';
 const mk = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
 
 // 一個物品的小圖：有圖用圖（種子是「種子袋＋作物」疊起來），沒有圖用名字的第一個字
+let toolLv = {}; // 自己的工具等級：升到銅以上的工具換一張圖
+export const setToolLv = (lv) => { toolLv = lv || {}; };
 export function itemIcon(items, id, size = 34) {
   const it = items[id], box = mk('span', 'iicon'); if (!it) return box;
-  const base = iconEl(it.art, size);
+  const base = (it.tool && (toolLv[it.tool] || 1) >= 2 && iconEl(it.art + '_copper', size)) || iconEl(it.art, size);
   if (base) { box.append(base); if (it.overlay) { const o = iconEl(it.overlay, size * 0.55); if (o) { o.classList.add('over'); box.append(o); } } }
   else box.append(mk('span', 'ifallback', it.name.slice(0, 1)));
   return box;
@@ -17,11 +19,11 @@ function slotEl(items, bal, s, onClick, extraCls = '') {
   b.addEventListener('click', onClick); return b;
 }
 
-export function openPanel(ctx, mode) {
+export function openPanel(ctx, mode, arg = {}) {
   const { hud, world: W } = ctx, { items, balance: bal } = ctx.data, room = W.room;
-  const root = mk('div', 'panel'), title = { bag: '背包', ship: '出貨箱', chest: '倉庫箱', shop: '種子攤', cook: '爐灶', craft: '製作台', coop: '雞舍', barn: '畜舍' }[mode];
+  const root = mk('div', 'panel'), title = { bag: '背包', ship: '出貨箱', chest: '倉庫箱', cook: '爐灶', craft: '製作台', coop: '雞舍', barn: '畜舍', smith: '鐵匠鋪' }[mode] || (mode === 'shop' && ctx.data.shops[arg.shop || 'stall'].name);
   let picked = -1, info = '';
-  const say = (r) => { if (r.t === 'no') hud.toast({ full: '放不下了', money: '錢不夠', materials: '材料不夠', level: '料理等級還不夠', housefull: '住滿了', nohay: '沒有乾草了（種子攤有賣）', already: '已經弄好了', closed: '現在沒有營業（6:00～18:00）', far: '太遠了', unsellable: '這個不能賣' }[r.reason] || '沒辦法', 1300); };
+  const say = (r) => { if (r.t === 'no') hud.toast({ full: '放不下了', money: '錢不夠', max: '已經是最高級了', closed: '現在沒有營業', materials: '材料不夠', level: '料理等級還不夠', housefull: '住滿了', nohay: '沒有乾草了（種子攤有賣）', already: '已經弄好了', far: '太遠了', unsellable: '這個不能賣' }[r.reason] || '沒辦法', 1300); };
   const grid = (list, n, onClick, cls) => { const g = mk('div', 'grid'); for (let i = 0; i < n; i++) g.append(slotEl(items, bal, list[i], () => onClick(i), (i === picked && cls === 'inv' ? 'on ' : '') + (i < bal.hotbarSlots && cls === 'inv' ? 'hot' : ''))); return g; };
   function draw() {
     root.textContent = '';
@@ -66,15 +68,26 @@ export function openPanel(ctx, mode) {
         row.append(b); list.append(row);
       }
       root.append(list);
-    } else if (mode === 'shop') {
-      const min = W.minute(), open = min >= bal.shop.open && min < bal.shop.close;
-      root.append(mk('p', 'hint', open ? '種子要種在翻過的土上。現在是春天，這些都是春天的作物。' : '現在沒有營業（6:00～18:00）。'));
+    } else if (mode === 'smith') {
+      const T = bal.tools, lvs = W.self.toolLv || {};
+      root.append(mk('p', 'hint', '石磊可以用錠把工具升級（木 → 銅 → 鐵 → 金）。越高級越省體力；斧頭、十字鎬、鐮刀、劍一下打得比較多。錠要用熔爐煉。'));
       const list = mk('div', 'shoplist');
-      for (const id of bal.shop.items) {
+      for (const tool of T.upgradable) {
+        const id = Object.keys(items).find((k) => items[k].tool === tool && !items[k].power), it = items[id], lv = lvs[tool] || 1, cost = T.cost[lv], row = mk('div', 'shoprow'); row.dataset.item = tool;
+        row.append(itemIcon(items, id), mk('span', 'sname', `${it.name}（${T.levels[lv - 1]}）`), mk('span', 'sdesc', cost ? `升到${T.levels[lv]}：${items[cost.bar].name}×${cost.n}、${cost.money} 元` : '已經是最高級'));
+        const b = mk('button', 'pbtn', '升級'); b.type = 'button'; b.disabled = !cost || W.farm.money < cost.money || !planTake(items, W.self.inv, { [cost.bar]: cost.n });
+        b.addEventListener('click', async () => { const r = await room.req({ t: 'upgrade', tool }); if (r.t === 'ok') hud.toast(`${it.name}升到${T.levels[r.lv - 1]}了！`, 1500); else say(r); }); row.append(b); list.append(row);
+      }
+      root.append(list);
+    } else if (mode === 'shop') {
+      const shop = ctx.data.shops[arg.shop || 'stall'], min = W.minute(), open = min >= shop.open && min < shop.close, hm = (m) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
+      root.append(mk('p', 'hint', open ? shop.hint : `現在沒有營業（${hm(shop.open)}～${hm(shop.close)}）。`));
+      const list = mk('div', 'shoplist');
+      for (const id of shop.items) {
         const it = items[id], row = mk('div', 'shoprow'); row.dataset.item = id;
         const crop = it.crop && ctx.data.crops[it.crop], days = crop ? crop.stageDays.reduce((a, b) => a + b, 0) : 0;
-        row.append(itemIcon(items, id), mk('span', 'sname', it.name), mk('span', 'sdesc', crop ? `${days} 天${crop.regrowDays ? '・會再長' : ''}・賣 ${items[it.crop].sell}` : it.desc || ''), mk('span', 'sprice', `${it.buy} 元`));
-        for (const n of [1, 5]) { const b = mk('button', 'pbtn', `買 ${n}`); b.type = 'button'; b.disabled = !open || W.farm.money < it.buy * n; b.addEventListener('click', async () => say(await room.req({ t: 'buy', item: id, n }))); row.append(b); }
+        row.append(itemIcon(items, id), mk('span', 'sname', it.name), mk('span', 'sdesc', crop ? `${days} 天${crop.regrowDays ? '・會再長' : ''}・賣 ${items[it.crop].sell}` : it.desc || (it.energy ? `體力 +${it.energy}` : '')), mk('span', 'sprice', `${it.buy} 元`));
+        for (const n of it.kind === 'tool' ? [1] : [1, 5]) { const b = mk('button', 'pbtn', `買 ${n}`); b.type = 'button'; b.disabled = !open || W.farm.money < it.buy * n; b.addEventListener('click', async () => say(await room.req({ t: 'buy', shop: arg.shop || 'stall', item: id, n }))); row.append(b); }
         list.append(row);
       }
       root.append(list);

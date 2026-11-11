@@ -1001,7 +1001,8 @@
   "kind": "dish",
   "energy": 30,
   "sell": 50,
-  "art": "dish/salad"
+  "art": "dish/salad",
+  "buy": 150
  },
  "dish_baked_potato": {
   "name": "烤馬鈴薯",
@@ -1015,7 +1016,8 @@
   "kind": "dish",
   "energy": 35,
   "sell": 55,
-  "art": "dish/veg_soup"
+  "art": "dish/veg_soup",
+  "buy": 165
  },
  "dish_stir_fry": {
   "name": "炒青菜",
@@ -1033,7 +1035,8 @@
   "buff": [
    "fishing",
    240
-  ]
+  ],
+  "buy": 180
  },
  "dish_smoothie": {
   "name": "野莓冰沙",
@@ -1051,7 +1054,8 @@
   "kind": "dish",
   "energy": 55,
   "sell": 75,
-  "art": "dish/stew"
+  "art": "dish/stew",
+  "buy": 225
  },
  "dish_mushroom_soup": {
   "name": "蘑菇濃湯",
@@ -1339,5 +1343,33 @@
   "sell": 20,
   "art": "machine/furnace",
   "desc": "放在農場的空地上，把礦石煉成錠"
+ },
+ "rod_fiber": {
+  "name": "玻璃纖維釣竿",
+  "kind": "tool",
+  "tool": "rod",
+  "power": 1,
+  "buy": 800,
+  "desc": "綠色的地方比較寬，魚比較不會跑",
+  "art": "tool/rod_fiber"
+ },
+ "tonic": {
+  "name": "元氣補藥",
+  "kind": "dish",
+  "energy": 60,
+  "buy": 150,
+  "sell": 40,
+  "art": "good/juice",
+  "desc": "白芷醫生調的，喝了體力 +60"
+ },
+ "bandage": {
+  "name": "繃帶",
+  "kind": "dish",
+  "energy": 0,
+  "heal": 60,
+  "buy": 80,
+  "sell": 20,
+  "art": "item/fiber",
+  "desc": "在礦坑受傷時用，血 +60"
  }
 }

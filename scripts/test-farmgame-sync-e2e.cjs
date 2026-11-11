@@ -111,6 +111,15 @@ const { chromium } = require('playwright');
   const thanks = await pa.locator('.dialog .dtext').textContent();
   ok('把手上的東西送給他：他有反應，好感變多，種子少一包 → ' + thanks.slice(0, 20), thanks.length > 3 && (await pa.evaluate(() => window.__game.world.self.friend.ahe.pts)) === 40 && (await count(pa, 'seed_carrot')) === 6);
   await pa.locator('.dialog button').last().click(); await pa.waitForTimeout(200);
+  await tp(pa, 25.5, 14.5, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
+  ok('佈告欄：今天的委託（誰要幾個什麼、報酬多少） → ' + (await pa.locator('.card').textContent()).slice(0, 40), /今天的委託/.test(await pa.locator('.card h2').textContent()) && /報酬 \d+ 元/.test(await pa.locator('.card').textContent()));
+  await pa.keyboard.press('Escape');
+  await tp(pa, 7, 9.7, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
+  ok('雜貨店：早上 8 點才開，面板會寫營業時間，買的按鈕按不下去', /雜貨店/.test(await pa.locator('.panel h2').textContent()) && /8:00～18:00/.test(await pa.locator('.panel .hint').first().textContent()) && (await pa.locator('.panel .pbtn:not(:disabled)').count()) === 0);
+  await pa.keyboard.press('Escape');
+  await tp(pa, 30, 9.7, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
+  ok('鐵匠鋪：列出六種工具現在的等級和升級要的錠', (await pa.locator('.panel .shoprow').count()) === 6 && /銅錠×5、300 元/.test(await pa.locator('.panel .shoprow[data-item=hoe]').textContent()));
+  await pa.screenshot({ path: S + '/s6-smith.png' }); await pa.keyboard.press('Escape');
   await tp(pa, 0.7, 15.5, 'left'); await pa.keyboard.down('KeyA'); await pa.waitForTimeout(500); await pa.keyboard.up('KeyA'); await pa.waitForTimeout(700);
   ok('往西走回路上', (await st(pa)).me.map === 'road');
   // 湖邊：採集、釣魚

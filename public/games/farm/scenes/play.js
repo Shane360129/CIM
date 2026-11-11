@@ -5,7 +5,7 @@ import { drawDoll } from '../render/doll.js';
 import { drawSprite } from '../render/sprites.js';
 import { groundAt, levelOf, sellPrice, animalPos, hearts, mineMap, monPos, npcPos, seasonIndex } from '../shared/rules.js';
 import { iconEl } from '../render/sprites.js';
-import { openPanel, itemIcon } from '../ui/panels.js';
+import { openPanel, itemIcon, setToolLv } from '../ui/panels.js';
 import { create } from './create.js';
 import { createFishing } from '../systems/fishing.js';
 
@@ -36,7 +36,7 @@ export const play = {
     hud.show(true); hud.showPlay(true);
     hud.setChat({ maxChars: balance.bubbleMaxChars, emoteList: balance.emotes, say: (text) => this.room.send({ t: 'bubble', text }), emote: (e) => this.room.send({ t: 'emote', e }) });
     hud.onBag(() => { this.fishing.cancel(); this.togglePanel('bag'); });
-    const refresh = () => { hud.setHotbar(W.self.inv, (s) => itemIcon(ctx.data.items, s.id, 30)); if (W.farm) hud.setStatus(W.farm.money, W.self.energy, W.self.energyMax, W.me.map === 'mine' ? W.self.hp : null, W.self.hpMax); };
+    const refresh = () => { setToolLv(W.self.toolLv); hud.setHotbar(W.self.inv, (s) => itemIcon(ctx.data.items, s.id, 30)); if (W.farm) hud.setStatus(W.farm.money, W.self.energy, W.self.energyMax, W.me.map === 'mine' ? W.self.hp : null, W.self.hpMax); };
     refresh();
     const net = (s) => hud.setNet(s === 'online' ? '' : s === 'replaced' ? '已在別的分頁打開' : '連線中斷，重新連線中…');
     net(W.net);
@@ -129,7 +129,12 @@ export const play = {
       if (use.startsWith('door:')) { const r = await this.room.req({ t: 'warp', i: Number(use.slice(5)) }); if (r.t === 'no') hud.toast(NO_TEXT[r.reason] || '進不去', 1000); return; }
       if (use === 'bin') return openPanel(this.ctx, 'ship');
       if (use === 'chest') return openPanel(this.ctx, 'chest');
-      if (use === 'shop') return openPanel(this.ctx, 'shop');
+      if (use === 'shop') return openPanel(this.ctx, 'shop', { shop: 'stall' });
+      if (data.shops[use]) return openPanel(this.ctx, 'shop', { shop: use });
+      if (use === 'smith') return openPanel(this.ctx, 'smith');
+      if (use === 'carpenter') return hud.toast('桐伯：蓋房子、擴建的生意還在準備，過陣子再來！', 1600);
+      if (use === 'board') return this.board();
+      if (use === 'mail') return this.mail();
       if (use === 'stove') return openPanel(this.ctx, 'cook');
       if (use === 'coop' || use === 'barn') return openPanel(this.ctx, use);
       if (use === 'workbench') return openPanel(this.ctx, 'craft');
@@ -187,6 +192,24 @@ export const play = {
     else if (s.stairs.open && s.stairs.x === t.x && s.stairs.y === t.y) r = await this.room.req({ t: 'mine-down' });
     else if (Math.abs(t.x - s.spawn.x) <= 1 && t.y >= s.spawn.y) return this.elevator(true);
     if (r && r.t === 'no') { const need = r.reason.startsWith('tool:') && TOOL_NAME[r.reason.slice(5)]; const text = need ? `這個要用${need}` : NO_TEXT[r.reason]; if (text) hud.toast(text, 1200); }
+  },
+  // 佈告欄：今天的委託（某位居民想要幾個某種東西）
+  async board() {
+    const { hud, data } = this.ctx, W = this.world, q = W.farm.quest;
+    if (!q || q.day !== W.farm.day) return hud.card('佈告欄', ['今天沒有委託。'], [{ label: '好', value: null }]);
+    const npc = data.npcs[q.npc], it = data.items[q.item], have = W.self.inv.filter((s) => s && s.id === q.item).reduce((n, s) => n + s.n, 0);
+    if (q.done) return hud.card('佈告欄', [`今天的委託已經完成了（${q.done === W.me.id ? '你' : '對方'}交的）。明天再來看看。`], [{ label: '好', value: null }]);
+    const go = await hud.card('今天的委託', [`${npc.name}：「我需要 ${it.name} ${q.n} 個，可以幫我找嗎？」`, `報酬 ${q.reward} 元，${npc.name}也會更喜歡你。你身上有 ${have} 個。`], [{ label: '先不要', value: false, ghost: true }, ...(have >= q.n ? [{ label: '交給他', value: true }] : [])]);
+    if (!go) return; const r = await this.room.req({ t: 'quest-done' });
+    hud.toast(r.t === 'ok' ? `完成委託！拿到 ${r.reward} 元` : '交不出去', 1600);
+  },
+  // 信箱：居民寄來的信，有些附了東西
+  async mail() {
+    const { hud, data } = this.ctx, W = this.world, list = (W.self.mail || []).filter((m) => !m.got);
+    if (!list.length) return hud.card('信箱', ['沒有新的信。'], [{ label: '好', value: null }]);
+    const m = list[0], from = data.npcs[m.from] ? data.npcs[m.from].name : '小鎮', gift = m.item ? `（附了 ${data.items[m.item[0]].name}×${m.item[1]}）` : '';
+    const ok = await hud.card(`${from}寄來的信`, [m.text, gift, list.length > 1 ? `還有 ${list.length - 1} 封沒看。` : ''].filter(Boolean), [{ label: m.item ? '收下' : '看完了', value: true }]);
+    if (ok) { const r = await this.room.req({ t: 'mail-open', mid: m.id }); if (r.t === 'no') hud.toast(r.reason === 'full' ? '背包滿了，信先放著' : '打不開', 1300); else if (list.length > 1) this.mail(); }
   },
   // 現在在小鎮上的居民和他們的位置（照行程用時間算）
   folks() {
@@ -337,6 +360,7 @@ export const play = {
       }
       if (it.t) {
         const d = it.t.def; if (!(d.art && drawSprite(g, d.art.replace('{season}', season), it.t.fx * T, it.t.fy * T, d.w * T, d.h * T))) drawObject(g, d, it.t.fx * T, it.t.fy * T, T);
+        if (it.t.def.use === 'mail' && (W.self.mail || []).some((m) => !m.got)) drawBubble(g, '✉', it.t.fx * T, it.t.fy * T - T * 1.2, T, true); // 信箱有新的信
         // 加工機：做好了頭上冒出成品，還在做就冒小點點
         if (it.o && it.o.kind && it.o.out) { if (W.abs() >= it.o.doneAt) { const oi = data.items[it.o.out]; drawBubble(g, ' ', it.t.fx * T, it.t.fy * T - T * 1.25, T, true); if (!drawSprite(g, oi.art, it.t.fx * T, it.t.fy * T - T * 1.38, T * 0.5, T * 0.5)) drawName(g, '好了', it.t.fx * T, it.t.fy * T - T * 1.6, T); } else drawName(g, '・'.repeat(1 + Math.floor(performance.now() / 500) % 3), it.t.fx * T, it.t.fy * T - T * 1.35, T); }
         continue;
