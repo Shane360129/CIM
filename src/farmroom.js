@@ -7,6 +7,7 @@ import PARTS from '../public/games/farm/data/doll/parts.json';
 import RAW_ITEMS from '../public/games/farm/data/items.json';
 import MACHINES from '../public/games/farm/data/machines.json';
 import RECIPES from '../public/games/farm/data/recipes.json';
+import ANIMALS from '../public/games/farm/data/animals.json';
 import CROPS from '../public/games/farm/data/crops.json';
 import OBJECTS from '../public/games/farm/data/objects.json';
 import MAP_FARM from '../public/games/farm/data/maps/farm.json';
@@ -14,7 +15,7 @@ import MAP_HOUSE from '../public/games/farm/data/maps/house.json';
 import MAP_ROAD from '../public/games/farm/data/maps/road.json';
 import MAP_LAKE from '../public/games/farm/data/maps/lake.json';
 import FISH from '../public/games/farm/data/fish.json';
-import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelOf, rollQuality, invAdd, invTake, sellPrice, makeItems, matches, planTake, absMinute } from '../public/games/farm/shared/rules.js';
+import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelOf, rollQuality, invAdd, invTake, sellPrice, makeItems, matches, planTake, absMinute, animalPos } from '../public/games/farm/shared/rules.js';
 
 const ITEMS = makeItems(RAW_ITEMS, MACHINES); // 加工品（g:機器:原料）的名字和價錢是算出來的
 
@@ -176,7 +177,7 @@ export class FarmRoom {
   pubFarm() {
     const f = this.farm;
     return { day: f.day, minute: this.minuteNow(), money: f.money, season: seasonId(f.day, BAL), weather: weatherOf(f.seed, f.day, BAL), minutesPerSecond: MIN_PER_MS * 1000, dayStart: BAL.dayStartMinute, dayEnd: BAL.dayEndMinute,
-      ship: f.ship, lastShip: f.lastShip, chest: f.chest };
+      ship: f.ship, lastShip: f.lastShip, chest: f.chest, newborn: f.newborn || [], animals: f.animals || [], pets: f.pets || [], graze: !!f.graze };
   }
   // 「你不在時發生的事」：過了幾天、錢差多少、對方做了什麼
   summaryFor(userId, saved, lastSeen) {
@@ -245,6 +246,7 @@ export class FarmRoom {
       if (it.buff) { p.buffs ||= {}; p.buffs[it.buff[0]] = this.absNow() + Math.round(it.buff[1] * k); }
       self(); this.broadcast({ t: 'fx', id: a.id, kind: 'eat', map: a.map, x: Math.floor(a.x), y: Math.floor(a.y) }); done({ buff: it.buff || null });
     }
+    else if (['animal-buy', 'animal', 'feed', 'graze', 'adopt', 'pet'].includes(m.t)) this.onAnimal(a, p, m, { no, done, self, near, farmChanged });
     else if (m.t === 'fish') this.onFish(a, p, m, { no, done, self });
     else if (m.t === 'reel') this.onReel(a, p, m, { no, done, self });
     else if (m.t === 'look') { // 建立角色、換裝：存起來，對方馬上看到
@@ -260,6 +262,78 @@ export class FarmRoom {
     }
     this.flush();
   }
+  // ---------- 畜牧與寵物 ----------
+  // 家畜和寵物是兩個人共有的（記在農場上）。牠們在圍欄裡的位置是用時間算的（shared/rules.js 的 animalPos），這裡不用存位置
+  onAnimal(a, p, m, { no, done, self, near, farmChanged }) {
+    const f = this.farm, AB = BAL.animals, day = f.day; f.animals ||= []; f.pets ||= [];
+    const tell = () => { this.farmDirty = true; this.broadcast({ t: 'animals', animals: f.animals, pets: f.pets, graze: !!f.graze, money: f.money }); };
+    const pick = (list) => list[Math.floor(Math.random() * list.length)];
+    if (m.t === 'animal-buy') {
+      const d = ANIMALS.livestock[m.kind]; if (!d) return no('unknown'); if (!near(d.home)) return no('far');
+      if (f.animals.filter((x) => ANIMALS.livestock[x.kind].home === d.home).length >= AB.capacity[d.home]) return no('housefull');
+      if (f.money < d.price) return no('money');
+      f.money -= d.price; f.nextAnimal = (f.nextAnimal || 0) + 1;
+      f.animals.push({ id: f.nextAnimal, kind: m.kind, name: cleanName(m.name).slice(0, 6) || d.name + f.nextAnimal, love: 0, born: day - d.growDays, color: pick(d.colors), traits: [pick(ANIMALS.traits)], fedDay: 0, petDay: 0, brushDay: 0, lastProd: day, ready: false });
+      this.logEvent(a.id, 'animal-buy', { kind: m.kind }); tell(); return done();
+    }
+    if (m.t === 'adopt') { // 寵物：貓、狗各一隻，不用錢，可以選毛色
+      const d = ANIMALS.pets[m.kind]; if (!d) return no('unknown'); if (!near('coop') && !near('barn') && !near('door')) return no('far');
+      if (f.pets.some((x) => x.kind === m.kind)) return no('already');
+      f.pets.push({ id: 900 + f.pets.length, kind: m.kind, name: cleanName(m.name).slice(0, 6) || d.name, color: d.colors.includes(m.color) ? m.color : d.colors[0], love: 0, petDay: 0 });
+      this.logEvent(a.id, 'adopt', { kind: m.kind }); tell(); return done();
+    }
+    if (m.t === 'graze') { if (!near('coop') && !near('barn')) return no('far'); f.graze = !!m.on; tell(); return done(); } // 放牧：天氣好的日子牠們自己在外面吃草，不用餵
+    if (m.t === 'feed') { // 餵這一棟裡還沒吃的：乾草先從背包拿，不夠再從倉庫箱拿
+      if (!['coop', 'barn'].includes(m.home) || !near(m.home)) return no('far');
+      const hungry = f.animals.filter((x) => ANIMALS.livestock[x.kind].home === m.home && x.fedDay !== day); if (!hungry.length) return no('already');
+      let fed = 0;
+      for (const an of hungry) {
+        let i = p.inv.findIndex((x) => x && x.id === 'hay'), from = p.inv; if (i < 0) { i = (f.chest || []).findIndex((x) => x && x.id === 'hay'); from = f.chest; }
+        if (i < 0) break; invTake(from, i, 1); an.fedDay = day; fed++;
+      }
+      if (!fed) return no('nohay');
+      self(); farmChanged(); tell(); return done({ fed, left: hungry.length - fed });
+    }
+    if (a.map !== 'farm') return no('far');
+    if (m.t === 'pet') { // 摸寵物
+      const pet = f.pets.find((x) => x.id === Number(m.aid)); if (!pet) return no('unknown');
+      if (pet.petDay === day) return no('already'); pet.petDay = day; pet.love = Math.min(AB.loveMax, pet.love + AB.petLove); tell(); return done({ love: pet.love });
+    }
+    const an = f.animals.find((x) => x.id === Number(m.aid)); if (!an) return no('unknown');
+    const d = ANIMALS.livestock[an.kind], pos = animalPos(MAPS.farm.pens[d.home], an.id, this.absNow());
+    if (Math.hypot(pos.x - a.x, pos.y - a.y) > BAL.reach + 1.5) return no('far');
+    if (m.act === 'collect') { // 收蛋、擠奶、剪毛：越喜歡你，品質越好
+      if (!an.ready) return no('nothing');
+      const q = AB.qualityAt.filter((v) => an.love >= v).length;
+      if (!invAdd(p.inv, BAL.invSlots, d.product, 1, q)) return no('full');
+      an.ready = false; p.skills.ranching = (p.skills.ranching || 0) + 6; this.logEvent(a.id, 'collect', { id: d.product });
+      self(); tell(); this.broadcast({ t: 'fx', id: a.id, kind: 'harvest', map: a.map, x: Math.floor(pos.x), y: Math.floor(pos.y), item: d.product }); return done({ got: { id: d.product, q } });
+    }
+    if (m.act === 'pet') { if (an.petDay === day) return no('already'); an.petDay = day; an.love = Math.min(AB.loveMax, an.love + AB.pet); p.skills.ranching = (p.skills.ranching || 0) + 2; self(); tell(); return done({ love: an.love }); }
+    if (m.act === 'brush') {
+      const held = p.inv[Math.floor(Number(m.slot))]; if (!held || ITEMS[held.id].tool !== 'brush') return no('tool:brush');
+      if (an.brushDay === day) return no('already'); an.brushDay = day; an.love = Math.min(AB.loveMax, an.love + AB.brush); p.skills.ranching = (p.skills.ranching || 0) + 2; self(); tell(); return done({ love: an.love });
+    }
+    return no('unknown');
+  }
+  // 換日：有吃的更喜歡你、沒吃的不開心；長大的、有吃的、時間到了就有產品；很喜歡你又有空位的話可能生小孩（毛色、特性會像爸媽）
+  animalsNewDay(old) {
+    const f = this.farm, AB = BAL.animals, wet = isWet(weatherOf(f.seed, old, BAL)), winter = seasonId(old, BAL) === 'winter', babies = [];
+    for (const an of f.animals || []) {
+      const d = ANIMALS.livestock[an.kind], grazed = f.graze && !wet && !winter, fed = an.fedDay === old || grazed, adult = f.day - an.born >= d.growDays;
+      an.love = clamp(an.love + (fed ? AB.fed + (grazed ? AB.graze : 0) : AB.hungry), 0, AB.loveMax);
+      if (adult && fed && f.day - an.lastProd >= d.every) { an.ready = true; an.lastProd = f.day; }
+      const room = (f.animals.length + babies.length) && f.animals.filter((x) => ANIMALS.livestock[x.kind].home === d.home).length + babies.filter((x) => ANIMALS.livestock[x.kind].home === d.home).length < AB.capacity[d.home];
+      if (adult && room && an.love >= AB.babyLove && Math.random() < AB.babyChance) {
+        f.nextAnimal = (f.nextAnimal || 0) + 1;
+        const trait = Math.random() < 0.7 ? an.traits[0] : ANIMALS.traits[Math.floor(Math.random() * ANIMALS.traits.length)];
+        babies.push({ id: f.nextAnimal, kind: an.kind, name: '小' + an.name.slice(0, 5), love: 100, born: f.day, color: Math.random() < 0.8 ? an.color : d.colors[Math.floor(Math.random() * d.colors.length)], traits: [trait], parent: an.id, fedDay: 0, petDay: 0, brushDay: 0, lastProd: f.day, ready: false });
+      }
+    }
+    if (babies.length) { f.animals.push(...babies); this.logEvent(0, 'born', { n: babies.length }); }
+    return babies;
+  }
+
   // 釣魚：拋竿時伺服器就決定好是哪條魚、多久上鉤；小遊戲在畫面上玩，玩完告訴伺服器有沒有拉上來。
   // 伺服器把關的是：真的拿著釣竿、對著水、體力夠、沒有在上鉤前就說釣到了
   onFish(a, p, m, { no, done, self }) {
@@ -421,6 +495,7 @@ export class FarmRoom {
       const k = !a ? 1 : !a.asleep ? BAL.sleepRestore.passout : (a.sleptAt || 0) >= BAL.lateMinute ? BAL.sleepRestore.late : BAL.sleepRestore.early;
       p.energy = Math.max(p.energy, Math.round(BAL.energyMax * k)); this.dirtyPl.add(r.user_id);
     }
+    f.newborn = this.animalsNewDay(old).map((b) => b.name);
     this.spawnDaily();
     this.farmDirty = true; this.logEvent(0, 'newday', { reason, total });
     for (const { ws, a } of this.online()) {

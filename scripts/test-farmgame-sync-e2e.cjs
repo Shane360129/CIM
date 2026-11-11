@@ -74,6 +74,16 @@ const { chromium } = require('playwright');
   await tp(pa, 14.5, 10.4, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
   ok('對著製作台按空白鍵：列出 10 種加工機和要的材料，材料不夠的按不下去', (await pa.locator('.panel .shoprow').count()) === 10 && (await pa.locator('.panel .shoprow .pbtn:disabled').count()) === 10 && /木材×20/.test(await pa.locator('.panel .shoprow[data-item=jam]').textContent()));
   await pa.screenshot({ path: S + '/s5-craft.png' }); await pa.keyboard.press('Escape');
+  // 雞舍：領養小狗（買雞要 300 元，留給伺服器測試）
+  await tp(pa, 34, 22.7, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
+  ok('對著雞舍按空白鍵：可以買雞和鴨、餵食、放牧、領養寵物', (await pa.locator('.panel .shoprow[data-item=chicken]').count()) === 1 && (await pa.locator('.panel [data-act=feed]').count()) === 1 && (await pa.locator('.panel [data-adopt]').count()) === 2);
+  await pa.locator('.panel .minput').fill('阿福'); await pa.locator('.panel [data-adopt=dog]').click(); await pb.waitForTimeout(500);
+  const pets = await pb.evaluate(() => window.__game.world.farm.pets);
+  ok('A 領養小狗取名阿福，B 那邊也有了', pets.length === 1 && pets[0].name === '阿福'); await pa.keyboard.press('Escape');
+  const dog = await pa.evaluate(() => { const b = window.__game.scenes.current.beasts()[0]; return { x: b.x, y: b.y }; });
+  await tp(pa, dog.x, dog.y + 1.0, 'up'); await pa.evaluate(([x, y]) => window.__game.scenes.current.act({ x: Math.floor(x), y: Math.floor(y - 0.4) }), [dog.x, dog.y]); await pa.waitForTimeout(500);
+  ok('走到小狗旁邊按動作鍵摸摸牠 → ' + (await pa.locator('.toast').textContent()), /阿福/.test(await pa.locator('.toast').textContent()));
+  await pa.screenshot({ path: S + '/s5-pet.png' });
   // 斷線重連
   await pa.evaluate(() => window.__game.world.room.drop()); await pb.waitForTimeout(500);
   ok('A 斷線：B 那邊 A 消失', (await st(pb)).n === 0);

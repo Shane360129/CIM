@@ -1167,5 +1167,21 @@
    "luck",
    480
   ]
+ },
+ "hay": {
+  "name": "乾草",
+  "kind": "feed",
+  "buy": 20,
+  "sell": 5,
+  "art": "obj/hay",
+  "desc": "家畜一天吃一份"
+ },
+ "brush": {
+  "name": "動物刷",
+  "kind": "tool",
+  "tool": "brush",
+  "buy": 200,
+  "art": "obj/brush",
+  "desc": "幫家畜刷毛，牠會更喜歡你"
  }
 }

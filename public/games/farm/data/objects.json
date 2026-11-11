@@ -269,5 +269,35 @@
   "color": "#b98a5a",
   "art": "machine/workbench",
   "use": "workbench"
+ },
+ "coop": {
+  "name": "雞舍",
+  "shape": "block",
+  "solid": true,
+  "w": 4.2,
+  "h": 3.6,
+  "color": "#e8c08a",
+  "roof": "#8a5a34",
+  "tiles": [
+   4,
+   2
+  ],
+  "art": "building/coop1",
+  "use": "coop"
+ },
+ "barn": {
+  "name": "畜舍",
+  "shape": "block",
+  "solid": true,
+  "w": 4.4,
+  "h": 4.0,
+  "color": "#c8553d",
+  "roof": "#7a2e22",
+  "tiles": [
+   4,
+   2
+  ],
+  "art": "building/barn1",
+  "use": "barn"
  }
 }

@@ -65,3 +65,11 @@ export function planTake(items, inv, need) {
 }
 // 現在的絕對時間（遊戲分鐘）：加工機、料理效果用它記什麼時候好、什麼時候結束
 export const absMinute = (day, minute, bal) => (day - 1) * (bal.dayEndMinute - bal.dayStartMinute) + (minute - bal.dayStartMinute);
+
+// 動物現在在哪裡：在自己的圍欄裡慢慢走來走去。位置只用「牠的編號＋現在的時間」算，所以兩個人看到的一樣，伺服器不用一直同步
+export function animalPos(pen, id, absMin) {
+  const step = 40, k = Math.floor(absMin / step), f = (absMin / step) - k, at = (n) => { const r = rng(id * 7919 + n * 104729); return { x: pen.x + 0.5 + r() * (pen.w - 1), y: pen.y + 0.5 + r() * (pen.h - 1) }; };
+  const a = at(k), b = at(k + 1), t = Math.min(1, f * 2.2); // 每一段時間前半在走、後半停著
+  return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, moving: t < 1, flip: b.x < a.x };
+}
+export const hearts = (love, bal) => Math.floor(Math.max(0, love) / bal.animals.heart);

@@ -111,3 +111,6 @@ button.chip { cursor: pointer; }
 .fgbar { position: relative; height: 26px; border-radius: 13px; background: #7cc6e6; border: 2px solid #5a3d22; overflow: hidden; }
 .fgzone { position: absolute; top: 0; bottom: 0; background: #6fbf5a; }
 .fgneedle { position: absolute; top: -2px; bottom: -2px; width: 6px; margin-left: -3px; border-radius: 3px; background: #e5484d; border: 1px solid #5a3d22; }
+
+.prow { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.pbtn.eat { margin-top: 6px; }

@@ -118,7 +118,8 @@
     "farming": "農耕",
     "foraging": "採集",
     "fishing": "釣魚",
-    "cooking": "料理"
+    "cooking": "料理",
+    "ranching": "畜牧"
   },
   "xpPerLevel": [
     40,
@@ -145,7 +146,9 @@
       "seed_tulip",
       "seed_rapeseed",
       "fertilizer",
-      "fertilizer_gold"
+      "fertilizer_gold",
+      "hay",
+      "brush"
     ]
   },
   "weather": {
@@ -250,5 +253,26 @@
     "speed": 1.3,
     "fishing": 0.06,
     "luck": 1
+  },
+  "animals": {
+    "capacity": {
+      "coop": 4,
+      "barn": 4
+    },
+    "loveMax": 1000,
+    "heart": 200,
+    "pet": 15,
+    "brush": 10,
+    "fed": 5,
+    "hungry": -20,
+    "graze": 3,
+    "qualityAt": [
+      400,
+      700,
+      900
+    ],
+    "babyChance": 0.06,
+    "babyLove": 600,
+    "petLove": 12
   }
 }

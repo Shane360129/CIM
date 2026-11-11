@@ -40,6 +40,7 @@ export function createWorld(session, bal) {
   room.on('objs', (m) => { w.setObjs(m.list); emit('objs', m); });
   room.on('self', (m) => { w.self = { inv: m.inv, energy: m.energy, energyMax: m.energyMax, skills: m.skills, fishRec: m.fishRec || {}, buffs: m.buffs || {} }; emit('self', m); });
   room.on('farm', (m) => { if (w.farm) Object.assign(w.farm, { money: m.money, ship: m.ship, chest: m.chest }); emit('farm', m); });
+  room.on('animals', (m) => { if (w.farm) Object.assign(w.farm, { animals: m.animals, pets: m.pets, graze: m.graze, money: m.money }); emit('farm', m); });
   room.on('warp', (m) => {
     const who = w.who(m.id); if (!who) return;
     Object.assign(who, { map: m.map, x: m.x, y: m.y, px: m.x, py: m.y, tx: m.x, ty: m.y, vx: 0, vy: 0, dir: m.dir, asleep: false });

@@ -36,7 +36,7 @@ if (process.argv[2] === 'after-restart') {
   const b = await login('fr_b');
   const dm = convs.find((c) => c.type === 'dm' && c.members.length === 2 && c.members.some((m) => m.userId === b.user.id));
   const A = open(dm.id, a.token); const snap = await A.wait('snapshot');
-  check('重開伺服器後：天數、格子、背包、錢、所在的地圖、造型都還在', !!snap && snap.farm.day >= 6 && snap.tiles.length >= 1 && snap.self.inv.some((x) => x && x.id === 'seed_strawberry') && snap.farm.money === 352 && snap.you.map === 'house' && !!snap.you.look, snap && `第 ${snap.farm.day} 天、${snap.tiles.length} 格、${snap.farm.money} 元、${snap.objs.length} 個東西`);
+  check('重開伺服器後：天數、格子、背包、錢、所在的地圖、造型都還在', !!snap && snap.farm.day >= 6 && snap.tiles.length >= 1 && snap.self.inv.some((x) => x && x.id === 'seed_strawberry') && snap.farm.animals.length === 1 && snap.you.map === 'house' && !!snap.you.look, snap && `第 ${snap.farm.day} 天、${snap.tiles.length} 格、${snap.farm.money} 元、${snap.objs.length} 個東西`);
   A.ws.close(); await sleep(200);
   console.log(`\n結果：${pass} 通過，${fail} 失敗`); process.exit(fail ? 1 : 0);
 }
@@ -235,10 +235,34 @@ if (has(Bc, 'carrot') >= 2) {
   check('吃掉：料理少一碗、體力不會超過上限', et.t === 'ok' && has(Bc, 'dish_veg_soup') === 0 && Bc.self.energy >= e1 && Bc.self.energy <= 100);
 } else check('（這次紅蘿蔔不到兩根，煮湯的檢查跳過）', true);
 check('不是料理的東西不能吃', (await req(Bc, { t: 'eat', slot: slot(Bc, 'hoe') })).reason === 'slot');
+// ---- 畜牧與寵物 ----
+const { animalPos } = await import('../public/games/farm/shared/rules.js');
+const PENS = JSON.parse((await import('node:fs')).readFileSync(new URL('../public/games/farm/data/maps/farm.json', import.meta.url), 'utf8')).pens;
+check('不在雞舍旁邊不能買', (await req(Bc, { t: 'animal-buy', kind: 'chicken', name: '小白' })).reason === 'far');
+await go(Bc, 5, 7.6); await req(Bc, { t: 'warp', i: 0 }); await go(Bc, 34, 22.7);
+check('沒有的動物不能買、乳牛要到畜舍買、錢不夠不能買', (await req(Bc, { t: 'animal-buy', kind: 'dragon' })).reason === 'unknown' && (await req(Bc, { t: 'animal-buy', kind: 'cow' })).reason === 'far' && (await req(Bc, { t: 'animal-buy', kind: 'duck', name: 'x' })).reason === 'money');
+const m0 = Bc.farm.money; Bc.clear(); const buy = await req(Bc, { t: 'animal-buy', kind: 'chicken', name: '小白<>' }); const am = await Bc.wait('animals');
+check('買一隻雞：錢少 300、雞舍多一隻、名字會清乾淨', buy.t === 'ok' && !!am && am.money === m0 - 300 && am.animals.length === 1 && am.animals[0].name === '小白' && am.animals[0].love === 0, `${m0} → ${am && am.money}`);
+const hen = am.animals[0]; await go(Bc, PENS.coop.x + 2, PENS.coop.y + 2.5); // 圍欄只有 4×5，站中間一定摸得到
+check('摸摸牠：更喜歡你；一天只能摸一次', (await req(Bc, { t: 'animal', aid: hen.id, act: 'pet' })).love === 15 && (await req(Bc, { t: 'animal', aid: hen.id, act: 'pet' })).reason === 'already');
+check('還沒有蛋不能收、沒拿刷子不能刷、沒有的動物摸不到', (await req(Bc, { t: 'animal', aid: hen.id, act: 'collect' })).reason === 'nothing' && (await req(Bc, { t: 'animal', aid: hen.id, act: 'brush', slot: slot(Bc, 'hoe') })).reason === 'tool:brush' && (await req(Bc, { t: 'animal', aid: 999, act: 'pet' })).reason === 'unknown');
+await go(Bc, 34, 22.7);
+check('沒有乾草不能餵', (await req(Bc, { t: 'feed', home: 'coop' })).reason === 'nohay');
+Bc.clear(); check('打開放牧', (await req(Bc, { t: 'graze', on: true })).t === 'ok' && (await Bc.wait('animals')).graze === true);
+Bc.clear(); check('領養一隻小狗（不用錢），同一種不能養第二隻', (await req(Bc, { t: 'adopt', kind: 'dog', name: '阿福' })).t === 'ok' && (await Bc.wait('animals')).pets[0].name === '阿福' && (await req(Bc, { t: 'adopt', kind: 'dog' })).reason === 'already');
+check('摸小狗', (await req(Bc, { t: 'pet', aid: 900 })).love === 12);
+const wasWet = ['rain', 'storm'].includes(Bc.farm.weather);
+await enter(Bc); await go(Bc, 2.6, 3.4); Bc.clear(); await req(Bc, { t: 'sleep', on: true }); const nd7 = await Bc.wait('newday'); const hen7 = nd7 && nd7.farm.animals[0];
+check(wasWet ? '（昨天下雨，放牧的雞沒吃到：不開心、沒有蛋）' : '放牧的晴天算有吃：隔天更喜歡你、有蛋可以收', !!hen7 && (wasWet ? hen7.love === 0 && !hen7.ready : hen7.love === 23 && hen7.ready), JSON.stringify(hen7));
+if (hen7 && hen7.ready) {
+  await go(Bc, 5, 7.6); await req(Bc, { t: 'warp', i: 0 }); await go(Bc, PENS.coop.x + 2, PENS.coop.y + 2.5);
+  const eg = await req(Bc, { t: 'animal', aid: hen.id, act: 'collect' });
+  check('收雞蛋：背包多一顆、畜牧有經驗；收過就沒了', eg.t === 'ok' && has(Bc, 'egg') === 1 && Bc.self.skills.ranching > 0 && (await req(Bc, { t: 'animal', aid: hen.id, act: 'collect' })).reason === 'nothing');
+}
 const A2 = open(dm.id, a.token); const s2 = await A2.wait('snapshot');
 check('重新上線：造型和名字還在', !!s2 && !!s2.you.look && s2.you.look.hair === 'twin' && s2.you.name.startsWith('晴b晴'));
-check('重新上線：人還在農舍裡、背包還在、看得到離線時的變化', !!s2 && s2.you.map === 'house' && s2.self.inv.some((x) => x && x.id === 'seed_strawberry') && s2.farm.day === 6);
-check('「你不在時發生的事」：過了 4 天、對方澆水和收成', !!s2 && !!s2.summary && s2.summary.days === 4 && s2.summary.acts.harvest >= 1 && s2.summary.acts.water >= 1, s2 && JSON.stringify(s2.summary));
+check('重新上線：人還在農舍裡、背包還在、看得到離線時的變化', !!s2 && s2.you.map === 'house' && s2.self.inv.some((x) => x && x.id === 'seed_strawberry') && s2.farm.day === 7 && s2.farm.animals.length === 1 && s2.farm.pets.length === 1);
+check('「你不在時發生的事」：過了 5 天、對方澆水和收成', !!s2 && !!s2.summary && s2.summary.days === 5 && s2.summary.acts.harvest >= 1 && s2.summary.acts.water >= 1, s2 && JSON.stringify(s2.summary));
 const A3 = open(dm.id, a.token); await A3.wait('snapshot'); await sleep(300);
 check('同一個人開第二個分頁：舊的收到 replaced，對方不會以為他離開', A2.log.some((m) => m.t === 'replaced') && !Bc.log.some((m) => m.t === 'leave' && m.id === a.user.id));
 // 時鐘只在有人的時候走

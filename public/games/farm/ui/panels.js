@@ -1,6 +1,6 @@
 // 遊戲裡的面板：背包、出貨箱、倉庫箱、種子攤。都是一般的網頁元素，蓋在畫面中間；內容每次有變化就整個重畫。
 import { iconEl } from '../render/sprites.js';
-import { sellPrice, planTake, levelOf } from '../shared/rules.js';
+import { sellPrice, planTake, levelOf, hearts } from '../shared/rules.js';
 const mk = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
 
 // 一個物品的小圖：有圖用圖（種子是「種子袋＋作物」疊起來），沒有圖用名字的第一個字
@@ -19,9 +19,9 @@ function slotEl(items, bal, s, onClick, extraCls = '') {
 
 export function openPanel(ctx, mode) {
   const { hud, world: W } = ctx, { items, balance: bal } = ctx.data, room = W.room;
-  const root = mk('div', 'panel'), title = { bag: '背包', ship: '出貨箱', chest: '倉庫箱', shop: '種子攤', cook: '爐灶', craft: '製作台' }[mode];
+  const root = mk('div', 'panel'), title = { bag: '背包', ship: '出貨箱', chest: '倉庫箱', shop: '種子攤', cook: '爐灶', craft: '製作台', coop: '雞舍', barn: '畜舍' }[mode];
   let picked = -1, info = '';
-  const say = (r) => { if (r.t === 'no') hud.toast({ full: '放不下了', money: '錢不夠', materials: '材料不夠', level: '料理等級還不夠', closed: '現在沒有營業（6:00～18:00）', far: '太遠了', unsellable: '這個不能賣' }[r.reason] || '沒辦法', 1300); };
+  const say = (r) => { if (r.t === 'no') hud.toast({ full: '放不下了', money: '錢不夠', materials: '材料不夠', level: '料理等級還不夠', housefull: '住滿了', nohay: '沒有乾草了（種子攤有賣）', already: '已經弄好了', closed: '現在沒有營業（6:00～18:00）', far: '太遠了', unsellable: '這個不能賣' }[r.reason] || '沒辦法', 1300); };
   const grid = (list, n, onClick, cls) => { const g = mk('div', 'grid'); for (let i = 0; i < n; i++) g.append(slotEl(items, bal, list[i], () => onClick(i), (i === picked && cls === 'inv' ? 'on ' : '') + (i < bal.hotbarSlots && cls === 'inv' ? 'hot' : ''))); return g; };
   function draw() {
     root.textContent = '';
@@ -29,7 +29,31 @@ export function openPanel(ctx, mode) {
     const x = mk('button', 'pclose', '✕'); x.type = 'button'; x.setAttribute('aria-label', '關閉'); x.addEventListener('click', () => hud.closePanel()); head.append(x); root.append(head);
     const inv = W.self.inv;
     const needText = (need) => Object.entries(need).map(([spec, n]) => `${spec === '@crop' ? '任何作物' : spec.startsWith('@') ? { veg: '蔬菜', fruit: '水果', fish: '魚', egg: '蛋', milk: '牛奶', forage: '採集物', flower: '花' }[spec.slice(1)] || spec : spec.startsWith('g:') ? ctx.data.machines[spec.slice(2)].name + '做的' : items[spec].name}×${n}`).join('、');
-    if (mode === 'cook' || mode === 'craft') {
+    if (mode === 'coop' || mode === 'barn') {
+      const A = ctx.data.animals, f = W.farm, here = (f.animals || []).filter((x) => A.livestock[x.kind].home === mode), cap = bal.animals.capacity[mode];
+      root.append(mk('p', 'hint', `住了 ${here.length}／${cap} 隻。每天餵一份乾草、摸摸牠；越喜歡你，產品品質越好。走到牠旁邊按動作鍵就能摸、收產品。`));
+      const list = mk('div', 'shoplist');
+      for (const an of here) {
+        const d = A.livestock[an.kind], row = mk('div', 'shoprow'), baby = f.day - an.born < d.growDays;
+        row.append(itemIcon(items, d.product), mk('span', 'sname', an.name), mk('span', 'sdesc', `${d.name}${baby ? '（小時候）' : ''}・${'♥'.repeat(hearts(an.love, bal)) || '♡'}・${an.traits.join('、')}・${an.fedDay === f.day ? '今天吃過了' : f.graze ? '放牧中' : '還沒吃'}`));
+        list.append(row);
+      }
+      root.append(list);
+      const act = mk('div', 'prow'), btn = (text, fn, off) => { const b = mk('button', 'pbtn', text); b.type = 'button'; b.disabled = !!off; b.addEventListener('click', fn); act.append(b); return b; };
+      btn('餵乾草', async () => { const r = await room.req({ t: 'feed', home: mode }); if (r.t === 'ok') hud.toast(r.left ? `餵了 ${r.fed} 隻，還有 ${r.left} 隻沒吃到` : `餵了 ${r.fed} 隻`, 1300); else say(r); }, !here.length).dataset.act = 'feed';
+      btn(f.graze ? '放牧：開（天氣好時自己吃草）' : '放牧：關', async () => say(await room.req({ t: 'graze', on: !f.graze }))).dataset.act = 'graze';
+      root.append(act, mk('h3', '', '買新的'));
+      const name = mk('input', 'minput'); name.type = 'text'; name.maxLength = 6; name.placeholder = '幫牠取名字（最多 6 個字）'; root.append(name);
+      const buy = mk('div', 'shoplist');
+      for (const [id, d] of Object.entries(A.livestock).filter(([, d]) => d.home === mode)) {
+        const row = mk('div', 'shoprow'); row.dataset.item = id;
+        row.append(itemIcon(items, d.product), mk('span', 'sname', d.name), mk('span', 'sdesc', `每 ${d.every} 天產一次${items[d.product].name}`), mk('span', 'sprice', `${d.price} 元`));
+        const b = mk('button', 'pbtn', '買'); b.type = 'button'; b.disabled = f.money < d.price || here.length >= cap; b.addEventListener('click', async () => { const r = await room.req({ t: 'animal-buy', kind: id, name: name.value }); if (r.t === 'ok') { name.value = ''; hud.toast(`${d.name}來了！`, 1300); } else say(r); }); row.append(b); buy.append(row);
+      }
+      root.append(buy);
+      const pets = Object.entries(A.pets).filter(([id]) => !(f.pets || []).some((x) => x.kind === id));
+      if (pets.length) { root.append(mk('h3', '', '領養寵物（不用錢）')); const pr = mk('div', 'prow'); for (const [id, d] of pets) { const b = mk('button', 'pbtn', `領養${d.name}`); b.type = 'button'; b.dataset.adopt = id; b.addEventListener('click', async () => say(await room.req({ t: 'adopt', kind: id, name: name.value, color: d.colors[Math.floor(Math.random() * d.colors.length)] }))); pr.append(b); } root.append(pr); }
+    } else if (mode === 'cook' || mode === 'craft') {
       const cook = mode === 'cook', lv = levelOf(W.self.skills.cooking || 0, bal).lv;
       root.append(mk('p', 'hint', cook ? `料理等級 ${lv}。對方也站在旁邊的話，一起煮出來的比較好吃（★）。煮好的料理在背包裡點它、再按「吃」。` : '用材料做加工機，做好後拿在手上，對著農場的空地按動作鍵放下去。'));
       const list = mk('div', 'shoplist');

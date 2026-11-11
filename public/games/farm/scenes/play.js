@@ -3,7 +3,7 @@ import { buildGround } from '../render/ground.js';
 import { drawObject, drawPlayer, drawBubble, drawTilled, drawShadow, drawName } from '../render/placeholder.js';
 import { drawDoll } from '../render/doll.js';
 import { drawSprite } from '../render/sprites.js';
-import { groundAt, levelOf, sellPrice } from '../shared/rules.js';
+import { groundAt, levelOf, sellPrice, animalPos, hearts } from '../shared/rules.js';
 import { openPanel, itemIcon } from '../ui/panels.js';
 import { create } from './create.js';
 import { createFishing } from '../systems/fishing.js';
@@ -83,14 +83,14 @@ export const play = {
   },
   // 早上：昨天出貨箱賣了多少（兩個人各放了什麼都看得到）
   morning(m) {
-    const { hud, data } = this.ctx, f = m.farm, W = this.world;
+    const { hud, data } = this.ctx, f = m.farm, W = this.world, born = (f.newborn || []).length ? [`${f.newborn.join('、')} 出生了！`] : [];
     const head = m.reason === 'late' ? '太晚了，累得昏倒了… 已經是隔天早上' : m.reason === 'restore' ? '農場回復到備份的樣子了' : `早安！第 ${f.day} 天`;
     const lines = [`今天的天氣：${this.bal.weatherNames[f.weather]}`];
     if (f.lastShip && f.lastShip.day === f.day - 1 && m.reason !== 'restore') {
       for (const l of f.lastShip.lines) lines.push(`${l.by === W.me.id ? '你' : (W.partner && W.partner.name) || '對方'}：${data.items[l.id].name}${l.q ? `（${this.bal.quality.names[l.q]}）` : ''}×${l.n} → ${l.sum} 元`);
       lines.push(`出貨收入一共 ${f.lastShip.total} 元。`);
     }
-    hud.card(head, lines, [{ label: '開始新的一天', value: true }]);
+    hud.card(head, [...lines, ...born], [{ label: '開始新的一天', value: true }]);
   },
   togglePanel(mode) { const hud = this.ctx.hud; if (hud.hasPanel) hud.closePanel(); else if (!hud.hasCard) openPanel(this.ctx, mode); },
   // 測試程式用的捷徑（資料其實都在 world 裡）
@@ -126,6 +126,7 @@ export const play = {
       if (use === 'chest') return openPanel(this.ctx, 'chest');
       if (use === 'shop') return openPanel(this.ctx, 'shop');
       if (use === 'stove') return openPanel(this.ctx, 'cook');
+      if (use === 'coop' || use === 'barn') return openPanel(this.ctx, use);
       if (use === 'workbench') return openPanel(this.ctx, 'craft');
       if (use === 'wardrobe') return this.ctx.scenes.go(create, { edit: true });
       if (use === 'bed') return this.bed();
@@ -133,6 +134,16 @@ export const play = {
     }
     pl.dir = DIR(t.x + 0.5 - pl.x, t.y + 0.5 - pl.y, pl.dir);
     const held = W.self.inv[hud.selected], heldDef = held && data.items[held.id];
+    // 對著動物：有產品先收，今天還沒摸就摸摸，手上拿刷子就刷毛
+    const beast = this.beasts().find((b) => Math.hypot(b.x - (t.x + 0.5), b.y - 0.4 - (t.y + 0.5)) < 0.85);
+    if (beast) {
+      const an = beast.an, brush = heldDef && heldDef.tool === 'brush';
+      const msg = beast.pet ? { t: 'pet', aid: an.id } : { t: 'animal', aid: an.id, act: an.ready ? 'collect' : brush && an.brushDay !== W.farm.day ? 'brush' : 'pet', slot: hud.selected };
+      const r = await this.room.req(msg);
+      if (r.t === 'ok') { if (r.got) hud.toast(`拿到 ${data.items[r.got.id].name}${r.got.q ? `（${this.bal.quality.names[r.got.q]}）` : ''}`, 1300); else { W.floaters.push({ map: this.mapId, x: beast.x, y: beast.y - 0.6, heart: true, life: 1.1 }); hud.toast(`${an.name} 很開心 ${'♥'.repeat(hearts(r.love, this.bal)) || '♡'}`, 1200); } }
+      else hud.toast(r.reason === 'already' ? `${an.name}：${'♥'.repeat(hearts(an.love, this.bal)) || '♡'}（今天摸過了）` : r.reason === 'full' ? '背包滿了' : NO_TEXT[r.reason] || '', 1300);
+      return;
+    }
     if (heldDef && heldDef.tool === 'rod' && !W.obj(this.mapId, t.x, t.y)) { // 釣竿：對著水面拋竿（可以丟遠一點：面前直直看過去最近的水）
       let w = groundAt(this.map, t.x, t.y) === 'water' ? t : null;
       if (!w) { const d = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] }[pl.dir]; for (let i = 1; i <= 3 && !w; i++) { const x = Math.floor(pl.x) + d[0] * i, y = Math.floor(pl.y) + d[1] * i; if (groundAt(this.map, x, y) === 'water') w = { x, y }; } }
@@ -145,6 +156,14 @@ export const play = {
     if (r.t === 'ok' && r.got) hud.toast(`收成了 ${data.items[r.got.id].name}${r.got.q ? `（${this.bal.quality.names[r.got.q]}）` : ''}`, 1200);
     if (r.t === 'no' && r.reason === 'busy') return hud.toast(`還在做，大約還要 ${r.left >= 60 ? Math.round(r.left / 60) + ' 小時' : r.left + ' 分鐘'}`, 1300);
     if (r.t === 'no') { const tool = r.reason.startsWith('tool:') && TOOL_NAME[r.reason.slice(5)]; const text = tool ? `這個要用${tool}` : NO_TEXT[r.reason]; if (text) hud.toast(text, 1300); }
+  },
+  // 現在這張地圖上的家畜和寵物在哪裡（位置是用時間算的，兩個人算出來一樣）
+  beasts() {
+    const W = this.world, f = W.farm, A = this.ctx.data.animals, pens = this.map.pens; if (!f || !pens || this.mapId !== 'farm') return [];
+    const now = W.abs(), out = [];
+    for (const an of f.animals || []) { const d = A.livestock[an.kind]; out.push({ an, d, baby: f.day - an.born < d.growDays, ...animalPos(pens[d.home], an.id, now) }); }
+    for (const an of f.pets || []) out.push({ an, d: A.pets[an.kind], pet: true, ...animalPos(pens.pet, an.id, now) });
+    return out;
   },
   // 上床睡覺：兩個人都在線時，要兩個人都上床才換日
   async bed() {
@@ -224,12 +243,22 @@ export const play = {
     // 只畫看得到的，依腳的位置由遠到近畫
     for (const t of this.things) if (t.fx > x0 && t.fx < x1 && t.fy > y0 && t.fy < y1) list.push({ y: t.fy, t });
     for (const o of W.objs.values()) if (o.map === mapId && o.x > x0 && o.x < x1 && o.y > y0 && o.y < y1) list.push({ y: o.y + 0.92, o, t: { def: o.item ? { ...data.objects[o.type], art: data.items[o.item].art, name: data.items[o.item].name } : o.kind ? { ...data.objects[o.type], art: data.machines[o.kind].art, name: data.machines[o.kind].name } : data.objects[o.type], fx: o.x + 0.5, fy: o.y + 0.92 } });
+    for (const b of this.beasts()) list.push({ y: b.y, beast: b });
     const people = [{ q: me, color: '#f0a04a' }, ...[...W.others.values()].filter((o) => o.map === mapId).map((o) => ({ q: lerp(o), color: '#6aa8e8' }))];
     for (const pp of people) list.push({ y: pp.q.y, pp });
     list.sort((u, v) => u.y - v.y);
     const parts = data.parts, U = T * 0.62;
     for (const it of list) {
       if (it.crop) { this.drawCrop(g, it.crop, T); continue; }
+      if (it.beast) { // 家畜、寵物：有圖用圖（側面，往左走就翻過來），小時候畫小一點；有產品可以收的頭上冒泡泡
+        const b = it.beast, sz = b.d.size * (b.baby ? 0.6 : 1) * T, bx = b.x * T, by = b.y * T - (b.moving ? Math.abs(Math.sin(performance.now() / 130 + b.an.id)) * T * 0.04 : 0);
+        drawShadow(g, bx, b.y * T, sz * 0.7);
+        g.save(); g.translate(bx, by); if (b.flip) g.scale(-1, 1);
+        if (!drawSprite(g, `${b.d.art}/${b.baby ? 'baby_side' : 'side'}`, 0, 0, sz, sz)) { g.fillStyle = b.an.color; g.strokeStyle = '#5a3d22'; g.lineWidth = Math.max(1.5, T * 0.04); g.beginPath(); g.ellipse(0, -sz * 0.3, sz * 0.38, sz * 0.28, 0, 0, 7); g.fill(); g.stroke(); g.beginPath(); g.arc(sz * 0.3, -sz * 0.5, sz * 0.17, 0, 7); g.fill(); g.stroke(); }
+        g.restore();
+        if (b.an.ready) { drawBubble(g, ' ', bx, by - sz * 1.0, T, true); if (!drawSprite(g, data.items[b.d.product].art, bx, by - sz * 1.0 - T * 0.13, T * 0.45, T * 0.45)) drawName(g, '！', bx, by - sz - T * 0.3, T); }
+        continue;
+      }
       if (it.t) {
         const d = it.t.def; if (!(d.art && drawSprite(g, d.art.replace('{season}', season), it.t.fx * T, it.t.fy * T, d.w * T, d.h * T))) drawObject(g, d, it.t.fx * T, it.t.fy * T, T);
         // 加工機：做好了頭上冒出成品，還在做就冒小點點
@@ -245,7 +274,7 @@ export const play = {
     // 浮標：自己的和對方的
     const bobs = []; if (this.fishing.bobber) bobs.push(this.fishing.bobber); for (const o of W.others.values()) if (o.map === mapId && o.fishing && !o.moving) bobs.push({ ...o.fishing, t: performance.now() / 1000 });
     for (const b of bobs) { const bx = (b.x + 0.5) * T, by = (b.y + 0.5) * T + Math.sin(b.t * (b.bite ? 22 : 3)) * T * (b.bite ? 0.08 : 0.03); g.fillStyle = '#fff'; g.strokeStyle = '#5a3d22'; g.lineWidth = Math.max(1.5, T * 0.04); g.beginPath(); g.arc(bx, by, T * 0.11, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#e5484d'; g.beginPath(); g.arc(bx, by, T * 0.11, Math.PI, 0); g.fill(); if (b.bite) drawBubble(g, '！', bx, by - T * 0.5, T, true); }
-    for (const f of W.floaters) { if (f.map !== mapId) continue; g.globalAlpha = Math.min(1, f.life * 2); const it = data.items[f.item]; if (!drawSprite(g, it.art, f.x * T, (f.y - (1.1 - f.life) * 0.9) * T, T * 0.6, T * 0.6)) drawName(g, it.name, f.x * T, (f.y - (1.1 - f.life) * 0.9) * T, T); g.globalAlpha = 1; }
+    for (const f of W.floaters) { if (f.map !== mapId) continue; g.globalAlpha = Math.min(1, f.life * 2); if (f.heart) { drawName(g, '♥', f.x * T, (f.y - (1.1 - f.life) * 0.9) * T, T * 1.6); g.globalAlpha = 1; continue; } const it = data.items[f.item]; if (!drawSprite(g, it.art, f.x * T, (f.y - (1.1 - f.life) * 0.9) * T, T * 0.6, T * 0.6)) drawName(g, it.name, f.x * T, (f.y - (1.1 - f.life) * 0.9) * T, T); g.globalAlpha = 1; }
     for (const pp of people) { const b = W.bubbles.get(pp.q.id); if (b) drawBubble(g, b.text, pp.q.x * T, pp.q.y * T - T * (pp.q.look ? 1.95 : 1.45), T, b.big); }
     // 天色（只有戶外）：傍晚慢慢變橘、晚上變暗；下雨天灰一點、畫雨絲
     if (!this.map.outdoor || !W.farm) return;
