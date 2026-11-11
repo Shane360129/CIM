@@ -10,9 +10,13 @@ import OBJECTS from '../public/games/farm/data/objects.json';
 import MAP_FARM from '../public/games/farm/data/maps/farm.json';
 import MAP_HOUSE from '../public/games/farm/data/maps/house.json';
 import MAP_ROAD from '../public/games/farm/data/maps/road.json';
+import MAP_LAKE from '../public/games/farm/data/maps/lake.json';
+import FISH from '../public/games/farm/data/fish.json';
 import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelOf, rollQuality, invAdd, invTake, sellPrice } from '../public/games/farm/shared/rules.js';
 
-const MAPS = { farm: MAP_FARM, house: MAP_HOUSE, road: MAP_ROAD };
+const MAPS = { farm: MAP_FARM, house: MAP_HOUSE, road: MAP_ROAD, lake: MAP_LAKE };
+// 每張地圖上不會動的東西（房子、長椅…）佔了哪些格子：採集物、雜草不會長在這些格子上
+const STATIC = Object.fromEntries(Object.entries(MAPS).map(([id, m]) => [id, new Set(m.objects.flatMap((o) => { const [tw, th] = OBJECTS[o.type].tiles || [1, 1], out = []; for (let x = 0; x < tw; x++) for (let y = 0; y < th; y++) out.push((o.x + x) + ',' + (o.y - y)); return out; }))]));
 const TICK_MS = 10000;                 // 有人在線時，每 10 秒推進一次遊戲時鐘
 const DAY_SPAN = BAL.dayEndMinute - BAL.dayStartMinute;            // 一天有幾個遊戲分鐘（早上 6 點到凌晨 2 點）
 const MIN_PER_MS = DAY_SPAN / (BAL.dayMinutesReal * 60000);         // 現實一毫秒等於幾個遊戲分鐘
@@ -63,6 +67,27 @@ export class FarmRoom {
     this.objs = new Map();
     for (const [id, m] of Object.entries(MAPS)) for (const o of m.objects) if (OBJECTS[o.type].tool) this.objs.set(K(id, o.x, o.y), { type: o.type, hp: OBJECTS[o.type].hp });
     for (const r of this.sql.exec(`SELECT k, data FROM objs`).toArray()) { if (r.data) this.objs.set(r.k, JSON.parse(r.data)); else this.objs.delete(r.k); }
+    if (this.farm.forageDay !== this.farm.day) { this.spawnDaily(); this.flush(); } // 新農場的第一天也要有東西可以撿
+  }
+  // 每天早上：野外長出這一季的採集物（昨天沒撿的會不見），農場多幾根雜草。位置用農場的種子算，同一天重算結果一樣
+  spawnDaily() {
+    const f = this.farm, list = BAL.forage.bySeason[seasonId(f.day, BAL)] || [];
+    for (const [k, o] of this.objs) if (o.type === 'forage') { this.objs.delete(k); this.dirtyObjs.add(k); }
+    const place = (map, rand, make) => {
+      const m = MAPS[map];
+      for (let tries = 0; tries < 60; tries++) {
+        const x = 2 + Math.floor(rand() * (m.w - 4)), y = 2 + Math.floor(rand() * (m.h - 4)), k = K(map, x, y), g = groundAt(m, x, y);
+        if (!make.grounds.includes(g) || STATIC[map].has(x + ',' + y) || this.objs.has(k) || this.tiles.has(k)) continue;
+        this.objs.set(k, make.obj()); this.dirtyObjs.add(k); return;
+      }
+    };
+    Object.entries(BAL.forage.perMap).forEach(([map, n], mi) => {
+      if (!MAPS[map] || !list.length) return; const rand = rng(f.seed + f.day * 131 + mi * 17);
+      for (let i = 0; i < n; i++) place(map, rand, { grounds: ['grass'], obj: () => ({ type: 'forage', item: list[Math.floor(rand() * list.length)], hp: 1 }) });
+    });
+    const weeds = [...this.objs.values()].filter((o) => o.type === 'weed').length, rand = rng(f.seed + f.day * 977);
+    if (f.day > 1) for (let i = 0; i < BAL.forage.weedsPerDay && weeds + i < BAL.forage.weedsMax; i++) place('farm', rand, { grounds: ['grass', 'soil'], obj: () => ({ type: 'weed', hp: OBJECTS.weed.hp }) });
+    f.forageDay = f.day; this.farmDirty = true;
   }
   touch(map, x, y) { this.dirty.add(`${map}:${Math.floor(x / CHUNK)},${Math.floor(y / CHUNK)}`); }
   // 格子分區塊存（16×16 一塊）：一個動作、一次換日改很多格也只寫幾列，不會每格寫一次
@@ -94,8 +119,8 @@ export class FarmRoom {
   }
   logEvent(userId, type, data) { this.sql.exec(`INSERT INTO events (ts, day, user_id, type, data) VALUES (?, ?, ?, ?, ?)`, Date.now(), this.farm.day, userId, type, data ? JSON.stringify(data) : null); }
   pubTile(k) { const v = this.tiles.get(k), t = unK(k); return v ? { ...t, t: 1, w: v.w === this.farm.day ? 1 : 0, f: v.f || 0, c: v.c ? { id: v.c.id, s: v.c.dead ? -1 : cropStage(CROPS[v.c.id], v.c.g) } : null } : { ...t, t: 0 }; }
-  pubObj(k) { const o = this.objs.get(k); return o ? { ...unK(k), type: o.type, hp: o.hp } : { ...unK(k), type: null }; }
-  pubSelf(a) { const p = this.player(a.id); return { inv: p.inv, energy: p.energy, energyMax: BAL.energyMax, skills: p.skills }; }
+  pubObj(k) { const o = this.objs.get(k); return o ? { ...unK(k), type: o.type, hp: o.hp, ...(o.item ? { item: o.item } : {}) } : { ...unK(k), type: null }; }
+  pubSelf(a) { const p = this.player(a.id); return { inv: p.inv, energy: p.energy, energyMax: BAL.energyMax, skills: p.skills, fishRec: p.fishRec || {} }; }
 
   // ---------- 連線 ----------
   sockets() { return this.ctx.getWebSockets(); }
@@ -193,6 +218,8 @@ export class FarmRoom {
       if (!invAdd(to, cap, s.id, k, s.q || 0)) return no('full');
       invTake(from, slot, k); self(); farmChanged(); done();
     } else if (m.t === 'warp') this.onWarp(ws, a, p, m, { no, done });
+    else if (m.t === 'fish') this.onFish(a, p, m, { no, done, self });
+    else if (m.t === 'reel') this.onReel(a, p, m, { no, done, self });
     else if (m.t === 'look') { // 建立角色、換裝：存起來，對方馬上看到
       const look = cleanLook(m.look); if (!look) return no('look');
       p.look = look; p.nick = cleanName(m.name) || p.nick; this.dirtyPl.add(a.id);
@@ -205,6 +232,37 @@ export class FarmRoom {
       if (a.asleep) { this.flush(); await this.maybeNewDay('sleep'); }
     }
     this.flush();
+  }
+  // 釣魚：拋竿時伺服器就決定好是哪條魚、多久上鉤；小遊戲在畫面上玩，玩完告訴伺服器有沒有拉上來。
+  // 伺服器把關的是：真的拿著釣竿、對著水、體力夠、沒有在上鉤前就說釣到了
+  onFish(a, p, m, { no, done, self }) {
+    const x = Math.floor(Number(m.x)), y = Math.floor(Number(m.y)), map = MAPS[a.map], held = p.inv[Math.floor(Number(m.slot))], F = BAL.fishing;
+    if (!held || ITEMS[held.id].tool !== 'rod') return no('tool:rod');
+    if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x >= map.w || y >= map.h || groundAt(map, x, y) !== 'water') return no('ground');
+    if (Math.hypot(x + 0.5 - a.x, y + 0.5 - a.y) > F.reach) return no('far');
+    if (p.energy < F.energy) return no('tired');
+    p.energy -= F.energy;
+    // 這裡、這一季、這個天氣、這個時間釣得到的魚，照稀有度抽一條
+    const f = this.farm, season = seasonId(f.day, BAL), wet = isWet(weatherOf(f.seed, f.day, BAL)), min = this.minuteNow();
+    const pool = Object.entries(FISH).filter(([, d]) => d.maps.includes(a.map) && d.seasons.includes(season) && min >= d.time[0] && min < d.time[1] && (!d.rain || wet));
+    let pick = null; if (pool.length && Math.random() >= F.junkChance) { let r = Math.random() * pool.reduce((s, [, d]) => s + d.weight, 0); for (const [id, d] of pool) { r -= d.weight; if (r <= 0) { pick = id; break; } } }
+    const wait = Math.round(F.waitMs[0] + Math.random() * (F.waitMs[1] - F.waitMs[0]));
+    (this.casts ||= new Map()).set(a.id, { fish: pick, at: Date.now(), wait, x, y });
+    self(); this.broadcast({ t: 'fx', id: a.id, kind: 'cast', map: a.map, x, y });
+    done({ wait, diff: pick ? FISH[pick].diff : 1 });
+  }
+  onReel(a, p, m, { no, done, self }) {
+    const c = this.casts && this.casts.get(a.id), F = BAL.fishing; if (!c) return no('gone');
+    this.casts.delete(a.id);
+    const t = Date.now() - c.at; if (t < c.wait - 150 || t > c.wait + 20000) return no('gone'); // 還沒上鉤就說釣到、或拖太久：不算
+    if (!m.win) return done({ got: null });
+    const item = c.fish ? 'fish_' + c.fish : 'junk', d = c.fish && FISH[c.fish];
+    if (!invAdd(p.inv, BAL.invSlots, item, 1)) return no('full');
+    let size = 0, record = false;
+    if (d) { size = Math.round((d.size[0] + Math.pow(Math.random(), 1.6) * (d.size[1] - d.size[0])) * 10) / 10; p.fishRec ||= {}; record = size > (p.fishRec[c.fish] || 0); if (record) p.fishRec[c.fish] = size; p.skills.fishing = (p.skills.fishing || 0) + d.diff * F.xpPerDiff; }
+    this.logEvent(a.id, 'fish', { id: item, size }); self();
+    this.broadcast({ t: 'fx', id: a.id, kind: 'harvest', map: a.map, x: c.x, y: c.y, item });
+    done({ got: { id: item, size, record } });
   }
   // 離某種可以互動的東西（出貨箱、床、倉庫箱、種子攤）夠不夠近
   nearUse(a, use) { return MAPS[a.map].objects.some((o) => { const d = OBJECTS[o.type]; if (d.use !== use) return false; const [tw] = d.tiles || [1, 1]; return Math.hypot(o.x + tw / 2 - a.x, o.y + 0.5 - a.y) <= BAL.reach + tw / 2; }); }
@@ -240,6 +298,11 @@ export class FarmRoom {
     const xp = (skill, n) => { p.skills[skill] = (p.skills[skill] || 0) + n; };
     const fx = (kind, extra) => this.broadcast({ t: 'fx', id: a.id, kind, map: a.map, x, y, ...extra }); // 讓對方看到你在做什麼
     const obj = this.objs.get(k);
+    if (obj && obj.type === 'forage') { // 野外的採集物：手上拿什麼都可以撿
+      if (!invAdd(p.inv, BAL.invSlots, obj.item, 1)) return bad('full');
+      this.objs.delete(k); this.dirtyObjs.add(k); xp('foraging', BAL.forage.xp); this.logEvent(a.id, 'forage', { id: obj.item }); self(); fx('harvest', { item: obj.item });
+      this.broadcast({ t: 'objs', by: a.id, list: [this.pubObj(k)], drops: { [obj.item]: 1 } }); return done();
+    }
     if (obj) { // 樹、石頭、樹枝、雜草：要用對的工具，打到沒血就清掉、掉材料
       const d = OBJECTS[obj.type]; if (tool !== d.tool) return bad('tool:' + d.tool);
       if (obj.hp <= 1) { const inv = JSON.parse(JSON.stringify(p.inv)); for (const [id, n] of Object.entries(d.drops)) if (!invAdd(inv, BAL.invSlots, id, n)) return bad('full'); if (!spend(d.energy)) return bad('tired'); p.inv = inv; this.objs.delete(k); xp(d.xp[0], d.xp[1]); this.logEvent(a.id, 'clear', { type: obj.type }); }
@@ -309,13 +372,14 @@ export class FarmRoom {
       const k = !a ? 1 : !a.asleep ? BAL.sleepRestore.passout : (a.sleptAt || 0) >= BAL.lateMinute ? BAL.sleepRestore.late : BAL.sleepRestore.early;
       p.energy = Math.max(p.energy, Math.round(BAL.energyMax * k)); this.dirtyPl.add(r.user_id);
     }
+    this.spawnDaily();
     this.farmDirty = true; this.logEvent(0, 'newday', { reason, total });
     for (const { ws, a } of this.online()) {
       if (reason === 'late' && !a.asleep) { a.map = 'house'; a.x = MAPS.house.spawn.x; a.y = MAPS.house.spawn.y; Object.assign(this.player(a.id), { map: a.map, x: a.x, y: a.y }); } // 昏倒的人被送回家
       a.asleep = false; ws.serializeAttachment(a);
     }
     this.flush();
-    for (const { ws, a } of this.online()) this.send(ws, { t: 'newday', reason, farm: this.pubFarm(), tiles: [...this.tiles.keys()].map((k) => this.pubTile(k)), self: this.pubSelf(a), you: this.pub(a), players: this.online().filter((s) => s.a.id !== a.id).map((s) => this.pub(s.a)) });
+    for (const { ws, a } of this.online()) this.send(ws, { t: 'newday', reason, farm: this.pubFarm(), tiles: [...this.tiles.keys()].map((k) => this.pubTile(k)), objs: [...this.objs.keys()].map((k) => this.pubObj(k)), self: this.pubSelf(a), you: this.pub(a), players: this.online().filter((s) => s.a.id !== a.id).map((s) => this.pub(s.a)) });
   }
   async restore(request, who) {
     const body = await request.json().catch(() => ({})), day = Number(body.day) || 0;

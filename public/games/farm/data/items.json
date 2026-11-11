@@ -321,5 +321,351 @@
   "sell": 22,
   "art": "item/fertilizer_gold",
   "desc": "好品質的機會更高"
+ },
+ "rod": {
+  "name": "竹釣竿",
+  "kind": "tool",
+  "tool": "rod",
+  "desc": "對著水面用，看到「！」就按動作鍵",
+  "art": "tool/rod"
+ },
+ "fish_crucian": {
+  "name": "鯽魚",
+  "kind": "fish",
+  "fish": "crucian",
+  "sell": 30,
+  "art": "fish/crucian"
+ },
+ "fish_carp": {
+  "name": "鯉魚",
+  "kind": "fish",
+  "fish": "carp",
+  "sell": 45,
+  "art": "fish/carp"
+ },
+ "fish_tilapia": {
+  "name": "吳郭魚",
+  "kind": "fish",
+  "fish": "tilapia",
+  "sell": 35,
+  "art": "fish/tilapia"
+ },
+ "fish_loach": {
+  "name": "泥鰍",
+  "kind": "fish",
+  "fish": "loach",
+  "sell": 40,
+  "art": "fish/loach"
+ },
+ "fish_goldfish": {
+  "name": "金魚",
+  "kind": "fish",
+  "fish": "goldfish",
+  "sell": 120,
+  "art": "fish/goldfish"
+ },
+ "fish_koi": {
+  "name": "錦鯉",
+  "kind": "fish",
+  "fish": "koi",
+  "sell": 380,
+  "art": "fish/koi"
+ },
+ "fish_bass": {
+  "name": "鱸魚",
+  "kind": "fish",
+  "fish": "bass",
+  "sell": 70,
+  "art": "fish/bass"
+ },
+ "fish_trout": {
+  "name": "鱒魚",
+  "kind": "fish",
+  "fish": "trout",
+  "sell": 85,
+  "art": "fish/trout"
+ },
+ "fish_ayu": {
+  "name": "香魚",
+  "kind": "fish",
+  "fish": "ayu",
+  "sell": 95,
+  "art": "fish/ayu"
+ },
+ "fish_catfish": {
+  "name": "鯰魚",
+  "kind": "fish",
+  "fish": "catfish",
+  "sell": 110,
+  "art": "fish/catfish"
+ },
+ "fish_river_shrimp": {
+  "name": "溪蝦",
+  "kind": "fish",
+  "fish": "river_shrimp",
+  "sell": 55,
+  "art": "fish/river_shrimp"
+ },
+ "fish_hairy_crab": {
+  "name": "毛蟹",
+  "kind": "fish",
+  "fish": "hairy_crab",
+  "sell": 130,
+  "art": "fish/hairy_crab"
+ },
+ "fish_eel": {
+  "name": "鰻魚",
+  "kind": "fish",
+  "fish": "eel",
+  "sell": 260,
+  "art": "fish/eel"
+ },
+ "fish_rainbow_trout": {
+  "name": "虹鱒",
+  "kind": "fish",
+  "fish": "rainbow_trout",
+  "sell": 240,
+  "art": "fish/rainbow_trout"
+ },
+ "fish_goby": {
+  "name": "蝦虎魚",
+  "kind": "fish",
+  "fish": "goby",
+  "sell": 25,
+  "art": "fish/goby"
+ },
+ "fish_salmon": {
+  "name": "鮭魚",
+  "kind": "fish",
+  "fish": "salmon",
+  "sell": 210,
+  "art": "fish/salmon"
+ },
+ "fish_horse_mackerel": {
+  "name": "竹莢魚",
+  "kind": "fish",
+  "fish": "horse_mackerel",
+  "sell": 40,
+  "art": "fish/horse_mackerel"
+ },
+ "fish_sardine": {
+  "name": "沙丁魚",
+  "kind": "fish",
+  "fish": "sardine",
+  "sell": 28,
+  "art": "fish/sardine"
+ },
+ "fish_mackerel": {
+  "name": "鯖魚",
+  "kind": "fish",
+  "fish": "mackerel",
+  "sell": 60,
+  "art": "fish/mackerel"
+ },
+ "fish_sea_bream": {
+  "name": "鯛魚",
+  "kind": "fish",
+  "fish": "sea_bream",
+  "sell": 150,
+  "art": "fish/sea_bream"
+ },
+ "fish_flounder": {
+  "name": "比目魚",
+  "kind": "fish",
+  "fish": "flounder",
+  "sell": 135,
+  "art": "fish/flounder"
+ },
+ "fish_octopus": {
+  "name": "章魚",
+  "kind": "fish",
+  "fish": "octopus",
+  "sell": 180,
+  "art": "fish/octopus"
+ },
+ "fish_squid": {
+  "name": "烏賊",
+  "kind": "fish",
+  "fish": "squid",
+  "sell": 100,
+  "art": "fish/squid"
+ },
+ "fish_saury": {
+  "name": "秋刀魚",
+  "kind": "fish",
+  "fish": "saury",
+  "sell": 75,
+  "art": "fish/saury"
+ },
+ "fish_tuna": {
+  "name": "鮪魚",
+  "kind": "fish",
+  "fish": "tuna",
+  "sell": 900,
+  "art": "fish/tuna"
+ },
+ "fish_pufferfish": {
+  "name": "河豚",
+  "kind": "fish",
+  "fish": "pufferfish",
+  "sell": 220,
+  "art": "fish/pufferfish"
+ },
+ "fish_sea_urchin": {
+  "name": "海膽",
+  "kind": "fish",
+  "fish": "sea_urchin",
+  "sell": 140,
+  "art": "fish/sea_urchin"
+ },
+ "fish_clam": {
+  "name": "蛤蜊",
+  "kind": "fish",
+  "fish": "clam",
+  "sell": 22,
+  "art": "fish/clam"
+ },
+ "fish_baby_shark": {
+  "name": "小鯊魚",
+  "kind": "fish",
+  "fish": "baby_shark",
+  "sell": 650,
+  "art": "fish/baby_shark"
+ },
+ "fish_swordfish": {
+  "name": "劍魚",
+  "kind": "fish",
+  "fish": "swordfish",
+  "sell": 1200,
+  "art": "fish/swordfish"
+ },
+ "fish_hermit_crab": {
+  "name": "寄居蟹",
+  "kind": "fish",
+  "fish": "hermit_crab",
+  "sell": 35,
+  "art": "fish/hermit_crab"
+ },
+ "fish_starfish": {
+  "name": "海星",
+  "kind": "fish",
+  "fish": "starfish",
+  "sell": 45,
+  "art": "fish/starfish"
+ },
+ "junk": {
+  "name": "水草",
+  "kind": "material",
+  "sell": 1,
+  "art": "item/weeds",
+  "desc": "釣上來的不是魚…"
+ },
+ "wildberry": {
+  "name": "野莓",
+  "kind": "forage",
+  "sell": 18,
+  "art": "item/wildberry"
+ },
+ "dandelion": {
+  "name": "蒲公英",
+  "kind": "forage",
+  "sell": 12,
+  "art": "item/dandelion"
+ },
+ "wild_scallion": {
+  "name": "野蔥",
+  "kind": "forage",
+  "sell": 14,
+  "art": "item/wild_scallion"
+ },
+ "fern_shoot": {
+  "name": "蕨菜",
+  "kind": "forage",
+  "sell": 16,
+  "art": "item/fern_shoot"
+ },
+ "bamboo_shoot": {
+  "name": "竹筍",
+  "kind": "forage",
+  "sell": 28,
+  "art": "item/bamboo_shoot"
+ },
+ "wild_blueberry": {
+  "name": "野生藍莓",
+  "kind": "forage",
+  "sell": 22,
+  "art": "item/wild_blueberry"
+ },
+ "coconut": {
+  "name": "椰子",
+  "kind": "forage",
+  "sell": 30,
+  "art": "item/coconut"
+ },
+ "cicada_shell": {
+  "name": "蟬殼",
+  "kind": "forage",
+  "sell": 15,
+  "art": "item/cicada_shell"
+ },
+ "seashell": {
+  "name": "貝殼",
+  "kind": "forage",
+  "sell": 20,
+  "art": "item/seashell"
+ },
+ "chestnut": {
+  "name": "栗子",
+  "kind": "forage",
+  "sell": 24,
+  "art": "item/chestnut"
+ },
+ "hazelnut": {
+  "name": "榛果",
+  "kind": "forage",
+  "sell": 22,
+  "art": "item/hazelnut"
+ },
+ "wild_mushroom": {
+  "name": "野菇",
+  "kind": "forage",
+  "sell": 26,
+  "art": "item/wild_mushroom"
+ },
+ "persimmon": {
+  "name": "柿子",
+  "kind": "forage",
+  "sell": 30,
+  "art": "item/persimmon"
+ },
+ "maple_leaf": {
+  "name": "楓葉",
+  "kind": "forage",
+  "sell": 10,
+  "art": "item/maple_leaf"
+ },
+ "pinecone": {
+  "name": "松果",
+  "kind": "forage",
+  "sell": 14,
+  "art": "item/pinecone"
+ },
+ "winter_root": {
+  "name": "冬季根莖",
+  "kind": "forage",
+  "sell": 28,
+  "art": "item/winter_root"
+ },
+ "snowdrop": {
+  "name": "雪花蓮",
+  "kind": "forage",
+  "sell": 32,
+  "art": "item/snowdrop"
+ },
+ "crystal_fruit": {
+  "name": "水晶果",
+  "kind": "forage",
+  "sell": 60,
+  "art": "item/crystal_fruit"
  }
 }

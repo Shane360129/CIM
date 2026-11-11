@@ -6,11 +6,12 @@ import { drawSprite } from '../render/sprites.js';
 import { groundAt, levelOf, sellPrice } from '../shared/rules.js';
 import { openPanel, itemIcon } from '../ui/panels.js';
 import { create } from './create.js';
+import { createFishing } from '../systems/fishing.js';
 
-const NO_TEXT = { far: '太遠了，走近一點', ground: '這裡不能翻土', locked: '這塊地還沒開墾（之後才能用）', already: '這裡已經弄好了', untilled: '要先用鋤頭翻土', offline: '連線中斷，稍等一下', timeout: '伺服器沒有回應',
-  tired: '太累了，體力不夠', full: '背包滿了', season: '這個季節種不活', crop: '上面還有作物', late: '已經發芽了，來不及施肥', nothing: '', out: '', unknown: '', closed: '那邊還沒開放' };
-const TOOL_NAME = { axe: '斧頭', pick: '十字鎬', sickle: '鐮刀' };
-const ACT_NAME = { till: '翻土', water: '澆水', plant: '播種', harvest: '收成', clear: '清理', ship: '出貨', buy: '買東西' };
+const NO_TEXT = { far: '太遠了，走近一點', ground: '這裡不行', locked: '這塊地還沒開墾（之後才能用）', already: '這裡已經弄好了', untilled: '要先用鋤頭翻土', offline: '連線中斷，稍等一下', timeout: '伺服器沒有回應',
+  tired: '太累了，體力不夠', gone: '魚跑掉了', full: '背包滿了', season: '這個季節種不活', crop: '上面還有作物', late: '已經發芽了，來不及施肥', nothing: '', out: '', unknown: '', closed: '那邊還沒開放' };
+const TOOL_NAME = { axe: '斧頭', pick: '十字鎬', sickle: '鐮刀', rod: '釣竿' };
+const ACT_NAME = { till: '翻土', water: '澆水', plant: '播種', harvest: '收成', clear: '清理', ship: '出貨', buy: '買東西', forage: '採集', fish: '釣魚' };
 const DIR = (dx, dy, cur) => (Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : dy < 0 ? 'up' : dy > 0 ? 'down' : cur);
 const key = (x, y) => x + ',' + y;
 
@@ -19,11 +20,21 @@ export const play = {
     const { balance } = ctx.data, W = (this.world = ctx.world), hud = ctx.hud;
     this.ctx = ctx; this.bal = balance; this.T = balance.tile; this.player = W.me; this.room = W.room; this.sent = { t: 0, vx: 0, vy: 0 }; this.warping = 0;
     ctx.level = (skill) => levelOf(W.self.skills[skill] || 0, balance).lv;
+    // 釣魚結束：r 是伺服器的回覆
+    this.fishing = createFishing(ctx, (r, win, diff, why) => {
+      const items = ctx.data.items;
+      if (why === 'early') return hud.toast('太早拉了，魚跑掉了', 1300);
+      if (why === 'late') return hud.toast('慢了一步，魚跑掉了', 1300);
+      if (!r || r.t !== 'ok') return hud.toast(r && r.reason === 'full' ? '背包滿了，魚放回去了' : '魚跑掉了', 1300);
+      if (!r.got) return hud.toast('沒拉上來…', 1300);
+      const it = items[r.got.id]; W.me.action = 'happy'; W.me.actionT = 0;
+      hud.toast(r.got.size ? `釣到 ${it.name}（${r.got.size} 公分）${r.got.record ? '・新紀錄！' : ''}` : `釣到 ${it.name}`, 1800);
+    });
     this.setMap(W.me.map || 'farm');
     ctx.view.onResize = (v) => ctx.camera.fit(v, balance);
     hud.show(true); hud.showPlay(true);
     hud.setChat({ maxChars: balance.bubbleMaxChars, emoteList: balance.emotes, say: (text) => this.room.send({ t: 'bubble', text }), emote: (e) => this.room.send({ t: 'emote', e }) });
-    hud.onBag(() => this.togglePanel('bag'));
+    hud.onBag(() => { this.fishing.cancel(); this.togglePanel('bag'); });
     const refresh = () => { hud.setHotbar(W.self.inv, (s) => itemIcon(ctx.data.items, s.id, 30)); if (W.farm) hud.setStatus(W.farm.money, W.self.energy, W.self.energyMax); };
     refresh();
     const net = (s) => hud.setNet(s === 'online' ? '' : s === 'replaced' ? '已在別的分頁打開' : '連線中斷，重新連線中…');
@@ -33,11 +44,11 @@ export const play = {
       ctx.input.on('bag', () => this.togglePanel('bag')),
       ctx.input.on('say', () => hud.openSay()),
       ctx.input.on('esc', () => { if (hud.hasPanel) hud.closePanel(); else if (hud.hasCard) hud.closeCard(); else if (window.parent !== window) window.parent.postMessage({ type: 'farm-close' }, location.origin); }),
-      ctx.input.on('action', () => this.act(this.facingTile())),
-      ctx.input.on('tap', (p) => { const w = ctx.camera.toWorld(p.x, p.y); this.act({ x: Math.floor(w.x / this.T), y: Math.floor(w.y / this.T) }); }),
+      ctx.input.on('action', () => { if (this.fishing.active) this.fishing.press(); else this.act(this.facingTile()); }),
+      ctx.input.on('tap', (p) => { if (this.fishing.active) return this.fishing.press(); const w = ctx.camera.toWorld(p.x, p.y); this.act({ x: Math.floor(w.x / this.T), y: Math.floor(w.y / this.T) }); }),
       W.on('status', (s) => { net(s); if (s === 'replaced') hud.card('農場在別的地方打開了', ['同一個帳號一次只能在一個分頁玩。'], [{ label: '知道了', value: true }]); }),
       W.on('snapshot', (m) => { this.sent = { t: 0, vx: 0, vy: 0 }; this.setMap(W.me.map); refresh(); if (m.summary) this.showSummary(m.summary, m.partner); }),
-      W.on('map', (id) => { this.setMap(id); hud.closePanel(); }),
+      W.on('map', (id) => { this.fishing.cancel(); this.setMap(id); hud.closePanel(); }),
       W.on('self', refresh), W.on('farm', refresh),
       W.on('toast', (t) => hud.toast(t)),
       W.on('objs', (m) => { if (m.by === W.me.id && m.drops) hud.toast('拿到 ' + Object.entries(m.drops).map(([id, n]) => `${ctx.data.items[id].name}×${n}`).join('、'), 1300); }),
@@ -45,7 +56,7 @@ export const play = {
     ];
     if (ctx.pendingSummary) { this.showSummary(ctx.pendingSummary.summary, ctx.pendingSummary.partner); ctx.pendingSummary = null; }
   },
-  exit(ctx) { this.off.forEach((f) => f()); ctx.hud.show(false); ctx.hud.showPlay(false); ctx.view.onResize = null; },
+  exit(ctx) { this.fishing.cancel(); this.off.forEach((f) => f()); ctx.hud.show(false); ctx.hud.showPlay(false); ctx.view.onResize = null; },
 
   // 換地圖：地面重畫，不會動的東西（房子、家具）和它們擋住的格子、可以互動的格子重算。樹、石頭這些會被清掉的在 world.objs 裡
   setMap(id) {
@@ -119,6 +130,15 @@ export const play = {
       return;
     }
     pl.dir = DIR(t.x + 0.5 - pl.x, t.y + 0.5 - pl.y, pl.dir);
+    const held = W.self.inv[hud.selected], heldDef = held && data.items[held.id];
+    if (heldDef && heldDef.tool === 'rod' && !W.obj(this.mapId, t.x, t.y)) { // 釣竿：對著水面拋竿（可以丟遠一點：面前直直看過去最近的水）
+      let w = groundAt(this.map, t.x, t.y) === 'water' ? t : null;
+      if (!w) { const d = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] }[pl.dir]; for (let i = 1; i <= 3 && !w; i++) { const x = Math.floor(pl.x) + d[0] * i, y = Math.floor(pl.y) + d[1] * i; if (groundAt(this.map, x, y) === 'water') w = { x, y }; } }
+      if (!w) return hud.toast('要對著水面才能釣魚', 1100);
+      const r = await this.fishing.cast(hud.selected, w.x, w.y);
+      if (r && r.t === 'no') hud.toast(NO_TEXT[r.reason] || '這裡釣不到', 1200); else if (r) { pl.action = 'cast'; pl.actionT = 0; pl.tool = 'cast'; }
+      return;
+    }
     const r = await this.room.req({ t: 'use', slot: hud.selected, x: t.x, y: t.y });
     if (r.t === 'ok' && r.got) hud.toast(`收成了 ${data.items[r.got.id].name}${r.got.q ? `（${this.bal.quality.names[r.got.q]}）` : ''}`, 1200);
     if (r.t === 'no') { const tool = r.reason.startsWith('tool:') && TOOL_NAME[r.reason.slice(5)]; const text = tool ? `這個要用${tool}` : NO_TEXT[r.reason]; if (text) hud.toast(text, 1300); }
@@ -134,7 +154,8 @@ export const play = {
   },
 
   update(dt) {
-    const { ctx } = this, W = this.world, p = this.player, hud = ctx.hud, a = hud.typing || hud.hasCard || !W.ready ? { x: 0, y: 0 } : ctx.input.axis(), sp = this.bal.walkSpeed * dt;
+    const { ctx } = this, W = this.world, p = this.player, hud = ctx.hud, a = hud.typing || hud.hasCard || !W.ready || this.fishing.state === 'game' ? { x: 0, y: 0 } : ctx.input.axis(), sp = this.bal.walkSpeed * dt;
+    this.fishing.update(dt); if ((a.x || a.y) && this.fishing.active) this.fishing.cancel(); // 一走動就收竿
     p.px = p.x; p.py = p.y;
     // 左右、上下分開試：斜著撞到牆會沿著牆滑過去，不會整個卡住
     if (a.x && this.free(p.x + a.x * sp, p.y)) p.x += a.x * sp;
@@ -199,7 +220,7 @@ export const play = {
     for (const e of this.map.exits || []) { g.font = `700 ${T * 0.22}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = 'rgba(255,255,255,.85)'; g.fillText(e.label, clampX((e.x + e.w / 2) * T, this.map.w * T, T * 1.6), (e.y + e.h / 2) * T - T * 1.1 * (e.h > 1 ? 1 : 0.2)); }
     // 只畫看得到的，依腳的位置由遠到近畫
     for (const t of this.things) if (t.fx > x0 && t.fx < x1 && t.fy > y0 && t.fy < y1) list.push({ y: t.fy, t });
-    for (const o of W.objs.values()) if (o.map === mapId && o.x > x0 && o.x < x1 && o.y > y0 && o.y < y1) list.push({ y: o.y + 0.92, t: { def: data.objects[o.type], fx: o.x + 0.5, fy: o.y + 0.92 } });
+    for (const o of W.objs.values()) if (o.map === mapId && o.x > x0 && o.x < x1 && o.y > y0 && o.y < y1) list.push({ y: o.y + 0.92, t: { def: o.item ? { ...data.objects[o.type], art: data.items[o.item].art, name: data.items[o.item].name } : data.objects[o.type], fx: o.x + 0.5, fy: o.y + 0.92 } });
     const people = [{ q: me, color: '#f0a04a' }, ...[...W.others.values()].filter((o) => o.map === mapId).map((o) => ({ q: lerp(o), color: '#6aa8e8' }))];
     for (const pp of people) list.push({ y: pp.q.y, pp });
     list.sort((u, v) => u.y - v.y);
@@ -213,6 +234,9 @@ export const play = {
       drawDoll(g, q.look, parts, q.x * T, q.y * T, U, q.dir, q.action || (q.asleep ? 'sit' : q.moving ? 'walk' : 'idle'), q.action ? q.actionT : q.anim, q.tool);
       drawName(g, q.asleep ? q.name + ' Zzz' : q.name, q.x * T, q.y * T - U * 2.72, T);
     }
+    // 浮標：自己的和對方的
+    const bobs = []; if (this.fishing.bobber) bobs.push(this.fishing.bobber); for (const o of W.others.values()) if (o.map === mapId && o.fishing && !o.moving) bobs.push({ ...o.fishing, t: performance.now() / 1000 });
+    for (const b of bobs) { const bx = (b.x + 0.5) * T, by = (b.y + 0.5) * T + Math.sin(b.t * (b.bite ? 22 : 3)) * T * (b.bite ? 0.08 : 0.03); g.fillStyle = '#fff'; g.strokeStyle = '#5a3d22'; g.lineWidth = Math.max(1.5, T * 0.04); g.beginPath(); g.arc(bx, by, T * 0.11, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#e5484d'; g.beginPath(); g.arc(bx, by, T * 0.11, Math.PI, 0); g.fill(); if (b.bite) drawBubble(g, '！', bx, by - T * 0.5, T, true); }
     for (const f of W.floaters) { if (f.map !== mapId) continue; g.globalAlpha = Math.min(1, f.life * 2); const it = data.items[f.item]; if (!drawSprite(g, it.art, f.x * T, (f.y - (1.1 - f.life) * 0.9) * T, T * 0.6, T * 0.6)) drawName(g, it.name, f.x * T, (f.y - (1.1 - f.life) * 0.9) * T, T); g.globalAlpha = 1; }
     for (const pp of people) { const b = W.bubbles.get(pp.q.id); if (b) drawBubble(g, b.text, pp.q.x * T, pp.q.y * T - T * (pp.q.look ? 1.95 : 1.45), T, b.big); }
     // 天色（只有戶外）：傍晚慢慢變橘、晚上變暗；下雨天灰一點、畫雨絲

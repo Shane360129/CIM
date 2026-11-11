@@ -104,3 +104,10 @@ button.chip { cursor: pointer; }
 .sname { font-weight: 700; flex: none; width: 6.2em; } .sdesc { flex: 1; font-size: 12px; color: #7a6548; } .sprice { flex: none; font-weight: 700; }
 .pbtn { font: inherit; font-size: 13px; font-weight: 700; padding: 5px 9px; border-radius: 8px; border: 2px solid #5a3d22; background: #e8872e; color: #fff; cursor: pointer; }
 .pbtn:disabled { background: #d9c7a0; color: #8a7a5c; border-color: #b8a47c; cursor: default; }
+
+/* 階段 5：釣魚小遊戲 */
+.fishgame { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); width: min(340px, calc(100% - 40px)); padding: 12px 14px; border-radius: 14px; background: #f3e6c8; border: 3px solid #5a3d22; pointer-events: none; }
+.fglabel { font-weight: 700; font-size: 15px; text-align: center; margin-bottom: 8px; }
+.fgbar { position: relative; height: 26px; border-radius: 13px; background: #7cc6e6; border: 2px solid #5a3d22; overflow: hidden; }
+.fgzone { position: absolute; top: 0; bottom: 0; background: #6fbf5a; }
+.fgneedle { position: absolute; top: -2px; bottom: -2px; width: 6px; margin-left: -3px; border-radius: 3px; background: #e5484d; border: 1px solid #5a3d22; }

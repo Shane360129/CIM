@@ -117,6 +117,21 @@ check('樹砍五下倒下，拿到木材和樹液，採集有經驗', has(A, 'wo
 check('清掉的地方可以走過去翻土嗎（東西真的不見了）', (await use(A, 'axe', tree.x, tree.y)).reason !== 'tool:axe');
 const e0 = A.self.energy; check('做事會累：體力變少了', e0 < 100, String(e0));
 check('不認得的格子座標被拒絕', (await req(A, { t: 'use', slot: 0, x: 'a', y: 3 })).reason === 'out');
+// ---- 採集、釣魚 ----
+const fo = sa.objs.find((o) => o.map === 'farm' && o.type === 'forage');
+check('農場上每天有這一季的採集物', !!fo && ['wildberry', 'dandelion', 'wild_scallion', 'fern_shoot', 'bamboo_shoot'].includes(fo.item), fo && fo.item);
+await go(A, fo.x + 0.5, fo.y + 1.2); const fx0 = A.self.skills.foraging; Bc.clear();
+check('採集物手上拿什麼都能撿：背包多一個、採集有經驗、對方看到它不見', (await use(A, 'hoe', fo.x, fo.y)).t === 'ok' && has(A, fo.item) === 1 && A.self.skills.foraging === fx0 + 3 && !!(await Bc.wait('objs', (m) => m.list[0].x === fo.x && m.list[0].type === null)));
+await go(A, 31.5, 6.5, 'right'); // 池塘在 x 32～38、y 4～8
+check('沒拿釣竿不能釣、不是水面不能釣、太遠不能釣', (await req(A, { t: 'fish', slot: slot(A, 'hoe'), x: 32, y: 6 })).reason === 'tool:rod' && (await req(A, { t: 'fish', slot: slot(A, 'rod'), x: 30, y: 6 })).reason === 'ground' && (await req(A, { t: 'fish', slot: slot(A, 'rod'), x: 38, y: 6 })).reason === 'far');
+Bc.clear(); const c1 = await req(A, { t: 'fish', slot: slot(A, 'rod'), x: 32, y: 6 });
+check('拋竿：伺服器回多久上鉤和難度，對方看得到你在釣魚', c1.t === 'ok' && c1.wait >= 1500 && c1.wait <= 5000 && c1.diff >= 1 && !!(await Bc.wait('fx', (m) => m.kind === 'cast' && m.x === 32)));
+check('還沒上鉤就說釣到了：不算', (await req(A, { t: 'reel', win: true })).reason === 'gone');
+const c2 = await req(A, { t: 'fish', slot: slot(A, 'rod'), x: 32, y: 6 }); await sleep(c2.wait + 120); const rl = await req(A, { t: 'reel', win: true });
+check('上鉤後拉上來：背包多一條（魚有尺寸和紀錄，釣魚有經驗；也可能是水草）', rl.t === 'ok' && !!rl.got && has(A, rl.got.id) === 1 && (rl.got.id === 'junk' || (rl.got.size > 0 && rl.got.record && A.self.fishRec[rl.got.id.slice(5)] === rl.got.size && A.self.skills.fishing > 0)), JSON.stringify(rl.got));
+const cf3 = await req(A, { t: 'fish', slot: slot(A, 'rod'), x: 32, y: 6 }); await sleep(cf3.wait + 120); const n3 = A.self.inv.filter(Boolean).reduce((n, x) => n + x.n, 0);
+check('小遊戲沒過：什麼都沒拿到', (await req(A, { t: 'reel', win: false })).got === null && A.self.inv.filter(Boolean).reduce((n, x) => n + x.n, 0) === n3);
+check('沒有拋竿就收竿：不算', (await req(A, { t: 'reel', win: true })).reason === 'gone');
 // 背包搬位置
 const s1 = slot(A, 'wood'); await req(A, { t: 'swap', slot: s1, b: 20 }); check('背包可以搬位置', A.self.inv[20] && A.self.inv[20].id === 'wood' && !A.self.inv[s1]);
 

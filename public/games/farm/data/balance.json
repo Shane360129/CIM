@@ -57,6 +57,10 @@
       1
     ],
     [
+      "rod",
+      1
+    ],
+    [
       "seed_carrot",
       8
     ],
@@ -112,7 +116,8 @@
   },
   "skills": {
     "farming": "農耕",
-    "foraging": "採集"
+    "foraging": "採集",
+    "fishing": "釣魚"
   },
   "xpPerLevel": [
     40,
@@ -179,5 +184,56 @@
     "summer",
     "autumn",
     "winter"
-  ]
+  ],
+  "forage": {
+    "perMap": {
+      "farm": 3,
+      "road": 3,
+      "lake": 9
+    },
+    "weedsPerDay": 2,
+    "weedsMax": 34,
+    "xp": 3,
+    "bySeason": {
+      "spring": [
+        "wildberry",
+        "dandelion",
+        "wild_scallion",
+        "fern_shoot",
+        "bamboo_shoot"
+      ],
+      "summer": [
+        "wild_blueberry",
+        "coconut",
+        "cicada_shell",
+        "seashell"
+      ],
+      "autumn": [
+        "chestnut",
+        "hazelnut",
+        "wild_mushroom",
+        "persimmon",
+        "maple_leaf"
+      ],
+      "winter": [
+        "pinecone",
+        "winter_root",
+        "snowdrop",
+        "crystal_fruit"
+      ]
+    }
+  },
+  "fishing": {
+    "reach": 3.4,
+    "energy": 2,
+    "waitMs": [
+      1500,
+      5000
+    ],
+    "biteWindowMs": 1100,
+    "hitsNeeded": 3,
+    "missesAllowed": 2,
+    "xpPerDiff": 5,
+    "junkChance": 0.12
+  }
 }

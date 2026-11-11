@@ -12,10 +12,11 @@ export const loading = {
       const convId = Number(new URLSearchParams(location.search).get('conv')) || 0;
       const [data, session] = await Promise.all([
         loadAll([['balance', 'data/balance.json'], ['objects', 'data/objects.json'], ['parts', 'data/doll/parts.json'], ['items', 'data/items.json'], ['crops', 'data/crops.json'],
-          ['map_farm', 'data/maps/farm.json'], ['map_house', 'data/maps/house.json'], ['map_road', 'data/maps/road.json']], (p) => { this.progress = p * 0.8; }),
+          ['map_farm', 'data/maps/farm.json'], ['map_house', 'data/maps/house.json'], ['map_road', 'data/maps/road.json'], ['map_lake', 'data/maps/lake.json'], ['fish', 'data/fish.json']], (p) => { this.progress = p * 0.8; }),
         signIn(convId),
       ]);
-      data.maps = { farm: data.map_farm, house: data.map_house, road: data.map_road };
+      data.maps = { farm: data.map_farm, house: data.map_house, road: data.map_road, lake: data.map_lake };
+      await loadAtlas('b3');
       await loadAtlas('b2'); // 第 2 批素材（目前是縮圖做的，畫質是暫時的）；載不到就全部用暫代圖
       Object.assign(ctx, { data, session });
       this.progress = 1;

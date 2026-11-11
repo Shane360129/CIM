@@ -83,6 +83,25 @@ const { chromium } = require('playwright');
   await tp(pa, 14, 6.6, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300); await pa.screenshot({ path: S + '/s4-shop.png' });
   await pa.locator('.shoprow[data-item=seed_cabbage] .pbtn').first().click(); await pb.waitForTimeout(500);
   ok('種子攤買高麗菜種子：背包多一包，錢兩邊都變成 450', (await count(pa, 'seed_cabbage')) === 1 && (await st(pa)).money === 450 && (await st(pb)).money === 450); await pa.keyboard.press('Escape');
+  // 湖邊：採集、釣魚
+  await tp(pa, 20.6, 0.7, 'up'); await pa.keyboard.down('KeyW'); await pa.waitForTimeout(500); await pa.keyboard.up('KeyW'); await pa.waitForTimeout(700);
+  ok('從路上往北走到湖邊', (await st(pa)).me.map === 'lake');
+  const fo = await pa.evaluate(() => [...window.__game.world.objs.values()].find((o) => o.map === 'lake' && o.type === 'forage'));
+  await tp(pa, fo.x + 0.5, fo.y + 1.3, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(500);
+  ok('湖邊有採集物，走過去按空白鍵撿起來', (await count(pa, fo.item)) === 1);
+  await tp(pa, 18.5, 14.6, 'up'); await hold(pa, 'rod'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
+  ok('拿釣竿對著湖面按空白鍵：拋竿，浮標在水上', (await pa.evaluate(() => window.__game.scenes.current.fishing.state)) === 'wait');
+  await pa.screenshot({ path: S + '/s5-fishing.png' });
+  await pa.waitForFunction(() => window.__game.scenes.current.fishing.state === 'bite', null, { timeout: 8000 }); await pa.keyboard.press('Space'); await pa.waitForTimeout(150);
+  ok('看到「！」按空白鍵：進入小遊戲', (await pa.locator('.fishgame').count()) === 1);
+  await pa.screenshot({ path: S + '/s5-fishgame.png' });
+  for (let i = 0; i < 3; i++) { await pa.evaluate(() => window.__game.scenes.current.fishing.debug.aim()); await pa.keyboard.press('Space'); await pa.waitForTimeout(120); }
+  await pa.waitForTimeout(500); const caught = await pa.locator('.toast').textContent();
+  ok('指針在綠色的地方按三次：釣到了 → ' + caught, /釣到/.test(caught) && (await pa.locator('.fishgame').count()) === 0 && (await st(pa)).inv.some((x) => x && (x.id.startsWith('fish_') || x.id === 'junk')));
+  await tp(pa, 18.5, 14.6, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
+  ok('還沒上鉤就拉：魚跑掉', /太早/.test(await pa.locator('.toast').textContent()));
+  await tp(pa, 17.6, 25.3, 'down'); await pa.keyboard.down('KeyS'); await pa.waitForTimeout(500); await pa.keyboard.up('KeyS'); await pa.waitForTimeout(700);
+  ok('往南走回路上', (await st(pa)).me.map === 'road');
   await tp(pa, 0.6, 7, 'left'); await pa.keyboard.down('KeyA'); await pa.waitForTimeout(500); await pa.keyboard.up('KeyA'); await pa.waitForTimeout(700);
   ok('往西走回農場', (await st(pa)).me.map === 'farm');
   // 農舍：門、衣櫃、倉庫箱、床

@@ -35,7 +35,7 @@ export function createWorld(session, bal) {
   room.on('move', (m) => { const o = w.others.get(m.id); if (!o) return; if (o.map !== m.map) { o.map = m.map; o.x = m.x; o.y = m.y; } Object.assign(o, { tx: m.x, ty: m.y, vx: m.vx, vy: m.vy, dir: m.dir }); if (Math.hypot(o.x - m.x, o.y - m.y) > 4) { o.x = m.x; o.y = m.y; } });
   room.on('tiles', (m) => { w.setTiles(m.list); emit('tiles', m); });
   room.on('objs', (m) => { w.setObjs(m.list); emit('objs', m); });
-  room.on('self', (m) => { w.self = { inv: m.inv, energy: m.energy, energyMax: m.energyMax, skills: m.skills }; emit('self', m); });
+  room.on('self', (m) => { w.self = { inv: m.inv, energy: m.energy, energyMax: m.energyMax, skills: m.skills, fishRec: m.fishRec || {} }; emit('self', m); });
   room.on('farm', (m) => { if (w.farm) Object.assign(w.farm, { money: m.money, ship: m.ship, chest: m.chest }); emit('farm', m); });
   room.on('warp', (m) => {
     const who = w.who(m.id); if (!who) return;
@@ -45,8 +45,9 @@ export function createWorld(session, bal) {
   // 有人做了動作：播他的動作（揮工具、澆水），收成的時候頭上冒出收到的東西
   room.on('fx', (m) => {
     const who = w.who(m.id); if (!who) return;
-    who.action = m.kind === 'water' ? 'water' : m.kind === 'harvest' || m.kind === 'plant' || m.kind === 'fertilize' ? 'eat' : 'swing'; who.actionT = 0; who.tool = m.kind;
+    who.action = m.kind === 'water' ? 'water' : m.kind === 'cast' ? 'cast' : m.kind === 'harvest' || m.kind === 'plant' || m.kind === 'fertilize' ? 'eat' : 'swing'; who.actionT = 0; who.tool = m.kind;
     if (m.id !== w.me.id && m.map === w.me.map) w.mark = { x: m.x, y: m.y, life: 0.6, color: '#ffd76a' };
+    who.fishing = m.kind === 'cast' ? { x: m.x, y: m.y } : null; // 對方在釣魚：看得到他的浮標
     if (m.kind === 'harvest') w.floaters.push({ map: m.map, x: m.x + 0.5, y: m.y, item: m.item, q: m.q, life: 1.1 });
   });
   room.on('no', (m) => { if (m.tile) w.setTiles([m.tile]); if (m.obj) w.setObjs([m.obj]); });
