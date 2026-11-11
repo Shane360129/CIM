@@ -153,5 +153,21 @@
    "wood": 20,
    "sap": 2
   }
+ },
+ "furnace": {
+  "name": "熔爐",
+  "in": [
+   "ore"
+  ],
+  "minutes": 180,
+  "map": {
+   "copper_ore": "copper_bar",
+   "iron_ore": "iron_bar",
+   "gold_ore": "gold_bar"
+  },
+  "art": "machine/furnace",
+  "craft": {
+   "stone": 25
+  }
  }
 }

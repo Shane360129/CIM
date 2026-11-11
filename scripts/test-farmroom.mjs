@@ -259,6 +259,38 @@ if (hen7 && hen7.ready) {
   const eg = await req(Bc, { t: 'animal', aid: hen.id, act: 'collect' });
   check('收雞蛋：背包多一顆、畜牧有經驗；收過就沒了', eg.t === 'ok' && has(Bc, 'egg') === 1 && Bc.self.skills.ranching > 0 && (await req(Bc, { t: 'animal', aid: hen.id, act: 'collect' })).reason === 'nothing');
 }
+// ---- 礦坑（入口在湖邊）----
+const { monPos } = await import('../public/games/farm/shared/rules.js');
+if (Bc.you.map !== 'farm' && !Bc.log.some((m) => m.t === 'warp' && m.id === b.user.id && m.map === 'farm')) { await go(Bc, 5, 7.6); await req(Bc, { t: 'warp', i: 0 }); }
+check('不在礦坑入口不能進去', (await req(Bc, { t: 'mine-enter', floor: 1 })).reason === 'far');
+await go(Bc, 42.5, 16); await req(Bc, { t: 'warp', i: 0 }); await go(Bc, 20.6, 0.7); await req(Bc, { t: 'warp', i: 2 }); await go(Bc, 31.5, 18.6);
+check('還沒到過的樓層電梯不能坐', (await req(Bc, { t: 'mine-enter', floor: 5 })).reason === 'closed' && (await req(Bc, { t: 'mine-enter', floor: 3 })).reason === 'closed');
+Bc.clear(); const en = await req(Bc, { t: 'mine-enter', floor: 1 }); const fl = (await Bc.wait('mine')) || {}; let st = fl.state;
+check('進礦坑第 1 層：拿到這一層的樣子（石頭、藏起來的樓梯、怪物）', en.t === 'ok' && !!st && st.floor === 1 && st.rocks.length >= 30 && st.mons.length >= 1 && st.stairs.open === false && st.rocks.some((r) => r.x === st.stairs.x && r.y === st.stairs.y), st && `${st.rocks.length} 顆石頭、${st.mons.length} 隻怪物`);
+const mineHit = (x, y, item = 'pick') => req(Bc, { t: 'mine-hit', x, y, slot: slot(Bc, item) });
+const rk = st.rocks.find((r) => r.type === 'stone' && !(r.x === st.stairs.x && r.y === st.stairs.y));
+await go(Bc, rk.x + 0.5, rk.y + 1.5); check('沒拿十字鎬敲不動', (await mineHit(rk.x, rk.y, 'hoe')).reason === 'tool:pick');
+const st0 = has(Bc, 'stone'), en0 = Bc.self.energy; Bc.clear(); const h1 = await mineHit(rk.x, rk.y), h2 = await mineHit(rk.x, rk.y);
+check('石頭敲兩下碎掉：拿到石頭、花體力、採礦有經驗，這一層的人都收到更新', h1.t === 'ok' && !h1.drops && h2.drops && h2.drops.stone === 1 && has(Bc, 'stone') === st0 + 1 && Bc.self.energy === en0 - 4 && Bc.self.skills.mining === 2 && !!(await Bc.wait('mine-upd', (m) => m.rock.hp === 0)));
+check('敲掉的石頭不能再敲', (await mineHit(rk.x, rk.y)).reason === 'nothing');
+check('樓梯還沒露出來不能下去', (await req(Bc, { t: 'mine-down' })).reason === 'nothing');
+// 怪物：碰到會痛、用劍打
+const mon = st.mons[0], mp = () => monPos(mon, Date.now()); let q = mp(); await go(Bc, q.x, q.y + 0.3);
+const hurt = await req(Bc, { t: 'hurt', mid: mon.id }); check('碰到怪物會痛：血變少', hurt.t === 'ok' && hurt.hp < 100 && Bc.self.hp === hurt.hp, JSON.stringify(hurt));
+check('連續碰不會一直扣（有間隔）', (await req(Bc, { t: 'hurt', mid: mon.id })).reason === 'far');
+check('沒拿劍打不了', (await req(Bc, { t: 'mon-hit', mid: mon.id, slot: slot(Bc, 'hoe') })).reason === 'tool:sword');
+let kill = null; for (let i = 0; i < 8 && !(kill && kill.drops); i++) { q = mp(); await go(Bc, q.x, q.y + 0.3); kill = await req(Bc, { t: 'mon-hit', mid: mon.id, slot: slot(Bc, 'sword') }); }
+check('用劍打幾下怪物就不見：掉東西、戰鬥有經驗', !!kill && !!kill.drops && Bc.self.skills.combat > 0 && (await req(Bc, { t: 'mon-hit', mid: mon.id, slot: slot(Bc, 'sword') })).reason === 'nothing', JSON.stringify(kill));
+// 樓梯藏在其中一顆石頭下面
+await go(Bc, st.stairs.x + 0.5, st.stairs.y + 1.5); let last = null; for (let i = 0; i < 6; i++) { last = await mineHit(st.stairs.x, st.stairs.y); if (last.drops) break; }
+const up = Bc.log.filter((m) => m.t === 'mine-upd').pop();
+check('敲掉藏著樓梯的那顆石頭：樓梯露出來', !!last.drops && up.stairs.open === true);
+Bc.clear(); const dn = await req(Bc, { t: 'mine-down' }); const f2 = await Bc.wait('mine');
+check('走樓梯到第 2 層：新的一層，最深紀錄變成 2', dn.t === 'ok' && !!f2 && f2.state.floor === 2 && f2.deepest === 2 && f2.state.rocks.length >= 30);
+check('沒走到梯子不能出去', (await (async () => { await go(Bc, 3, 3); return req(Bc, { t: 'mine-exit' }); })()).reason === 'far');
+await go(Bc, 10.5, 12.5); Bc.clear();
+check('從梯子出去：回到湖邊的入口前面', (await req(Bc, { t: 'mine-exit' })).t === 'ok' && !!(await Bc.wait('warp', (m) => m.id === b.user.id && m.map === 'lake')));
+check('在外面不能敲礦坑的石頭', (await mineHit(5, 5)).reason === 'far');
 const A2 = open(dm.id, a.token); const s2 = await A2.wait('snapshot');
 check('重新上線：造型和名字還在', !!s2 && !!s2.you.look && s2.you.look.hair === 'twin' && s2.you.name.startsWith('晴b晴'));
 check('重新上線：人還在農舍裡、背包還在、看得到離線時的變化', !!s2 && s2.you.map === 'house' && s2.self.inv.some((x) => x && x.id === 'seed_strawberry') && s2.farm.day === 7 && s2.farm.animals.length === 1 && s2.farm.pets.length === 1);

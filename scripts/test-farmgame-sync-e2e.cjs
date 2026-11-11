@@ -72,7 +72,7 @@ const { chromium } = require('playwright');
   ok('對著出貨箱按空白鍵打開，點纖維放進去：B 也看得到箱子裡有東西', (await st(pb)).ship.length === 1 && (await count(pa, 'fiber')) === 0); await pa.keyboard.press('Escape');
   // 製作台
   await tp(pa, 14.5, 10.4, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
-  ok('對著製作台按空白鍵：列出 10 種加工機和要的材料，材料不夠的按不下去', (await pa.locator('.panel .shoprow').count()) === 10 && (await pa.locator('.panel .shoprow .pbtn:disabled').count()) === 10 && /木材×20/.test(await pa.locator('.panel .shoprow[data-item=jam]').textContent()));
+  ok('對著製作台按空白鍵：列出 11 種加工機和要的材料，材料不夠的按不下去', (await pa.locator('.panel .shoprow').count()) === 11 && (await pa.locator('.panel .shoprow .pbtn:disabled').count()) === 11 && /木材×20/.test(await pa.locator('.panel .shoprow[data-item=jam]').textContent()));
   await pa.screenshot({ path: S + '/s5-craft.png' }); await pa.keyboard.press('Escape');
   // 雞舍：領養小狗（買雞要 300 元，留給伺服器測試）
   await tp(pa, 34, 22.7, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
@@ -114,6 +114,19 @@ const { chromium } = require('playwright');
   ok('指針在綠色的地方按三次：釣到了 → ' + caught, /釣到/.test(caught) && (await pa.locator('.fishgame').count()) === 0 && (await st(pa)).inv.some((x) => x && (x.id.startsWith('fish_') || x.id === 'junk')));
   await tp(pa, 18.5, 14.6, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
   ok('還沒上鉤就拉：魚跑掉', /太早/.test(await pa.locator('.toast').textContent()));
+  // 礦坑
+  await tp(pa, 31.5, 18.7, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
+  ok('對著礦坑入口按空白鍵：可以進第 1 層（還沒有電梯樓層）', (await pa.locator('.card button').count()) === 2);
+  await pa.locator('.card button', { hasText: '第 1 層' }).click(); await pa.waitForTimeout(700);
+  const mine = await pa.evaluate(() => { const w = window.__game.world; return { map: w.me.map, rocks: w.mine && w.mine.rocks.length, mons: w.mine && w.mine.mons.length, hp: w.self.hp }; });
+  ok(`進到礦坑第 1 層：${mine.rocks} 顆石頭、${mine.mons} 隻怪物，畫面上出現血量`, mine.map === 'mine' && mine.rocks >= 30 && (await pa.locator('.chip.hp:not(.hidden)').count()) === 1 && /礦坑第 1 層/.test(await pa.locator('.clock small').first().textContent()));
+  const rk = await pa.evaluate(() => { const s = window.__game.world.mine; return s.rocks.filter((r) => r.type === 'stone' && !s.rocks.some((q) => q.x === r.x && q.y === r.y + 1)).sort((a, b) => Math.hypot(a.x - 10, a.y - 12) - Math.hypot(b.x - 10, b.y - 12))[0]; });
+  await tp(pa, rk.x + 0.5, rk.y + 1.5, 'up'); await hold(pa, 'pick'); await pa.keyboard.press('Space'); await pa.waitForTimeout(350); await pa.keyboard.press('Space'); await pa.waitForTimeout(500);
+  ok('用十字鎬敲兩下石頭：石頭少一顆、拿到石頭', (await pa.evaluate(() => window.__game.world.mine.rocks.length)) === mine.rocks - 1 && (await count(pa, 'stone')) >= 1);
+  await pa.screenshot({ path: S + '/s5-mine.png' });
+  ok('B 知道 A 在礦坑裡', (await st(pb)).other.map === 'mine');
+  await tp(pa, 10.5, 12.5, 'down'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300); await pa.locator('.card button', { hasText: '出去' }).click(); await pa.waitForTimeout(700);
+  ok('對著梯子按空白鍵選「出去」：回到湖邊', (await st(pa)).me.map === 'lake' && (await pa.locator('.chip.hp.hidden').count()) === 1);
   await tp(pa, 17.6, 25.3, 'down'); await pa.keyboard.down('KeyS'); await pa.waitForTimeout(500); await pa.keyboard.up('KeyS'); await pa.waitForTimeout(700);
   ok('往南走回路上', (await st(pa)).me.map === 'road');
   await tp(pa, 0.6, 7, 'left'); await pa.keyboard.down('KeyA'); await pa.waitForTimeout(500); await pa.keyboard.up('KeyA'); await pa.waitForTimeout(700);

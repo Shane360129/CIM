@@ -1183,5 +1183,161 @@
   "buy": 200,
   "art": "obj/brush",
   "desc": "幫家畜刷毛，牠會更喜歡你"
+ },
+ "copper_ore": {
+  "name": "銅礦",
+  "kind": "mineral",
+  "sell": 15,
+  "art": "item/copper_ore",
+  "tags": [
+   "ore"
+  ]
+ },
+ "iron_ore": {
+  "name": "鐵礦",
+  "kind": "mineral",
+  "sell": 30,
+  "art": "item/iron_ore",
+  "tags": [
+   "ore"
+  ]
+ },
+ "gold_ore": {
+  "name": "金礦",
+  "kind": "mineral",
+  "sell": 70,
+  "art": "item/gold_ore",
+  "tags": [
+   "ore"
+  ]
+ },
+ "coal": {
+  "name": "煤炭",
+  "kind": "mineral",
+  "sell": 12,
+  "art": "item/coal",
+  "tags": [
+   "gem"
+  ]
+ },
+ "quartz": {
+  "name": "石英",
+  "kind": "mineral",
+  "sell": 35,
+  "art": "item/quartz",
+  "tags": [
+   "gem"
+  ]
+ },
+ "amethyst": {
+  "name": "紫水晶",
+  "kind": "mineral",
+  "sell": 110,
+  "art": "item/amethyst",
+  "tags": [
+   "gem"
+  ]
+ },
+ "jade": {
+  "name": "翡翠",
+  "kind": "mineral",
+  "sell": 160,
+  "art": "item/jade",
+  "tags": [
+   "gem"
+  ]
+ },
+ "ruby": {
+  "name": "紅寶石",
+  "kind": "mineral",
+  "sell": 260,
+  "art": "item/ruby",
+  "tags": [
+   "gem"
+  ]
+ },
+ "sapphire": {
+  "name": "藍寶石",
+  "kind": "mineral",
+  "sell": 280,
+  "art": "item/sapphire",
+  "tags": [
+   "gem"
+  ]
+ },
+ "topaz": {
+  "name": "黃玉",
+  "kind": "mineral",
+  "sell": 140,
+  "art": "item/topaz",
+  "tags": [
+   "gem"
+  ]
+ },
+ "moonstone": {
+  "name": "月光石",
+  "kind": "mineral",
+  "sell": 420,
+  "art": "item/moonstone",
+  "tags": [
+   "gem"
+  ]
+ },
+ "diamond": {
+  "name": "鑽石",
+  "kind": "mineral",
+  "sell": 800,
+  "art": "item/diamond",
+  "tags": [
+   "gem"
+  ]
+ },
+ "fossil": {
+  "name": "化石碎片",
+  "kind": "mineral",
+  "sell": 90,
+  "art": "item/fossil",
+  "tags": [
+   "gem"
+  ]
+ },
+ "copper_bar": {
+  "name": "銅錠",
+  "kind": "material",
+  "sell": 60,
+  "art": "item/copper_bar"
+ },
+ "iron_bar": {
+  "name": "鐵錠",
+  "kind": "material",
+  "sell": 120,
+  "art": "item/iron_bar"
+ },
+ "gold_bar": {
+  "name": "金錠",
+  "kind": "material",
+  "sell": 260,
+  "art": "item/gold_bar"
+ },
+ "sword": {
+  "name": "木劍",
+  "kind": "tool",
+  "tool": "sword",
+  "desc": "在礦坑裡對著怪物揮",
+  "art": "tool/sword"
+ },
+ "jelly_drop": {
+  "name": "果凍塊",
+  "kind": "material",
+  "sell": 14,
+  "art": "item/sap"
+ },
+ "m_furnace": {
+  "name": "熔爐",
+  "kind": "machine",
+  "machine": "furnace",
+  "sell": 20,
+  "art": "machine/furnace",
+  "desc": "放在農場的空地上，把礦石煉成錠"
  }
 }

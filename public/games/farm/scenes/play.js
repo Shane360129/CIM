@@ -3,14 +3,14 @@ import { buildGround } from '../render/ground.js';
 import { drawObject, drawPlayer, drawBubble, drawTilled, drawShadow, drawName } from '../render/placeholder.js';
 import { drawDoll } from '../render/doll.js';
 import { drawSprite } from '../render/sprites.js';
-import { groundAt, levelOf, sellPrice, animalPos, hearts } from '../shared/rules.js';
+import { groundAt, levelOf, sellPrice, animalPos, hearts, mineMap, monPos } from '../shared/rules.js';
 import { openPanel, itemIcon } from '../ui/panels.js';
 import { create } from './create.js';
 import { createFishing } from '../systems/fishing.js';
 
 const NO_TEXT = { far: '太遠了，走近一點', ground: '這裡不行', locked: '這塊地還沒開墾（之後才能用）', already: '這裡已經弄好了', untilled: '要先用鋤頭翻土', offline: '連線中斷，稍等一下', timeout: '伺服器沒有回應',
   tired: '太累了，體力不夠', gone: '魚跑掉了', machine: '這個放不進這台機器', place: '加工機要放在農場的空地上', full: '背包滿了', season: '這個季節種不活', crop: '上面還有作物', late: '已經發芽了，來不及施肥', nothing: '', out: '', unknown: '', closed: '那邊還沒開放' };
-const TOOL_NAME = { axe: '斧頭', pick: '十字鎬', sickle: '鐮刀', rod: '釣竿' };
+const TOOL_NAME = { axe: '斧頭', pick: '十字鎬', sickle: '鐮刀', rod: '釣竿', sword: '劍', brush: '動物刷' };
 const ACT_NAME = { till: '翻土', water: '澆水', plant: '播種', harvest: '收成', clear: '清理', ship: '出貨', buy: '買東西', forage: '採集', fish: '釣魚' };
 const DIR = (dx, dy, cur) => (Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : dy < 0 ? 'up' : dy > 0 ? 'down' : cur);
 const key = (x, y) => x + ',' + y;
@@ -35,7 +35,7 @@ export const play = {
     hud.show(true); hud.showPlay(true);
     hud.setChat({ maxChars: balance.bubbleMaxChars, emoteList: balance.emotes, say: (text) => this.room.send({ t: 'bubble', text }), emote: (e) => this.room.send({ t: 'emote', e }) });
     hud.onBag(() => { this.fishing.cancel(); this.togglePanel('bag'); });
-    const refresh = () => { hud.setHotbar(W.self.inv, (s) => itemIcon(ctx.data.items, s.id, 30)); if (W.farm) hud.setStatus(W.farm.money, W.self.energy, W.self.energyMax); };
+    const refresh = () => { hud.setHotbar(W.self.inv, (s) => itemIcon(ctx.data.items, s.id, 30)); if (W.farm) hud.setStatus(W.farm.money, W.self.energy, W.self.energyMax, W.me.map === 'mine' ? W.self.hp : null, W.self.hpMax); };
     refresh();
     const net = (s) => hud.setNet(s === 'online' ? '' : s === 'replaced' ? '已在別的分頁打開' : '連線中斷，重新連線中…');
     net(W.net);
@@ -48,9 +48,11 @@ export const play = {
       ctx.input.on('tap', (p) => { if (this.fishing.active) return this.fishing.press(); const w = ctx.camera.toWorld(p.x, p.y); this.act({ x: Math.floor(w.x / this.T), y: Math.floor(w.y / this.T) }); }),
       W.on('status', (s) => { net(s); if (s === 'replaced') hud.card('農場在別的地方打開了', ['同一個帳號一次只能在一個分頁玩。'], [{ label: '知道了', value: true }]); }),
       W.on('snapshot', (m) => { this.sent = { t: 0, vx: 0, vy: 0 }; this.setMap(W.me.map); refresh(); if (m.summary) this.showSummary(m.summary, m.partner); }),
-      W.on('map', (id) => { this.fishing.cancel(); this.setMap(id); hud.closePanel(); }),
+      W.on('map', (id) => { this.fishing.cancel(); this.setMap(id); hud.closePanel(); refresh(); }),
       W.on('self', refresh), W.on('farm', refresh),
       W.on('toast', (t) => hud.toast(t)),
+      W.on('faint', () => hud.card('昏倒了…', ['被怪物打到沒力氣，醒來已經在礦坑外面。東西都還在，只是體力剩一半。'], [{ label: '好', value: true }])),
+      W.on('mine-upd', (m) => { if (m.by === W.me.id && m.drops) hud.toast('拿到 ' + Object.entries(m.drops).map(([id, n]) => `${ctx.data.items[id].name}×${n}`).join('、'), 1300); if (m.stairs && m.stairs.open && m.rock && m.rock.x === m.stairs.x && m.rock.y === m.stairs.y) hud.toast('石頭下面有往下的樓梯！', 1600); }),
       W.on('objs', (m) => { if (m.by === W.me.id && m.drops) hud.toast('拿到 ' + Object.entries(m.drops).map(([id, n]) => `${ctx.data.items[id].name}×${n}`).join('、'), 1300); }),
       W.on('newday', (m) => { refresh(); hud.closePanel(); hud.closeCard(); this.morning(m); }),
     ];
@@ -60,8 +62,8 @@ export const play = {
 
   // 換地圖：地面重畫，不會動的東西（房子、家具）和它們擋住的格子、可以互動的格子重算。樹、石頭這些會被清掉的在 world.objs 裡
   setMap(id) {
-    const { ctx } = this, map = ctx.data.maps[id] || ctx.data.maps.farm, objects = ctx.data.objects;
-    this.mapId = ctx.data.maps[id] ? id : 'farm'; this.map = map; this.ground = buildGround(map, this.T);
+    const { ctx } = this, mine = id === 'mine' && this.world.mine, map = mine ? mineMap(this.bal, mine.floor) : ctx.data.maps[id] || ctx.data.maps.farm, objects = ctx.data.objects;
+    this.mapId = mine ? 'mine' : ctx.data.maps[id] ? id : 'farm'; this.map = map; this.ground = buildGround(map, this.T);
     this.solid = new Set(); this.useAt = new Map(); this.things = [];
     for (const o of map.objects) {
       const def = objects[o.type]; if (def.tool) continue;
@@ -102,6 +104,7 @@ export const play = {
     const tx = Math.floor(x), ty = Math.floor(y), m = this.map;
     if (tx < 0 || ty < 0 || tx >= m.w || ty >= m.h || (m.walls && ty < 1)) return true;
     if (this.solid.has(key(tx, ty)) || groundAt(m, tx, ty) === 'water') return true;
+    if (m.mine) return !!this.world.mine && this.world.mine.rocks.some((r) => r.x === tx && r.y === ty);
     const o = this.world.obj(this.mapId, tx, ty); return !!o && !!this.ctx.data.objects[o.type].solid;
   },
   // 身體是一個小方塊：四個角都沒被擋住才走得過去
@@ -118,6 +121,7 @@ export const play = {
     const { hud, data } = this.ctx, W = this.world, pl = this.player;
     if (hud.hasCard || !W.ready || t.x < 0 || t.y < 0 || t.x >= this.map.w || t.y >= this.map.h) return;
     W.mark = { ...t, life: 0.6, color: '#fff' };
+    if (this.map.mine) return this.actMine(t);
     const use = this.useAt.get(key(t.x, t.y));
     if (use) {
       if (Math.hypot(t.x + 0.5 - pl.x, t.y + 0.5 - pl.y) > this.bal.reach + 1) return hud.toast('走近一點', 900);
@@ -130,6 +134,7 @@ export const play = {
       if (use === 'workbench') return openPanel(this.ctx, 'craft');
       if (use === 'wardrobe') return this.ctx.scenes.go(create, { edit: true });
       if (use === 'bed') return this.bed();
+      if (use === 'mine') return this.elevator(false);
       return;
     }
     pl.dir = DIR(t.x + 0.5 - pl.x, t.y + 0.5 - pl.y, pl.dir);
@@ -156,6 +161,28 @@ export const play = {
     if (r.t === 'ok' && r.got) hud.toast(`收成了 ${data.items[r.got.id].name}${r.got.q ? `（${this.bal.quality.names[r.got.q]}）` : ''}`, 1200);
     if (r.t === 'no' && r.reason === 'busy') return hud.toast(`還在做，大約還要 ${r.left >= 60 ? Math.round(r.left / 60) + ' 小時' : r.left + ' 分鐘'}`, 1300);
     if (r.t === 'no') { const tool = r.reason.startsWith('tool:') && TOOL_NAME[r.reason.slice(5)]; const text = tool ? `這個要用${tool}` : NO_TEXT[r.reason]; if (text) hud.toast(text, 1300); }
+  },
+  // 礦坑入口／礦坑裡的梯子：從第 1 層進去，或坐電梯到去過的第 5、10、15… 層；在裡面的話也可以出去
+  async elevator(inside) {
+    const { hud } = this.ctx, W = this.world, M = this.bal.mine, deep = W.farm.mineDeepest || 1, btns = [];
+    if (inside) btns.push({ label: '出去', value: 'exit', ghost: true }); else btns.push({ label: '第 1 層', value: 1 });
+    for (let n = M.elevatorEvery; n <= Math.min(deep, M.floors); n += M.elevatorEvery) if (!inside || n !== W.mine.floor) btns.push({ label: `第 ${n} 層`, value: n, ghost: true });
+    btns.push({ label: '先不要', value: null, ghost: true });
+    const pick = await hud.card(inside ? `礦坑第 ${W.mine.floor} 層` : '礦坑入口', [inside ? '要出去，還是坐電梯到別層？' : `用十字鎬敲石頭，樓梯藏在某一顆下面。每 ${M.elevatorEvery} 層有電梯。目前最深到過第 ${deep} 層。小心怪物，帶著劍。`], btns);
+    if (pick === 'exit') await this.room.req({ t: 'mine-exit' }); else if (pick) { const r = await this.room.req({ t: 'mine-enter', floor: pick }); if (r.t === 'no') hud.toast('進不去', 1000); }
+  },
+  // 在礦坑裡按動作鍵：怪物 → 揮劍；石頭 → 敲；樓梯 → 下去；入口的梯子 → 出去或坐電梯
+  async actMine(t) {
+    const { hud, data } = this.ctx, W = this.world, s = W.mine, pl = this.player; if (!s) return;
+    pl.dir = DIR(t.x + 0.5 - pl.x, t.y + 0.5 - pl.y, pl.dir);
+    const now = W.serverNow(), mon = s.mons.map((m) => ({ m, p: monPos(m, now) })).filter((q) => Math.hypot(q.p.x - pl.x, q.p.y - pl.y) < this.bal.reach + 0.3).sort((a, b) => Math.hypot(a.p.x - t.x - 0.5, a.p.y - t.y - 0.5) - Math.hypot(b.p.x - t.x - 0.5, b.p.y - t.y - 0.5))[0];
+    const held = W.self.inv[hud.selected], tool = held && data.items[held.id].tool;
+    let r = null;
+    if (mon && (tool === 'sword' || Math.hypot(mon.p.x - t.x - 0.5, mon.p.y - t.y - 0.5) < 0.9)) r = await this.room.req({ t: 'mon-hit', mid: mon.m.id, slot: hud.selected });
+    else if (s.rocks.some((k) => k.x === t.x && k.y === t.y)) r = await this.room.req({ t: 'mine-hit', x: t.x, y: t.y, slot: hud.selected });
+    else if (s.stairs.open && s.stairs.x === t.x && s.stairs.y === t.y) r = await this.room.req({ t: 'mine-down' });
+    else if (Math.abs(t.x - s.spawn.x) <= 1 && t.y >= s.spawn.y) return this.elevator(true);
+    if (r && r.t === 'no') { const need = r.reason.startsWith('tool:') && TOOL_NAME[r.reason.slice(5)]; const text = need ? `這個要用${need}` : NO_TEXT[r.reason]; if (text) hud.toast(text, 1200); }
   },
   // 現在這張地圖上的家畜和寵物在哪裡（位置是用時間算的，兩個人算出來一樣）
   beasts() {
@@ -191,6 +218,12 @@ export const play = {
       this.room.send({ t: 'move', x: +p.x.toFixed(3), y: +p.y.toFixed(3), dir: p.dir, vx: +a.x.toFixed(2), vy: +a.y.toFixed(2) });
       this.sent = { t: now, vx: a.x, vy: a.y };
     }
+    // 礦坑裡碰到怪物會痛：隔一小段時間才會再痛一次
+    if (this.map.mine && W.mine && W.ready && now > (this.hurtAt || 0)) {
+      const t = W.serverNow(), hit = W.mine.mons.find((m) => { const q = monPos(m, t); return Math.hypot(q.x - p.x, q.y - p.y) < 0.7; });
+      if (hit) { this.hurtAt = now + this.bal.mine.hurtEveryMs; this.flash = 0.35; this.room.req({ t: 'hurt', mid: hit.id }); }
+    }
+    if (this.flash > 0) this.flash -= dt;
     // 走到地圖的出入口：換地圖（請伺服器帶過去）
     if (p.moving && now > this.warping) (this.map.exits || []).forEach((e, i) => {
       if (p.x >= e.x && p.x < e.x + e.w && p.y >= e.y && p.y < e.y + e.h) {
@@ -244,12 +277,26 @@ export const play = {
     for (const t of this.things) if (t.fx > x0 && t.fx < x1 && t.fy > y0 && t.fy < y1) list.push({ y: t.fy, t });
     for (const o of W.objs.values()) if (o.map === mapId && o.x > x0 && o.x < x1 && o.y > y0 && o.y < y1) list.push({ y: o.y + 0.92, o, t: { def: o.item ? { ...data.objects[o.type], art: data.items[o.item].art, name: data.items[o.item].name } : o.kind ? { ...data.objects[o.type], art: data.machines[o.kind].art, name: data.machines[o.kind].name } : data.objects[o.type], fx: o.x + 0.5, fy: o.y + 0.92 } });
     for (const b of this.beasts()) list.push({ y: b.y, beast: b });
-    const people = [{ q: me, color: '#f0a04a' }, ...[...W.others.values()].filter((o) => o.map === mapId).map((o) => ({ q: lerp(o), color: '#6aa8e8' }))];
+    if (this.map.mine && W.mine) { // 礦坑：石頭、打開的樓梯、入口的梯子、怪物
+      const s = W.mine, RT = this.bal.mine.rockTypes, MT = this.bal.mine.monsters, tnow = W.serverNow();
+      g.fillStyle = '#3b2f22'; g.fillRect((s.spawn.x - 0.3) * T, (s.spawn.y + 1) * T, T * 1.6, T * 0.9); drawName(g, '梯子（出去／電梯）', (s.spawn.x + 0.5) * T, (s.spawn.y + 1.5) * T, T);
+      if (s.stairs.open && !drawSprite(g, 'mine/stairs_down', (s.stairs.x + 0.5) * T, (s.stairs.y + 0.95) * T, T, T)) { g.fillStyle = '#2b2421'; g.beginPath(); g.ellipse((s.stairs.x + 0.5) * T, (s.stairs.y + 0.55) * T, T * 0.36, T * 0.26, 0, 0, 7); g.fill(); }
+      for (const r of s.rocks) list.push({ y: r.y + 0.92, t: { def: { name: RT[r.type].name, shape: 'blob', w: r.type === 'stone' ? 0.85 : 1.0, h: r.type === 'stone' ? 0.75 : 0.95, color: '#a9a59c', art: RT[r.type].art }, fx: r.x + 0.5, fy: r.y + 0.95 } });
+      for (const m of s.mons) { const q = monPos(m, tnow); list.push({ y: q.y, mon: { m, d: MT[m.type], ...q } }); }
+    }
+    const myFloor = W.mine ? W.mine.floor : 0;
+    const people = [{ q: me, color: '#f0a04a' }, ...[...W.others.values()].filter((o) => o.map === mapId && (mapId !== 'mine' || o.floor === myFloor)).map((o) => ({ q: lerp(o), color: '#6aa8e8' }))];
     for (const pp of people) list.push({ y: pp.q.y, pp });
     list.sort((u, v) => u.y - v.y);
     const parts = data.parts, U = T * 0.62;
     for (const it of list) {
       if (it.crop) { this.drawCrop(g, it.crop, T); continue; }
+      if (it.mon) { // 怪物：被打到的那一下換成「被打」的表情
+        const q = it.mon, sz = q.d.size * T, hit = q.m.hitAt && performance.now() - q.m.hitAt < 300, by = q.y * T - Math.abs(Math.sin(performance.now() / 260 + q.m.id)) * T * 0.08;
+        drawShadow(g, q.x * T, q.y * T, sz * 0.7);
+        if (!drawSprite(g, `${q.d.art}/${hit ? 'hit' : 'front'}`, q.x * T, by, sz, sz)) { g.fillStyle = hit ? '#fff' : '#7dbb5a'; g.strokeStyle = '#5a3d22'; g.lineWidth = Math.max(1.5, T * 0.04); g.beginPath(); g.arc(q.x * T, by - sz * 0.4, sz * 0.4, 0, 7); g.fill(); g.stroke(); }
+        continue;
+      }
       if (it.beast) { // 家畜、寵物：有圖用圖（側面，往左走就翻過來），小時候畫小一點；有產品可以收的頭上冒泡泡
         const b = it.beast, sz = b.d.size * (b.baby ? 0.6 : 1) * T, bx = b.x * T, by = b.y * T - (b.moving ? Math.abs(Math.sin(performance.now() / 130 + b.an.id)) * T * 0.04 : 0);
         drawShadow(g, bx, b.y * T, sz * 0.7);
@@ -276,6 +323,7 @@ export const play = {
     for (const b of bobs) { const bx = (b.x + 0.5) * T, by = (b.y + 0.5) * T + Math.sin(b.t * (b.bite ? 22 : 3)) * T * (b.bite ? 0.08 : 0.03); g.fillStyle = '#fff'; g.strokeStyle = '#5a3d22'; g.lineWidth = Math.max(1.5, T * 0.04); g.beginPath(); g.arc(bx, by, T * 0.11, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#e5484d'; g.beginPath(); g.arc(bx, by, T * 0.11, Math.PI, 0); g.fill(); if (b.bite) drawBubble(g, '！', bx, by - T * 0.5, T, true); }
     for (const f of W.floaters) { if (f.map !== mapId) continue; g.globalAlpha = Math.min(1, f.life * 2); if (f.heart) { drawName(g, '♥', f.x * T, (f.y - (1.1 - f.life) * 0.9) * T, T * 1.6); g.globalAlpha = 1; continue; } const it = data.items[f.item]; if (!drawSprite(g, it.art, f.x * T, (f.y - (1.1 - f.life) * 0.9) * T, T * 0.6, T * 0.6)) drawName(g, it.name, f.x * T, (f.y - (1.1 - f.life) * 0.9) * T, T); g.globalAlpha = 1; }
     for (const pp of people) { const b = W.bubbles.get(pp.q.id); if (b) drawBubble(g, b.text, pp.q.x * T, pp.q.y * T - T * (pp.q.look ? 1.95 : 1.45), T, b.big); }
+    if (this.flash > 0) { g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = `rgba(230, 60, 60, ${this.flash})`; g.fillRect(0, 0, view.canvas.width, view.canvas.height); } // 被怪物打到：畫面紅一下
     // 天色（只有戶外）：傍晚慢慢變橘、晚上變暗；下雨天灰一點、畫雨絲
     if (!this.map.outdoor || !W.farm) return;
     g.setTransform(1, 0, 0, 1, 0, 0);

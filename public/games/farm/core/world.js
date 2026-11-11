@@ -10,7 +10,9 @@ export function createWorld(session, bal) {
   const w = {
     room, ready: false, net: 'connecting', partner: null, farm: null,
     me: { id: session.me.id, name: session.me.displayName, look: null, x: 0, y: 0, px: 0, py: 0, dir: 'down', moving: false, anim: 0, asleep: false, action: null, actionT: 0 },
-    others: new Map(), tiles: new Map(), objs: new Map(), bubbles: new Map(), mark: null, floaters: [],
+    others: new Map(), tiles: new Map(), objs: new Map(), bubbles: new Map(), mark: null, floaters: [], mine: null, clockOff: 0,
+    // 伺服器的時鐘（毫秒）：怪物的位置用它算，兩個人和伺服器才會一樣
+    serverNow() { return Date.now() + w.clockOff; },
     self: { inv: [], energy: 0, energyMax: 100, skills: {} },
     on(name, fn) { (handlers[name] ||= []).push(fn); return () => { handlers[name] = handlers[name].filter((f) => f !== fn); }; },
     setTiles(list) { for (const t of list) { if (t.t) w.tiles.set(key(t.map, t.x, t.y), t); else w.tiles.delete(key(t.map, t.x, t.y)); } },
@@ -28,7 +30,7 @@ export function createWorld(session, bal) {
   room.on('snapshot', (m) => {
     // 第一次連上、或斷線重連：全部照伺服器的重來
     Object.assign(w.me, { map: m.you.map, x: m.you.x, y: m.you.y, px: m.you.x, py: m.you.y, dir: m.you.dir, asleep: false, look: m.you.look, name: m.you.name });
-    w.self = m.self; w.objs.clear(); w.setObjs(m.objs);
+    w.self = m.self; w.objs.clear(); w.setObjs(m.objs); if (m.farm.now) w.clockOff = m.farm.now - Date.now(); w.mine = null;
     w.partner = m.partner; w.others.clear(); for (const o of m.players) w.others.set(o.id, other(o));
     w.tiles.clear(); w.setTiles(m.tiles); w.farm = { ...m.farm, at: performance.now() }; w.ready = true;
     emit('snapshot', m);
@@ -38,18 +40,28 @@ export function createWorld(session, bal) {
   room.on('move', (m) => { const o = w.others.get(m.id); if (!o) return; if (o.map !== m.map) { o.map = m.map; o.x = m.x; o.y = m.y; } Object.assign(o, { tx: m.x, ty: m.y, vx: m.vx, vy: m.vy, dir: m.dir }); if (Math.hypot(o.x - m.x, o.y - m.y) > 4) { o.x = m.x; o.y = m.y; } });
   room.on('tiles', (m) => { w.setTiles(m.list); emit('tiles', m); });
   room.on('objs', (m) => { w.setObjs(m.list); emit('objs', m); });
-  room.on('self', (m) => { w.self = { inv: m.inv, energy: m.energy, energyMax: m.energyMax, skills: m.skills, fishRec: m.fishRec || {}, buffs: m.buffs || {} }; emit('self', m); });
+  room.on('self', (m) => { w.self = { inv: m.inv, energy: m.energy, energyMax: m.energyMax, skills: m.skills, fishRec: m.fishRec || {}, buffs: m.buffs || {}, hp: m.hp, hpMax: m.hpMax }; emit('self', m); });
   room.on('farm', (m) => { if (w.farm) Object.assign(w.farm, { money: m.money, ship: m.ship, chest: m.chest }); emit('farm', m); });
   room.on('animals', (m) => { if (w.farm) Object.assign(w.farm, { animals: m.animals, pets: m.pets, graze: m.graze, money: m.money }); emit('farm', m); });
+  room.on('mine', (m) => { w.mine = m.state; if (w.farm) w.farm.mineDeepest = m.deepest; emit('map', 'mine'); });
+  room.on('mine-upd', (m) => {
+    const s = w.mine; if (!s || s.floor !== m.floor) return;
+    if (m.rock) { if (m.rock.hp <= 0) s.rocks = s.rocks.filter((r) => !(r.x === m.rock.x && r.y === m.rock.y)); else { const r = s.rocks.find((r) => r.x === m.rock.x && r.y === m.rock.y); if (r) r.hp = m.rock.hp; } }
+    if (m.stairs) s.stairs = m.stairs;
+    if (m.mon) { if (m.mon.hp <= 0) s.mons = s.mons.filter((x) => x.id !== m.mon.id); else { const x = s.mons.find((x) => x.id === m.mon.id); if (x) { x.hp = m.mon.hp; x.hitAt = performance.now(); } } }
+    emit('mine-upd', m);
+  });
   room.on('warp', (m) => {
     const who = w.who(m.id); if (!who) return;
-    Object.assign(who, { map: m.map, x: m.x, y: m.y, px: m.x, py: m.y, tx: m.x, ty: m.y, vx: 0, vy: 0, dir: m.dir, asleep: false });
+    Object.assign(who, { map: m.map, floor: m.floor || 0, x: m.x, y: m.y, px: m.x, py: m.y, tx: m.x, ty: m.y, vx: 0, vy: 0, dir: m.dir, asleep: false, fishing: null });
+    if (m.id === w.me.id && m.map !== 'mine') w.mine = null;
+    if (m.id === w.me.id && m.faint) emit('faint');
     if (m.id === w.me.id) emit('map', m.map);
   });
   // 有人做了動作：播他的動作（揮工具、澆水），收成的時候頭上冒出收到的東西
   room.on('fx', (m) => {
     const who = w.who(m.id); if (!who) return;
-    who.action = m.kind === 'water' ? 'water' : m.kind === 'cast' ? 'cast' : m.kind === 'eat' || m.kind === 'cook' ? 'eat' : m.kind === 'harvest' || m.kind === 'plant' || m.kind === 'fertilize' ? 'eat' : 'swing'; who.actionT = 0; who.tool = m.kind;
+    who.action = m.kind === 'water' ? 'water' : m.kind === 'cast' ? 'cast' : m.kind === 'pick' || m.kind === 'sword' ? 'swing' : m.kind === 'eat' || m.kind === 'cook' ? 'eat' : m.kind === 'harvest' || m.kind === 'plant' || m.kind === 'fertilize' ? 'eat' : 'swing'; who.actionT = 0; who.tool = m.kind;
     if (m.id !== w.me.id && m.map === w.me.map) w.mark = { x: m.x, y: m.y, life: 0.6, color: '#ffd76a' };
     who.fishing = m.kind === 'cast' ? { x: m.x, y: m.y } : null; // 對方在釣魚：看得到他的浮標
     if (m.kind === 'harvest' || m.kind === 'cook') w.floaters.push({ map: m.map, x: m.x + 0.5, y: m.y, item: m.item, q: m.q, life: 1.1 });

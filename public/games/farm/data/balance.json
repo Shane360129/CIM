@@ -61,6 +61,10 @@
       1
     ],
     [
+      "sword",
+      1
+    ],
+    [
       "seed_carrot",
       8
     ],
@@ -119,7 +123,9 @@
     "foraging": "採集",
     "fishing": "釣魚",
     "cooking": "料理",
-    "ranching": "畜牧"
+    "ranching": "畜牧",
+    "mining": "採礦",
+    "combat": "戰鬥"
   },
   "xpPerLevel": [
     40,
@@ -274,5 +280,193 @@
     "babyChance": 0.06,
     "babyLove": 600,
     "petLove": 12
+  },
+  "mine": {
+    "floors": 20,
+    "w": 20,
+    "h": 14,
+    "elevatorEvery": 5,
+    "hpMax": 100,
+    "energy": 2,
+    "rocks": [
+      34,
+      46
+    ],
+    "rockTypes": {
+      "stone": {
+        "name": "石頭",
+        "hp": 2,
+        "drops": {
+          "stone": 1
+        },
+        "from": 1,
+        "weight": 60,
+        "perFloor": -1.5,
+        "art": "mine/rock_s",
+        "xp": 2
+      },
+      "big": {
+        "name": "大石頭",
+        "hp": 4,
+        "drops": {
+          "stone": 3
+        },
+        "from": 1,
+        "weight": 14,
+        "perFloor": 0,
+        "art": "mine/rock_l",
+        "xp": 4
+      },
+      "coal": {
+        "name": "煤層",
+        "hp": 3,
+        "drops": {
+          "coal": 1
+        },
+        "from": 2,
+        "weight": 8,
+        "perFloor": 0.2,
+        "art": "mine/rock_l",
+        "xp": 4
+      },
+      "copper": {
+        "name": "銅礦石",
+        "hp": 3,
+        "drops": {
+          "copper_ore": 2
+        },
+        "from": 1,
+        "weight": 12,
+        "perFloor": 0.3,
+        "art": "mine/copper_node",
+        "xp": 5
+      },
+      "iron": {
+        "name": "鐵礦石",
+        "hp": 4,
+        "drops": {
+          "iron_ore": 2
+        },
+        "from": 6,
+        "weight": 6,
+        "perFloor": 0.8,
+        "art": "mine/iron_node",
+        "xp": 8
+      },
+      "gold": {
+        "name": "金礦石",
+        "hp": 5,
+        "drops": {
+          "gold_ore": 2
+        },
+        "from": 12,
+        "weight": 3,
+        "perFloor": 0.7,
+        "art": "mine/gold_node",
+        "xp": 12
+      },
+      "gem": {
+        "name": "寶石原石",
+        "hp": 4,
+        "gems": true,
+        "from": 3,
+        "weight": 2,
+        "perFloor": 0.25,
+        "art": "mine/gem_node",
+        "xp": 10
+      }
+    },
+    "gems": [
+      [
+        "quartz",
+        1,
+        40
+      ],
+      [
+        "topaz",
+        3,
+        18
+      ],
+      [
+        "amethyst",
+        5,
+        16
+      ],
+      [
+        "jade",
+        8,
+        12
+      ],
+      [
+        "fossil",
+        4,
+        10
+      ],
+      [
+        "ruby",
+        11,
+        8
+      ],
+      [
+        "sapphire",
+        13,
+        8
+      ],
+      [
+        "moonstone",
+        16,
+        4
+      ],
+      [
+        "diamond",
+        18,
+        2
+      ]
+    ],
+    "monsters": {
+      "jelly": {
+        "name": "果凍球",
+        "hp": 3,
+        "dmg": 8,
+        "from": 1,
+        "drops": {
+          "jelly_drop": 1
+        },
+        "xp": 6,
+        "art": "monster/jelly",
+        "size": 0.85
+      },
+      "stone_sprite": {
+        "name": "石頭小精靈",
+        "hp": 5,
+        "dmg": 12,
+        "from": 5,
+        "drops": {
+          "stone": 2,
+          "coal": 1
+        },
+        "xp": 10,
+        "art": "monster/stone_sprite",
+        "size": 0.9
+      },
+      "mushroom": {
+        "name": "蘑菇小怪",
+        "hp": 4,
+        "dmg": 10,
+        "from": 9,
+        "drops": {
+          "wild_mushroom": 1
+        },
+        "xp": 9,
+        "art": "monster/mushroom",
+        "size": 0.9
+      }
+    },
+    "monsterCount": [
+      1,
+      5
+    ],
+    "hurtEveryMs": 900,
+    "faintEnergy": 0.5
   }
 }

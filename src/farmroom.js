@@ -15,7 +15,7 @@ import MAP_HOUSE from '../public/games/farm/data/maps/house.json';
 import MAP_ROAD from '../public/games/farm/data/maps/road.json';
 import MAP_LAKE from '../public/games/farm/data/maps/lake.json';
 import FISH from '../public/games/farm/data/fish.json';
-import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelOf, rollQuality, invAdd, invTake, sellPrice, makeItems, matches, planTake, absMinute, animalPos } from '../public/games/farm/shared/rules.js';
+import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelOf, rollQuality, invAdd, invTake, sellPrice, makeItems, matches, planTake, absMinute, animalPos, genFloor, monPos, mineMap } from '../public/games/farm/shared/rules.js';
 
 const ITEMS = makeItems(RAW_ITEMS, MACHINES); // 加工品（g:機器:原料）的名字和價錢是算出來的
 
@@ -28,6 +28,7 @@ const MIN_PER_MS = DAY_SPAN / (BAL.dayMinutesReal * 60000);         // 現實一
 const CHUNK = 16, BACKUP_DAYS = 7, MOVE_MIN_MS = 40;
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const MINE_MAP = mineMap(BAL, 0), MINE_EXIT = { map: 'lake', x: 31.5, y: 18.7 }; // 礦坑每一層一樣大；出來的地方是湖邊的入口前面
 const K = (map, x, y) => `${map}:${x},${y}`;
 const unK = (k) => { const [map, xy] = k.split(':'), [x, y] = xy.split(',').map(Number); return { map, x, y }; };
 // 外觀只收清單裡有的零件和顏色（data/doll/parts.json），其他一律不收
@@ -126,14 +127,15 @@ export class FarmRoom {
   pubTile(k) { const v = this.tiles.get(k), t = unK(k); return v ? { ...t, t: 1, w: v.w === this.farm.day ? 1 : 0, f: v.f || 0, c: v.c ? { id: v.c.id, s: v.c.dead ? -1 : cropStage(CROPS[v.c.id], v.c.g) } : null } : { ...t, t: 0 }; }
   pubObj(k) { const o = this.objs.get(k); return o ? { ...unK(k), type: o.type, hp: o.hp, ...(o.item ? { item: o.item } : {}), ...(o.kind ? { kind: o.kind, out: o.out || null, doneAt: o.doneAt || 0 } : {}) } : { ...unK(k), type: null }; }
   absNow() { return absMinute(this.farm.day, this.minuteNow(), BAL); }
-  pubSelf(a) { const p = this.player(a.id); return { inv: p.inv, energy: p.energy, energyMax: BAL.energyMax, skills: p.skills, fishRec: p.fishRec || {}, buffs: p.buffs || {} }; }
+  pubSelf(a) { const p = this.player(a.id); return { inv: p.inv, energy: p.energy, energyMax: BAL.energyMax, skills: p.skills, fishRec: p.fishRec || {}, buffs: p.buffs || {}, hp: p.hp ?? BAL.mine.hpMax, hpMax: BAL.mine.hpMax }; }
 
   // ---------- 連線 ----------
   sockets() { return this.ctx.getWebSockets(); }
   online() { return this.sockets().map((ws) => ({ ws, a: ws.deserializeAttachment() })).filter((s) => s.a && !s.a.gone); } // gone：被自己的新分頁換掉的舊連線
   send(ws, msg) { try { ws.send(JSON.stringify(msg)); } catch { /* 對方剛好斷線 */ } }
   broadcast(msg, exceptId = 0) { const text = JSON.stringify(msg); for (const { ws, a } of this.online()) if (a.id !== exceptId) { try { ws.send(text); } catch {} } }
-  pub(a) { const p = this.player(a.id); return { id: a.id, name: p.nick || a.name, look: p.look || null, color: a.color, map: a.map, x: a.x, y: a.y, dir: a.dir, vx: a.vx || 0, vy: a.vy || 0, asleep: !!a.asleep }; }
+  mapOf(a) { return a.map === 'mine' ? MINE_MAP : MAPS[a.map]; }
+  pub(a) { const p = this.player(a.id); return { id: a.id, name: p.nick || a.name, look: p.look || null, color: a.color, map: a.map, floor: a.floor || 0, x: a.x, y: a.y, dir: a.dir, vx: a.vx || 0, vy: a.vy || 0, asleep: !!a.asleep }; }
 
   async fetch(request) {
     const url = new URL(request.url);
@@ -177,7 +179,7 @@ export class FarmRoom {
   pubFarm() {
     const f = this.farm;
     return { day: f.day, minute: this.minuteNow(), money: f.money, season: seasonId(f.day, BAL), weather: weatherOf(f.seed, f.day, BAL), minutesPerSecond: MIN_PER_MS * 1000, dayStart: BAL.dayStartMinute, dayEnd: BAL.dayEndMinute,
-      ship: f.ship, lastShip: f.lastShip, chest: f.chest, newborn: f.newborn || [], animals: f.animals || [], pets: f.pets || [], graze: !!f.graze };
+      now: Date.now(), mineDeepest: f.mineDeepest || 1, ship: f.ship, lastShip: f.lastShip, chest: f.chest, newborn: f.newborn || [], animals: f.animals || [], pets: f.pets || [], graze: !!f.graze };
   }
   // 「你不在時發生的事」：過了幾天、錢差多少、對方做了什麼
   summaryFor(userId, saved, lastSeen) {
@@ -247,6 +249,7 @@ export class FarmRoom {
       self(); this.broadcast({ t: 'fx', id: a.id, kind: 'eat', map: a.map, x: Math.floor(a.x), y: Math.floor(a.y) }); done({ buff: it.buff || null });
     }
     else if (['animal-buy', 'animal', 'feed', 'graze', 'adopt', 'pet'].includes(m.t)) this.onAnimal(a, p, m, { no, done, self, near, farmChanged });
+    else if (m.t.startsWith('mine-') || m.t === 'mon-hit' || m.t === 'hurt') this.onMine(ws, a, p, m, { no, done, self, near });
     else if (m.t === 'fish') this.onFish(a, p, m, { no, done, self });
     else if (m.t === 'reel') this.onReel(a, p, m, { no, done, self });
     else if (m.t === 'look') { // 建立角色、換裝：存起來，對方馬上看到
@@ -262,6 +265,60 @@ export class FarmRoom {
     }
     this.flush();
   }
+  // ---------- 礦坑 ----------
+  // 每一層用種子生成（shared/rules.js 的 genFloor），當天敲掉了哪些石頭記在農場上，隔天重新長出來。人在礦坑裡時 a.map 是 'mine'、a.floor 是第幾層
+  floorState(n) { const f = this.farm; if (!f.mine || f.mine.day !== f.day) f.mine = { day: f.day, floors: {} }; return (f.mine.floors[n] ||= genFloor(f.seed, n, f.day, BAL)); }
+  toFloor(n, msg) { const text = JSON.stringify(msg); for (const { ws, a } of this.online()) if (a.map === 'mine' && a.floor === n) { try { ws.send(text); } catch {} } }
+  onMine(ws, a, p, m, { no, done, self, near }) {
+    const f = this.farm, M = BAL.mine, inMine = a.map === 'mine', st = inMine ? this.floorState(a.floor) : null;
+    const goTo = (floor) => {
+      const s2 = this.floorState(floor); a.map = 'mine'; a.floor = floor; a.x = s2.spawn.x + 0.5; a.y = s2.spawn.y + 0.5; a.vx = a.vy = 0; ws.serializeAttachment(a);
+      f.mineDeepest = Math.max(f.mineDeepest || 1, floor); this.farmDirty = true;
+      this.broadcast({ t: 'warp', id: a.id, map: 'mine', floor, x: a.x, y: a.y, dir: 'up' }); this.send(ws, { t: 'mine', state: s2, deepest: f.mineDeepest });
+    };
+    const leave = (faint) => { Object.assign(a, { ...MINE_EXIT, floor: 0, vx: 0, vy: 0 }); ws.serializeAttachment(a); Object.assign(p, MINE_EXIT); this.dirtyPl.add(a.id); this.broadcast({ t: 'warp', id: a.id, map: a.map, x: a.x, y: a.y, dir: 'down', faint: !!faint }); };
+    if (m.t === 'mine-enter') { // 從入口進去：第 1 層，或坐電梯到去過的第 5、10、15… 層
+      const floor = Math.floor(Number(m.floor)) || 1; if (inMine ? Math.hypot(st.spawn.x + 0.5 - a.x, st.spawn.y + 0.5 - a.y) > 2.5 : !near('mine')) return no('far');
+      if (floor < 1 || floor > M.floors || (floor > 1 && (floor % M.elevatorEvery !== 0 || floor > (f.mineDeepest || 1)))) return no('closed');
+      goTo(floor); return done();
+    }
+    if (!inMine) return no('far');
+    if (m.t === 'mine-exit') { if (Math.hypot(st.spawn.x + 0.5 - a.x, st.spawn.y + 0.5 - a.y) > 2.5) return no('far'); leave(false); return done(); }
+    if (m.t === 'mine-down') {
+      if (!st.stairs.open) return no('nothing'); if (Math.hypot(st.stairs.x + 0.5 - a.x, st.stairs.y + 0.5 - a.y) > 2.2) return no('far');
+      if (a.floor >= M.floors) return no('closed'); goTo(a.floor + 1); return done();
+    }
+    const held = p.inv[Math.floor(Number(m.slot))], tool = held && ITEMS[held.id].tool;
+    if (m.t === 'mine-hit') { // 敲石頭：要用十字鎬。敲碎了掉石頭、礦石或寶石；樓梯藏在其中一顆下面
+      const x = Math.floor(Number(m.x)), y = Math.floor(Number(m.y)), rock = st.rocks.find((r) => r.x === x && r.y === y); if (!rock) return no('nothing');
+      if (tool !== 'pick') return no('tool:pick'); if (Math.hypot(x + 0.5 - a.x, y + 0.5 - a.y) > BAL.reach) return no('far');
+      const T = M.rockTypes[rock.type]; let drops = null;
+      if (rock.hp <= 1) {
+        drops = T.gems ? (() => { const pool = M.gems.filter(([, from]) => a.floor >= from); let k = Math.random() * pool.reduce((s2, g) => s2 + g[2], 0); for (const [id, , w] of pool) { k -= w; if (k <= 0) return { [id]: 1 }; } return { quartz: 1 }; })() : T.drops;
+        const inv = JSON.parse(JSON.stringify(p.inv)); for (const [id, n] of Object.entries(drops)) if (!invAdd(inv, BAL.invSlots, id, n)) return no('full');
+        if (p.energy < M.energy) return no('tired'); p.energy -= M.energy; p.inv = inv; p.skills.mining = (p.skills.mining || 0) + T.xp;
+        st.rocks = st.rocks.filter((r) => r !== rock); if (st.stairs.x === x && st.stairs.y === y) st.stairs.open = true; this.logEvent(a.id, 'mine', { type: rock.type });
+      } else { if (p.energy < M.energy) return no('tired'); p.energy -= M.energy; rock.hp -= 1; }
+      this.farmDirty = true; self(); this.broadcast({ t: 'fx', id: a.id, kind: 'pick', map: 'mine', x, y });
+      this.toFloor(a.floor, { t: 'mine-upd', floor: a.floor, rock: { x, y, hp: drops ? 0 : rock.hp }, stairs: st.stairs, by: a.id, drops }); return done({ drops });
+    }
+    const mon = st.mons.find((x) => x.id === Number(m.mid)); if (!mon) return no('nothing');
+    const D = M.monsters[mon.type], pos = monPos(mon, Date.now());
+    if (m.t === 'mon-hit') { // 揮劍：打到沒血就不見、掉東西
+      if (tool !== 'sword') return no('tool:sword'); if (Math.hypot(pos.x - a.x, pos.y - a.y) > BAL.reach + 0.8) return no('far');
+      mon.hp -= 1 + Math.floor(levelOf(p.skills.combat || 0, BAL).lv / 20); let drops = null;
+      if (mon.hp <= 0) { drops = D.drops; for (const [id, n] of Object.entries(drops)) invAdd(p.inv, BAL.invSlots, id, n); st.mons = st.mons.filter((x) => x !== mon); p.skills.combat = (p.skills.combat || 0) + D.xp; this.logEvent(a.id, 'monster', { type: mon.type }); }
+      this.farmDirty = true; self(); this.broadcast({ t: 'fx', id: a.id, kind: 'sword', map: 'mine', x: Math.floor(pos.x), y: Math.floor(pos.y) });
+      this.toFloor(a.floor, { t: 'mine-upd', floor: a.floor, mon: { id: mon.id, hp: Math.max(0, mon.hp) }, by: a.id, drops }); return done({ drops });
+    }
+    if (m.t === 'hurt') { // 碰到怪物會痛（畫面發現碰到了來報告）。沒血了就昏倒，被送回入口，體力剩一半，東西不會掉
+      const now = Date.now(); if (now - (a.ht || 0) < M.hurtEveryMs - 100 || Math.hypot(pos.x - a.x, pos.y - a.y) > 1.6) return no('far');
+      a.ht = now; ws.serializeAttachment(a); p.hp = (p.hp ?? M.hpMax) - D.dmg;
+      if (p.hp <= 0) { p.hp = Math.round(M.hpMax / 2); p.energy = Math.floor(p.energy * M.faintEnergy); leave(true); self(); return done({ faint: true }); }
+      self(); return done({ hp: p.hp });
+    }
+  }
+
   // ---------- 畜牧與寵物 ----------
   // 家畜和寵物是兩個人共有的（記在農場上）。牠們在圍欄裡的位置是用時間算的（shared/rules.js 的 animalPos），這裡不用存位置
   onAnimal(a, p, m, { no, done, self, near, farmChanged }) {
@@ -337,7 +394,7 @@ export class FarmRoom {
   // 釣魚：拋竿時伺服器就決定好是哪條魚、多久上鉤；小遊戲在畫面上玩，玩完告訴伺服器有沒有拉上來。
   // 伺服器把關的是：真的拿著釣竿、對著水、體力夠、沒有在上鉤前就說釣到了
   onFish(a, p, m, { no, done, self }) {
-    const x = Math.floor(Number(m.x)), y = Math.floor(Number(m.y)), map = MAPS[a.map], held = p.inv[Math.floor(Number(m.slot))], F = BAL.fishing;
+    const x = Math.floor(Number(m.x)), y = Math.floor(Number(m.y)), map = this.mapOf(a), held = p.inv[Math.floor(Number(m.slot))], F = BAL.fishing;
     if (!held || ITEMS[held.id].tool !== 'rod') return no('tool:rod');
     if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x >= map.w || y >= map.h || groundAt(map, x, y) !== 'water') return no('ground');
     if (Math.hypot(x + 0.5 - a.x, y + 0.5 - a.y) > F.reach) return no('far');
@@ -366,11 +423,11 @@ export class FarmRoom {
     done({ got: { id: item, size, record } });
   }
   // 離某種可以互動的東西（出貨箱、床、倉庫箱、種子攤）夠不夠近
-  nearUse(a, use) { return MAPS[a.map].objects.some((o) => { const d = OBJECTS[o.type]; if (d.use !== use) return false; const [tw] = d.tiles || [1, 1]; return Math.hypot(o.x + tw / 2 - a.x, o.y + 0.5 - a.y) <= BAL.reach + tw / 2; }); }
+  nearUse(a, use) { return this.mapOf(a).objects.some((o) => { const d = OBJECTS[o.type]; if (d.use !== use) return false; const [tw] = d.tiles || [1, 1]; return Math.hypot(o.x + tw / 2 - a.x, o.y + 0.5 - a.y) <= BAL.reach + tw / 2; }); }
   // 走動：各自畫面先動，這裡只記位置、轉給對方。送的是「位置＋速度」，對方照速度往前推，所以不必每一步都送
   onMove(ws, a, m) {
     const now = Date.now(); if (now - a.mt < MOVE_MIN_MS) return; // 送太快的丟掉
-    const x = Number(m.x), y = Number(m.y), map = MAPS[a.map]; if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    const x = Number(m.x), y = Number(m.y), map = this.mapOf(a); if (!Number.isFinite(x) || !Number.isFinite(y)) return;
     a.x = clamp(x, 0.3, map.w - 0.3); a.y = clamp(y, 0.3, map.h - 0.3); a.mt = now;
     a.vx = clamp(Number(m.vx) || 0, -1, 1); a.vy = clamp(Number(m.vy) || 0, -1, 1);
     if (['up', 'down', 'left', 'right'].includes(m.dir)) a.dir = m.dir;
@@ -380,7 +437,7 @@ export class FarmRoom {
   }
   // 換地圖：走到出入口（或門）才過得去
   onWarp(ws, a, p, m, { no, done }) {
-    const map = MAPS[a.map], list = [...(map.exits || []), ...(map.doors || []).map((d) => ({ ...d, w: 1, h: 1 }))], e = list[Math.floor(Number(m.i))];
+    const map = this.mapOf(a), list = [...(map.exits || []), ...(map.doors || []).map((d) => ({ ...d, w: 1, h: 1 }))], e = list[Math.floor(Number(m.i))];
     if (!e || !e.to || !MAPS[e.to]) return no('closed');
     if (a.x < e.x - 1.6 || a.x > e.x + e.w + 1.6 || a.y < e.y - 1.6 || a.y > e.y + e.h + 1.6) return no('far');
     a.map = e.to; a.x = e.tx; a.y = e.ty; a.vx = a.vy = 0; a.asleep = false; ws.serializeAttachment(a);
@@ -389,7 +446,8 @@ export class FarmRoom {
   }
   // 用手上的東西對某一格做事：先看那一格有沒有可以清掉的東西，再看手上拿的是什麼。伺服器檢查都合法才生效；兩個人搶同一格，先到的成功
   onUse(ws, a, p, m, { no, done, self }) {
-    const x = Math.floor(Number(m.x)), y = Math.floor(Number(m.y)), map = MAPS[a.map], k = K(a.map, x, y);
+    if (a.map === 'mine') return no('nothing'); // 礦坑裡的事走 mine-* 訊息
+    const x = Math.floor(Number(m.x)), y = Math.floor(Number(m.y)), map = this.mapOf(a), k = K(a.map, x, y);
     const bad = (reason) => no(reason, { tile: this.pubTile(k), obj: this.pubObj(k) });
     if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x >= map.w || y >= map.h) return no('out');
     if (Math.hypot(x + 0.5 - a.x, y + 0.5 - a.y) > BAL.reach) return bad('far');
@@ -415,8 +473,9 @@ export class FarmRoom {
       if (obj.out) return no('busy', { left: Math.ceil(obj.doneAt - now) });
       if ((tool === 'axe' || tool === 'pick') && !mc.gives) { if (!invAdd(p.inv, BAL.invSlots, 'm_' + obj.kind, 1)) return bad('full'); this.objs.delete(k); return upd('clear'); }
       const fit = held && mc.in.some((spec) => matches(ITEMS, held.id, spec.startsWith('@') ? spec : '@' + spec)); if (!fit) return bad('machine'); // 機器收的是「類別」，所以前面補上 @
-      const src = held.id; invTake(p.inv, Math.floor(Number(m.slot)), 1);
-      if (mc.seeds) { obj.out = 'seed_' + src; obj.n = mc.seeds; } else { obj.out = `g:${obj.kind}:${src}`; obj.n = 1; }
+      const src = held.id; if (mc.map && !mc.map[src]) return bad('machine');
+      invTake(p.inv, Math.floor(Number(m.slot)), 1);
+      if (mc.map) { obj.out = mc.map[src]; obj.n = 1; } else if (mc.seeds) { obj.out = 'seed_' + src; obj.n = mc.seeds; } else { obj.out = `g:${obj.kind}:${src}`; obj.n = 1; }
       obj.doneAt = now + mc.minutes; this.logEvent(a.id, 'process', { kind: obj.kind }); return upd('plant');
     }
     if (obj) { // 樹、石頭、樹枝、雜草：要用對的工具，打到沒血就清掉、掉材料
@@ -493,13 +552,14 @@ export class FarmRoom {
     for (const r of players) {
       const p = this.player(r.user_id), a = awake.get(r.user_id);
       const k = !a ? 1 : !a.asleep ? BAL.sleepRestore.passout : (a.sleptAt || 0) >= BAL.lateMinute ? BAL.sleepRestore.late : BAL.sleepRestore.early;
-      p.energy = Math.max(p.energy, Math.round(BAL.energyMax * k)); this.dirtyPl.add(r.user_id);
+      p.energy = Math.max(p.energy, Math.round(BAL.energyMax * k)); p.hp = BAL.mine.hpMax; this.dirtyPl.add(r.user_id);
     }
     f.newborn = this.animalsNewDay(old).map((b) => b.name);
     this.spawnDaily();
     this.farmDirty = true; this.logEvent(0, 'newday', { reason, total });
     for (const { ws, a } of this.online()) {
       if (reason === 'late' && !a.asleep) { a.map = 'house'; a.x = MAPS.house.spawn.x; a.y = MAPS.house.spawn.y; Object.assign(this.player(a.id), { map: a.map, x: a.x, y: a.y }); } // 昏倒的人被送回家
+      if (a.map === 'mine') { Object.assign(a, MINE_EXIT, { floor: 0 }); Object.assign(this.player(a.id), MINE_EXIT); } // 礦坑隔天會重新長：還在裡面的人送回入口
       a.asleep = false; ws.serializeAttachment(a);
     }
     this.flush();
@@ -517,7 +577,7 @@ export class FarmRoom {
     for (const r of b.players || []) this.sql.exec(`UPDATE players SET data = ? WHERE user_id = ?`, r.data, r.user_id);
     this.farmDirty = true; this.flush(); this.logEvent(who.user.id, 'restore', { day });
     // 人留在原地（備份只回復農場和背包，不把人搬走）
-    for (const { ws, a } of this.online()) { const p = this.player(a.id); Object.assign(p, { map: a.map, x: a.x, y: a.y }); this.dirtyPl.add(a.id); a.asleep = false; ws.serializeAttachment(a); }
+    for (const { ws, a } of this.online()) { const p = this.player(a.id); if (a.map === 'mine') Object.assign(a, MINE_EXIT, { floor: 0 }); Object.assign(p, { map: a.map, x: a.x, y: a.y }); this.dirtyPl.add(a.id); a.asleep = false; ws.serializeAttachment(a); }
     this.flush();
     for (const { ws, a } of this.online()) this.send(ws, { t: 'newday', reason: 'restore', farm: this.pubFarm(), tiles: [...this.tiles.keys()].map((k) => this.pubTile(k)), objs: [...this.objs.keys()].map((k) => this.pubObj(k)), self: this.pubSelf(a), you: this.pub(a), players: this.online().filter((s) => s.a.id !== a.id).map((s) => this.pub(s.a)) });
     return json({ ok: true, day: this.farm.day });
@@ -531,7 +591,7 @@ export class FarmRoom {
     this.load();
     const still = this.online().some((s) => s.ws !== ws && s.a.id === a.id);
     if (!still) {
-      const p = this.player(a.id, a.name); Object.assign(p, { map: a.map, x: a.x, y: a.y, dir: a.dir, lastDay: this.farm.day, lastMoney: this.farm.money }); this.dirtyPl.add(a.id); this.flush();
+      const p = this.player(a.id, a.name); Object.assign(p, a.map === 'mine' ? MINE_EXIT : { map: a.map, x: a.x, y: a.y }, { dir: a.dir, lastDay: this.farm.day, lastMoney: this.farm.money }); this.dirtyPl.add(a.id); this.flush();
       this.sql.exec(`UPDATE players SET last_seen = ? WHERE user_id = ?`, Date.now(), a.id);
       this.broadcast({ t: 'leave', id: a.id }, a.id);
     }

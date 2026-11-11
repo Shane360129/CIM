@@ -73,3 +73,25 @@ export function animalPos(pen, id, absMin) {
   return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, moving: t < 1, flip: b.x < a.x };
 }
 export const hearts = (love, bal) => Math.floor(Math.max(0, love) / bal.animals.heart);
+
+// 礦坑的一層：石頭在哪、各是什麼、樓梯藏在哪顆石頭下面、有哪些怪物。只用「農場的種子＋第幾層＋第幾天」算，
+// 所以兩個人進同一層看到的一模一樣；隔天會重新長出來
+export function genFloor(seed, floor, day, bal) {
+  const M = bal.mine, r = rng(seed * 13 + floor * 7919 + day * 104729), W = M.w, H = M.h, used = new Set(), rocks = [];
+  const spawn = { x: Math.floor(W / 2), y: H - 2 }, free = (x, y) => !used.has(x + ',' + y) && Math.hypot(x - spawn.x, y - spawn.y) > 2.2;
+  const types = Object.entries(M.rockTypes).filter(([, t]) => floor >= t.from).map(([id, t]) => [id, Math.max(1, t.weight + t.perFloor * floor)]), total = types.reduce((a, [, w]) => a + w, 0);
+  const n = M.rocks[0] + Math.floor(r() * (M.rocks[1] - M.rocks[0]));
+  for (let i = 0, tries = 0; i < n && tries < 600; tries++) {
+    const x = 1 + Math.floor(r() * (W - 2)), y = 1 + Math.floor(r() * (H - 3)); if (!free(x, y)) continue;
+    let k = r() * total, type = types[0][0]; for (const [id, w] of types) { k -= w; if (k <= 0) { type = id; break; } }
+    used.add(x + ',' + y); rocks.push({ x, y, type, hp: M.rockTypes[type].hp }); i++;
+  }
+  const stairs = rocks[Math.floor(r() * rocks.length)], mons = [];
+  const kinds = Object.entries(M.monsters).filter(([, m]) => floor >= m.from).map(([id]) => id), count = M.monsterCount[0] + Math.floor(r() * Math.min(M.monsterCount[1] - M.monsterCount[0] + 1, 1 + floor / 4));
+  for (let i = 0, tries = 0; i < count && tries < 200; tries++) { const x = 1 + Math.floor(r() * (W - 2)), y = 1 + Math.floor(r() * (H - 4)); if (!free(x, y)) continue; const type = kinds[Math.floor(r() * kinds.length)]; mons.push({ id: i + 1, type, hp: M.monsters[type].hp, x: x + 0.5, y: y + 0.5 }); i++; }
+  return { floor, w: W, h: H, spawn, rocks, stairs: { x: stairs.x, y: stairs.y, open: false }, mons };
+}
+// 怪物現在在哪：繞著牠的家慢慢晃（跟動物一樣用時間算，兩個人看到的一樣）
+export function monPos(m, absMs) { const t = absMs / 1000, k = m.id * 1.7; return { x: m.x + Math.sin(t * 0.7 + k) * 1.3, y: m.y + Math.cos(t * 0.5 + k * 2) * 0.9 }; }
+// 礦坑那一層當成一張地圖（給走路、畫面用）
+export const mineMap = (bal, floor) => ({ name: `礦坑第 ${floor} 層`, w: bal.mine.w, h: bal.mine.h, ground: 'cave', outdoor: false, patches: [], objects: [], exits: [], mine: true });

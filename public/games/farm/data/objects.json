@@ -299,5 +299,20 @@
   ],
   "art": "building/barn1",
   "use": "barn"
+ },
+ "mine_entrance": {
+  "name": "礦坑入口",
+  "shape": "block",
+  "solid": true,
+  "w": 3.4,
+  "h": 3.2,
+  "color": "#8a8f96",
+  "roof": "#5a5f66",
+  "tiles": [
+   3,
+   2
+  ],
+  "art": "building/mine_entrance",
+  "use": "mine"
  }
 }

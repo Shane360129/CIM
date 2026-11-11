@@ -38,7 +38,8 @@ export function createHud(ui, slots) {
   sayInput.type = 'text'; sayInput.placeholder = '說一句話…'; sayInput.autocomplete = 'off'; say.append(sayInput, sayBtn); ui.append(say);
   let card = null, panel = null, panelClose = null, onSay = null, onEmote = null;
   const chips = mk('div', 'chips hidden'), chipMoney = mk('span', 'chip'), chipEnergy = mk('span', 'chip energy'), efill = mk('i'), btnBag = mk('button', 'chip', '🎒');
-  const ebar = mk('span', 'ebar'); ebar.append(efill); chipEnergy.append('⚡', ebar); btnBag.type = 'button'; btnBag.title = '背包（E）'; chips.append(chipMoney, chipEnergy, btnBag); ui.append(chips);
+  const ebar = mk('span', 'ebar'); ebar.append(efill); chipEnergy.append('⚡', ebar); btnBag.type = 'button'; btnBag.title = '背包（E）'; const chipHp = mk('span', 'chip hp hidden'), hfill = mk('i'), hbar = mk('span', 'ebar'); hbar.append(hfill); chipHp.append('❤', hbar); chipHp.title = '血量（只有在礦坑裡會用到）';
+  chips.append(chipMoney, chipEnergy, chipHp, btnBag); ui.append(chips);
   const closeSay = () => { say.classList.add('hidden'); sayInput.blur(); };
   say.addEventListener('submit', (e) => { e.preventDefault(); const t = sayInput.value.trim(); sayInput.value = ''; closeSay(); if (t && onSay) onSay(t); });
   sayInput.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeSay(); e.stopPropagation(); } });
@@ -48,7 +49,7 @@ export function createHud(ui, slots) {
   Object.defineProperties(hud, Object.getOwnPropertyDescriptors({
     showPlay(on) { for (const n of [clock, side, chips]) n.classList.toggle('hidden', !on); if (!on) { emotes.classList.add('hidden'); closeSay(); hud.closeCard(); hud.closePanel(); } },
     onBag(fn) { btnBag.onclick = fn; },
-    setStatus(money, energy, max) { const m = `💰 ${money}`; if (chipMoney.textContent !== m) chipMoney.textContent = m; efill.style.width = Math.round(100 * energy / max) + '%'; chipEnergy.classList.toggle('low', energy < max * 0.2); chipEnergy.title = `體力 ${energy}/${max}`; },
+    setStatus(money, energy, max, hp = null, hpMax = 100) { chipHp.classList.toggle('hidden', hp == null); if (hp != null) hfill.style.width = Math.round(100 * hp / hpMax) + '%'; const m = `💰 ${money}`; if (chipMoney.textContent !== m) chipMoney.textContent = m; efill.style.width = Math.round(100 * energy / max) + '%'; chipEnergy.classList.toggle('low', energy < max * 0.2); chipEnergy.title = `體力 ${energy}/${max}`; },
     // 快捷列：背包的前 10 格。make(i) 回傳那一格要放的圖示（沒有東西回傳 null）
     setHotbar(inv, make) { cells.forEach((c, i) => { c.textContent = ''; const s = inv[i]; if (s) { c.append(make(s)); if (s.n > 1) { const n = mk('span', 'count', String(s.n)); c.append(n); } } else c.append(mk('span', 'num', String((i + 1) % 10))); }); },
     openPanel(node, onClose) { hud.closePanel(); panel = node; panelClose = onClose; ui.append(node); },

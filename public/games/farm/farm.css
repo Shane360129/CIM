@@ -114,3 +114,5 @@ button.chip { cursor: pointer; }
 
 .prow { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 .pbtn.eat { margin-top: 6px; }
+
+.chip.hp .ebar i { background: #e5484d; }
