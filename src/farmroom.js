@@ -31,7 +31,8 @@ const ITEMS = makeItems(RAW_ITEMS, MACHINES); // 加工品（g:機器:原料）�
 
 const MAPS = { farm: MAP_FARM, house: MAP_HOUSE, road: MAP_ROAD, lake: MAP_LAKE, town: MAP_TOWN, forest: MAP_FOREST, beach: MAP_BEACH, greenhouse: MAP_GREENHOUSE };
 // 每張地圖上不會動的東西（房子、長椅…）佔了哪些格子：採集物、雜草不會長在這些格子上
-const TOWN_GRID = walkGrid(MAPS.town, OBJECTS); // 居民找路用：小鎮上哪些格子走得到
+const GRIDS = Object.fromEntries(['town', 'forest', 'beach'].map((m) => [m, walkGrid(MAPS[m], OBJECTS)])); // 居民找路用：每張地圖哪些格子走得到
+const NPC_ENTRIES = { forest: [1.6, 28.0], beach: [1.6, 8.0] }; // 居民從小鎮到這些地圖時，從哪裡走進來
 const STATIC = Object.fromEntries(Object.entries(MAPS).map(([id, m]) => [id, new Set(m.objects.flatMap((o) => { const [tw, th] = OBJECTS[o.type].tiles || [1, 1], out = []; for (let x = 0; x < tw; x++) for (let y = 0; y < th; y++) out.push((o.x + x) + ',' + (o.y - y)); return out; }))]));
 const TICK_MS = 10000;                 // 有人在線時，每 10 秒推進一次遊戲時鐘
 const DAY_SPAN = BAL.dayEndMinute - BAL.dayStartMinute;            // 一天有幾個遊戲分鐘（早上 6 點到凌晨 2 點）
@@ -381,7 +382,7 @@ export class FarmRoom {
   // 好感是每個玩家各算各的。居民在哪裡是照行程用時間算的（shared/rules.js 的 npcPos），這裡只檢查你是不是站在他旁邊
   onNpc(a, p, m, { no, done, self }) {
     const npc = NPCS[m.npc], F = BAL.friend, f = this.farm; if (!npc || !npc.full) return no('unknown');
-    const fid = this.festivalToday(), pos = npcPos(npc, this.minuteNow(), F.walkMinutes, TOWN_GRID, { wet: isWet(weatherOf(f.seed, f.day, BAL)), fest: fid && FESTIVALS[fid].map === 'town' ? FESTIVALS[fid].stage : null }); if (a.map !== 'town' || Math.hypot(pos.x - a.x, pos.y - a.y) > BAL.reach + 1.5) return no('far');
+    const fid = this.festivalToday(), pos = npcPos(npc, this.minuteNow(), F.walkMinutes, GRIDS, { entries: NPC_ENTRIES, wet: isWet(weatherOf(f.seed, f.day, BAL)), fest: fid && FESTIVALS[fid].map === 'town' ? FESTIVALS[fid].stage : null }); if (a.map !== pos.map || Math.hypot(pos.x - a.x, pos.y - a.y) > BAL.reach + 1.5) return no('far');
     const fr = ((p.friend ||= {})[m.npc] ||= { pts: 0, talk: 0, giftDay: 0, week: 0, gifts: 0, met: false });
     const bday = npc.birthday && npc.birthday[0] === seasonIndex(f.day, BAL) && npc.birthday[1] === ((f.day - 1) % BAL.seasonDays) + 1;
     if (m.t === 'talk') { // 每天第一次聊天會增加好感

@@ -105,7 +105,7 @@ export const mineMap = (bal, floor) => ({ name: `礦坑第 ${floor} 層`, w: bal
 // ---- 居民找路：地圖上哪些格子走得到（建築、家具、樹、水都擋路），兩點之間沿著走得到的格子走 ----
 export function walkGrid(map, objects) {
   const w = map.w, h = map.h, b = new Uint8Array(w * h), cache = new Map();
-  for (const p of map.patches || []) if (p.type === 'water') for (let x = p.x; x < p.x + p.w; x++) for (let y = p.y; y < p.y + p.h; y++) if (x >= 0 && y >= 0 && x < w && y < h) b[y * w + x] = 1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (groundAt(map, x, y) === 'water') b[y * w + x] = 1; // 水上鋪了路（碼頭、木橋）的地方走得過去
   for (const o of map.objects) { const d = objects[o.type]; if (!d || !d.solid) continue; const [tw, th] = d.tiles || [1, 1]; for (let x = 0; x < tw; x++) for (let y = 0; y < th; y++) { const X = o.x + x, Y = o.y - y; if (X >= 0 && Y >= 0 && X < w && Y < h) b[Y * w + X] = 1; } }
   return { w, h, b, cache };
 }
@@ -146,22 +146,29 @@ const along = (path, d) => { // 沿著路走了 d 格的位置和方向
 };
 // 這一天的行程：下雨天不去菜園、不坐在外面（留在原本的地方）；節慶那天白天大家都到舞台旁邊
 export function daySchedule(npc, opts = {}) {
-  let sch = npc.schedule.map((e) => [e[0], e[1], e[2], e[3] || 'wander']);
+  let sch = npc.schedule.map((e) => [e[0], e[1], e[2], e[3] || 'wander', e[4] || 'town']); // 第五個欄位：在哪張地圖（沒寫就是小鎮）
   if (opts.wet) sch = sch.filter((e) => !['farm', 'sit', 'fish'].includes(e[3]));
   if (opts.fest) {
     let h = 0; for (const ch of npc.name) h = (h * 31 + ch.codePointAt(0)) % 9973;
     const a = (h % 360) * Math.PI / 180, r = 3 + (h % 3) * 0.7, spot = [opts.fest.x + 1 + Math.cos(a) * r, opts.fest.y + 1.5 + Math.sin(a) * r * 0.6];
-    sch = [...sch.filter((e) => e[0] < 540 || e[0] >= 1020), [540, spot[0], spot[1], 'cheer'], ...(sch.some((e) => e[0] >= 1020) ? [] : [])].sort((p, q) => p[0] - q[0]);
-    if (!sch.some((e) => e[0] >= 1020)) sch.push([1020, ...npc.schedule[npc.schedule.length - 1].slice(1, 3), 'stay']);
+    sch = [...sch.filter((e) => e[0] < 540 || e[0] >= 1020), [540, spot[0], spot[1], 'cheer', 'town'], ...(sch.some((e) => e[0] >= 1020) ? [] : [])].sort((p, q) => p[0] - q[0]);
+    if (!sch.some((e) => e[0] >= 1020)) sch.push([1020, ...npc.schedule[npc.schedule.length - 1].slice(1, 3), 'stay', 'town']);
   }
   return sch;
 }
-// 居民現在在哪、在做什麼：全部用時間算，伺服器和兩個玩家看到的一樣。G 是 walkGrid（有給才會繞路）
-export function npcPos(npc, minute, walk = 40, G = null, opts = {}) {
+// 居民現在在哪、在做什麼：全部用時間算，伺服器和兩個玩家看到的一樣。grids 是「地圖 → walkGrid」（有給才會繞路）；entries 是「地圖 → 從小鎮過去時出現的位置」
+// 回傳的 map 是他現在在哪張地圖
+export function npcPos(npc, minute, walk = 40, grids = null, opts = {}) {
   const sch = opts.sch || daySchedule(npc, opts); let i = 0; for (let k = 0; k < sch.length; k++) if (minute >= sch[k][0]) i = k;
-  const cur = sch[i], prev = sch[i > 0 ? i - 1 : sch.length - 1];
+  return { map: sch[i][4], ...npcPos1(npc, minute, walk, grids, { ...opts, sch }) };
+}
+function npcPos1(npc, minute, walk, grids, opts) {
+  const sch = opts.sch || daySchedule(npc, opts); let i = 0; for (let k = 0; k < sch.length; k++) if (minute >= sch[k][0]) i = k;
+  const cur = sch[i], prev0 = sch[i > 0 ? i - 1 : sch.length - 1], map = cur[4], G = grids && (grids[map] || (grids.w ? grids : null));
+  // 換地圖：從那張地圖的入口走進來（在原本的地圖上就消失了）
+  const ent = prev0[4] !== map && opts.entries && opts.entries[map], prev = ent ? [prev0[0], ent[0], ent[1]] : prev0;
   const face = (dx, dy) => (Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : dy < 0 ? 'up' : 'down');
-  if (minute < sch[0][0]) return { x: prev[1], y: prev[2], moving: false, dir: 'down' };
+  if (minute < sch[0][0]) return { x: prev0[1], y: prev0[2], moving: false, dir: 'down', map: prev0[4] };
   // 走過去：有地圖就沿著路走（每分鐘 0.7 格），沒有就照原本的直線
   const path = G ? findPath(G, prev[1], prev[2], cur[1], cur[2]) : null, dur = path ? Math.max(4, path.len / 0.7) : walk, el = minute - cur[0];
   if (el < dur) {

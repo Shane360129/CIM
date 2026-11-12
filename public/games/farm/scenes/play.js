@@ -294,11 +294,11 @@ export const play = {
   },
   // 現在在小鎮上的居民和他們的位置（照行程用時間算）
   folks() {
-    const W = this.world, npcs = this.ctx.data.npcs; if (this.mapId !== 'town' || !W.farm) return [];
+    const W = this.world, npcs = this.ctx.data.npcs; if (!['town', 'forest', 'beach'].includes(this.mapId) || !W.farm) return [];
     const min = W.minute(), walk = this.bal.friend.walkMinutes, d = this.ctx.data, fe = W.farm.festival && d.festivals[W.farm.festival];
-    this.townGrid ||= walkGrid(d.maps.town, d.objects);
-    const opts = { wet: ['rain', 'storm'].includes(W.farm.weather), fest: fe && fe.map === 'town' ? fe.stage : null };
-    const list = Object.entries(npcs).filter(([, n]) => n.full).map(([id, n]) => ({ id, n, ...npcPos(n, min, walk, this.townGrid, opts) }));
+    this.grids ||= Object.fromEntries(['town', 'forest', 'beach'].map((m) => [m, walkGrid(d.maps[m], d.objects)]));
+    const opts = { entries: { forest: [1.6, 28.0], beach: [1.6, 8.0] }, wet: ['rain', 'storm'].includes(W.farm.weather), fest: fe && fe.map === 'town' ? fe.stage : null };
+    const list = Object.entries(npcs).filter(([, n]) => n.full).map(([id, n]) => ({ id, n, ...npcPos(n, min, walk, this.grids, opts) })).filter((f) => f.map === this.mapId);
     // 閒著、站得很近的兩個人會聊天：每 30 分鐘（遊戲時間）的前 8 分鐘，其中一個人頭上冒一句話
     const lines = d.chatter.lines, slot = Math.floor(min / 30);
     if (min % 30 < 8) for (let a = 0; a < list.length; a++) for (let b = a + 1; b < list.length; b++) {
