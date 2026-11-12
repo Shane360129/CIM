@@ -415,6 +415,14 @@ export const play = {
     }
     // 出入口的字
     for (const e of this.map.exits || []) { g.font = `700 ${T * 0.22}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = 'rgba(255,255,255,.85)'; g.fillText(e.label, clampX((e.x + e.w / 2) * T, this.map.w * T, T * 1.6), (e.y + e.h / 2) * T - T * 1.1 * (e.h > 1 ? 1 : 0.2)); }
+    // 小鎮的菜園：居民在照顧的作物（裝飾用，種什麼跟著季節、長多大跟著日期）
+    for (const gd of this.map.gardens || []) {
+      const kinds = Object.keys(data.crops).filter((id) => data.crops[id].seasons.includes(season) && !data.crops[id].regrowDays), day = W.farm ? W.farm.day : 1;
+      for (let gx = 0; gx < gd.w; gx++) for (let gy = 0; gy < gd.h; gy++) {
+        const id = kinds[(gx * 7 + gy * 3) % kinds.length], st = Math.min(4, Math.floor(((day + gx * 2 + gy) % 9) / 2));
+        drawTilled(g, gd.x + gx, gd.y + gy, T, (day + gx) % 2 === 0); list.push({ y: gd.y + gy + 0.8, crop: { x: gd.x + gx, y: gd.y + gy, c: { id, s: st } } });
+      }
+    }
     // 只畫看得到的，依腳的位置由遠到近畫
     for (const t of this.things) if (t.fx > x0 && t.fx < x1 && t.fy > y0 && t.fy < y1) list.push({ y: t.fy, t });
     for (const o of W.objs.values()) if (o.map === mapId && o.x > x0 && o.x < x1 && o.y > y0 && o.y < y1) list.push({ y: o.y + 0.92, o, t: { def: o.item ? { ...data.objects[o.type], art: data.items[o.item].art, name: data.items[o.item].name } : o.kind ? { ...data.objects[o.type], art: data.machines[o.kind].art, name: data.machines[o.kind].name, ...this.treeLook(o) } : data.objects[o.type], fx: o.x + 0.5, fy: o.y + 0.92 } });
@@ -425,7 +433,7 @@ export const play = {
       for (const [bx, by] of [[st.x - 4, st.y - 6], [st.x + 1, st.y - 7], [st.x + 6, st.y - 6]]) list.push({ y: by + 0.9, t: { def: { name: '旗', shape: 'blob', w: 2.2, h: 1.0, color: '#e5484d', art: 'obj/bunting' }, fx: bx, fy: by + 0.9 } });
     }
     if (this.hunt) for (const e of this.hunt.eggs) if (!e.got) list.push({ y: e.y + 0.8, egg: e });
-    for (const n of this.folks()) list.push({ y: n.y, pp: { q: { id: 'npc:' + n.id, x: n.x, y: n.y, dir: n.dir, moving: n.moving, anim: performance.now() / 1000, look: n.n.look, name: n.n.name }, color: '#ccc' } });
+    for (const n of this.folks()) list.push({ y: n.y, pp: { q: { id: 'npc:' + n.id, x: n.x, y: n.y, dir: n.dir, moving: n.moving, anim: performance.now() / 1000, look: n.n.look, name: n.n.name, action: n.action || null, actionT: (performance.now() / 1000 + n.x) % (n.action === 'water' ? 1.4 : n.action === 'swing' ? 1.1 : 1000), tool: n.tool || null }, color: '#ccc' } });
     if (this.map.mine && W.mine) { // 礦坑：石頭、打開的樓梯、入口的梯子、怪物
       const s = W.mine, RT = this.bal.mine.rockTypes, MT = this.bal.mine.monsters, tnow = W.serverNow();
       g.fillStyle = '#3b2f22'; g.fillRect((s.spawn.x - 0.3) * T, (s.spawn.y + 1) * T, T * 1.6, T * 0.9); drawName(g, '梯子（出去／電梯）', (s.spawn.x + 0.5) * T, (s.spawn.y + 1.5) * T, T);

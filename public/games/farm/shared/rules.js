@@ -106,8 +106,24 @@ export function npcPos(npc, minute, walk = 40) {
   const sch = npc.schedule; let i = 0; for (let k = 0; k < sch.length; k++) if (minute >= sch[k][0]) i = k;
   const cur = sch[i], prev = sch[i > 0 ? i - 1 : sch.length - 1], t = Math.min(1, Math.max(0, (minute - cur[0]) / walk));
   if (minute < sch[0][0]) return { x: prev[1], y: prev[2], moving: false, dir: 'down' };
-  const x = prev[1] + (cur[1] - prev[1]) * t, y = prev[2] + (cur[2] - prev[2]) * t, dx = cur[1] - prev[1], dy = cur[2] - prev[2];
-  return { x, y, moving: t < 1, dir: t >= 1 ? 'down' : Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : dy < 0 ? 'up' : 'down' };
+  const face = (dx, dy) => (Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : dy < 0 ? 'up' : 'down');
+  if (t < 1) return { x: prev[1] + (cur[1] - prev[1]) * t, y: prev[2] + (cur[2] - prev[2]) * t, moving: true, dir: face(cur[1] - prev[1], cur[2] - prev[2]) };
+  // 到了：做這一段行程的事（行程第四個欄位）。全部用時間算，伺服器和兩個玩家看到的一樣
+  const act = cur[3] || 'wander', since = minute - cur[0] - walk;
+  let h = 0; for (const ch of npc.name) h = (h * 31 + ch.codePointAt(0)) % 9973;
+  if (act === 'farm') { // 在菜園：每 25 分鐘換一格，走過去（5 分鐘）→ 翻土或澆水
+    const slot = Math.floor(since / 25), ph = since % 25, col = slot % 4, from = slot > 0 ? (slot - 1) % 4 : col;
+    if (ph < 5 && from !== col) { const k = ph / 5; return { x: cur[1] + from + (col - from) * k, y: cur[2], moving: true, dir: col > from ? 'right' : 'left' }; }
+    return { x: cur[1] + col, y: cur[2], moving: false, dir: 'up', action: slot % 2 ? 'water' : 'swing', tool: slot % 2 ? 'water' : 'hoe' };
+  }
+  if (act === 'sit') return { x: cur[1], y: cur[2], moving: false, dir: 'down', action: 'sit' };
+  if (act === 'eat') return { x: cur[1], y: cur[2], moving: false, dir: 'down', action: Math.floor(since / 20) % 2 ? 'eat' : null };
+  if (act === 'stay') return { x: cur[1], y: cur[2], moving: false, dir: 'down' };
+  // 沒有特別的事：在附近晃。每 30 分鐘換一個點（離定點不到一格），走過去 6 分鐘，然後站著東看西看
+  const spot = (n) => { const r = rng(h * 131 + i * 17 + n * 7919); return [cur[1] + (r() - 0.5) * 1.7, cur[2] + (r() - 0.5) * 1.1, r()]; };
+  const slot = Math.floor(since / 30), ph = since % 30, a = slot > 0 ? spot(slot - 1) : [cur[1], cur[2], 0], b = spot(slot);
+  if (ph < 6) { const k = ph / 6; return { x: a[0] + (b[0] - a[0]) * k, y: a[1] + (b[1] - a[1]) * k, moving: true, dir: face(b[0] - a[0], b[1] - a[1]) }; }
+  return { x: b[0], y: b[1], moving: false, dir: ['down', 'left', 'right', 'down'][Math.floor(b[2] * 4)] };
 }
 // 送這個東西給他，他的反應：love 最喜歡、like 喜歡、dislike 討厭、neutral 普通
 export function giftTaste(items, npc, id) { for (const k of ['loves', 'likes', 'dislikes']) if ((npc[k] || []).some((spec) => matches(items, id, spec))) return k === 'loves' ? 'love' : k === 'likes' ? 'like' : 'dislike'; return 'neutral'; }
