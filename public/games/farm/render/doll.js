@@ -5,7 +5,7 @@
 import { sprite } from './sprites.js';
 const OUT = '#5a3d22';
 // 美術零件（白底，照外觀的顏色染色）要畫多大、放哪裡：單位是 U（一個頭的直徑）。w 是正面／背面的寬，ws 是側面的寬；dy 是比基準點高（負）或低多少
-const HAIR = { px: 222, top: -0.80, sx: -0.17 }; // px：原圖裡一個頭的直徑大約幾個像素；top：頭髮頂端比頭的中心高多少（U）
+const HAIR = { px: 222, top: -0.80, sx: -0.17, sxArt: -0.06 }; // px：原圖裡一個頭的直徑大約幾個像素；top：頭髮頂端比頭的中心高多少（U）
 const FIT = { top: { w: 1.02, ws: 0.62, dy: -0.1 }, dress: { w: 0.8, ws: 0.5, dy: -0.08 }, bottom: { w: 0.72, ws: 0.5, dy: -0.2 }, hat: { straw: { w: 1.3, ws: 1.3, dy: -0.78 }, beanie: { w: 1.12, ws: 1.12, dy: -1.36, dys: -1.02 }, cap: { w: 1.15, ws: 1.15, dy: -1.06, dys: -0.78, flipSide: true }, other: { w: 1.2, ws: 1.2, dy: -1.02 } } };
 const shade = (hex, k) => { const n = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)); return '#' + n.map((v) => Math.round(Math.max(0, Math.min(255, k > 0 ? v + (255 - v) * k : v * (1 + k)))).toString(16).padStart(2, '0')).join(''); };
 
@@ -25,6 +25,29 @@ export function poseOf(action, t) {
 }
 
 // look：外觀（data/doll/parts.json 的 presets 那種物件）；dir：down 正面、up 背面、left／right 側面（左邊是右邊的鏡像）
+// 美術素體：膚色換成玩家選的、白色布料（袖子）換成衣服的顏色。一次算好快取起來
+const paintCache = new Map(); let baseSkin = null;
+function skinOf(s) { // 素體本來的膚色：取頭部正中間一小塊的平均
+  const c = document.createElement('canvas'); c.width = s.w; c.height = s.h; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(s.img, s.x, s.y, s.w, s.h, 0, 0, s.w, s.h);
+  const d = g.getImageData(Math.round(s.w * 0.42), Math.round(s.h * 0.5), Math.round(s.w * 0.16), Math.round(s.h * 0.16)).data, sum = [0, 0, 0]; let n = 0;
+  for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 200) { sum[0] += d[i]; sum[1] += d[i + 1]; sum[2] += d[i + 2]; n++; }
+  return n ? sum.map((v) => v / n) : [246, 207, 163];
+}
+function paint(s, skin, cloth) {
+  const key = `${s.x},${s.y}|${skin}|${cloth || ''}`; if (paintCache.has(key)) return paintCache.get(key);
+  if (!baseSkin) { const h = sprite('base/head/front'); baseSkin = h ? skinOf(h) : [246, 207, 163]; }
+  const c = document.createElement('canvas'); c.width = s.w; c.height = s.h; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(s.img, s.x, s.y, s.w, s.h, 0, 0, s.w, s.h);
+  const d = g.getImageData(0, 0, s.w, s.h), a = d.data, hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const sk = hex(skin).map((v, i) => v / baseSkin[i]), cl = cloth ? hex(cloth) : null;
+  for (let i = 0; i < a.length; i += 4) {
+    if (!a[i + 3]) continue; const r = a[i], gg = a[i + 1], b = a[i + 2], mx = Math.max(r, gg, b), mn = Math.min(r, gg, b);
+    if (r >= gg && gg >= b && r > 120 && r - b > 22 && r - b < 140) { a[i] = Math.min(255, r * sk[0]); a[i + 1] = Math.min(255, gg * sk[1]); a[i + 2] = Math.min(255, b * sk[2]); } // 皮膚
+    else if (cl && mx - mn < 40 && mx >= 120) { const l = mx / 255; a[i] = cl[0] * l; a[i + 1] = cl[1] * l; a[i + 2] = cl[2] * l; } // 白色布料
+  }
+  g.putImageData(d, 0, 0); paintCache.set(key, c); return c;
+}
+const HEAD_PX = 217; // 素體圖裡頭的高度（像素）＝ 1 U
+
 export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle', t = 0, tool = null) {
   const p = poseOf(action, t), side = dir === 'left' || dir === 'right', back = dir === 'up';
   const top = parts.top.find((v) => v.id === look.top) || parts.top[0];
@@ -48,11 +71,56 @@ export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle',
     if (flip) g.restore(); return true;
   };
   const topArt = !!sprite(`top/${top.id}/${view}`);
+  // ---- 美術素體（頭、臉、身體、手腳）：素材到了就用，沒有就用下面程式畫的 ----
+  const BASE = !!sprite('base/head/front') && !look.plain, k0 = U / HEAD_PX, mirror = dir === 'left';
+  const put = (name, cx, top, opt = {}) => { // 畫一張零件：以 (cx, top) 為上緣中心；可以指定寬高、旋轉（繞上緣中心）、換色
+    const s = sprite(name); if (!s) return false;
+    const sc = (opt.k || 1) * k0, w = opt.w || s.w * sc, h = opt.h || s.h * sc;
+    const src = opt.raw ? null : paint(s, skin, opt.cloth || null);
+    g.save(); g.translate(cx, top); if (opt.ang) g.rotate(opt.ang); if (opt.flip) g.scale(-1, 1);
+    if (src) g.drawImage(src, -w / 2, opt.mid ? -h / 2 : 0, w, h); else g.drawImage(s.img, s.x, s.y, s.w, s.h, -w / 2, opt.mid ? -h / 2 : 0, w, h);
+    g.restore(); return true;
+  };
+  const vk = back ? 'b' : side ? 's' : 'f';
+  const armArt = (front) => {
+    const ang = front ? p.armF : p.armB, ax = side ? (front ? 0.04 : -0.06) * U : (front ? 0.3 : -0.3) * U;
+    const rot = side ? ang : (front ? -1 : 1) * 0.1 + (action === 'walk' ? ang * 0.25 : front || action === 'happy' ? ang * (front ? 1 : -1) * 0.5 : 0);
+    const sl = topArt && top.sleeve !== 'long' ? 'arm' : top.sleeve === 'long' ? 'arml' : 'arms', who = side ? (front ? 'sf' : 'sb') : back ? (front ? 'br' : 'bl') : (front ? 'fr' : 'fl');
+    const L = 0.62 * U, s = sprite(`base/${sl}/${who}`); if (!s) return false;
+    const w = L * s.w / s.h;
+    put(`base/${sl}/${who}`, ax, sh - 0.02 * U, { w, h: L, ang: rot, cloth: sl === 'arm' ? null : look.topColor });
+    if (front && tool && p.tool) { g.save(); g.translate(ax, sh); g.rotate(rot); g.translate(0, L * 0.9); g.rotate(-0.5); rr(-0.03 * U, -0.75 * U, 0.06 * U, 0.85 * U, 0.02 * U); fill('#8a5a34'); rr(-0.14 * U, -0.86 * U, 0.3 * U, 0.16 * U, 0.04 * U); fill(tool === 'water' ? '#6aa8e8' : '#a9a59c'); g.restore(); }
+    return true;
+  };
+  const legArt = (sx, ang) => {
+    const who = side ? (sx > 0 ? 'sf' : 'sb') : back ? (sx > 0 ? 'br' : 'bl') : (sx > 0 ? 'fr' : 'fl');
+    const L = -by + 0.02 * U - (side ? 0 : Math.max(0, ang * sx) * 0.1 * U), s = sprite(`base/leg/${who}`); if (!s) return false;
+    put(`base/leg/${who}`, side ? 0 : sx * 0.14 * U, by - 0.02 * U, { w: L * s.w / s.h, h: L, ang: side ? ang : 0 });
+    const sc = look.shoesColor, tall = look.shoes === 'boot' || look.shoes === 'rain' || (parts.shoes.find((v) => v.id === look.shoes) || {}).tall;
+    const ss = sprite(`shoes/${look.shoes}/${view}`);
+    if (ss) { // 美術鞋子：每隻腳一隻，鞋底貼著腳底；長靴比較高
+      const sw = (side ? 0.4 : 0.3) * U, sh2 = Math.min(sw * ss.h / ss.w, (tall ? 0.42 : 0.24) * U), sw2 = sh2 * ss.w / ss.h;
+      g.save(); g.translate(side ? 0 : sx * 0.14 * U, by - 0.02 * U); g.rotate(side ? ang : 0); g.drawImage(paint(ss, skin, sc), -sw2 / 2 + (side ? 0.04 * U : 0), L - sh2 + 0.02 * U, sw2, sh2); g.restore();
+      return true;
+    }
+    g.save(); g.translate(side ? 0 : sx * 0.14 * U, by - 0.02 * U); g.rotate(side ? ang : 0); rr(-0.13 * U, L - (tall ? 0.24 : 0.13) * U, 0.26 * U + (side ? 0.06 * U : 0), (tall ? 0.24 : 0.13) * U, 0.06 * U); fill(look.shoes === 'sandal' ? shade(sc, -0.2) : sc); g.restore();
+    return true;
+  };
+  const bodyArt = () => { const s = sprite(`base/torso/${view}`); if (!s) return false; const h = by + 0.12 * U - (hy + 0.42 * U); put(`base/torso/${view}`, side ? -0.02 * U : 0, hy + 0.42 * U, { w: h * s.w / s.h, h }); return true; };
+  const headArt = () => put(`base/head/${view}`, side ? -0.03 * U : 0, hy - 0.52 * U, { h: 1.04 * U, w: 1.04 * U * sprite(`base/head/${view}`).w / sprite(`base/head/${view}`).h });
+  const faceArt = () => {
+    if (back) return true;
+    const blink = action !== 'happy' && (t % 4.3) < 0.14, eyes = look.asleep || blink ? 'closed' : action === 'happy' ? 'happy' : look.eyes;
+    const fs = (name, cx, cy, k) => { const s = sprite(name); if (!s) return; const w = s.w * k0 * k, h = s.h * k0 * k; g.drawImage(s.img, s.x, s.y, s.w, s.h, cx - w / 2, cy - h / 2, w, h); };
+    if (side) { const fx = 0.24 * U; fs(`face/s/mouth/blush`, fx - 0.08 * U, hy + 0.22 * U, 0.3); fs(`face/s/eyes/${eyes}`, fx, hy + 0.06 * U, 0.42); fs(`face/s/brows/${look.brows}`, fx, hy - 0.17 * U, 0.42); fs(`face/s/mouth/${look.mouths}`, fx + 0.06 * U, hy + 0.3 * U, 0.38); return true; }
+    fs('face/f/mouth/blush', 0, hy + 0.2 * U, 0.85); fs(`face/f/eyes/${eyes}`, 0, hy + 0.06 * U, 0.82); fs(`face/f/brows/${look.brows}`, 0, hy - 0.16 * U, 0.82); fs(`face/s/mouth/${look.mouths}`, 0, hy + 0.3 * U, 0.38);
+    return true;
+  };
   // 髮型的圖：五個零件（正面前髮 ff、正面後髮 fb、背面 bk、側面前髮 sf、側面後髮 sb）都照原圖的比例畫，頂端對齊頭頂上方一點
   const hairArt = (v) => {
     const s = sprite(`hair/${look.hair}/${v}`); if (!s) return false;
     const w = s.w / HAIR.px * U, h = s.h / HAIR.px * U;
-    g.drawImage(tintSprite(s.img, s.x, s.y, s.w, s.h, look.hairColor), -w / 2 + (side ? HAIR.sx : 0) * U, hy + HAIR.top * U, w, h); return true;
+    g.drawImage(tintSprite(s.img, s.x, s.y, s.w, s.h, look.hairColor), -w / 2 + (side ? (sprite('base/head/front') && !look.plain ? HAIR.sxArt : HAIR.sx) : 0) * U, hy + HAIR.top * U, w, h); return true;
   };
   // ---- 各個零件 ----
   const hairBack = () => {
@@ -90,7 +158,7 @@ export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle',
   };
   const topL = () => {
     const c = look.topColor, h = by - sh + (top.dress ? 0.2 : 0.02) * U;
-    if (art(`top/${top.id}`, c, top.dress ? FIT.dress : FIT.top, sh)) return;
+    if (art(`top/${top.id}`, c, top.dress ? FIT.dress : FIT.top, sh, 0, top.dress ? 0 : by - sh + 0.32 * U)) return; // 上衣太長的（畫得像洋裝）等比例縮小
     rr(-0.33 * U, sh - 0.02 * U, 0.66 * U, h, 0.16 * U); fill(c);
     g.save(); g.beginPath(); g.roundRect(-0.33 * U, sh - 0.02 * U, 0.66 * U, h, 0.16 * U); g.clip(); g.lineWidth = lw * 0.9;
     if (top.id === 'stripe') { g.strokeStyle = shade(c, -0.28); for (let i = 1; i < 4; i++) { g.beginPath(); g.moveTo(-0.4 * U, sh + i * 0.15 * U); g.lineTo(0.4 * U, sh + i * 0.15 * U); g.stroke(); } }
@@ -147,17 +215,37 @@ export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle',
     else if (look.hat === 'beanie') { g.beginPath(); g.arc(0, hy - 0.12 * U, 0.54 * U, Math.PI, 0); g.closePath(); fill(c); rr(-0.56 * U, hy - 0.22 * U, 1.12 * U, 0.16 * U, 0.07 * U); fill(shade(c, 0.3)); g.beginPath(); g.arc(0, hy - 0.68 * U, 0.12 * U, 0, 7); fill(shade(c, 0.3)); }
     else if (look.hat === 'cap') { g.beginPath(); g.arc(0, hy - 0.14 * U, 0.53 * U, Math.PI, 0); g.closePath(); fill(c); if (!back) { rr(side ? 0.2 * U : -0.36 * U, hy - 0.2 * U, (side ? 0.55 : 0.72) * U, 0.11 * U, 0.05 * U); fill(shade(c, -0.18)); } }
   };
+  const accArt = (layer) => { // 美術配件：位置照 parts.json 的 slots（臉上、脖子、胸前、腰、背後…）
+    const a = parts.acc.find((v) => v.id === look.acc); if (!a || !a.art) return false;
+    const sl = parts.slots[a.slot] || {}; if (!!sl.behind !== (layer === 'behind')) return true;
+    if (sl.behind && layer === 'behind' && back) return true; // 背面時，背包和翅膀改到身體前面畫（離鏡頭比較近）
+    const sv = sl.behind ? (back ? 'front' : side ? 'side' : 'back') : view, s = sprite(`acc/${a.id}/${sv}`); if (!s) return true;
+    if (!sl.behind && back && ['face', 'cheek', 'bow', 'tie', 'necklace', 'badge', 'apron'].includes(a.slot)) return true; // 背面看不到臉上和胸前的東西
+    const base = sl.y === 'hy' ? hy : sl.y === 'by' ? by : sh, w = a.w * (side ? sl.sw || 0.7 : 1) * U, h = w * s.h / s.w;
+    const cx = (side ? sl.sx || 0 : sl.dx || 0) * U, cy = base + (sl.dy || 0) * U;
+    g.drawImage(s.img, s.x, s.y, s.w, s.h, cx - w / 2, cy - h / 2, w, h); return true;
+  };
   const acc = () => {
+    if (accArt('front')) return;
     if (look.acc === 'glasses' && !back) { g.lineWidth = lw * 0.9; g.strokeStyle = '#3a2e22'; for (const sx of side ? [0.26] : [-0.2, 0.2]) { g.beginPath(); g.arc(sx * U, hy + 0.06 * U, 0.13 * U, 0, 7); g.stroke(); } if (!side) { g.beginPath(); g.moveTo(-0.07 * U, hy + 0.06 * U); g.lineTo(0.07 * U, hy + 0.06 * U); g.stroke(); } g.strokeStyle = OUT; }
     if (look.acc === 'scarf') { g.lineWidth = lw; rr(-0.34 * U, sh - 0.1 * U, 0.68 * U, 0.2 * U, 0.09 * U); fill('#e5484d'); if (!back) { rr(0.08 * U, sh + 0.02 * U, 0.16 * U, 0.3 * U, 0.05 * U); fill('#e5484d'); } }
   };
   // ---- 照圖層順序畫 ----
+  if (BASE) { // 美術素體
+    accArt('behind'); hairBack();
+    if (side) armArt(false); else if (back) { armArt(true); armArt(false); }
+    if (side) { legArt(-1, p.legB); legArt(1, p.legA); } else { legArt(-1, p.legA); legArt(1, p.legB); }
+    bodyArt(); bottom(); topL();
+    if (!back) { if (!side) armArt(false); armArt(true); }
+    headArt(); faceArt(); hairFront(); hat(); acc(); if (back) { const a = parts.acc.find((v) => v.id === look.acc); if (a && a.art && (parts.slots[a.slot] || {}).behind) { const s = sprite(`acc/${a.id}/front`); if (s) { const sl = parts.slots[a.slot], w = a.w * U, h = w * s.h / s.w; g.drawImage(s.img, s.x, s.y, s.w, s.h, -w / 2, sh + sl.dy * U - h / 2, w, h); } } }
+  } else {
   hairBack();
   if (side) arm(false); else if (back) { arm(true); arm(false); }
   if (side) { leg(-1, p.legB); leg(1, p.legA); } else { leg(-1, p.legA); leg(1, p.legB); }
   body(); bottom(); topL();
   if (!back) { if (!side) arm(false); arm(true); }
   head(); face(); hairFront(); hat(); acc();
+  }
   g.restore();
 }
 // 換色（給之後的圖用）：白到淺灰的像素換成目標顏色、保留明暗；描邊和本來就有顏色的部分不動。結果快取起來，同一張圖同一個顏色只算一次。

@@ -26,6 +26,9 @@
   },
   "hair": {
    "max": 420
+  },
+  "base": {
+   "max": 400
   }
  },
  "sheets": {
@@ -3226,6 +3229,461 @@
     ]
    ],
    "splitCols": 4
+  },
+  "1-01": {
+   "kind": "base",
+   "maxH": 400,
+   "names": [
+    [
+     "base/head/front",
+     "base/head/back",
+     "base/head/side"
+    ],
+    [
+     "base/torso/front",
+     "base/torso/back",
+     "base/torso/side"
+    ],
+    [
+     "base/arm/fl",
+     "base/arm/fr",
+     "base/arm/bl",
+     "base/arm/br",
+     "base/arm/sf",
+     "base/arm/sb"
+    ],
+    [
+     "base/leg/fl",
+     "base/leg/fr",
+     "base/leg/bl",
+     "base/leg/br",
+     "base/leg/sf",
+     "base/leg/sb"
+    ]
+   ],
+   "gap": 0.5
+  },
+  "1-02": {
+   "kind": "base",
+   "names": [
+    [
+     "base/arms/fl",
+     "base/arms/fr",
+     "base/arms/bl",
+     "base/arms/br",
+     "base/arms/sf",
+     "base/arms/sb"
+    ],
+    [
+     "base/arml/fl",
+     "base/arml/fr",
+     "base/arml/bl",
+     "base/arml/br",
+     "base/arml/sf",
+     "base/arml/sb"
+    ]
+   ]
+  },
+  "1-03": {
+   "kind": "base",
+   "bg": "#00ffff",
+   "cells": {
+    "cols": 6,
+    "rows": [
+     [
+      100,
+      300,
+      25
+     ],
+     [
+      350,
+      560,
+      25
+     ],
+     [
+      590,
+      740,
+      0
+     ],
+     [
+      760,
+      960,
+      0
+     ]
+    ]
+   },
+   "names": [
+    [
+     "face/f/eyes/round",
+     "face/f/eyes/soft",
+     "face/f/eyes/sharp",
+     "face/f/eyes/smile",
+     "face/f/eyes/lash",
+     "face/f/eyes/cool"
+    ],
+    [
+     "face/f/eyes/closed",
+     "face/f/eyes/happy",
+     "face/f/eyes/wow",
+     "face/f/eyes/teary",
+     "face/f/eyes/angry",
+     "face/f/eyes/heart"
+    ],
+    [
+     "face/f/brows/plain",
+     "face/f/brows/thick",
+     "face/f/brows/thin",
+     "face/f/brows/worry",
+     "face/f/brows/angry",
+     "face/f/brows/up"
+    ],
+    [
+     "face/f/mouth/smile",
+     "face/f/mouth/open",
+     "face/f/mouth/pout",
+     "face/f/mouth/o",
+     "face/f/mouth/sad",
+     "face/f/mouth/blush"
+    ]
+   ],
+   "minArea": 2,
+   "gap": 0.3
+  },
+  "1-04": {
+   "kind": "base",
+   "bg": "#00ffff",
+   "cells": {
+    "cols": 6,
+    "rows": [
+     [
+      90,
+      300,
+      0
+     ],
+     [
+      350,
+      580,
+      0
+     ],
+     [
+      600,
+      760,
+      0
+     ],
+     [
+      800,
+      960,
+      0
+     ]
+    ]
+   },
+   "names": [
+    [
+     "face/s/eyes/round",
+     "face/s/eyes/soft",
+     "face/s/eyes/sharp",
+     "face/s/eyes/smile",
+     "face/s/eyes/lash",
+     "face/s/eyes/cool"
+    ],
+    [
+     "face/s/eyes/closed",
+     "face/s/eyes/happy",
+     "face/s/eyes/wow",
+     "face/s/eyes/teary",
+     "face/s/eyes/angry",
+     "face/s/eyes/heart"
+    ],
+    [
+     "face/s/brows/plain",
+     "face/s/brows/thick",
+     "face/s/brows/thin",
+     "face/s/brows/worry",
+     "face/s/brows/angry",
+     "face/s/brows/up"
+    ],
+    [
+     "face/s/mouth/smile",
+     "face/s/mouth/open",
+     "face/s/mouth/pout",
+     "face/s/mouth/o",
+     "face/s/mouth/sad",
+     "face/s/mouth/blush"
+    ]
+   ],
+   "minArea": 2,
+   "gap": 0.3
+  },
+  "5-32": {
+   "kind": "doll",
+   "names": [
+    [
+     "shoes/k32a/front",
+     "shoes/k32a/back",
+     "shoes/k32a/side"
+    ],
+    [
+     "shoes/k32b/front",
+     "shoes/k32b/back",
+     "shoes/k32b/side"
+    ],
+    [
+     "shoes/k32c/front",
+     "shoes/k32c/back",
+     "shoes/k32c/side"
+    ],
+    [
+     "shoes/k32d/front",
+     "shoes/k32d/back",
+     "shoes/k32d/side"
+    ],
+    [
+     "shoes/k32e/front",
+     "shoes/k32e/back",
+     "shoes/k32e/side"
+    ]
+   ]
+  },
+  "5-33": {
+   "kind": "doll",
+   "names": [
+    [
+     "shoes/k33a/front",
+     "shoes/k33a/back",
+     "shoes/k33a/side"
+    ],
+    [
+     "shoes/k33b/front",
+     "shoes/k33b/back",
+     "shoes/k33b/side"
+    ],
+    [
+     "shoes/k33c/front",
+     "shoes/k33c/back",
+     "shoes/k33c/side"
+    ],
+    [
+     "shoes/k33d/front",
+     "shoes/k33d/back",
+     "shoes/k33d/side"
+    ],
+    [
+     "shoes/k33e/front",
+     "shoes/k33e/back",
+     "shoes/k33e/side"
+    ]
+   ]
+  },
+  "5-43": {
+   "kind": "doll",
+   "names": [
+    [
+     "acc/a43a/front",
+     "acc/a43a/back",
+     "acc/a43a/side"
+    ],
+    [
+     "acc/a43b/front",
+     "acc/a43b/back",
+     "acc/a43b/side"
+    ],
+    [
+     "acc/a43c/front",
+     "acc/a43c/back",
+     "acc/a43c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-44": {
+   "kind": "doll",
+   "names": [
+    [
+     "acc/a44a/front",
+     "acc/a44a/back",
+     "acc/a44a/side"
+    ],
+    [
+     "acc/a44b/front",
+     "acc/a44b/back",
+     "acc/a44b/side"
+    ],
+    [
+     "acc/a44c/front",
+     "acc/a44c/back",
+     "acc/a44c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-45": {
+   "kind": "doll",
+   "names": [
+    [
+     "acc/a45a/front",
+     "acc/a45a/back",
+     "acc/a45a/side"
+    ],
+    [
+     "acc/a45b/front",
+     "acc/a45b/back",
+     "acc/a45b/side"
+    ],
+    [
+     "acc/a45c/front",
+     "acc/a45c/back",
+     "acc/a45c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-46": {
+   "kind": "doll",
+   "names": [
+    [
+     "acc/a46a/front",
+     "acc/a46a/back",
+     "acc/a46a/side"
+    ],
+    [
+     "acc/x461/front",
+     "acc/x461/back",
+     "acc/x461/side"
+    ],
+    [
+     "acc/x462/front",
+     "acc/x462/back",
+     "acc/x462/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-47": {
+   "kind": "doll",
+   "names": [
+    [
+     "acc/a47a/front",
+     "acc/a47a/back",
+     "acc/a47a/side"
+    ],
+    [
+     "acc/a47b/front",
+     "acc/a47b/back",
+     "acc/a47b/side"
+    ],
+    [
+     "acc/a47c/front",
+     "acc/a47c/back",
+     "acc/a47c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-48": {
+   "kind": "doll",
+   "names": [
+    [
+     "acc/a48a/front",
+     "acc/a48a/back",
+     "acc/a48a/side"
+    ],
+    [
+     "acc/x481/front",
+     "acc/x481/back",
+     "acc/x481/side"
+    ],
+    [
+     "acc/a48c/front",
+     "acc/a48c/back",
+     "acc/a48c/side"
+    ]
+   ],
+   "bg": "#00ffff",
+   "gap": 8
+  },
+  "5-49": {
+   "kind": "doll",
+   "names": [
+    [
+     "acc/a49a/front",
+     "acc/a49a/back",
+     "acc/a49a/side"
+    ],
+    [
+     "acc/x491/front",
+     "acc/x491/back",
+     "acc/x491/side"
+    ],
+    [
+     "acc/x492/front",
+     "acc/x492/back",
+     "acc/x492/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-50": {
+   "kind": "doll",
+   "names": [
+    [
+     "acc/a50a/front",
+     "acc/a50a/back",
+     "acc/a50a/side"
+    ],
+    [
+     "acc/x501/front",
+     "acc/x501/back",
+     "acc/x501/side"
+    ],
+    [
+     "acc/a50c/front",
+     "acc/a50c/back",
+     "acc/a50c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-51": {
+   "kind": "doll",
+   "names": [
+    [
+     "acc/x510/front",
+     "acc/x510/back",
+     "acc/x510/side"
+    ],
+    [
+     "acc/a51b/front",
+     "acc/a51b/back",
+     "acc/a51b/side"
+    ],
+    [
+     "acc/a51c/front",
+     "acc/a51c/back",
+     "acc/a51c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-52": {
+   "kind": "doll",
+   "names": [
+    [
+     "acc/a52a/front",
+     "acc/a52a/back",
+     "acc/a52a/side"
+    ],
+    [
+     "acc/a52b/front",
+     "acc/a52b/back",
+     "acc/a52b/side"
+    ],
+    [
+     "acc/x522/front",
+     "acc/x522/back",
+     "acc/x522/side"
+    ]
+   ],
+   "bg": "#00ffff"
   }
  }
 }

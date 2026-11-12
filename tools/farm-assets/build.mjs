@@ -88,7 +88,19 @@ for (const id of ids) {
   const w = info.width, h = info.height, k = w / 200; // 門檻是照 200 像素寬的縮圖訂的，原圖照比例放大
   if (sc && sc.kind === 'scene') { sprites.push({ name: sc.names[0], px: data, w, h, kind: 'scene', id }); continue; }
   const alpha = keyOut(data, w, h, hexRgb((sc && sc.bg) || '#ff00ff'), sc && sc.tolerance);
-  const groups = order(findObjects(alpha, w, h, Math.round(((sc && sc.gap) ?? 2) * k), Math.round(((sc && sc.minArea) ?? 14) * k * k)), (sc && sc.order) || 'rows');
+  let found = findObjects(alpha, w, h, Math.round(((sc && sc.gap) ?? 2) * k), Math.round(((sc && sc.minArea) ?? 14) * k * k));
+  if (sc && sc.maxH) found = found.filter((b) => b.y1 - b.y0 < sc.maxH); // maxH：太高的（例如旁邊的組合參考圖）不要
+  let groups = order(found, (sc && sc.order) || 'rows');
+  // cells：零件照固定格子排（每列 cols 格、每列的上下範圍寫在 rows），一格裡的東西合成一張；dropTop 把格子最上面那條細的（例如眼睛上方的眉毛）丟掉
+  if (sc && sc.cells) {
+    const cw = w / sc.cells.cols;
+    groups = sc.cells.rows.map(([ry0, ry1, dropTop]) => Array.from({ length: sc.cells.cols }, (_, c) => {
+      let inC = found.filter((b) => { const cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2; return cx >= c * cw && cx < (c + 1) * cw && cy >= ry0 && cy < ry1; });
+      if (dropTop && inC.length) { const top = Math.min(...inC.map((b) => b.y0)), rest = inC.filter((b) => b.y0 >= top + dropTop); if (rest.length) inC = rest; }
+      if (!inC.length) return null;
+      return { x0: Math.min(...inC.map((b) => b.x0)), y0: Math.min(...inC.map((b) => b.y0)), x1: Math.max(...inC.map((b) => b.x1)), y1: Math.max(...inC.map((b) => b.y1)) };
+    }).filter(Boolean));
+  }
   if (onlyBoxes) { console.log(`${id}（${full ? '原圖' : '縮圖'} ${w}×${h}）：` + groups.map((g) => g.length).join(' + ') + ` = ${groups.flat().length} 個`); continue; }
   // splitCols：一列裡有東西黏在一起（找到的比欄數少）時，把這一列照欄數平均切開
   if (sc.splitCols) for (let gi = 0; gi < groups.length; gi++) if (groups[gi].length < sc.splitCols) { const r = groups[gi], b = { ...r[0], x0: Math.min(...r.map((q) => q.x0)), x1: Math.max(...r.map((q) => q.x1)), y0: Math.min(...r.map((q) => q.y0)), y1: Math.max(...r.map((q) => q.y1)) }, cw = (b.x1 - b.x0 + 1) / sc.splitCols; groups[gi] = Array.from({ length: sc.splitCols }, (_, i) => ({ ...b, x0: Math.round(b.x0 + cw * i), x1: Math.round(b.x0 + cw * (i + 1)) - 1 })); }
