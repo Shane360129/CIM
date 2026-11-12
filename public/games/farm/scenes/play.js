@@ -478,7 +478,7 @@ export const play = {
         if (it.t.def.use === 'notes' && this.unreadNotes()) drawBubble(g, '📝', it.t.fx * T, it.t.fy * T - T * 1.3, T, true); // 便條板有對方的新便條
         if (it.t.def.use === 'mail' && (W.self.mail || []).some((m) => !m.got)) drawBubble(g, '✉', it.t.fx * T, it.t.fy * T - T * 1.2, T, true); // 信箱有新的信
         // 加工機：做好了頭上冒出成品，還在做就冒小點點
-        if (it.o && it.o.kind && it.o.out) { if (W.abs() >= it.o.doneAt) { const oi = data.items[it.o.out]; drawBubble(g, ' ', it.t.fx * T, it.t.fy * T - T * 1.25, T, true); if (!drawSprite(g, oi.art, it.t.fx * T, it.t.fy * T - T * 1.38, T * 0.5, T * 0.5)) drawName(g, '好了', it.t.fx * T, it.t.fy * T - T * 1.6, T); } else drawName(g, '・'.repeat(1 + Math.floor(performance.now() / 500) % 3), it.t.fx * T, it.t.fy * T - T * 1.35, T); }
+        if (it.o && it.o.kind && it.o.out && !data.machines[it.o.kind].tree) { if (W.abs() >= it.o.doneAt) { const oi = data.items[it.o.out]; drawBubble(g, ' ', it.t.fx * T, it.t.fy * T - T * 1.25, T, true); if (!drawSprite(g, oi.art, it.t.fx * T, it.t.fy * T - T * 1.38, T * 0.5, T * 0.5)) drawName(g, '好了', it.t.fx * T, it.t.fy * T - T * 1.6, T); } else drawName(g, '・'.repeat(1 + Math.floor(performance.now() / 500) % 3), it.t.fx * T, it.t.fy * T - T * 1.35, T); }
         continue;
       }
       const q = it.pp.q;

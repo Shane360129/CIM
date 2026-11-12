@@ -179,7 +179,10 @@
   "art": "ftree/apple",
   "tree": true,
   "w": 1.9,
-  "h": 2.5
+  "h": 2.5,
+  "seasons": [
+   "autumn"
+  ]
  },
  "tree_peach": {
   "name": "桃子樹",
@@ -190,7 +193,10 @@
   "art": "ftree/peach",
   "tree": true,
   "w": 1.9,
-  "h": 2.5
+  "h": 2.5,
+  "seasons": [
+   "summer"
+  ]
  },
  "tree_cherry": {
   "name": "櫻桃樹",
@@ -201,7 +207,10 @@
   "art": "ftree/cherry",
   "tree": true,
   "w": 1.9,
-  "h": 2.5
+  "h": 2.5,
+  "seasons": [
+   "spring"
+  ]
  },
  "tree_pear": {
   "name": "梨子樹",
@@ -212,7 +221,11 @@
   "art": "ftree/pear",
   "tree": true,
   "w": 1.9,
-  "h": 2.5
+  "h": 2.5,
+  "seasons": [
+   "summer",
+   "autumn"
+  ]
  },
  "tree_plum": {
   "name": "李子樹",
@@ -223,7 +236,11 @@
   "art": "ftree/plum",
   "tree": true,
   "w": 1.9,
-  "h": 2.5
+  "h": 2.5,
+  "seasons": [
+   "spring",
+   "summer"
+  ]
  },
  "tree_persimmon": {
   "name": "柿子樹",
@@ -234,7 +251,10 @@
   "art": "ftree/persimmon",
   "tree": true,
   "w": 1.9,
-  "h": 2.5
+  "h": 2.5,
+  "seasons": [
+   "autumn"
+  ]
  },
  "tree_orange": {
   "name": "橘子樹",
@@ -245,7 +265,10 @@
   "art": "ftree/orange",
   "tree": true,
   "w": 1.9,
-  "h": 2.5
+  "h": 2.5,
+  "seasons": [
+   "winter"
+  ]
  },
  "tree_lemon": {
   "name": "檸檬樹",
@@ -256,7 +279,11 @@
   "art": "ftree/lemon",
   "tree": true,
   "w": 1.9,
-  "h": 2.5
+  "h": 2.5,
+  "seasons": [
+   "winter",
+   "spring"
+  ]
  },
  "tree_pomelo": {
   "name": "柚子樹",
@@ -267,7 +294,10 @@
   "art": "ftree/pomelo",
   "tree": true,
   "w": 1.9,
-  "h": 2.5
+  "h": 2.5,
+  "seasons": [
+   "autumn"
+  ]
  },
  "tree_mango": {
   "name": "芒果樹",
@@ -278,7 +308,10 @@
   "art": "ftree/mango",
   "tree": true,
   "w": 1.9,
-  "h": 2.5
+  "h": 2.5,
+  "seasons": [
+   "summer"
+  ]
  },
  "tree_banana": {
   "name": "香蕉樹",
@@ -289,7 +322,11 @@
   "art": "ftree/banana",
   "tree": true,
   "w": 1.9,
-  "h": 2.5
+  "h": 2.5,
+  "seasons": [
+   "summer",
+   "autumn"
+  ]
  },
  "tree_coconut": {
   "name": "椰子樹",
@@ -300,7 +337,10 @@
   "art": "ftree/coconut",
   "tree": true,
   "w": 1.9,
-  "h": 2.5
+  "h": 2.5,
+  "seasons": [
+   "summer"
+  ]
  },
  "tree_lychee": {
   "name": "荔枝樹",
@@ -311,7 +351,10 @@
   "art": "ftree/lychee",
   "tree": true,
   "w": 1.9,
-  "h": 2.5
+  "h": 2.5,
+  "seasons": [
+   "summer"
+  ]
  },
  "tree_longan": {
   "name": "龍眼樹",
@@ -322,7 +365,11 @@
   "art": "ftree/longan",
   "tree": true,
   "w": 1.9,
-  "h": 2.5
+  "h": 2.5,
+  "seasons": [
+   "summer",
+   "autumn"
+  ]
  },
  "tree_guava": {
   "name": "芭樂樹",
@@ -333,7 +380,11 @@
   "art": "ftree/guava",
   "tree": true,
   "w": 1.9,
-  "h": 2.5
+  "h": 2.5,
+  "seasons": [
+   "autumn",
+   "winter"
+  ]
  },
  "tree_loquat": {
   "name": "枇杷樹",
@@ -344,7 +395,10 @@
   "art": "ftree/loquat",
   "tree": true,
   "w": 1.9,
-  "h": 2.5
+  "h": 2.5,
+  "seasons": [
+   "spring"
+  ]
  },
  "tree_fig": {
   "name": "無花果樹",
@@ -355,7 +409,11 @@
   "art": "ftree/fig",
   "tree": true,
   "w": 1.9,
-  "h": 2.5
+  "h": 2.5,
+  "seasons": [
+   "summer",
+   "autumn"
+  ]
  },
  "tree_pomegranate": {
   "name": "石榴樹",
@@ -366,7 +424,10 @@
   "art": "ftree/pomegranate",
   "tree": true,
   "w": 1.9,
-  "h": 2.5
+  "h": 2.5,
+  "seasons": [
+   "autumn"
+  ]
  },
  "tree_chestnut": {
   "name": "栗子樹",
@@ -377,7 +438,10 @@
   "art": "ftree/chestnut",
   "tree": true,
   "w": 1.9,
-  "h": 2.5
+  "h": 2.5,
+  "seasons": [
+   "autumn"
+  ]
  },
  "tree_olive": {
   "name": "橄欖樹",
@@ -388,6 +452,10 @@
   "art": "ftree/olive",
   "tree": true,
   "w": 1.9,
-  "h": 2.5
+  "h": 2.5,
+  "seasons": [
+   "autumn",
+   "winter"
+  ]
  }
 }

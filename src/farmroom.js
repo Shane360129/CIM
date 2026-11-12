@@ -599,6 +599,7 @@ export class FarmRoom {
     }
     if (obj && obj.type === 'machine') { // 加工機：好了就拿、空的就放原料進去、拿斧頭或十字鎬對著空的機器可以收回背包
       const mc = MACHINES[obj.kind], now = this.absNow(), upd = (kind) => { this.dirtyObjs.add(k); self(); fx(kind); this.broadcast({ t: 'objs', by: a.id, list: [this.pubObj(k)] }); done(); };
+      if (obj.out && now >= obj.doneAt && mc.seasons && !mc.seasons.includes(seasonId(this.farm.day, BAL))) return no('season'); // 果樹：不是結果的季節
       if (obj.out && now >= obj.doneAt) {
         if (!invAdd(p.inv, BAL.invSlots, obj.out, obj.n || 1)) return bad('full');
         this.logEvent(a.id, 'collect', { id: obj.out }); const got = obj.out;
