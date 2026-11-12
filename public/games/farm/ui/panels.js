@@ -32,12 +32,12 @@ export function openPanel(ctx, mode, arg = {}) {
     const inv = W.self.inv;
     const needText = (need) => Object.entries(need).map(([spec, n]) => `${spec === '@crop' ? '任何作物' : spec.startsWith('@') ? { veg: '蔬菜', fruit: '水果', fish: '魚', egg: '蛋', milk: '牛奶', forage: '採集物', flower: '花' }[spec.slice(1)] || spec : spec.startsWith('g:') ? ctx.data.machines[spec.slice(2)].name + '做的' : items[spec].name}×${n}`).join('、');
     if (mode === 'build') {
-      const f = W.farm, H = bal.house, lv = f.houseLv || 1, next = H.levels[lv], costText = (c) => Object.entries(c).filter(([k]) => k !== 'money' && k !== 'name').map(([k, n]) => `${items[k].name}×${n}`).join('、') + `、${c.money} 元`;
-      const can = (c) => f.money >= c.money && !!planTake(items, W.self.inv, Object.fromEntries(Object.entries(c).filter(([k]) => k !== 'money' && k !== 'name')));
+      const f = W.farm, H = bal.house, lv = f.houseLv || 1, next = H.levels[lv], costText = (c) => Object.entries(c).filter(([k]) => !['money', 'name', 'desc'].includes(k)).map(([k, n]) => `${items[k].name}×${n}`).join('、') + `、${c.money} 元`;
+      const can = (c) => f.money >= c.money && !!planTake(items, W.self.inv, Object.fromEntries(Object.entries(c).filter(([k]) => !['money', 'name', 'desc'].includes(k))));
       root.append(mk('p', 'hint', '桐伯：蓋房子、開墾，交給我！材料要帶在身上。'));
       const list = mk('div', 'shoplist'), row = (name, desc, cost, what) => { const r = mk('div', 'shoprow'); r.dataset.item = what; r.append(mk('span', 'sname', name), mk('span', 'sdesc', desc)); const b = mk('button', 'pbtn', '動工'); b.type = 'button'; b.disabled = !cost || !can(cost); b.addEventListener('click', async () => { const x = await room.req({ t: 'build', what }); if (x.t === 'ok') hud.toast('完工了！', 1500); else say(x); }); r.append(b); list.append(r); };
       row(`農舍（現在：${H.names[lv - 1]}）`, next ? `擴建成「${H.names[lv]}」：${costText(next)}。倉庫箱多 ${H.perLevel.chestSlots} 格、體力上限 +${H.perLevel.energyMax}` : '已經是最大的了', next, 'house');
-      for (const [id, c] of Object.entries(bal.land)) row(c.name, (f.land || {})[id] ? '已經開墾好了' : `開墾：${costText(c)}。多一塊可以翻土的田`, (f.land || {})[id] ? null : c, id);
+      for (const [id, c] of Object.entries(bal.land)) row(c.name, (f.land || {})[id] ? '已經蓋好了' : `${costText(c)}。${c.desc || '多一塊可以翻土的田'}`, (f.land || {})[id] ? null : c, id);
       root.append(list);
     } else if (mode === 'codex') {
       const f = W.farm, cx = f.codex || {}, groups = { 作物: 'crop', 魚: 'fish', 採集物: 'forage', 礦物: 'mineral', 料理: 'dish', 畜產: 'animal_product' };

@@ -14,6 +14,9 @@ import MAP_FARM from '../public/games/farm/data/maps/farm.json';
 import MAP_HOUSE from '../public/games/farm/data/maps/house.json';
 import MAP_ROAD from '../public/games/farm/data/maps/road.json';
 import MAP_LAKE from '../public/games/farm/data/maps/lake.json';
+import MAP_FOREST from '../public/games/farm/data/maps/forest.json';
+import MAP_BEACH from '../public/games/farm/data/maps/beach.json';
+import MAP_GREENHOUSE from '../public/games/farm/data/maps/greenhouse.json';
 import FISH from '../public/games/farm/data/fish.json';
 import MAP_TOWN from '../public/games/farm/data/maps/town.json';
 import NPCS from '../public/games/farm/data/npcs/residents.json';
@@ -26,7 +29,7 @@ import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelO
 
 const ITEMS = makeItems(RAW_ITEMS, MACHINES); // 加工品（g:機器:原料）的名字和價錢是算出來的
 
-const MAPS = { farm: MAP_FARM, house: MAP_HOUSE, road: MAP_ROAD, lake: MAP_LAKE, town: MAP_TOWN };
+const MAPS = { farm: MAP_FARM, house: MAP_HOUSE, road: MAP_ROAD, lake: MAP_LAKE, town: MAP_TOWN, forest: MAP_FOREST, beach: MAP_BEACH, greenhouse: MAP_GREENHOUSE };
 // 每張地圖上不會動的東西（房子、長椅…）佔了哪些格子：採集物、雜草不會長在這些格子上
 const TOWN_GRID = walkGrid(MAPS.town, OBJECTS); // 居民找路用：小鎮上哪些格子走得到
 const STATIC = Object.fromEntries(Object.entries(MAPS).map(([id, m]) => [id, new Set(m.objects.flatMap((o) => { const [tw, th] = OBJECTS[o.type].tiles || [1, 1], out = []; for (let x = 0; x < tw; x++) for (let y = 0; y < th; y++) out.push((o.x + x) + ',' + (o.y - y)); return out; }))]));
@@ -100,8 +103,9 @@ export class FarmRoom {
       }
     };
     Object.entries(BAL.forage.perMap).forEach(([map, n], mi) => {
-      if (!MAPS[map] || !list.length) return; const rand = rng(f.seed + f.day * 131 + mi * 17);
-      for (let i = 0; i < n; i++) place(map, rand, { grounds: ['grass'], obj: () => ({ type: 'forage', item: list[Math.floor(rand() * list.length)], hp: 1 }) });
+      const own = (BAL.forage.byMap || {})[map], pool = own ? own.items : list; // 有些地方撿得到的東西不一樣（海邊是貝殼）
+      if (!MAPS[map] || !pool.length) return; const rand = rng(f.seed + f.day * 131 + mi * 17);
+      for (let i = 0; i < n; i++) place(map, rand, { grounds: own ? own.grounds : ['grass'], obj: () => ({ type: 'forage', item: pool[Math.floor(rand() * pool.length)], hp: 1 }) });
     });
     const weeds = [...this.objs.values()].filter((o) => o.type === 'weed').length, rand = rng(f.seed + f.day * 977);
     if (f.day > 1) for (let i = 0; i < BAL.forage.weedsPerDay && weeds + i < BAL.forage.weedsMax; i++) place('farm', rand, { grounds: ['grass', 'soil'], obj: () => ({ type: 'weed', hp: OBJECTS.weed.hp }) });
@@ -273,7 +277,7 @@ export class FarmRoom {
       if (!near('carpenter')) return no('far');
       const cost = m.what === 'house' ? BAL.house.levels[this.houseLv()] : BAL.land[m.what]; if (!cost) return no(m.what === 'house' ? 'max' : 'unknown');
       if (m.what !== 'house' && (this.farm.land || {})[m.what]) return no('already');
-      const { money, name, ...mats } = cost; if (this.farm.money < money) return no('money'); const plan = planTake(ITEMS, p.inv, mats); if (!plan) return no('materials');
+      const { money, name, desc, ...mats } = cost; if (this.farm.money < money) return no('money'); const plan = planTake(ITEMS, p.inv, mats); if (!plan) return no('materials');
       for (const [i, k] of plan) invTake(p.inv, i, k); this.farm.money -= money;
       if (m.what === 'house') this.farm.houseLv = this.houseLv() + 1; else (this.farm.land ||= {})[m.what] = this.farm.day;
       this.logEvent(a.id, 'build', { what: m.what }); self(); farmChanged(); this.broadcast({ t: 'built', what: m.what, by: a.id, houseLv: this.houseLv(), land: this.farm.land || {} }); done();
@@ -573,6 +577,7 @@ export class FarmRoom {
   onWarp(ws, a, p, m, { no, done }) {
     const map = this.mapOf(a), list = [...(map.exits || []), ...(map.doors || []).map((d) => ({ ...d, w: 1, h: 1 }))], e = list[Math.floor(Number(m.i))];
     if (!e || !e.to || !MAPS[e.to]) return no('closed');
+    if (e.to === 'greenhouse' && !(this.farm.land || {}).greenhouse) return no('greenhouse'); // 溫室要先找木工屋蓋
     if (a.x < e.x - 1.6 || a.x > e.x + e.w + 1.6 || a.y < e.y - 1.6 || a.y > e.y + e.h + 1.6) return no('far');
     a.map = e.to; a.x = e.tx; a.y = e.ty; a.vx = a.vy = 0; a.asleep = false; ws.serializeAttachment(a);
     Object.assign(p, { map: a.map, x: a.x, y: a.y }); this.dirtyPl.add(a.id);

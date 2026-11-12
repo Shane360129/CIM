@@ -12,7 +12,7 @@ import { runEvent } from '../systems/cutscene.js';
 import { minigame } from './minigame.js';
 import { openSettings } from '../ui/settings.js';
 
-const NO_TEXT = { far: '太遠了，走近一點', ground: '這裡不行', locked: '這塊地還沒開墾（之後才能用）', already: '這裡已經弄好了', untilled: '要先用鋤頭翻土', offline: '連線中斷，稍等一下', timeout: '伺服器沒有回應',
+const NO_TEXT = { far: '太遠了，走近一點', ground: '這裡不行', locked: '這塊地還沒開墾（之後才能用）', greenhouse: '溫室還沒蓋，到小鎮的木工屋找桐伯', already: '這裡已經弄好了', untilled: '要先用鋤頭翻土', offline: '連線中斷，稍等一下', timeout: '伺服器沒有回應',
   tired: '太累了，體力不夠', gone: '魚跑掉了', machine: '這個放不進這台機器', place: '加工機要放在農場的空地上', full: '背包滿了', season: '這個季節種不活', crop: '上面還有作物', late: '已經發芽了，來不及施肥', nothing: '', out: '', unknown: '', closed: '那邊還沒開放' };
 const TOOL_NAME = { axe: '斧頭', pick: '十字鎬', sickle: '鐮刀', rod: '釣竿', sword: '劍', brush: '動物刷' };
 const ACT_NAME = { till: '翻土', water: '澆水', plant: '播種', harvest: '收成', clear: '清理', ship: '出貨', buy: '買東西', forage: '採集', fish: '釣魚' };
@@ -144,7 +144,7 @@ export const play = {
       if (use === 'bin') return openPanel(this.ctx, 'ship');
       if (use === 'chest') return openPanel(this.ctx, 'chest');
       if (use === 'shop') return openPanel(this.ctx, 'shop', { shop: 'stall' });
-      if (use === 'store') return hud.card('雜貨店', ['想看什麼？'], [{ label: '果樹苗', value: 'nursery', ghost: true }, { label: '種子和雜貨', value: 'store' }]).then((v) => { if (v) openPanel(this.ctx, 'shop', { shop: v }); });
+      if (use === 'store') return hud.card('雜貨店', ['想看什麼？'], [{ label: '果樹苗', value: 'nursery', ghost: true }, { label: '溫室種子', value: 'gh_seeds', ghost: true }, { label: '種子和雜貨', value: 'store' }]).then((v) => { if (v) openPanel(this.ctx, 'shop', { shop: v }); });
       if (data.shops[use]) return openPanel(this.ctx, 'shop', { shop: use });
       if (use === 'smith') return openPanel(this.ctx, 'smith');
       if (use === 'carpenter') return openPanel(this.ctx, 'build');
@@ -433,7 +433,7 @@ export const play = {
       }
     }
     // 只畫看得到的，依腳的位置由遠到近畫
-    for (const t of this.things) if (t.fx > x0 && t.fx < x1 && t.fy > y0 && t.fy < y1) list.push({ y: t.fy, t });
+    for (const t of this.things) if (t.fx > x0 && t.fx < x1 && t.fy > y0 && t.fy < y1) list.push({ y: t.def.flat ? -1e9 : t.fy, t }); // flat：貼在地上的（木棧道），最先畫
     for (const o of W.objs.values()) if (o.map === mapId && o.x > x0 && o.x < x1 && o.y > y0 && o.y < y1) list.push({ y: o.y + 0.92, o, t: { def: o.item ? { ...data.objects[o.type], art: data.items[o.item].art, name: data.items[o.item].name } : o.kind ? { ...data.objects[o.type], art: data.machines[o.kind].art, name: data.machines[o.kind].name, ...this.treeLook(o) } : data.objects[o.type], fx: o.x + 0.5, fy: o.y + 0.92 } });
     for (const b of this.beasts()) list.push({ y: b.y, beast: b });
     const fe = this.fest();

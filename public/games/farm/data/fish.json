@@ -3,7 +3,8 @@
   "name": "鯽魚",
   "maps": [
    "farm",
-   "lake"
+   "lake",
+   "forest"
   ],
   "seasons": [
    "spring",
@@ -73,7 +74,8 @@
  "loach": {
   "name": "泥鰍",
   "maps": [
-   "farm"
+   "farm",
+   "forest"
   ],
   "seasons": [
    "spring",
@@ -163,7 +165,8 @@
  "trout": {
   "name": "鱒魚",
   "maps": [
-   "lake"
+   "lake",
+   "forest"
   ],
   "seasons": [
    "spring",
@@ -185,7 +188,8 @@
  "ayu": {
   "name": "香魚",
   "maps": [
-   "lake"
+   "lake",
+   "forest"
   ],
   "seasons": [
    "spring",
@@ -228,7 +232,8 @@
  "river_shrimp": {
   "name": "溪蝦",
   "maps": [
-   "lake"
+   "lake",
+   "forest"
   ],
   "seasons": [
    "spring",
@@ -292,7 +297,8 @@
  "rainbow_trout": {
   "name": "虹鱒",
   "maps": [
-   "lake"
+   "lake",
+   "forest"
   ],
   "seasons": [
    "spring",
@@ -313,7 +319,8 @@
  "goby": {
   "name": "蝦虎魚",
   "maps": [
-   "lake"
+   "lake",
+   "forest"
   ],
   "seasons": [
    "spring",
@@ -695,5 +702,29 @@
   ],
   "diff": 1
  },
- "twin": {"name":"比翼魚","maps":["farm","lake"],"seasons":["spring","summer","autumn","winter"],"time":[360,1560],"rain":false,"weight":0,"size":[45,80],"diff":4,"duo":true}
+ "twin": {
+  "name": "比翼魚",
+  "maps": [
+   "farm",
+   "lake"
+  ],
+  "seasons": [
+   "spring",
+   "summer",
+   "autumn",
+   "winter"
+  ],
+  "time": [
+   360,
+   1560
+  ],
+  "rain": false,
+  "weight": 0,
+  "size": [
+   45,
+   80
+  ],
+  "diff": 4,
+  "duo": true
+ }
 }

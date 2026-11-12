@@ -185,6 +185,8 @@ check('一天的長度（兩人共用的設定）：只能選設定檔列的幾�
 check('對方站太遠不能送東西', (await req(A, { t: 'give', slot: slot(A, 'fiber'), n: 1 })).reason === 'far');
 await go(Bc, 12.5, 10.6); Bc.clear();
 check('站在一起可以送：我少一個、對方多一個並收到通知', (await req(A, { t: 'give', slot: slot(A, 'fiber'), n: 1 })).t === 'ok' && has(A, 'fiber') === 0 && !!(await Bc.wait('given', (m) => m.item === 'fiber' && m.n === 1)) && has(Bc, 'fiber') === 1);
+await go(A, 31, 5.4, 'up');
+check('溫室還沒蓋：從花拱門進不去，會說要先找木工屋', (await req(A, { t: 'warp', i: 2 })).reason === 'greenhouse');
 // ---- 出貨箱（在家門口旁邊 12,9）----
 await go(A, 20.5, 14.5);
 check('離出貨箱太遠不能出貨', (await req(A, { t: 'ship', slot: 20, n: 99 })).reason === 'far');

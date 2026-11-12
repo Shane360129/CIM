@@ -1348,5 +1348,515 @@
   "regrowDays": 0,
   "xp": 13,
   "art": "crop/hydrangea"
+ },
+ "coffee": {
+  "name": "咖啡樹",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 3,
+  "xp": 19,
+  "art": "crop/coffee"
+ },
+ "tea": {
+  "name": "茶樹",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 3,
+  "xp": 19,
+  "art": "crop/tea"
+ },
+ "cacao": {
+  "name": "可可樹",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 3,
+  "xp": 19,
+  "art": "crop/cacao"
+ },
+ "vanilla": {
+  "name": "香草蘭",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 19,
+  "art": "crop/vanilla"
+ },
+ "cotton": {
+  "name": "棉花",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 19,
+  "art": "crop/cotton"
+ },
+ "flax": {
+  "name": "亞麻",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 19,
+  "art": "crop/flax"
+ },
+ "sugarcane": {
+  "name": "甘蔗",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 19,
+  "art": "crop/sugarcane"
+ },
+ "pineapple": {
+  "name": "鳳梨",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 3,
+  "xp": 19,
+  "art": "crop/pineapple"
+ },
+ "passionfruit": {
+  "name": "百香果藤",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 3,
+  "xp": 19,
+  "art": "crop/passionfruit"
+ },
+ "grape": {
+  "name": "葡萄藤",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 3,
+  "xp": 19,
+  "art": "crop/grape"
+ },
+ "kiwi": {
+  "name": "奇異果藤",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 3,
+  "xp": 19,
+  "art": "crop/kiwi"
+ },
+ "hops": {
+  "name": "啤酒花藤",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 3,
+  "xp": 19,
+  "art": "crop/hops"
+ },
+ "aloe": {
+  "name": "蘆薈",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 19,
+  "art": "crop/aloe"
+ },
+ "cactus_fruit": {
+  "name": "仙人掌果",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 19,
+  "art": "crop/cactus_fruit"
+ },
+ "dragonfruit": {
+  "name": "火龍果",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 3,
+  "xp": 19,
+  "art": "crop/dragonfruit"
+ },
+ "lavender": {
+  "name": "薰衣草",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 19,
+  "art": "crop/lavender"
+ },
+ "rosemary": {
+  "name": "迷迭香",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 19,
+  "art": "crop/rosemary"
+ },
+ "chamomile": {
+  "name": "洋甘菊",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 19,
+  "art": "crop/chamomile"
+ },
+ "lemongrass": {
+  "name": "香茅",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 19,
+  "art": "crop/lemongrass"
+ },
+ "wasabi": {
+  "name": "山葵",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 19,
+  "art": "crop/wasabi"
+ },
+ "ginseng": {
+  "name": "人參",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 19,
+  "art": "crop/ginseng"
+ },
+ "lingzhi": {
+  "name": "靈芝木",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   2,
+   2,
+   3,
+   2
+  ],
+  "regrowDays": 0,
+  "xp": 19,
+  "art": "crop/lingzhi"
+ },
+ "truffle": {
+  "name": "松露橡苗",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "regrowDays": 0,
+  "xp": 22,
+  "art": "crop/truffle"
+ },
+ "gold_carrot": {
+  "name": "金色蘿蔔",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "regrowDays": 0,
+  "xp": 22,
+  "art": "crop/gold_carrot"
+ },
+ "rainbow_corn": {
+  "name": "彩虹玉米",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "regrowDays": 0,
+  "xp": 22,
+  "art": "crop/rainbow_corn"
+ },
+ "starfruit": {
+  "name": "星星果",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "regrowDays": 0,
+  "xp": 22,
+  "art": "crop/starfruit"
+ },
+ "moonmelon": {
+  "name": "月光瓜",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "regrowDays": 0,
+  "xp": 22,
+  "art": "crop/moonmelon"
+ },
+ "crystal_berry": {
+  "name": "水晶莓",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "regrowDays": 0,
+  "xp": 22,
+  "art": "crop/crystal_berry"
+ },
+ "giant_bean": {
+  "name": "巨人豆藤",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "regrowDays": 3,
+  "xp": 22,
+  "art": "crop/giant_bean"
+ },
+ "cloud_cotton": {
+  "name": "雲朵棉",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "regrowDays": 0,
+  "xp": 22,
+  "art": "crop/cloud_cotton"
+ },
+ "snow_strawberry": {
+  "name": "雪花草莓",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "regrowDays": 0,
+  "xp": 22,
+  "art": "crop/snow_strawberry"
+ },
+ "honey_beet": {
+  "name": "蜜糖甜菜",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "regrowDays": 0,
+  "xp": 22,
+  "art": "crop/honey_beet"
+ },
+ "bell_chili": {
+  "name": "鈴鐺椒",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "regrowDays": 3,
+  "xp": 22,
+  "art": "crop/bell_chili"
+ },
+ "sun_tomato": {
+  "name": "太陽番茄",
+  "seasons": [
+   "greenhouse"
+  ],
+  "stageDays": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "regrowDays": 3,
+  "xp": 22,
+  "art": "crop/sun_tomato"
  }
 }
