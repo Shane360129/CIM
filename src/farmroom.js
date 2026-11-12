@@ -22,12 +22,13 @@ import EVENTS from '../public/games/farm/data/events/hearts.json';
 import FESTIVALS from '../public/games/farm/data/festivals.json';
 import RESTORE from '../public/games/farm/data/restore.json';
 import ACHIEVEMENTS from '../public/games/farm/data/achievements.json';
-import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelOf, rollQuality, invAdd, invTake, sellPrice, makeItems, matches, planTake, shopItems, absMinute, animalPos, genFloor, monPos, mineMap, npcPos, giftTaste, seasonIndex } from '../public/games/farm/shared/rules.js';
+import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelOf, rollQuality, invAdd, invTake, sellPrice, makeItems, matches, planTake, shopItems, absMinute, animalPos, genFloor, monPos, mineMap, npcPos, walkGrid, giftTaste, seasonIndex } from '../public/games/farm/shared/rules.js';
 
 const ITEMS = makeItems(RAW_ITEMS, MACHINES); // 加工品（g:機器:原料）的名字和價錢是算出來的
 
 const MAPS = { farm: MAP_FARM, house: MAP_HOUSE, road: MAP_ROAD, lake: MAP_LAKE, town: MAP_TOWN };
 // 每張地圖上不會動的東西（房子、長椅…）佔了哪些格子：採集物、雜草不會長在這些格子上
+const TOWN_GRID = walkGrid(MAPS.town, OBJECTS); // 居民找路用：小鎮上哪些格子走得到
 const STATIC = Object.fromEntries(Object.entries(MAPS).map(([id, m]) => [id, new Set(m.objects.flatMap((o) => { const [tw, th] = OBJECTS[o.type].tiles || [1, 1], out = []; for (let x = 0; x < tw; x++) for (let y = 0; y < th; y++) out.push((o.x + x) + ',' + (o.y - y)); return out; }))]));
 const TICK_MS = 10000;                 // 有人在線時，每 10 秒推進一次遊戲時鐘
 const DAY_SPAN = BAL.dayEndMinute - BAL.dayStartMinute;            // 一天有幾個遊戲分鐘（早上 6 點到凌晨 2 點）
@@ -376,7 +377,7 @@ export class FarmRoom {
   // 好感是每個玩家各算各的。居民在哪裡是照行程用時間算的（shared/rules.js 的 npcPos），這裡只檢查你是不是站在他旁邊
   onNpc(a, p, m, { no, done, self }) {
     const npc = NPCS[m.npc], F = BAL.friend, f = this.farm; if (!npc || !npc.full) return no('unknown');
-    const pos = npcPos(npc, this.minuteNow(), F.walkMinutes); if (a.map !== 'town' || Math.hypot(pos.x - a.x, pos.y - a.y) > BAL.reach + 1.5) return no('far');
+    const fid = this.festivalToday(), pos = npcPos(npc, this.minuteNow(), F.walkMinutes, TOWN_GRID, { wet: isWet(weatherOf(f.seed, f.day, BAL)), fest: fid && FESTIVALS[fid].map === 'town' ? FESTIVALS[fid].stage : null }); if (a.map !== 'town' || Math.hypot(pos.x - a.x, pos.y - a.y) > BAL.reach + 1.5) return no('far');
     const fr = ((p.friend ||= {})[m.npc] ||= { pts: 0, talk: 0, giftDay: 0, week: 0, gifts: 0, met: false });
     const bday = npc.birthday && npc.birthday[0] === seasonIndex(f.day, BAL) && npc.birthday[1] === ((f.day - 1) % BAL.seasonDays) + 1;
     if (m.t === 'talk') { // 每天第一次聊天會增加好感

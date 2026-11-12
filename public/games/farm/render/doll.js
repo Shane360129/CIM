@@ -19,6 +19,8 @@ export function poseOf(action, t) {
   else if (action === 'cast') { const k = Math.min(1, t / 0.5); p.armF = -2.6 + k * 1.9; p.lean = -0.15 + k * 0.3; p.tool = 1; }                                  // 拋竿
   else if (action === 'eat') { p.armF = -2.0 + s(t * 10) * 0.12; p.bob = Math.abs(s(t * 10)) * 0.02; }                                                              // 吃東西：手舉到嘴邊
   else if (action === 'sit') { p.sit = 1; }
+  else if (action === 'fishing') { p.armF = -1.3 + s(t * 1.5) * 0.06; p.tool = 1; }                                                                                  // 釣魚：竿子往前伸，等魚上鉤
+  else if (action === 'sweep') { p.armF = -0.6 + s(t * 5) * 0.35; p.lean = 0.08; p.tool = 1; p.bob = Math.abs(s(t * 5)) * 0.01; }                             // 掃地：掃把左右揮
   else if (action === 'happy') { const k = Math.min(1, t / 0.5); p.hop = s(k * Math.PI) * 0.35; p.armF = -2.6; p.armB = -2.6; p.squash = k < 0.12 || k > 0.9 ? 0.08 : -0.05; }   // 開心跳一下
   else { p.bob = s(t * 2.2) * 0.012; p.squash = s(t * 2.2) * 0.012; }                                                                                             // 待機：呼吸
   return p;
@@ -89,7 +91,7 @@ export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle',
     const L = 0.62 * U, s = sprite(`base/${sl}/${who}`); if (!s) return false;
     const w = L * s.w / s.h;
     put(`base/${sl}/${who}`, ax, sh - 0.02 * U, { w, h: L, ang: rot, cloth: sl === 'arm' ? null : look.topColor });
-    if (front && tool && p.tool) { g.save(); g.translate(ax, sh); g.rotate(rot); g.translate(0, L * 0.9); g.rotate(-0.5); rr(-0.03 * U, -0.75 * U, 0.06 * U, 0.85 * U, 0.02 * U); fill('#8a5a34'); rr(-0.14 * U, -0.86 * U, 0.3 * U, 0.16 * U, 0.04 * U); fill(tool === 'water' ? '#6aa8e8' : '#a9a59c'); g.restore(); }
+    if (front && tool && p.tool) { g.save(); g.translate(ax, sh); g.rotate(rot); g.translate(0, L * 0.9); g.rotate(-0.5); rr(-0.03 * U, -0.75 * U, 0.06 * U, 0.85 * U, 0.02 * U); fill('#8a5a34'); rr(-0.14 * U, -0.86 * U, 0.3 * U, 0.16 * U, 0.04 * U); fill(tool === 'water' ? '#6aa8e8' : tool === 'broom' ? '#d9b45a' : tool === 'rod' ? '#8a5a34' : '#a9a59c'); if (tool === 'rod') { g.strokeStyle = '#ffffff'; g.lineWidth = Math.max(1, U * 0.02); g.beginPath(); g.moveTo(0.02 * U, -0.86 * U); g.lineTo(0.5 * U, -0.1 * U); g.stroke(); g.strokeStyle = OUT; } g.restore(); }
     return true;
   };
   const legArt = (sx, ang) => {
@@ -136,7 +138,7 @@ export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle',
     const L = 0.5 * U, W = 0.2 * U, sl = top.sleeve === 'long' ? L * 0.78 : L * 0.4;
     rr(-W / 2, 0, W, L, W / 2); fill(skin);
     if (!(topArt && top.sleeve !== 'long')) { rr(-W / 2 - 1, -1, W + 2, sl, W / 2); fill(look.topColor); } // 短袖的美術上衣自己帶袖子
-    if (front && tool && p.tool) { g.translate(0, L * 0.92); g.rotate(-0.5); rr(-0.03 * U, -0.75 * U, 0.06 * U, 0.85 * U, 0.02 * U); fill('#8a5a34'); rr(-0.14 * U, -0.86 * U, 0.3 * U, 0.16 * U, 0.04 * U); fill(tool === 'water' ? '#6aa8e8' : '#a9a59c'); }
+    if (front && tool && p.tool) { g.translate(0, L * 0.92); g.rotate(-0.5); rr(-0.03 * U, -0.75 * U, 0.06 * U, 0.85 * U, 0.02 * U); fill('#8a5a34'); rr(-0.14 * U, -0.86 * U, 0.3 * U, 0.16 * U, 0.04 * U); fill(tool === 'water' ? '#6aa8e8' : tool === 'broom' ? '#d9b45a' : tool === 'rod' ? '#8a5a34' : '#a9a59c'); if (tool === 'rod') { g.strokeStyle = '#ffffff'; g.lineWidth = Math.max(1, U * 0.02); g.beginPath(); g.moveTo(0.02 * U, -0.86 * U); g.lineTo(0.5 * U, -0.1 * U); g.stroke(); g.strokeStyle = OUT; } }
     g.restore();
   };
   const leg = (sx, ang) => {

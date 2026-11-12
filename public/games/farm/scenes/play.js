@@ -3,7 +3,7 @@ import { buildGround } from '../render/ground.js';
 import { drawObject, drawPlayer, drawBubble, drawTilled, drawShadow, drawName } from '../render/placeholder.js';
 import { drawDoll } from '../render/doll.js';
 import { drawSprite } from '../render/sprites.js';
-import { groundAt, levelOf, sellPrice, animalPos, hearts, mineMap, monPos, npcPos, seasonIndex, rng } from '../shared/rules.js';
+import { groundAt, levelOf, sellPrice, animalPos, hearts, mineMap, monPos, npcPos, walkGrid, seasonIndex, rng } from '../shared/rules.js';
 import { iconEl } from '../render/sprites.js';
 import { openPanel, itemIcon, setToolLv } from '../ui/panels.js';
 import { create } from './create.js';
@@ -295,8 +295,17 @@ export const play = {
   // 現在在小鎮上的居民和他們的位置（照行程用時間算）
   folks() {
     const W = this.world, npcs = this.ctx.data.npcs; if (this.mapId !== 'town' || !W.farm) return [];
-    const min = W.minute(), walk = this.bal.friend.walkMinutes;
-    return Object.entries(npcs).filter(([, n]) => n.full).map(([id, n]) => ({ id, n, ...npcPos(n, min, walk) }));
+    const min = W.minute(), walk = this.bal.friend.walkMinutes, d = this.ctx.data, fe = W.farm.festival && d.festivals[W.farm.festival];
+    this.townGrid ||= walkGrid(d.maps.town, d.objects);
+    const opts = { wet: ['rain', 'storm'].includes(W.farm.weather), fest: fe && fe.map === 'town' ? fe.stage : null };
+    const list = Object.entries(npcs).filter(([, n]) => n.full).map(([id, n]) => ({ id, n, ...npcPos(n, min, walk, this.townGrid, opts) }));
+    // 閒著、站得很近的兩個人會聊天：每 30 分鐘（遊戲時間）的前 8 分鐘，其中一個人頭上冒一句話
+    const lines = d.chatter.lines, slot = Math.floor(min / 30);
+    if (min % 30 < 8) for (let a = 0; a < list.length; a++) for (let b = a + 1; b < list.length; b++) {
+      const p = list[a], q = list[b]; if (p.moving || q.moving || p.say || q.say || ['swing', 'water', 'fishing', 'sweep'].includes(p.action) || Math.hypot(p.x - q.x, p.y - q.y) > 1.8) continue;
+      const r = rng(slot * 977 + a * 31 + b), who = r() < 0.5 ? p : q; who.say = lines[Math.floor(r() * lines.length)]; (who === p ? q : p).say = ' ';
+    }
+    return list;
   },
   // 跟居民說話：每天第一次聊天加好感；可以把手上的東西送給他（一天一次、一週兩次）
   async talk(folk) {
@@ -433,7 +442,7 @@ export const play = {
       for (const [bx, by] of [[st.x - 4, st.y - 6], [st.x + 1, st.y - 7], [st.x + 6, st.y - 6]]) list.push({ y: by + 0.9, t: { def: { name: '旗', shape: 'blob', w: 2.2, h: 1.0, color: '#e5484d', art: 'obj/bunting' }, fx: bx, fy: by + 0.9 } });
     }
     if (this.hunt) for (const e of this.hunt.eggs) if (!e.got) list.push({ y: e.y + 0.8, egg: e });
-    for (const n of this.folks()) list.push({ y: n.y, pp: { q: { id: 'npc:' + n.id, x: n.x, y: n.y, dir: n.dir, moving: n.moving, anim: performance.now() / 1000, look: n.n.look, name: n.n.name, action: n.action || null, actionT: (performance.now() / 1000 + n.x) % (n.action === 'water' ? 1.4 : n.action === 'swing' ? 1.1 : 1000), tool: n.tool || null }, color: '#ccc' } });
+    for (const n of this.folks()) list.push({ y: n.y, pp: { q: { id: 'npc:' + n.id, x: n.x, y: n.y, dir: n.dir, moving: n.moving, anim: performance.now() / 1000, look: n.n.look, name: n.n.name, say: n.say && n.say.trim() ? n.say : null, action: n.action || null, actionT: (performance.now() / 1000 + n.x) % (n.action === 'water' ? 1.4 : n.action === 'swing' ? 1.1 : 1000), tool: n.tool || null }, color: '#ccc' } });
     if (this.map.mine && W.mine) { // 礦坑：石頭、打開的樓梯、入口的梯子、怪物
       const s = W.mine, RT = this.bal.mine.rockTypes, MT = this.bal.mine.monsters, tnow = W.serverNow();
       g.fillStyle = '#3b2f22'; g.fillRect((s.spawn.x - 0.3) * T, (s.spawn.y + 1) * T, T * 1.6, T * 0.9); drawName(g, '梯子（出去／電梯）', (s.spawn.x + 0.5) * T, (s.spawn.y + 1.5) * T, T);
@@ -483,6 +492,7 @@ export const play = {
     for (const b of bobs) { const bx = (b.x + 0.5) * T, by = (b.y + 0.5) * T + Math.sin(b.t * (b.bite ? 22 : 3)) * T * (b.bite ? 0.08 : 0.03); g.fillStyle = '#fff'; g.strokeStyle = '#5a3d22'; g.lineWidth = Math.max(1.5, T * 0.04); g.beginPath(); g.arc(bx, by, T * 0.11, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#e5484d'; g.beginPath(); g.arc(bx, by, T * 0.11, Math.PI, 0); g.fill(); if (b.bite) drawBubble(g, '！', bx, by - T * 0.5, T, true); }
     for (const f of W.floaters) { if (f.map !== mapId) continue; g.globalAlpha = Math.min(1, f.life * 2); if (f.heart) { drawName(g, '♥', f.x * T, (f.y - (1.1 - f.life) * 0.9) * T, T * 1.6); g.globalAlpha = 1; continue; } const it = data.items[f.item]; if (!drawSprite(g, it.art, f.x * T, (f.y - (1.1 - f.life) * 0.9) * T, T * 0.6, T * 0.6)) drawName(g, it.name, f.x * T, (f.y - (1.1 - f.life) * 0.9) * T, T); g.globalAlpha = 1; }
     for (const pp of people) { const b = W.bubbles.get(pp.q.id); if (b) drawBubble(g, b.text, pp.q.x * T, pp.q.y * T - T * (pp.q.look ? 1.95 : 1.45), T, b.big); }
+    for (const it of list) if (it.pp && it.pp.q.say) drawBubble(g, it.pp.q.say, it.pp.q.x * T, it.pp.q.y * T - T * 1.95, T, false); // 居民之間聊天
     if (this.flash > 0) { g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = `rgba(230, 60, 60, ${this.flash})`; g.fillRect(0, 0, view.canvas.width, view.canvas.height); } // 被怪物打到：畫面紅一下
     // 天色（只有戶外）：傍晚慢慢變橘、晚上變暗；下雨天灰一點、畫雨絲
     if (!this.map.outdoor || !W.farm) return;

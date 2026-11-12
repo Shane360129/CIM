@@ -12,7 +12,7 @@ export const loading = {
     try {
       const convId = Number(new URLSearchParams(location.search).get('conv')) || 0;
       const [data, session] = await Promise.all([
-        loadAll([['balance', 'data/balance.json'], ['tutorial', 'data/tutorial.json'], ['music', 'data/music.json'], ['objects', 'data/objects.json'], ['parts', 'data/doll/parts.json'], ['items', 'data/items.json'], ['crops', 'data/crops.json'],
+        loadAll([['balance', 'data/balance.json'], ['tutorial', 'data/tutorial.json'], ['chatter', 'data/npcs/chatter.json'], ['music', 'data/music.json'], ['objects', 'data/objects.json'], ['parts', 'data/doll/parts.json'], ['items', 'data/items.json'], ['crops', 'data/crops.json'],
           ['map_farm', 'data/maps/farm.json'], ['map_house', 'data/maps/house.json'], ['map_road', 'data/maps/road.json'], ['map_lake', 'data/maps/lake.json'], ['fish', 'data/fish.json'], ['machines', 'data/machines.json'], ['recipes', 'data/recipes.json'], ['animals', 'data/animals.json'], ['map_town', 'data/maps/town.json'], ['npcs', 'data/npcs/residents.json'], ['shops', 'data/shops.json'], ['events', 'data/events/hearts.json'], ['festivals', 'data/festivals.json'], ['restore', 'data/restore.json'], ['achievements', 'data/achievements.json']], (p) => { this.progress = p * 0.8; }),
         signIn(convId),
       ]);

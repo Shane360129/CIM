@@ -102,26 +102,89 @@ export function monPos(m, absMs) { const t = absMs / 1000, k = m.id * 1.7; retur
 export const mineMap = (bal, floor) => ({ name: `礦坑第 ${floor} 層`, w: bal.mine.w, h: bal.mine.h, ground: 'cave', outdoor: false, patches: [], objects: [], exits: [], mine: true });
 
 // 居民現在在哪：照每日行程（[幾點起, x, y]…），到了時間就花一小段時間走過去。只用時間算，兩個人看到的一樣
-export function npcPos(npc, minute, walk = 40) {
-  const sch = npc.schedule; let i = 0; for (let k = 0; k < sch.length; k++) if (minute >= sch[k][0]) i = k;
-  const cur = sch[i], prev = sch[i > 0 ? i - 1 : sch.length - 1], t = Math.min(1, Math.max(0, (minute - cur[0]) / walk));
-  if (minute < sch[0][0]) return { x: prev[1], y: prev[2], moving: false, dir: 'down' };
+// ---- 居民找路：地圖上哪些格子走得到（建築、家具、樹、水都擋路），兩點之間沿著走得到的格子走 ----
+export function walkGrid(map, objects) {
+  const w = map.w, h = map.h, b = new Uint8Array(w * h), cache = new Map();
+  for (const p of map.patches || []) if (p.type === 'water') for (let x = p.x; x < p.x + p.w; x++) for (let y = p.y; y < p.y + p.h; y++) if (x >= 0 && y >= 0 && x < w && y < h) b[y * w + x] = 1;
+  for (const o of map.objects) { const d = objects[o.type]; if (!d || !d.solid) continue; const [tw, th] = d.tiles || [1, 1]; for (let x = 0; x < tw; x++) for (let y = 0; y < th; y++) { const X = o.x + x, Y = o.y - y; if (X >= 0 && Y >= 0 && X < w && Y < h) b[Y * w + X] = 1; } }
+  return { w, h, b, cache };
+}
+const free = (G, x, y) => x >= 0 && y >= 0 && x < G.w && y < G.h && !G.b[y * G.w + x];
+// 最近的走得到的格子（站的位置剛好在建築上時，挪到旁邊）
+export function snapFree(G, x, y) {
+  const tx = Math.floor(x), ty = Math.floor(y); if (free(G, tx, ty)) return [x, y];
+  for (let r = 1; r < 8; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (Math.max(Math.abs(dx), Math.abs(dy)) === r && free(G, tx + dx, ty + dy)) return [tx + dx + 0.5, ty + dy + 0.5];
+  return [x, y];
+}
+// 兩點之間的路：一串轉折點（格子中心），走斜的不會切過牆角。算過的記起來
+export function findPath(G, ax, ay, bx, by) {
+  const key = `${ax},${ay},${bx},${by}`; if (G.cache.has(key)) return G.cache.get(key);
+  const [sx, sy] = snapFree(G, ax, ay), [ex, ey] = snapFree(G, bx, by), S = Math.floor(sy) * G.w + Math.floor(sx), E = Math.floor(ey) * G.w + Math.floor(ex);
+  const prev = new Int32Array(G.w * G.h).fill(-1), q = [S]; prev[S] = S;
+  for (let qi = 0; qi < q.length && prev[E] < 0; qi++) {
+    const c = q[qi], cx = c % G.w, cy = (c / G.w) | 0;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+      const nx = cx + dx, ny = cy + dy, n = ny * G.w + nx; if (!free(G, nx, ny) || prev[n] >= 0) continue;
+      if (dx && dy && (!free(G, cx + dx, cy) || !free(G, cx, cy + dy))) continue; prev[n] = c; q.push(n);
+    }
+  }
+  let pts;
+  if (prev[E] < 0) pts = [[ax, ay], [bx, by]]; // 走不到（不應該發生）：直接過去
+  else {
+    const cells = []; for (let c = E; c !== S; c = prev[c]) cells.push(c); cells.reverse();
+    pts = [[sx, sy]]; let ldx = 0, ldy = 0;
+    cells.forEach((c, i) => { const x = (c % G.w) + 0.5, y = ((c / G.w) | 0) + 0.5, last = i === cells.length - 1; const pv = i ? cells[i - 1] : S, dx = (c % G.w) - (pv % G.w), dy = ((c / G.w) | 0) - ((pv / G.w) | 0);
+      if (i && (dx !== ldx || dy !== ldy)) pts.push([(pv % G.w) + 0.5, ((pv / G.w) | 0) + 0.5]); ldx = dx; ldy = dy; if (last) pts.push([ex, ey]); });
+    if (!cells.length) pts.push([ex, ey]);
+  }
+  let len = 0; for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+  const r = { pts, len }; G.cache.set(key, r); return r;
+}
+const along = (path, d) => { // 沿著路走了 d 格的位置和方向
+  for (let i = 1; i < path.pts.length; i++) { const [x0, y0] = path.pts[i - 1], [x1, y1] = path.pts[i], L = Math.hypot(x1 - x0, y1 - y0); if (d <= L || i === path.pts.length - 1) { const k = L ? Math.min(1, d / L) : 1; return { x: x0 + (x1 - x0) * k, y: y0 + (y1 - y0) * k, dx: x1 - x0, dy: y1 - y0 }; } d -= L; }
+  const e = path.pts[path.pts.length - 1]; return { x: e[0], y: e[1], dx: 0, dy: 1 };
+};
+// 這一天的行程：下雨天不去菜園、不坐在外面（留在原本的地方）；節慶那天白天大家都到舞台旁邊
+export function daySchedule(npc, opts = {}) {
+  let sch = npc.schedule.map((e) => [e[0], e[1], e[2], e[3] || 'wander']);
+  if (opts.wet) sch = sch.filter((e) => !['farm', 'sit', 'fish'].includes(e[3]));
+  if (opts.fest) {
+    let h = 0; for (const ch of npc.name) h = (h * 31 + ch.codePointAt(0)) % 9973;
+    const a = (h % 360) * Math.PI / 180, r = 3 + (h % 3) * 0.7, spot = [opts.fest.x + 1 + Math.cos(a) * r, opts.fest.y + 1.5 + Math.sin(a) * r * 0.6];
+    sch = [...sch.filter((e) => e[0] < 540 || e[0] >= 1020), [540, spot[0], spot[1], 'cheer'], ...(sch.some((e) => e[0] >= 1020) ? [] : [])].sort((p, q) => p[0] - q[0]);
+    if (!sch.some((e) => e[0] >= 1020)) sch.push([1020, ...npc.schedule[npc.schedule.length - 1].slice(1, 3), 'stay']);
+  }
+  return sch;
+}
+// 居民現在在哪、在做什麼：全部用時間算，伺服器和兩個玩家看到的一樣。G 是 walkGrid（有給才會繞路）
+export function npcPos(npc, minute, walk = 40, G = null, opts = {}) {
+  const sch = opts.sch || daySchedule(npc, opts); let i = 0; for (let k = 0; k < sch.length; k++) if (minute >= sch[k][0]) i = k;
+  const cur = sch[i], prev = sch[i > 0 ? i - 1 : sch.length - 1];
   const face = (dx, dy) => (Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'left' : 'right') : dy < 0 ? 'up' : 'down');
-  if (t < 1) return { x: prev[1] + (cur[1] - prev[1]) * t, y: prev[2] + (cur[2] - prev[2]) * t, moving: true, dir: face(cur[1] - prev[1], cur[2] - prev[2]) };
-  // 到了：做這一段行程的事（行程第四個欄位）。全部用時間算，伺服器和兩個玩家看到的一樣
-  const act = cur[3] || 'wander', since = minute - cur[0] - walk;
+  if (minute < sch[0][0]) return { x: prev[1], y: prev[2], moving: false, dir: 'down' };
+  // 走過去：有地圖就沿著路走（每分鐘 0.7 格），沒有就照原本的直線
+  const path = G ? findPath(G, prev[1], prev[2], cur[1], cur[2]) : null, dur = path ? Math.max(4, path.len / 0.7) : walk, el = minute - cur[0];
+  if (el < dur) {
+    if (path) { const p = along(path, el / dur * path.len); return { x: p.x, y: p.y, moving: true, dir: face(p.dx, p.dy) }; }
+    const t = el / dur; return { x: prev[1] + (cur[1] - prev[1]) * t, y: prev[2] + (cur[2] - prev[2]) * t, moving: true, dir: face(cur[1] - prev[1], cur[2] - prev[2]) };
+  }
+  // 到了：做這一段行程的事（行程第四個欄位）
+  const act = cur[3] || 'wander', since = el - dur, [hx, hy] = G ? snapFree(G, cur[1], cur[2]) : [cur[1], cur[2]];
   let h = 0; for (const ch of npc.name) h = (h * 31 + ch.codePointAt(0)) % 9973;
   if (act === 'farm') { // 在菜園：每 25 分鐘換一格，走過去（5 分鐘）→ 翻土或澆水
     const slot = Math.floor(since / 25), ph = since % 25, col = slot % 4, from = slot > 0 ? (slot - 1) % 4 : col;
     if (ph < 5 && from !== col) { const k = ph / 5; return { x: cur[1] + from + (col - from) * k, y: cur[2], moving: true, dir: col > from ? 'right' : 'left' }; }
     return { x: cur[1] + col, y: cur[2], moving: false, dir: 'up', action: slot % 2 ? 'water' : 'swing', tool: slot % 2 ? 'water' : 'hoe' };
   }
-  if (act === 'sit') return { x: cur[1], y: cur[2], moving: false, dir: 'down', action: 'sit' };
-  if (act === 'eat') return { x: cur[1], y: cur[2], moving: false, dir: 'down', action: Math.floor(since / 20) % 2 ? 'eat' : null };
-  if (act === 'stay') return { x: cur[1], y: cur[2], moving: false, dir: 'down' };
-  // 沒有特別的事：在附近晃。每 30 分鐘換一個點（離定點不到一格），走過去 6 分鐘，然後站著東看西看
-  const spot = (n) => { const r = rng(h * 131 + i * 17 + n * 7919); return [cur[1] + (r() - 0.5) * 1.7, cur[2] + (r() - 0.5) * 1.1, r()]; };
-  const slot = Math.floor(since / 30), ph = since % 30, a = slot > 0 ? spot(slot - 1) : [cur[1], cur[2], 0], b = spot(slot);
+  if (act === 'fish') return { x: hx, y: hy, moving: false, dir: 'right', action: 'fishing', tool: 'rod' };
+  if (act === 'sweep') { const sw = Math.sin(since * 0.9) * 0.6; return { x: hx + sw, y: hy, moving: false, dir: 'down', action: 'sweep', tool: 'broom' }; }
+  if (act === 'cheer') return { x: hx, y: hy, moving: false, dir: 'up', action: Math.floor(since / 6) % 3 === 0 ? 'happy' : null };
+  if (act === 'sit') return { x: hx, y: hy, moving: false, dir: 'down', action: 'sit' };
+  if (act === 'eat') return { x: hx, y: hy, moving: false, dir: 'down', action: Math.floor(since / 20) % 2 ? 'eat' : null };
+  if (act === 'stay') return { x: hx, y: hy, moving: false, dir: 'down' };
+  // 沒有特別的事：在附近晃。每 30 分鐘換一個點（離定點不到一格、要走得到），走過去 6 分鐘，然後站著東看西看
+  const spot = (n) => { const r = rng(h * 131 + i * 17 + n * 7919), x = hx + (r() - 0.5) * 1.7, y = hy + (r() - 0.5) * 1.1, z = r(); return G && !free(G, Math.floor(x), Math.floor(y)) ? [hx, hy, z] : [x, y, z]; };
+  const slot = Math.floor(since / 30), ph = since % 30, a = slot > 0 ? spot(slot - 1) : [hx, hy, 0], b = spot(slot);
   if (ph < 6) { const k = ph / 6; return { x: a[0] + (b[0] - a[0]) * k, y: a[1] + (b[1] - a[1]) * k, moving: true, dir: face(b[0] - a[0], b[1] - a[1]) }; }
   return { x: b[0], y: b[1], moving: false, dir: ['down', 'left', 'right', 'down'][Math.floor(b[2] * 4)] };
 }
