@@ -83,7 +83,7 @@ export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle',
     if (!side) { if (sx == null) g.drawImage(src, dx, dy, dw, dh); else g.drawImage(src, sx, sy, sw, sh, dx, dy, dw, dh); return; }
     g.save(); g.translate(dx + dw / 2, 0); g.scale(-1, 1); if (sx == null) g.drawImage(src, -dw / 2, dy, dw, dh); else g.drawImage(src, sx, sy, sw, sh, -dw / 2, dy, dw, dh); g.restore();
   };
-  const dS = (s, color, dx, dy, dw, dh) => (color ? dI(tintSprite(s.img, s.x, s.y, s.w, s.h, color), null, null, null, null, dx, dy, dw, dh) : dI(s.img, s.x, s.y, s.w, s.h, dx, dy, dw, dh));
+  const dS = (s, color, dx, dy, dw, dh, clean = false) => (color ? dI(tintSprite(s.img, s.x, s.y, s.w, s.h, color, clean), null, null, null, null, dx, dy, dw, dh) : dI(s.img, s.x, s.y, s.w, s.h, dx, dy, dw, dh));
   // ---- 美術素體（頭、臉、身體、手腳）：素材到了就用，沒有就用下面程式畫的 ----
   const k0 = U / headPx(), kH = HU / headPx(), mirror = dir === 'left';
   const put = (name, cx, top, opt = {}) => { // 畫一張零件：以 (cx, top) 為上緣中心；可以指定寬高、旋轉（繞上緣中心）、換色
@@ -162,13 +162,13 @@ export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle',
     const s = sprite(`hair/${look.hair}/${v}`); if (!s) return false;
     const art = !!sprite('base/head/front') && !look.plain, F = art && parts.fitTable && parts.fitTable.hair[look.hair], f = F && F[v], hb = f && headBox();
     if (hb) { const w = s.w * f[2] * hb.k, h = s.h * f[2] * hb.k, x = hb.x + f[0] * hb.w, y = hb.y + f[1] * hb.h;
-      if (side && F.sideFlip === false) g.drawImage(tintSprite(s.img, s.x, s.y, s.w, s.h, look.hairColor), x, y, w, h); // 這款的側面圖本來就面向右，不用翻
-      else dS(s, look.hairColor, x, y, w, h);
+      if (side && F.sideFlip === false) g.drawImage(tintSprite(s.img, s.x, s.y, s.w, s.h, look.hairColor, true), x, y, w, h); // 這款的側面圖本來就面向右，不用翻
+      else dS(s, look.hairColor, x, y, w, h, true);
       return true; }
     const ref = sprite(`hair/${look.hair}/bk`) || s, headW = art ? 1.04 * HU * 245 / 217 : 1.06 * U;
     const k = art ? Math.min(1.25, Math.max(0.85, headW * HAIR.wrap / ref.w / (HU / HAIR.px))) * HU / HAIR.px : U / HAIR.px;
     const w = s.w * k, h = s.h * k, top = art ? hy - 0.52 * HU - (v === 'bk' ? HAIR.liftBack : HAIR.lift) * HU : hy + HAIR.top * U;
-    dS(s, look.hairColor, -w / 2 + (side ? (art ? HAIR.sxArt * HU : HAIR.sx * U) : 0), top, w, h); return true;
+    dS(s, look.hairColor, -w / 2 + (side ? (art ? HAIR.sxArt * HU : HAIR.sx * U) : 0), top, w, h, true); return true;
   };
   // ---- 各個零件 ----
   const hairBack = () => {
@@ -287,7 +287,11 @@ export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle',
     bodyArt(); if (!bottomWear()) bottom(); if (side && dressed) armArt(true); if (!topWear()) topL();
     if (!back && !dressed) { if (!side) armArt(false); armArt(true); }
     if (!back && dressed && (p.tool || action === 'happy' || action === 'eat')) armArt(true); // 舉手、拿工具的時候前面那隻手要在衣服前面
-    headArt(); faceArt(); hairFront(); if (!hatWear()) hat(); acc(); if (back) { const a = parts.acc.find((v) => v.id === look.acc); if (a && a.art && (parts.slots[a.slot] || {}).behind) { const s = sprite(`acc/${a.id}/front`); if (s) { const sl = parts.slots[a.slot], w = a.w * U * B.width, h = w * s.h / s.w; g.drawImage(s.img, s.x, s.y, s.w, s.h, -w / 2, sh + sl.dy * U - h / 2, w, h); } } }
+    // 頭套類的帽子（貓耳帽、小雞帽、青蛙帽…）正面時套在頭後面，臉從開口露出來；瀏海只畫在頭的範圍內，不會蓋到頭套
+    const hood = !side && !back && look.hat !== 'none' && (parts.hat.find((v) => v.id === look.hat) || {}).hood && hatWear();
+    headArt(); faceArt();
+    if (hood) { g.save(); g.beginPath(); g.ellipse(0, hy, 0.48 * HU, 0.53 * HU, 0, 0, 7); g.clip(); hairFront(); g.restore(); } else hairFront();
+    if (!hood && !hatWear()) hat(); acc(); if (back) { const a = parts.acc.find((v) => v.id === look.acc); if (a && a.art && (parts.slots[a.slot] || {}).behind) { const s = sprite(`acc/${a.id}/front`); if (s) { const sl = parts.slots[a.slot], w = a.w * U * B.width, h = w * s.h / s.w; g.drawImage(s.img, s.x, s.y, s.w, s.h, -w / 2, sh + sl.dy * U - h / 2, w, h); } } }
   } else {
   hairBack();
   if (side) arm(false); else if (back) { arm(true); arm(false); }
@@ -301,13 +305,15 @@ export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle',
 // 換色（給之後的圖用）：白到淺灰的像素換成目標顏色、保留明暗；描邊和本來就有顏色的部分不動。結果快取起來，同一張圖同一個顏色只算一次。
 // 不用 ctx.filter（舊手機不支援），直接改像素。
 const tintCache = new Map();
-export function tintSprite(img, sx, sy, w, h, color) {
-  const key = `${img.src}|${sx},${sy},${w},${h}|${color}`; if (tintCache.has(key)) return tintCache.get(key);
+// clean：頭髮的原圖只有灰階，帶洋紅色的像素是去背留下的邊，改成灰色並依程度變淡（不然換色後會有粉紅雜點）
+export function tintSprite(img, sx, sy, w, h, color, clean = false) {
+  const key = `${img.src}|${sx},${sy},${w},${h}|${color}|${clean ? 1 : 0}`; if (tintCache.has(key)) return tintCache.get(key);
   const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d', { willReadFrequently: true });
   g.drawImage(img, sx, sy, w, h, 0, 0, w, h);
   const d = g.getImageData(0, 0, w, h), a = d.data, [tr, tg, tb] = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
   for (let i = 0; i < a.length; i += 4) {
     if (!a[i + 3]) continue;
+    if (clean) { const m = Math.min(a[i], a[i + 2]) - a[i + 1]; if (m > 20) { a[i] = a[i + 2] = a[i + 1]; a[i + 3] *= Math.max(0, 1 - m / 160); } }
     const mx = Math.max(a[i], a[i + 1], a[i + 2]), mn = Math.min(a[i], a[i + 1], a[i + 2]);
     if (mx - mn > 75 || mx < 110) continue;            // 彩度高的（圖案）或很深的（描邊）：不換。米白色的布料也算白，要換
     const l = mx / 255; a[i] = tr * l; a[i + 1] = tg * l; a[i + 2] = tb * l;

@@ -752,17 +752,20 @@
   {
    "id": "c38a",
    "name": "貓耳帽",
-   "art": true
+   "art": true,
+   "hood": true
   },
   {
    "id": "c38b",
    "name": "小雞帽",
-   "art": true
+   "art": true,
+   "hood": true
   },
   {
    "id": "c38c",
    "name": "西瓜帽",
-   "art": true
+   "art": true,
+   "hood": true
   },
   {
    "id": "c39a",
@@ -772,7 +775,8 @@
   {
    "id": "c39b",
    "name": "雪人毛帽",
-   "art": true
+   "art": true,
+   "hood": true
   },
   {
    "id": "c39c",
@@ -839,7 +843,8 @@
   {
    "id": "c42b",
    "name": "青蛙帽",
-   "art": true
+   "art": true,
+   "hood": true
   },
   {
    "id": "c42c",

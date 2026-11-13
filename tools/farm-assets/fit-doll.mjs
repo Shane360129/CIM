@@ -109,5 +109,9 @@ for (const h of parts.hat) {
   }
   out.hat[h.id] = f; console.log('帽子', h.id, h.name, JSON.stringify(f));
 }
-await writeFile(path.join(ROOT, 'public/games/farm/data/doll/fit.json'), JSON.stringify(out, null, 1));
-console.log('寫好了 public/games/farm/data/doll/fit.json');
+// fit.json 已經逐款手動修過（manual: true）：不加 --force 就不覆蓋，結果另外寫到 fit.auto.json 給人參考
+const FIT = path.join(ROOT, 'public/games/farm/data/doll/fit.json');
+const manual = await readFile(FIT, 'utf8').then((t) => JSON.parse(t).manual === true, () => false);
+const dest = manual && !process.argv.includes('--force') ? path.join(ROOT, 'public/games/farm/data/doll/fit.auto.json') : FIT;
+await writeFile(dest, JSON.stringify(out, null, 1));
+console.log('寫好了', path.relative(ROOT, dest), manual && dest !== FIT ? '（fit.json 是手動修過的，沒有覆蓋；要覆蓋請加 --force）' : '');

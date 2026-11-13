@@ -33,7 +33,8 @@ export const create = {
     for (const [key, label, colorKey, colorList] of ROWS) {
       const row = mk('div', 'mrow'), prev = mk('button', 'marrow', '◀'), next = mk('button', 'marrow', '▶'), name = mk('span', 'mname');
       prev.type = next.type = 'button'; prev.setAttribute('aria-label', '上一個' + label); next.setAttribute('aria-label', '下一個' + label); next.dataset.next = key;
-      const step = (d) => { const list = parts[key], i = list.findIndex((v) => v.id === this.look[key]); this.look[key] = list[(i + d + list.length) % list.length].id; refresh.forEach((f) => f()); };
+      // hidden：使用者挑掉不要的款式不列出來（已經穿著的照樣能顯示）
+      const step = (d) => { const list = parts[key].filter((v) => !v.hidden), i = list.findIndex((v) => v.id === this.look[key]); this.look[key] = list[(i + d + list.length) % list.length].id; refresh.forEach((f) => f()); };
       prev.addEventListener('click', () => step(-1)); next.addEventListener('click', () => step(1));
       refresh.push(() => { name.textContent = (parts[key].find((v) => v.id === this.look[key]) || {}).name || ''; });
       row.append(mk('span', 'mlabel', label), prev, name, next); root.append(row);
