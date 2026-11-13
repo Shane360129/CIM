@@ -5,7 +5,7 @@
 import { sprite } from './sprites.js';
 const OUT = '#5a3d22';
 // 美術零件（白底，照外觀的顏色染色）要畫多大、放哪裡：單位是 U（一個頭的直徑）。w 是正面／背面的寬，ws 是側面的寬；dy 是比基準點高（負）或低多少
-const HAIR = { px: 222, top: -0.80, sx: -0.17, sxArt: -0.06 }; // px：原圖裡一個頭的直徑大約幾個像素；top：頭髮頂端比頭的中心高多少（U）
+const HAIR = { px: 222, top: -0.80, sx: -0.17, sxArt: -0.13, wrap: 1.06, lift: 0.25, liftBack: 0.1 }; // wrap：後腦勺那片比頭寬多少；lift：頭髮頂端比頭頂高多少（U） // px：原圖裡一個頭的直徑大約幾個像素；top：頭髮頂端比頭的中心高多少（U）
 const FIT = { top: { w: 1.02, ws: 0.62, dy: -0.1 }, dress: { w: 0.8, ws: 0.5, dy: -0.08 }, bottom: { w: 0.72, ws: 0.5, dy: -0.2 }, hat: { straw: { w: 1.3, ws: 1.3, dy: -0.78 }, beanie: { w: 1.12, ws: 1.12, dy: -1.36, dys: -1.02 }, cap: { w: 1.15, ws: 1.15, dy: -1.06, dys: -0.78, flipSide: true }, other: { w: 1.2, ws: 1.2, dy: -1.02 } } };
 const shade = (hex, k) => { const n = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)); return '#' + n.map((v) => Math.round(Math.max(0, Math.min(255, k > 0 ? v + (255 - v) * k : v * (1 + k)))).toString(16).padStart(2, '0')).join(''); };
 
@@ -143,10 +143,14 @@ export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle',
     return true;
   };
   // 髮型的圖：五個零件（正面前髮 ff、正面後髮 fb、背面 bk、側面前髮 sf、側面後髮 sb）都照原圖的比例畫，頂端對齊頭頂上方一點
+  // 髮型：每一款照「後腦勺那一片（bk）的寬度」對齊頭的寬度（各款的圖大小不一，這樣才會剛好包住頭），頂端貼著頭頂上方一點
   const hairArt = (v) => {
     const s = sprite(`hair/${look.hair}/${v}`); if (!s) return false;
-    const w = s.w / HAIR.px * U, h = s.h / HAIR.px * U;
-    dS(s, look.hairColor, -w / 2 + (side ? (sprite('base/head/front') && !look.plain ? HAIR.sxArt : HAIR.sx) : 0) * U, hy + HAIR.top * U, w, h); return true;
+    const art = !!sprite('base/head/front') && !look.plain, ref = sprite(`hair/${look.hair}/bk`) || s;
+    const headW = art ? 1.04 * U * 245 / 217 : 1.06 * U; // 頭（含耳朵）畫出來的寬
+    let k = art ? Math.min(1.25, Math.max(0.85, headW * HAIR.wrap / ref.w / (U / HAIR.px))) * U / HAIR.px : U / HAIR.px;
+    const w = s.w * k, h = s.h * k, top = art ? hy - 0.52 * U - (v === 'bk' ? HAIR.liftBack : HAIR.lift) * U : hy + HAIR.top * U; // 背面那片包住整個後腦勺；前面和側面的瀏海要停在眉毛上面
+    dS(s, look.hairColor, -w / 2 + (side ? (art ? HAIR.sxArt : HAIR.sx) : 0) * U, top, w, h); return true;
   };
   // ---- 各個零件 ----
   const hairBack = () => {
