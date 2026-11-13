@@ -3,7 +3,7 @@ import { buildGround } from '../render/ground.js';
 import { drawObject, drawPlayer, drawBubble, drawTilled, drawShadow, drawName } from '../render/placeholder.js';
 import { drawDoll } from '../render/doll.js';
 import { drawSprite } from '../render/sprites.js';
-import { groundAt, levelOf, sellPrice, animalPos, hearts, mineMap, monPos, npcPos, seasonIndex, rng } from '../shared/rules.js';
+import { groundAt, levelOf, sellPrice, animalPos, hearts, mineMap, monPos, npcPos, walkGrid, seasonIndex, rng } from '../shared/rules.js';
 import { iconEl } from '../render/sprites.js';
 import { openPanel, itemIcon, setToolLv } from '../ui/panels.js';
 import { create } from './create.js';
@@ -12,7 +12,7 @@ import { runEvent } from '../systems/cutscene.js';
 import { minigame } from './minigame.js';
 import { openSettings } from '../ui/settings.js';
 
-const NO_TEXT = { far: '太遠了，走近一點', ground: '這裡不行', locked: '這塊地還沒開墾（之後才能用）', already: '這裡已經弄好了', untilled: '要先用鋤頭翻土', offline: '連線中斷，稍等一下', timeout: '伺服器沒有回應',
+const NO_TEXT = { far: '太遠了，走近一點', ground: '這裡不行', locked: '這塊地還沒開墾（之後才能用）', greenhouse: '溫室還沒蓋，到小鎮的木工屋找桐伯', already: '這裡已經弄好了', untilled: '要先用鋤頭翻土', offline: '連線中斷，稍等一下', timeout: '伺服器沒有回應',
   tired: '太累了，體力不夠', gone: '魚跑掉了', machine: '這個放不進這台機器', place: '加工機要放在農場的空地上', full: '背包滿了', season: '這個季節種不活', crop: '上面還有作物', late: '已經發芽了，來不及施肥', nothing: '', out: '', unknown: '', closed: '那邊還沒開放' };
 const TOOL_NAME = { axe: '斧頭', pick: '十字鎬', sickle: '鐮刀', rod: '釣竿', sword: '劍', brush: '動物刷' };
 const ACT_NAME = { till: '翻土', water: '澆水', plant: '播種', harvest: '收成', clear: '清理', ship: '出貨', buy: '買東西', forage: '採集', fish: '釣魚' };
@@ -144,7 +144,7 @@ export const play = {
       if (use === 'bin') return openPanel(this.ctx, 'ship');
       if (use === 'chest') return openPanel(this.ctx, 'chest');
       if (use === 'shop') return openPanel(this.ctx, 'shop', { shop: 'stall' });
-      if (use === 'store') return hud.card('雜貨店', ['想看什麼？'], [{ label: '果樹苗', value: 'nursery', ghost: true }, { label: '種子和雜貨', value: 'store' }]).then((v) => { if (v) openPanel(this.ctx, 'shop', { shop: v }); });
+      if (use === 'store') return hud.card('雜貨店', ['想看什麼？'], [{ label: '果樹苗', value: 'nursery', ghost: true }, { label: '溫室種子', value: 'gh_seeds', ghost: true }, { label: '種子和雜貨', value: 'store' }]).then((v) => { if (v) openPanel(this.ctx, 'shop', { shop: v }); });
       if (data.shops[use]) return openPanel(this.ctx, 'shop', { shop: use });
       if (use === 'smith') return openPanel(this.ctx, 'smith');
       if (use === 'carpenter') return openPanel(this.ctx, 'build');
@@ -294,9 +294,18 @@ export const play = {
   },
   // 現在在小鎮上的居民和他們的位置（照行程用時間算）
   folks() {
-    const W = this.world, npcs = this.ctx.data.npcs; if (this.mapId !== 'town' || !W.farm) return [];
-    const min = W.minute(), walk = this.bal.friend.walkMinutes;
-    return Object.entries(npcs).filter(([, n]) => n.full).map(([id, n]) => ({ id, n, ...npcPos(n, min, walk) }));
+    const W = this.world, npcs = this.ctx.data.npcs; if (!['town', 'forest', 'beach'].includes(this.mapId) || !W.farm) return [];
+    const min = W.minute(), walk = this.bal.friend.walkMinutes, d = this.ctx.data, fe = W.farm.festival && d.festivals[W.farm.festival];
+    this.grids ||= Object.fromEntries(['town', 'forest', 'beach'].map((m) => [m, walkGrid(d.maps[m], d.objects)]));
+    const opts = { entries: { forest: [1.6, 28.0], beach: [1.6, 8.0] }, wet: ['rain', 'storm'].includes(W.farm.weather), fest: fe && fe.map === 'town' ? fe.stage : null };
+    const list = Object.entries(npcs).filter(([, n]) => n.full).map(([id, n]) => ({ id, n, ...npcPos(n, min, walk, this.grids, opts) })).filter((f) => f.map === this.mapId);
+    // 閒著、站得很近的兩個人會聊天：每 30 分鐘（遊戲時間）的前 8 分鐘，其中一個人頭上冒一句話
+    const lines = d.chatter.lines, slot = Math.floor(min / 30);
+    if (min % 30 < 8) for (let a = 0; a < list.length; a++) for (let b = a + 1; b < list.length; b++) {
+      const p = list[a], q = list[b]; if (p.moving || q.moving || p.say || q.say || ['swing', 'water', 'fishing', 'sweep'].includes(p.action) || Math.hypot(p.x - q.x, p.y - q.y) > 1.8) continue;
+      const r = rng(slot * 977 + a * 31 + b), who = r() < 0.5 ? p : q; who.say = lines[Math.floor(r() * lines.length)]; (who === p ? q : p).say = ' ';
+    }
+    return list;
   },
   // 跟居民說話：每天第一次聊天加好感；可以把手上的東西送給他（一天一次、一週兩次）
   async talk(folk) {
@@ -415,8 +424,16 @@ export const play = {
     }
     // 出入口的字
     for (const e of this.map.exits || []) { g.font = `700 ${T * 0.22}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = 'rgba(255,255,255,.85)'; g.fillText(e.label, clampX((e.x + e.w / 2) * T, this.map.w * T, T * 1.6), (e.y + e.h / 2) * T - T * 1.1 * (e.h > 1 ? 1 : 0.2)); }
+    // 小鎮的菜園：居民在照顧的作物（裝飾用，種什麼跟著季節、長多大跟著日期）
+    for (const gd of this.map.gardens || []) {
+      const kinds = Object.keys(data.crops).filter((id) => data.crops[id].seasons.includes(season) && !data.crops[id].regrowDays), day = W.farm ? W.farm.day : 1;
+      for (let gx = 0; gx < gd.w; gx++) for (let gy = 0; gy < gd.h; gy++) {
+        const id = kinds[(gx * 7 + gy * 3) % kinds.length], st = Math.min(4, Math.floor(((day + gx * 2 + gy) % 9) / 2));
+        drawTilled(g, gd.x + gx, gd.y + gy, T, (day + gx) % 2 === 0); list.push({ y: gd.y + gy + 0.8, crop: { x: gd.x + gx, y: gd.y + gy, c: { id, s: st } } });
+      }
+    }
     // 只畫看得到的，依腳的位置由遠到近畫
-    for (const t of this.things) if (t.fx > x0 && t.fx < x1 && t.fy > y0 && t.fy < y1) list.push({ y: t.fy, t });
+    for (const t of this.things) if (t.fx > x0 && t.fx < x1 && t.fy > y0 && t.fy < y1) list.push({ y: t.def.flat ? -1e9 : t.fy, t }); // flat：貼在地上的（木棧道），最先畫
     for (const o of W.objs.values()) if (o.map === mapId && o.x > x0 && o.x < x1 && o.y > y0 && o.y < y1) list.push({ y: o.y + 0.92, o, t: { def: o.item ? { ...data.objects[o.type], art: data.items[o.item].art, name: data.items[o.item].name } : o.kind ? { ...data.objects[o.type], art: data.machines[o.kind].art, name: data.machines[o.kind].name, ...this.treeLook(o) } : data.objects[o.type], fx: o.x + 0.5, fy: o.y + 0.92 } });
     for (const b of this.beasts()) list.push({ y: b.y, beast: b });
     const fe = this.fest();
@@ -425,7 +442,7 @@ export const play = {
       for (const [bx, by] of [[st.x - 4, st.y - 6], [st.x + 1, st.y - 7], [st.x + 6, st.y - 6]]) list.push({ y: by + 0.9, t: { def: { name: '旗', shape: 'blob', w: 2.2, h: 1.0, color: '#e5484d', art: 'obj/bunting' }, fx: bx, fy: by + 0.9 } });
     }
     if (this.hunt) for (const e of this.hunt.eggs) if (!e.got) list.push({ y: e.y + 0.8, egg: e });
-    for (const n of this.folks()) list.push({ y: n.y, pp: { q: { id: 'npc:' + n.id, x: n.x, y: n.y, dir: n.dir, moving: n.moving, anim: performance.now() / 1000, look: n.n.look, name: n.n.name }, color: '#ccc' } });
+    for (const n of this.folks()) list.push({ y: n.y, pp: { q: { id: 'npc:' + n.id, x: n.x, y: n.y, dir: n.dir, moving: n.moving, anim: performance.now() / 1000, look: n.n.look, name: n.n.name, say: n.say && n.say.trim() ? n.say : null, action: n.action || null, actionT: (performance.now() / 1000 + n.x) % (n.action === 'water' ? 1.4 : n.action === 'swing' ? 1.1 : 1000), tool: n.tool || null }, color: '#ccc' } });
     if (this.map.mine && W.mine) { // 礦坑：石頭、打開的樓梯、入口的梯子、怪物
       const s = W.mine, RT = this.bal.mine.rockTypes, MT = this.bal.mine.monsters, tnow = W.serverNow();
       g.fillStyle = '#3b2f22'; g.fillRect((s.spawn.x - 0.3) * T, (s.spawn.y + 1) * T, T * 1.6, T * 0.9); drawName(g, '梯子（出去／電梯）', (s.spawn.x + 0.5) * T, (s.spawn.y + 1.5) * T, T);
@@ -461,7 +478,7 @@ export const play = {
         if (it.t.def.use === 'notes' && this.unreadNotes()) drawBubble(g, '📝', it.t.fx * T, it.t.fy * T - T * 1.3, T, true); // 便條板有對方的新便條
         if (it.t.def.use === 'mail' && (W.self.mail || []).some((m) => !m.got)) drawBubble(g, '✉', it.t.fx * T, it.t.fy * T - T * 1.2, T, true); // 信箱有新的信
         // 加工機：做好了頭上冒出成品，還在做就冒小點點
-        if (it.o && it.o.kind && it.o.out) { if (W.abs() >= it.o.doneAt) { const oi = data.items[it.o.out]; drawBubble(g, ' ', it.t.fx * T, it.t.fy * T - T * 1.25, T, true); if (!drawSprite(g, oi.art, it.t.fx * T, it.t.fy * T - T * 1.38, T * 0.5, T * 0.5)) drawName(g, '好了', it.t.fx * T, it.t.fy * T - T * 1.6, T); } else drawName(g, '・'.repeat(1 + Math.floor(performance.now() / 500) % 3), it.t.fx * T, it.t.fy * T - T * 1.35, T); }
+        if (it.o && it.o.kind && it.o.out && !data.machines[it.o.kind].tree) { if (W.abs() >= it.o.doneAt) { const oi = data.items[it.o.out]; drawBubble(g, ' ', it.t.fx * T, it.t.fy * T - T * 1.25, T, true); if (!drawSprite(g, oi.art, it.t.fx * T, it.t.fy * T - T * 1.38, T * 0.5, T * 0.5)) drawName(g, '好了', it.t.fx * T, it.t.fy * T - T * 1.6, T); } else drawName(g, '・'.repeat(1 + Math.floor(performance.now() / 500) % 3), it.t.fx * T, it.t.fy * T - T * 1.35, T); }
         continue;
       }
       const q = it.pp.q;
@@ -475,6 +492,7 @@ export const play = {
     for (const b of bobs) { const bx = (b.x + 0.5) * T, by = (b.y + 0.5) * T + Math.sin(b.t * (b.bite ? 22 : 3)) * T * (b.bite ? 0.08 : 0.03); g.fillStyle = '#fff'; g.strokeStyle = '#5a3d22'; g.lineWidth = Math.max(1.5, T * 0.04); g.beginPath(); g.arc(bx, by, T * 0.11, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#e5484d'; g.beginPath(); g.arc(bx, by, T * 0.11, Math.PI, 0); g.fill(); if (b.bite) drawBubble(g, '！', bx, by - T * 0.5, T, true); }
     for (const f of W.floaters) { if (f.map !== mapId) continue; g.globalAlpha = Math.min(1, f.life * 2); if (f.heart) { drawName(g, '♥', f.x * T, (f.y - (1.1 - f.life) * 0.9) * T, T * 1.6); g.globalAlpha = 1; continue; } const it = data.items[f.item]; if (!drawSprite(g, it.art, f.x * T, (f.y - (1.1 - f.life) * 0.9) * T, T * 0.6, T * 0.6)) drawName(g, it.name, f.x * T, (f.y - (1.1 - f.life) * 0.9) * T, T); g.globalAlpha = 1; }
     for (const pp of people) { const b = W.bubbles.get(pp.q.id); if (b) drawBubble(g, b.text, pp.q.x * T, pp.q.y * T - T * (pp.q.look ? 1.95 : 1.45), T, b.big); }
+    for (const it of list) if (it.pp && it.pp.q.say) drawBubble(g, it.pp.q.say, it.pp.q.x * T, it.pp.q.y * T - T * 1.95, T, false); // 居民之間聊天
     if (this.flash > 0) { g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = `rgba(230, 60, 60, ${this.flash})`; g.fillRect(0, 0, view.canvas.width, view.canvas.height); } // 被怪物打到：畫面紅一下
     // 天色（只有戶外）：傍晚慢慢變橘、晚上變暗；下雨天灰一點、畫雨絲
     if (!this.map.outdoor || !W.farm) return;

@@ -9,7 +9,12 @@
   "playerRadius": 0.3,
   "hotbarSlots": 10,
   "dayMinutesReal": 15,
-  "dayLenOptions": [10, 15, 20, 30],
+  "dayLenOptions": [
+    10,
+    15,
+    20,
+    30
+  ],
   "dayStartMinute": 360,
   "dayEndMinute": 1560,
   "reach": 2.6,
@@ -174,7 +179,9 @@
     "perMap": {
       "farm": 3,
       "road": 3,
-      "lake": 9
+      "lake": 9,
+      "forest": 12,
+      "beach": 8
     },
     "weedsPerDay": 2,
     "weedsMax": 34,
@@ -206,6 +213,34 @@
         "snowdrop",
         "crystal_fruit"
       ]
+    },
+    "byMap": {
+      "beach": {
+        "items": [
+          "seashell",
+          "seashell",
+          "coral",
+          "fish_hermit_crab",
+          "fish_starfish"
+        ],
+        "grounds": [
+          "sand"
+        ]
+      },
+      "forest": {
+        "items": [
+          "wild_mushroom",
+          "fern_shoot",
+          "wildberry",
+          "pinecone",
+          "hazelnut",
+          "wild_blueberry",
+          "chestnut"
+        ],
+        "grounds": [
+          "grass"
+        ]
+      }
     }
   },
   "fishing": {
@@ -592,11 +627,20 @@
       "money": 8000,
       "wood": 50,
       "fiber": 30
+    },
+    "greenhouse": {
+      "name": "溫室",
+      "desc": "在農場東北角的花拱門後面蓋一間溫室：裡面的田一年四季都能種，溫室作物也只能種在這裡",
+      "money": 15000,
+      "wood": 120,
+      "stone": 80,
+      "copper_bar": 10
     }
   },
   "duo": {
     "pushWindowMs": 5000,
-    "giveReach": 2.6, "fishReach": 5,
+    "giveReach": 2.6,
+    "fishReach": 5,
     "noteMaxChars": 60,
     "notesKeep": 20
   },

@@ -26,6 +26,9 @@
   },
   "hair": {
    "max": 420
+  },
+  "base": {
+   "max": 400
   }
  },
  "sheets": {
@@ -3226,6 +3229,822 @@
     ]
    ],
    "splitCols": 4
+  },
+  "1-01": {
+   "kind": "base",
+   "maxH": 400,
+   "names": [
+    [
+     "base/head/front",
+     "base/head/back",
+     "base/head/side"
+    ],
+    [
+     "base/torso/front",
+     "base/torso/back",
+     "base/torso/side"
+    ],
+    [
+     "base/arm/fl",
+     "base/arm/fr",
+     "base/arm/bl",
+     "base/arm/br",
+     "base/arm/sf",
+     "base/arm/sb"
+    ],
+    [
+     "base/leg/fl",
+     "base/leg/fr",
+     "base/leg/bl",
+     "base/leg/br",
+     "base/leg/sf",
+     "base/leg/sb"
+    ]
+   ],
+   "gap": 0.5
+  },
+  "1-02": {
+   "kind": "base",
+   "names": [
+    [
+     "base/arms/fl",
+     "base/arms/fr",
+     "base/arms/bl",
+     "base/arms/br",
+     "base/arms/sf",
+     "base/arms/sb"
+    ],
+    [
+     "base/arml/fl",
+     "base/arml/fr",
+     "base/arml/bl",
+     "base/arml/br",
+     "base/arml/sf",
+     "base/arml/sb"
+    ]
+   ]
+  },
+  "1-03": {
+   "kind": "base",
+   "bg": "#00ffff",
+   "cells": {
+    "cols": 6,
+    "rows": [
+     [
+      100,
+      300,
+      25
+     ],
+     [
+      350,
+      560,
+      25
+     ],
+     [
+      590,
+      740,
+      0
+     ],
+     [
+      760,
+      960,
+      0
+     ]
+    ]
+   },
+   "names": [
+    [
+     "face/f/eyes/round",
+     "face/f/eyes/soft",
+     "face/f/eyes/sharp",
+     "face/f/eyes/smile",
+     "face/f/eyes/lash",
+     "face/f/eyes/cool"
+    ],
+    [
+     "face/f/eyes/closed",
+     "face/f/eyes/happy",
+     "face/f/eyes/wow",
+     "face/f/eyes/teary",
+     "face/f/eyes/angry",
+     "face/f/eyes/heart"
+    ],
+    [
+     "face/f/brows/plain",
+     "face/f/brows/thick",
+     "face/f/brows/thin",
+     "face/f/brows/worry",
+     "face/f/brows/angry",
+     "face/f/brows/up"
+    ],
+    [
+     "face/f/mouth/smile",
+     "face/f/mouth/open",
+     "face/f/mouth/pout",
+     "face/f/mouth/o",
+     "face/f/mouth/sad",
+     "face/f/mouth/blush"
+    ]
+   ],
+   "minArea": 2,
+   "gap": 0.3
+  },
+  "1-04": {
+   "kind": "base",
+   "bg": "#00ffff",
+   "cells": {
+    "cols": 6,
+    "rows": [
+     [
+      90,
+      300,
+      0
+     ],
+     [
+      350,
+      580,
+      0
+     ],
+     [
+      600,
+      760,
+      0
+     ],
+     [
+      800,
+      960,
+      0
+     ]
+    ]
+   },
+   "names": [
+    [
+     "face/s/eyes/round",
+     "face/s/eyes/soft",
+     "face/s/eyes/sharp",
+     "face/s/eyes/smile",
+     "face/s/eyes/lash",
+     "face/s/eyes/cool"
+    ],
+    [
+     "face/s/eyes/closed",
+     "face/s/eyes/happy",
+     "face/s/eyes/wow",
+     "face/s/eyes/teary",
+     "face/s/eyes/angry",
+     "face/s/eyes/heart"
+    ],
+    [
+     "face/s/brows/plain",
+     "face/s/brows/thick",
+     "face/s/brows/thin",
+     "face/s/brows/worry",
+     "face/s/brows/angry",
+     "face/s/brows/up"
+    ],
+    [
+     "face/s/mouth/smile",
+     "face/s/mouth/open",
+     "face/s/mouth/pout",
+     "face/s/mouth/o",
+     "face/s/mouth/sad",
+     "face/s/mouth/blush"
+    ]
+   ],
+   "minArea": 2,
+   "gap": 0.3
+  },
+  "5-32": {
+   "kind": "doll",
+   "names": [
+    [
+     "shoes/k32a/front",
+     "shoes/k32a/back",
+     "shoes/k32a/side"
+    ],
+    [
+     "shoes/k32b/front",
+     "shoes/k32b/back",
+     "shoes/k32b/side"
+    ],
+    [
+     "shoes/k32c/front",
+     "shoes/k32c/back",
+     "shoes/k32c/side"
+    ],
+    [
+     "shoes/k32d/front",
+     "shoes/k32d/back",
+     "shoes/k32d/side"
+    ],
+    [
+     "shoes/k32e/front",
+     "shoes/k32e/back",
+     "shoes/k32e/side"
+    ]
+   ]
+  },
+  "5-33": {
+   "kind": "doll",
+   "names": [
+    [
+     "shoes/k33a/front",
+     "shoes/k33a/back",
+     "shoes/k33a/side"
+    ],
+    [
+     "shoes/k33b/front",
+     "shoes/k33b/back",
+     "shoes/k33b/side"
+    ],
+    [
+     "shoes/k33c/front",
+     "shoes/k33c/back",
+     "shoes/k33c/side"
+    ],
+    [
+     "shoes/k33d/front",
+     "shoes/k33d/back",
+     "shoes/k33d/side"
+    ],
+    [
+     "shoes/k33e/front",
+     "shoes/k33e/back",
+     "shoes/k33e/side"
+    ]
+   ]
+  },
+  "5-43": {
+   "kind": "doll",
+   "names": [
+    [
+     "acc/a43a/front",
+     "acc/a43a/back",
+     "acc/a43a/side"
+    ],
+    [
+     "acc/a43b/front",
+     "acc/a43b/back",
+     "acc/a43b/side"
+    ],
+    [
+     "acc/a43c/front",
+     "acc/a43c/back",
+     "acc/a43c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-44": {
+   "kind": "doll",
+   "names": [
+    [
+     "acc/a44a/front",
+     "acc/a44a/back",
+     "acc/a44a/side"
+    ],
+    [
+     "acc/a44b/front",
+     "acc/a44b/back",
+     "acc/a44b/side"
+    ],
+    [
+     "acc/a44c/front",
+     "acc/a44c/back",
+     "acc/a44c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-45": {
+   "kind": "doll",
+   "names": [
+    [
+     "acc/a45a/front",
+     "acc/a45a/back",
+     "acc/a45a/side"
+    ],
+    [
+     "acc/a45b/front",
+     "acc/a45b/back",
+     "acc/a45b/side"
+    ],
+    [
+     "acc/a45c/front",
+     "acc/a45c/back",
+     "acc/a45c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-46": {
+   "kind": "doll",
+   "names": [
+    [
+     "acc/a46a/front",
+     "acc/a46a/back",
+     "acc/a46a/side"
+    ],
+    [
+     "acc/x461/front",
+     "acc/x461/back",
+     "acc/x461/side"
+    ],
+    [
+     "acc/x462/front",
+     "acc/x462/back",
+     "acc/x462/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-47": {
+   "kind": "doll",
+   "names": [
+    [
+     "acc/a47a/front",
+     "acc/a47a/back",
+     "acc/a47a/side"
+    ],
+    [
+     "acc/a47b/front",
+     "acc/a47b/back",
+     "acc/a47b/side"
+    ],
+    [
+     "acc/a47c/front",
+     "acc/a47c/back",
+     "acc/a47c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-48": {
+   "kind": "doll",
+   "names": [
+    [
+     "acc/a48a/front",
+     "acc/a48a/back",
+     "acc/a48a/side"
+    ],
+    [
+     "acc/x481/front",
+     "acc/x481/back",
+     "acc/x481/side"
+    ],
+    [
+     "acc/a48c/front",
+     "acc/a48c/back",
+     "acc/a48c/side"
+    ]
+   ],
+   "bg": "#00ffff",
+   "gap": 8
+  },
+  "5-49": {
+   "kind": "doll",
+   "names": [
+    [
+     "acc/a49a/front",
+     "acc/a49a/back",
+     "acc/a49a/side"
+    ],
+    [
+     "acc/x491/front",
+     "acc/x491/back",
+     "acc/x491/side"
+    ],
+    [
+     "acc/x492/front",
+     "acc/x492/back",
+     "acc/x492/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-50": {
+   "kind": "doll",
+   "names": [
+    [
+     "acc/a50a/front",
+     "acc/a50a/back",
+     "acc/a50a/side"
+    ],
+    [
+     "acc/x501/front",
+     "acc/x501/back",
+     "acc/x501/side"
+    ],
+    [
+     "acc/a50c/front",
+     "acc/a50c/back",
+     "acc/a50c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-51": {
+   "kind": "doll",
+   "names": [
+    [
+     "acc/x510/front",
+     "acc/x510/back",
+     "acc/x510/side"
+    ],
+    [
+     "acc/a51b/front",
+     "acc/a51b/back",
+     "acc/a51b/side"
+    ],
+    [
+     "acc/a51c/front",
+     "acc/a51c/back",
+     "acc/a51c/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "5-52": {
+   "kind": "doll",
+   "names": [
+    [
+     "acc/a52a/front",
+     "acc/a52a/back",
+     "acc/a52a/side"
+    ],
+    [
+     "acc/a52b/front",
+     "acc/a52b/back",
+     "acc/a52b/side"
+    ],
+    [
+     "acc/x522/front",
+     "acc/x522/back",
+     "acc/x522/side"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "6-35": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/coffee/0",
+     "crop/coffee/1",
+     "crop/coffee/2",
+     "crop/coffee/3",
+     "crop/coffee/4",
+     "item/coffee"
+    ],
+    [
+     "crop/tea/0",
+     "crop/tea/1",
+     "crop/tea/2",
+     "crop/tea/3",
+     "crop/tea/4",
+     "item/tea"
+    ]
+   ]
+  },
+  "6-36": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/cacao/0",
+     "crop/cacao/1",
+     "crop/cacao/2",
+     "crop/cacao/3",
+     "crop/cacao/4",
+     "item/cacao"
+    ],
+    [
+     "crop/vanilla/0",
+     "crop/vanilla/1",
+     "crop/vanilla/2",
+     "crop/vanilla/3",
+     "crop/vanilla/4",
+     "item/vanilla"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "6-37": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/cotton/0",
+     "crop/cotton/1",
+     "crop/cotton/2",
+     "crop/cotton/3",
+     "crop/cotton/4",
+     "item/cotton"
+    ],
+    [
+     "crop/flax/0",
+     "crop/flax/1",
+     "crop/flax/2",
+     "crop/flax/3",
+     "crop/flax/4",
+     "item/flax"
+    ]
+   ]
+  },
+  "6-38": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/sugarcane/0",
+     "crop/sugarcane/1",
+     "crop/sugarcane/2",
+     "crop/sugarcane/3",
+     "crop/sugarcane/4",
+     "item/sugarcane"
+    ],
+    [
+     "crop/pineapple/0",
+     "crop/pineapple/1",
+     "crop/pineapple/2",
+     "crop/pineapple/3",
+     "crop/pineapple/4",
+     "item/pineapple"
+    ]
+   ]
+  },
+  "6-39": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/passionfruit/0",
+     "crop/passionfruit/1",
+     "crop/passionfruit/2",
+     "crop/passionfruit/3",
+     "crop/passionfruit/4",
+     "item/passionfruit"
+    ],
+    [
+     "crop/grape/0",
+     "crop/grape/1",
+     "crop/grape/2",
+     "crop/grape/3",
+     "crop/grape/4",
+     "item/grape"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "6-40": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/kiwi/0",
+     "crop/kiwi/1",
+     "crop/kiwi/2",
+     "crop/kiwi/3",
+     "crop/kiwi/4",
+     "item/kiwi"
+    ],
+    [
+     "crop/hops/0",
+     "crop/hops/1",
+     "crop/hops/2",
+     "crop/hops/3",
+     "crop/hops/4",
+     "item/hops"
+    ]
+   ]
+  },
+  "6-41": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/aloe/0",
+     "crop/aloe/1",
+     "crop/aloe/2",
+     "crop/aloe/3",
+     "crop/aloe/4",
+     "item/aloe"
+    ],
+    [
+     "crop/cactus_fruit/0",
+     "crop/cactus_fruit/1",
+     "crop/cactus_fruit/2",
+     "crop/cactus_fruit/3",
+     "crop/cactus_fruit/4",
+     "item/cactus_fruit"
+    ]
+   ]
+  },
+  "6-42": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/dragonfruit/0",
+     "crop/dragonfruit/1",
+     "crop/dragonfruit/2",
+     "crop/dragonfruit/3",
+     "crop/dragonfruit/4",
+     "item/dragonfruit"
+    ],
+    [
+     "crop/lavender/0",
+     "crop/lavender/1",
+     "crop/lavender/2",
+     "crop/lavender/3",
+     "crop/lavender/4",
+     "item/lavender"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "6-43": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/rosemary/0",
+     "crop/rosemary/1",
+     "crop/rosemary/2",
+     "crop/rosemary/3",
+     "crop/rosemary/4",
+     "item/rosemary"
+    ],
+    [
+     "crop/chamomile/0",
+     "crop/chamomile/1",
+     "crop/chamomile/2",
+     "crop/chamomile/3",
+     "crop/chamomile/4",
+     "item/chamomile"
+    ]
+   ]
+  },
+  "6-44": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/lemongrass/0",
+     "crop/lemongrass/1",
+     "crop/lemongrass/2",
+     "crop/lemongrass/3",
+     "crop/lemongrass/4",
+     "item/lemongrass"
+    ],
+    [
+     "crop/wasabi/0",
+     "crop/wasabi/1",
+     "crop/wasabi/2",
+     "crop/wasabi/3",
+     "crop/wasabi/4",
+     "item/wasabi"
+    ]
+   ]
+  },
+  "6-45": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/ginseng/0",
+     "crop/ginseng/1",
+     "crop/ginseng/2",
+     "crop/ginseng/3",
+     "crop/ginseng/4",
+     "item/ginseng"
+    ],
+    [
+     "crop/lingzhi/0",
+     "crop/lingzhi/1",
+     "crop/lingzhi/2",
+     "crop/lingzhi/3",
+     "crop/lingzhi/4",
+     "item/lingzhi"
+    ]
+   ]
+  },
+  "6-46": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/truffle/0",
+     "crop/truffle/1",
+     "crop/truffle/2",
+     "crop/truffle/3",
+     "crop/truffle/4",
+     "item/truffle"
+    ],
+    [
+     "crop/gold_carrot/0",
+     "crop/gold_carrot/1",
+     "crop/gold_carrot/2",
+     "crop/gold_carrot/3",
+     "crop/gold_carrot/4",
+     "item/gold_carrot"
+    ]
+   ]
+  },
+  "6-47": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/rainbow_corn/0",
+     "crop/rainbow_corn/1",
+     "crop/rainbow_corn/2",
+     "crop/rainbow_corn/3",
+     "crop/rainbow_corn/4",
+     "item/rainbow_corn"
+    ],
+    [
+     "crop/starfruit/0",
+     "crop/starfruit/1",
+     "crop/starfruit/2",
+     "crop/starfruit/3",
+     "crop/starfruit/4",
+     "item/starfruit"
+    ]
+   ]
+  },
+  "6-48": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/moonmelon/0",
+     "crop/moonmelon/1",
+     "crop/moonmelon/2",
+     "crop/moonmelon/3",
+     "crop/moonmelon/4",
+     "item/moonmelon"
+    ],
+    [
+     "crop/crystal_berry/0",
+     "crop/crystal_berry/1",
+     "crop/crystal_berry/2",
+     "crop/crystal_berry/3",
+     "crop/crystal_berry/4",
+     "item/crystal_berry"
+    ]
+   ],
+   "bg": "#00ffff"
+  },
+  "6-49": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/giant_bean/0",
+     "crop/giant_bean/1",
+     "crop/giant_bean/2",
+     "crop/giant_bean/3",
+     "crop/giant_bean/4",
+     "item/giant_bean"
+    ],
+    [
+     "crop/cloud_cotton/0",
+     "crop/cloud_cotton/1",
+     "crop/cloud_cotton/2",
+     "crop/cloud_cotton/3",
+     "crop/cloud_cotton/4",
+     "item/cloud_cotton"
+    ]
+   ]
+  },
+  "6-51": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/snow_strawberry/0",
+     "crop/snow_strawberry/1",
+     "crop/snow_strawberry/2",
+     "crop/snow_strawberry/3",
+     "crop/snow_strawberry/4",
+     "item/snow_strawberry"
+    ],
+    [
+     "crop/honey_beet/0",
+     "crop/honey_beet/1",
+     "crop/honey_beet/2",
+     "crop/honey_beet/3",
+     "crop/honey_beet/4",
+     "item/honey_beet"
+    ]
+   ]
+  },
+  "6-50": {
+   "kind": "crop",
+   "names": [
+    [
+     "crop/bell_chili/0",
+     "crop/bell_chili/1",
+     "crop/bell_chili/2",
+     "crop/bell_chili/3",
+     "crop/bell_chili/4",
+     "item/bell_chili"
+    ],
+    [
+     "crop/sun_tomato/0",
+     "crop/sun_tomato/1",
+     "crop/sun_tomato/2",
+     "crop/sun_tomato/3",
+     "crop/sun_tomato/4",
+     "item/sun_tomato"
+    ]
+   ]
   }
  }
 }

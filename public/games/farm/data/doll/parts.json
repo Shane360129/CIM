@@ -600,6 +600,50 @@
   {
    "id": "leather",
    "name": "皮鞋"
+  },
+  {
+   "id": "k32a",
+   "name": "運動鞋"
+  },
+  {
+   "id": "k32b",
+   "name": "拖鞋"
+  },
+  {
+   "id": "k32c",
+   "name": "草鞋"
+  },
+  {
+   "id": "k32d",
+   "name": "雪靴",
+   "tall": true
+  },
+  {
+   "id": "k32e",
+   "name": "娃娃鞋"
+  },
+  {
+   "id": "k33a",
+   "name": "木屐"
+  },
+  {
+   "id": "k33b",
+   "name": "工作靴",
+   "tall": true
+  },
+  {
+   "id": "k33c",
+   "name": "高筒帆布鞋",
+   "tall": true
+  },
+  {
+   "id": "k33d",
+   "name": "毛毛拖鞋"
+  },
+  {
+   "id": "k33e",
+   "name": "長筒靴",
+   "tall": true
   }
  ],
  "hat": [
@@ -767,6 +811,160 @@
   {
    "id": "scarf",
    "name": "圍巾"
+  },
+  {
+   "id": "a43a",
+   "name": "圓框眼鏡",
+   "slot": "face",
+   "w": 0.78,
+   "art": true
+  },
+  {
+   "id": "a43b",
+   "name": "方框眼鏡",
+   "slot": "face",
+   "w": 0.8,
+   "art": true
+  },
+  {
+   "id": "a43c",
+   "name": "墨鏡",
+   "slot": "face",
+   "w": 0.8,
+   "art": true
+  },
+  {
+   "id": "a44a",
+   "name": "格紋圍巾",
+   "slot": "neck",
+   "w": 0.72,
+   "art": true
+  },
+  {
+   "id": "a44b",
+   "name": "領結",
+   "slot": "bow",
+   "w": 0.34,
+   "art": true
+  },
+  {
+   "id": "a44c",
+   "name": "領帶",
+   "slot": "tie",
+   "w": 0.22,
+   "art": true
+  },
+  {
+   "id": "a45a",
+   "name": "花朵項鍊",
+   "slot": "necklace",
+   "w": 0.42,
+   "art": true
+  },
+  {
+   "id": "a45b",
+   "name": "後背包",
+   "slot": "back",
+   "w": 0.7,
+   "art": true
+  },
+  {
+   "id": "a45c",
+   "name": "斜背包",
+   "slot": "hip",
+   "w": 0.38,
+   "art": true
+  },
+  {
+   "id": "a46a",
+   "name": "圍裙",
+   "slot": "apron",
+   "w": 0.62,
+   "art": true
+  },
+  {
+   "id": "a47a",
+   "name": "OK 繃",
+   "slot": "cheek",
+   "w": 0.22,
+   "art": true
+  },
+  {
+   "id": "a47b",
+   "name": "花朵髮夾",
+   "slot": "clip",
+   "w": 0.26,
+   "art": true
+  },
+  {
+   "id": "a47c",
+   "name": "星星髮夾",
+   "slot": "clip",
+   "w": 0.26,
+   "art": true
+  },
+  {
+   "id": "a48a",
+   "name": "天使翅膀",
+   "slot": "wings",
+   "w": 1.25,
+   "art": true
+  },
+  {
+   "id": "a48c",
+   "name": "腰包",
+   "slot": "waist",
+   "w": 0.66,
+   "art": true
+  },
+  {
+   "id": "a49a",
+   "name": "披肩",
+   "slot": "cape",
+   "w": 0.86,
+   "art": true
+  },
+  {
+   "id": "a50a",
+   "name": "口哨",
+   "slot": "necklace",
+   "w": 0.36,
+   "art": true
+  },
+  {
+   "id": "a50c",
+   "name": "種子袋腰帶",
+   "slot": "waist",
+   "w": 0.72,
+   "art": true
+  },
+  {
+   "id": "a51b",
+   "name": "鈴鐺項圈",
+   "slot": "collar",
+   "w": 0.5,
+   "art": true
+  },
+  {
+   "id": "a51c",
+   "name": "徽章",
+   "slot": "badge",
+   "w": 0.2,
+   "art": true
+  },
+  {
+   "id": "a52a",
+   "name": "髮帶",
+   "slot": "band",
+   "w": 1.0,
+   "art": true
+  },
+  {
+   "id": "a52b",
+   "name": "圍兜",
+   "slot": "apron",
+   "w": 0.55,
+   "art": true
   }
  ],
  "presets": {
@@ -805,6 +1003,102 @@
    "hat": "none",
    "hatColor": "#f6d34a",
    "acc": "none"
+  }
+ },
+ "slots": {
+  "face": {
+   "y": "hy",
+   "dy": 0.06,
+   "sx": 0.22,
+   "sw": 0.55
+  },
+  "cheek": {
+   "y": "hy",
+   "dy": 0.22,
+   "dx": 0.24,
+   "sx": 0.18
+  },
+  "clip": {
+   "y": "hy",
+   "dy": -0.3,
+   "dx": 0.3,
+   "sx": -0.12
+  },
+  "band": {
+   "y": "hy",
+   "dy": -0.42,
+   "sx": -0.04
+  },
+  "neck": {
+   "y": "sh",
+   "dy": 0.24,
+   "sx": 0.04
+  },
+  "bow": {
+   "y": "sh",
+   "dy": 0.04,
+   "sx": 0.16,
+   "sw": 0.5
+  },
+  "tie": {
+   "y": "sh",
+   "dy": 0.16,
+   "sx": 0.18
+  },
+  "necklace": {
+   "y": "sh",
+   "dy": 0.16,
+   "sx": 0.12,
+   "sw": 0.5
+  },
+  "collar": {
+   "y": "sh",
+   "dy": 0.05,
+   "sx": 0.04
+  },
+  "badge": {
+   "y": "sh",
+   "dy": 0.26,
+   "dx": 0.14,
+   "sx": 0.12
+  },
+  "apron": {
+   "y": "sh",
+   "dy": 0.32,
+   "sx": 0.06,
+   "sw": 0.7
+  },
+  "cape": {
+   "y": "sh",
+   "dy": 0.12,
+   "sx": -0.02,
+   "sw": 0.8
+  },
+  "waist": {
+   "y": "by",
+   "dy": -0.1,
+   "sx": 0.0,
+   "sw": 0.7
+  },
+  "hip": {
+   "y": "by",
+   "dy": -0.1,
+   "dx": 0.3,
+   "sx": -0.12
+  },
+  "back": {
+   "y": "sh",
+   "dy": 0.3,
+   "behind": true,
+   "sx": -0.24,
+   "sw": 0.6
+  },
+  "wings": {
+   "y": "sh",
+   "dy": 0.22,
+   "behind": true,
+   "sx": -0.22,
+   "sw": 0.55
   }
  }
 }

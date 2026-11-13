@@ -559,5 +559,223 @@
   "color": "#c9a877",
   "art": "obj/board",
   "use": "notes"
+ },
+ "pine": {
+  "name": "松樹",
+  "shape": "tree",
+  "solid": true,
+  "w": 1.9,
+  "h": 2.5,
+  "color": "#3f7a4a",
+  "trunk": "#8a5a36",
+  "art": "tree/pine/{season}",
+  "tool": "axe",
+  "hp": 5,
+  "drops": {
+   "wood": 6,
+   "sap": 1
+  },
+  "energy": 3,
+  "xp": [
+   "foraging",
+   8
+  ]
+ },
+ "maple": {
+  "name": "楓樹",
+  "shape": "tree",
+  "solid": true,
+  "w": 1.9,
+  "h": 2.5,
+  "color": "#c96a3c",
+  "trunk": "#8a5a36",
+  "art": "tree/maple/{season}",
+  "tool": "axe",
+  "hp": 5,
+  "drops": {
+   "wood": 6,
+   "sap": 1
+  },
+  "energy": 3,
+  "xp": [
+   "foraging",
+   8
+  ]
+ },
+ "log": {
+  "name": "倒下的樹幹",
+  "shape": "block",
+  "solid": true,
+  "w": 1.7,
+  "h": 0.8,
+  "color": "#8a5a36",
+  "art": "obj/fallen_log",
+  "tiles": [
+   2,
+   1
+  ]
+ },
+ "stump": {
+  "name": "樹樁",
+  "shape": "block",
+  "solid": true,
+  "w": 1.0,
+  "h": 0.8,
+  "color": "#8a5a36",
+  "art": "tree/oak/stump"
+ },
+ "fern": {
+  "name": "蕨類",
+  "shape": "blob",
+  "solid": false,
+  "w": 0.95,
+  "h": 0.8,
+  "color": "#6fb357",
+  "art": "obj/fern"
+ },
+ "mushrooms": {
+  "name": "蘑菇",
+  "shape": "blob",
+  "solid": false,
+  "w": 0.7,
+  "h": 0.55,
+  "color": "#c0504d",
+  "art": "obj/mushrooms"
+ },
+ "mossy": {
+  "name": "長苔的石頭",
+  "shape": "blob",
+  "solid": true,
+  "w": 1.0,
+  "h": 0.75,
+  "color": "#7d8a6a",
+  "art": "obj/mossy_stone"
+ },
+ "reeds": {
+  "name": "蘆葦",
+  "shape": "blob",
+  "solid": false,
+  "w": 0.9,
+  "h": 1.1,
+  "color": "#6fb357",
+  "art": "obj/reeds"
+ },
+ "lotus": {
+  "name": "荷葉",
+  "shape": "blob",
+  "solid": false,
+  "w": 0.9,
+  "h": 0.5,
+  "color": "#4f9a4a",
+  "art": "obj/lotus_leaf"
+ },
+ "boardwalk": {
+  "name": "木棧道",
+  "shape": "block",
+  "solid": false,
+  "w": 1.05,
+  "h": 1.05,
+  "color": "#b98a5a",
+  "art": "obj/boardwalk",
+  "flat": true
+ },
+ "palm": {
+  "name": "椰子樹",
+  "shape": "tree",
+  "solid": true,
+  "w": 2.0,
+  "h": 2.7,
+  "color": "#4f9a4a",
+  "art": "ftree/coconut/summer"
+ },
+ "crate": {
+  "name": "木箱",
+  "shape": "block",
+  "solid": true,
+  "w": 0.85,
+  "h": 0.85,
+  "color": "#b98a5a",
+  "art": "obj/crate"
+ },
+ "lantern": {
+  "name": "燈籠",
+  "shape": "block",
+  "solid": true,
+  "w": 0.6,
+  "h": 1.3,
+  "color": "#e5484d",
+  "art": "obj/lantern"
+ },
+ "flower_r": {
+  "name": "紅花",
+  "shape": "blob",
+  "solid": false,
+  "w": 0.8,
+  "h": 0.6,
+  "color": "#e5484d",
+  "art": "obj/flower_red"
+ },
+ "flower_w": {
+  "name": "白花",
+  "shape": "blob",
+  "solid": false,
+  "w": 0.8,
+  "h": 0.6,
+  "color": "#f3ead2",
+  "art": "obj/flower_white"
+ },
+ "flowerbed": {
+  "name": "花圃",
+  "shape": "block",
+  "solid": true,
+  "w": 1.6,
+  "h": 0.9,
+  "color": "#e88ab0",
+  "art": "obj/flowerbed",
+  "tiles": [
+   2,
+   1
+  ]
+ },
+ "stone_m": {
+  "name": "大石頭",
+  "shape": "blob",
+  "solid": true,
+  "w": 1.0,
+  "h": 0.8,
+  "color": "#a9a59c",
+  "art": "obj/stone_m"
+ },
+ "bus_stop": {
+  "name": "站牌",
+  "shape": "block",
+  "solid": true,
+  "w": 1.0,
+  "h": 1.6,
+  "color": "#6aa8e8",
+  "art": "obj/bus_stop"
+ },
+ "arch": {
+  "name": "溫室入口",
+  "shape": "block",
+  "solid": true,
+  "w": 1.9,
+  "h": 2.0,
+  "color": "#e88ab0",
+  "art": "obj/flower_arch",
+  "tiles": [
+   2,
+   1
+  ],
+  "use": "door"
+ },
+ "gh_pot": {
+  "name": "盆栽",
+  "shape": "block",
+  "solid": true,
+  "w": 0.9,
+  "h": 0.9,
+  "color": "#b98a5a",
+  "art": "obj/planter"
  }
 }
