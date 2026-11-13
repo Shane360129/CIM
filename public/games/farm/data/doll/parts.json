@@ -686,17 +686,34 @@
   {
    "id": "c35b",
    "name": "髮箍",
-   "art": true
+   "art": true,
+   "band": {
+    "w": 1.12,
+    "at": 0.5,
+    "side": {
+     "h": 0.72,
+     "bottom": 0.55,
+     "sx": 0.45
+    }
+   }
   },
   {
    "id": "c35c",
    "name": "蝴蝶結",
-   "art": true
+   "art": true,
+   "band": {
+    "w": 0.62,
+    "at": 0.16
+   }
   },
   {
    "id": "c36a",
    "name": "花冠",
-   "art": true
+   "art": true,
+   "band": {
+    "w": 1.08,
+    "at": 0.22
+   }
   },
   {
    "id": "c36b",
@@ -721,7 +738,16 @@
   {
    "id": "c37c",
    "name": "兔耳髮箍",
-   "art": true
+   "art": true,
+   "band": {
+    "w": 0.95,
+    "at": 0.3,
+    "side": {
+     "h": 1.25,
+     "bottom": 0.45,
+     "sx": 0.4
+    }
+   }
   },
   {
    "id": "c38a",
@@ -761,7 +787,11 @@
   {
    "id": "c40b",
    "name": "皇冠",
-   "art": true
+   "art": true,
+   "band": {
+    "w": 0.62,
+    "at": 0.1
+   }
   },
   {
    "id": "c40c",
@@ -776,17 +806,35 @@
   {
    "id": "c41b",
    "name": "耳罩",
-   "art": true
+   "art": true,
+   "band": {
+    "w": 1.18,
+    "at": 0.58,
+    "mid": true,
+    "side": {
+     "h": 0.85,
+     "bottom": 0.78,
+     "sx": 0.32
+    }
+   }
   },
   {
    "id": "c41c",
    "name": "髮夾組",
-   "art": true
+   "art": true,
+   "band": {
+    "w": 0.95,
+    "at": 0.3
+   }
   },
   {
    "id": "c42a",
    "name": "花朵頭飾",
-   "art": true
+   "art": true,
+   "band": {
+    "w": 1.0,
+    "at": 0.22
+   }
   },
   {
    "id": "c42b",

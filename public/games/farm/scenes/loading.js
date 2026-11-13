@@ -12,10 +12,11 @@ export const loading = {
     try {
       const convId = Number(new URLSearchParams(location.search).get('conv')) || 0;
       const [data, session] = await Promise.all([
-        loadAll([['balance', 'data/balance.json'], ['tutorial', 'data/tutorial.json'], ['chatter', 'data/npcs/chatter.json'], ['music', 'data/music.json'], ['objects', 'data/objects.json'], ['parts', 'data/doll/parts.json'], ['items', 'data/items.json'], ['crops', 'data/crops.json'],
+        loadAll([['balance', 'data/balance.json'], ['tutorial', 'data/tutorial.json'], ['chatter', 'data/npcs/chatter.json'], ['music', 'data/music.json'], ['objects', 'data/objects.json'], ['parts', 'data/doll/parts.json'], ['dollFit', 'data/doll/fit.json'], ['items', 'data/items.json'], ['crops', 'data/crops.json'],
           ['map_farm', 'data/maps/farm.json'], ['map_house', 'data/maps/house.json'], ['map_road', 'data/maps/road.json'], ['map_lake', 'data/maps/lake.json'], ['map_forest', 'data/maps/forest.json'], ['map_beach', 'data/maps/beach.json'], ['map_greenhouse', 'data/maps/greenhouse.json'], ['map_uptown', 'data/maps/uptown.json'], ['fish', 'data/fish.json'], ['machines', 'data/machines.json'], ['recipes', 'data/recipes.json'], ['animals', 'data/animals.json'], ['map_town', 'data/maps/town.json'], ['npcs', 'data/npcs/residents.json'], ['shops', 'data/shops.json'], ['events', 'data/events/hearts.json'], ['festivals', 'data/festivals.json'], ['restore', 'data/restore.json'], ['achievements', 'data/achievements.json']], (p) => { this.progress = p * 0.8; }),
         signIn(convId),
       ]);
+      data.parts.fitTable = data.dollFit; // 髮型、帽子的自動對位結果
       data.rawItems = data.items; data.items = makeItems(data.items, data.machines); // 加工品的名字和價錢是算出來的
       data.maps = { farm: data.map_farm, house: data.map_house, road: data.map_road, lake: data.map_lake, town: data.map_town, forest: data.map_forest, beach: data.map_beach, greenhouse: data.map_greenhouse, uptown: data.map_uptown };
       await Promise.all(['b1', 'b2', 'b3', 'b4'].map((b) => loadAtlas(b))); for (const b of ['b6', 'b5']) loadAtlas(b); // 第 5、6 批（更多服裝、夏秋冬作物、果樹）在背景下載，不擋開場；還沒載完的先用暫代圖 // 各批素材的圖集一起下載（名字不重複，順序沒差）；載不到的那一批用暫代圖

@@ -128,6 +128,8 @@ export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle',
   };
   const hatWear = () => {
     if (look.hat === 'none') return true; const f = FT.hat || { k: 1 }, s = sprite(`hat/${look.hat}/${view}`), hp = parts.hat.find((v) => v.id === look.hat) || {}; if (!s) return false;
+    const tf = parts.fitTable && parts.fitTable.hat[look.hat] && parts.fitTable.hat[look.hat][view], hb = tf && headBox();
+    if (hb) { dS(s, look.hat === 'straw' || hp.art ? null : look.hatColor, hb.x + tf[0] * hb.w, hb.y + tf[1] * hb.h, s.w * tf[2] * hb.k, s.h * tf[2] * hb.k); return true; }
     const w = s.w * k0 * f.k, h = s.h * k0 * f.k, dy = hp.dy != null ? hp.dy : (FT.hatY && FT.hatY[look.hat] != null ? FT.hatY[look.hat] : -0.38);
     const col = look.hat === 'straw' || hp.art ? null : look.hatColor;
     dS(s, col, -w / 2 + (side ? 0.02 * U : 0), hy + dy * U - h / 2, w, h); return true;
@@ -144,12 +146,19 @@ export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle',
   };
   // 髮型的圖：五個零件（正面前髮 ff、正面後髮 fb、背面 bk、側面前髮 sf、側面後髮 sb）都照原圖的比例畫，頂端對齊頭頂上方一點
   // 髮型：每一款照「後腦勺那一片（bk）的寬度」對齊頭的寬度（各款的圖大小不一，這樣才會剛好包住頭），頂端貼著頭頂上方一點
+  // 頭畫在哪裡（跟 headArt 一樣的算法）：髮型、帽子照 fit.json 對齊到這個框
+  const headBox = () => { const hs = sprite(`base/head/${view}`); if (!hs) return null; const h = 1.04 * U, w = h * hs.w / hs.h; return { x: (side ? -0.03 * U : 0) - w / 2, y: hy - 0.52 * U, w, h, k: h / hs.h }; };
+  // 髮型：照 data/doll/fit.json（tools/farm-assets/fit-doll.mjs 自動對位算出來的）放；沒有對位資料的用舊的算法
   const hairArt = (v) => {
     const s = sprite(`hair/${look.hair}/${v}`); if (!s) return false;
-    const art = !!sprite('base/head/front') && !look.plain, ref = sprite(`hair/${look.hair}/bk`) || s;
-    const headW = art ? 1.04 * U * 245 / 217 : 1.06 * U; // 頭（含耳朵）畫出來的寬
-    let k = art ? Math.min(1.25, Math.max(0.85, headW * HAIR.wrap / ref.w / (U / HAIR.px))) * U / HAIR.px : U / HAIR.px;
-    const w = s.w * k, h = s.h * k, top = art ? hy - 0.52 * U - (v === 'bk' ? HAIR.liftBack : HAIR.lift) * U : hy + HAIR.top * U; // 背面那片包住整個後腦勺；前面和側面的瀏海要停在眉毛上面
+    const art = !!sprite('base/head/front') && !look.plain, F = art && parts.fitTable && parts.fitTable.hair[look.hair], f = F && F[v], hb = f && headBox();
+    if (hb) { const w = s.w * f[2] * hb.k, h = s.h * f[2] * hb.k, x = hb.x + f[0] * hb.w, y = hb.y + f[1] * hb.h;
+      if (side && F.sideFlip === false) g.drawImage(tintSprite(s.img, s.x, s.y, s.w, s.h, look.hairColor), x, y, w, h); // 這款的側面圖本來就面向右，不用翻
+      else dS(s, look.hairColor, x, y, w, h);
+      return true; }
+    const ref = sprite(`hair/${look.hair}/bk`) || s, headW = art ? 1.04 * U * 245 / 217 : 1.06 * U;
+    const k = art ? Math.min(1.25, Math.max(0.85, headW * HAIR.wrap / ref.w / (U / HAIR.px))) * U / HAIR.px : U / HAIR.px;
+    const w = s.w * k, h = s.h * k, top = art ? hy - 0.52 * U - (v === 'bk' ? HAIR.liftBack : HAIR.lift) * U : hy + HAIR.top * U;
     dS(s, look.hairColor, -w / 2 + (side ? (art ? HAIR.sxArt : HAIR.sx) : 0) * U, top, w, h); return true;
   };
   // ---- 各個零件 ----
