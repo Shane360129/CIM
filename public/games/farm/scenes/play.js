@@ -2,7 +2,7 @@
 import { buildGround } from '../render/ground.js';
 import { drawObject, drawPlayer, drawBubble, drawTilled, drawShadow, drawName } from '../render/placeholder.js';
 import { drawDoll } from '../render/doll.js';
-import { drawSprite } from '../render/sprites.js';
+import { drawSprite, drawSign } from '../render/sprites.js';
 import { groundAt, levelOf, sellPrice, animalPos, hearts, mineMap, monPos, npcPos, walkGrid, seasonIndex, rng } from '../shared/rules.js';
 import { iconEl } from '../render/sprites.js';
 import { openPanel, itemIcon, setToolLv } from '../ui/panels.js';
@@ -294,10 +294,10 @@ export const play = {
   },
   // 現在在小鎮上的居民和他們的位置（照行程用時間算）
   folks() {
-    const W = this.world, npcs = this.ctx.data.npcs; if (!['town', 'forest', 'beach'].includes(this.mapId) || !W.farm) return [];
+    const W = this.world, npcs = this.ctx.data.npcs; const d0 = this.ctx.data, npcMaps = ['town', ...Object.keys(d0.maps).filter((m) => d0.maps[m].npcEntry)]; if (!npcMaps.includes(this.mapId) || !W.farm) return [];
     const min = W.minute(), walk = this.bal.friend.walkMinutes, d = this.ctx.data, fe = W.farm.festival && d.festivals[W.farm.festival];
-    this.grids ||= Object.fromEntries(['town', 'forest', 'beach'].map((m) => [m, walkGrid(d.maps[m], d.objects)]));
-    const opts = { entries: { forest: [1.6, 28.0], beach: [1.6, 8.0] }, wet: ['rain', 'storm'].includes(W.farm.weather), fest: fe && fe.map === 'town' ? fe.stage : null };
+    this.grids ||= Object.fromEntries(npcMaps.map((m) => [m, walkGrid(d.maps[m], d.objects)]));
+    const opts = { entries: Object.fromEntries(npcMaps.filter((m) => d.maps[m].npcEntry).map((m) => [m, d.maps[m].npcEntry])), wet: ['rain', 'storm'].includes(W.farm.weather), fest: fe && fe.map === 'town' ? fe.stage : null };
     const list = Object.entries(npcs).filter(([, n]) => n.full).map(([id, n]) => ({ id, n, ...npcPos(n, min, walk, this.grids, opts) })).filter((f) => f.map === this.mapId);
     // 閒著、站得很近的兩個人會聊天：每 30 分鐘（遊戲時間）的前 8 分鐘，其中一個人頭上冒一句話
     const lines = d.chatter.lines, slot = Math.floor(min / 30);
@@ -474,7 +474,8 @@ export const play = {
         continue;
       }
       if (it.t) {
-        const d = it.t.def; if (!(d.art && drawSprite(g, d.art.replace('{season}', season), it.t.fx * T, it.t.fy * T, d.w * T, d.h * T))) drawObject(g, d, it.t.fx * T, it.t.fy * T, T);
+        const d = it.t.def; if (!(d.art && drawSprite(g, d.art.replace('{season}', season), it.t.fx * T, it.t.fy * T, d.w * T, d.h * T, d.hue || 0))) drawObject(g, d, it.t.fx * T, it.t.fy * T, T);
+        if (d.sign) drawSign(g, d.sign, it.t.fx * T, it.t.fy * T - T * (d.signY || 1.25), T); // 組合出來的建築：門口掛招牌
         if (it.t.def.use === 'notes' && this.unreadNotes()) drawBubble(g, '📝', it.t.fx * T, it.t.fy * T - T * 1.3, T, true); // 便條板有對方的新便條
         if (it.t.def.use === 'mail' && (W.self.mail || []).some((m) => !m.got)) drawBubble(g, '✉', it.t.fx * T, it.t.fy * T - T * 1.2, T, true); // 信箱有新的信
         // 加工機：做好了頭上冒出成品，還在做就冒小點點

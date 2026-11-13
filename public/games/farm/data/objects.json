@@ -777,5 +777,172 @@
   "h": 0.9,
   "color": "#b98a5a",
   "art": "obj/planter"
+ },
+ "library": {
+  "name": "圖書館",
+  "shape": "block",
+  "solid": true,
+  "w": 4.6,
+  "h": 4.2,
+  "color": "#e8d0a0",
+  "roof": "#3b6ea8",
+  "tiles": [
+   4,
+   2
+  ],
+  "art": "building/home_a",
+  "hue": 200,
+  "sign": "圖書館"
+ },
+ "school": {
+  "name": "學校",
+  "shape": "block",
+  "solid": true,
+  "w": 4.6,
+  "h": 4.2,
+  "color": "#e8d0a0",
+  "roof": "#7dbb5a",
+  "tiles": [
+   4,
+   2
+  ],
+  "art": "building/store",
+  "hue": 40,
+  "sign": "晴耕谷小學"
+ },
+ "flowershop": {
+  "name": "花店",
+  "shape": "block",
+  "solid": true,
+  "w": 4.6,
+  "h": 4.2,
+  "color": "#e8d0a0",
+  "roof": "#e0b030",
+  "tiles": [
+   4,
+   2
+  ],
+  "art": "building/home_b",
+  "hue": 320,
+  "sign": "柚子花店"
+ },
+ "bathhouse": {
+  "name": "澡堂",
+  "shape": "block",
+  "solid": true,
+  "w": 4.6,
+  "h": 4.2,
+  "color": "#e8d0a0",
+  "roof": "#e0b030",
+  "tiles": [
+   4,
+   2
+  ],
+  "art": "building/home_b",
+  "hue": -20,
+  "sign": "♨ 澡堂"
+ },
+ "petshop": {
+  "name": "寵物店",
+  "shape": "block",
+  "solid": true,
+  "w": 4.6,
+  "h": 4.2,
+  "color": "#e8d0a0",
+  "roof": "#3b6ea8",
+  "tiles": [
+   4,
+   2
+  ],
+  "art": "building/home_a",
+  "hue": 30,
+  "sign": "阿汪動物醫院"
+ },
+ "coop_office": {
+  "name": "農會",
+  "shape": "block",
+  "solid": true,
+  "w": 4.6,
+  "h": 4.2,
+  "color": "#e8c08a",
+  "roof": "#c8553d",
+  "tiles": [
+   4,
+   2
+  ],
+  "art": "building/diner",
+  "hue": 25,
+  "sign": "農會",
+  "base": "diner"
+ },
+ "station": {
+  "name": "車站",
+  "shape": "block",
+  "solid": true,
+  "w": 4.6,
+  "h": 4.2,
+  "color": "#e8e0d0",
+  "roof": "#3b6ea8",
+  "tiles": [
+   4,
+   2
+  ],
+  "art": "building/tackle",
+  "hue": 170,
+  "sign": "晴耕谷站"
+ },
+ "lighthouse": {
+  "name": "燈塔小屋",
+  "shape": "block",
+  "solid": true,
+  "w": 4.6,
+  "h": 4.2,
+  "color": "#e8e0d0",
+  "roof": "#3b6ea8",
+  "tiles": [
+   4,
+   2
+  ],
+  "art": "building/tackle",
+  "hue": 0,
+  "sign": "燈塔"
+ },
+ "petbed": {
+  "name": "寵物床",
+  "shape": "block",
+  "solid": true,
+  "w": 1.0,
+  "h": 0.7,
+  "color": "#c9788a",
+  "art": "obj/pet_bed"
+ },
+ "feeder": {
+  "name": "飼料槽",
+  "shape": "block",
+  "solid": true,
+  "w": 1.1,
+  "h": 0.7,
+  "color": "#b98a5a",
+  "art": "obj/feeder"
+ },
+ "shrine_lantern": {
+  "name": "石燈籠",
+  "shape": "block",
+  "solid": true,
+  "w": 0.7,
+  "h": 1.4,
+  "color": "#a9a59c",
+  "art": "obj/lantern"
+ },
+ "shrine_sign": {
+  "name": "山神小祠",
+  "shape": "block",
+  "solid": true,
+  "w": 1.0,
+  "h": 1.1,
+  "color": "#b98a5a",
+  "art": "obj/board",
+  "sign": "山神小祠",
+  "signY": 1.5
  }
 }

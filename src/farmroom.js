@@ -17,6 +17,7 @@ import MAP_LAKE from '../public/games/farm/data/maps/lake.json';
 import MAP_FOREST from '../public/games/farm/data/maps/forest.json';
 import MAP_BEACH from '../public/games/farm/data/maps/beach.json';
 import MAP_GREENHOUSE from '../public/games/farm/data/maps/greenhouse.json';
+import MAP_UPTOWN from '../public/games/farm/data/maps/uptown.json';
 import FISH from '../public/games/farm/data/fish.json';
 import MAP_TOWN from '../public/games/farm/data/maps/town.json';
 import NPCS from '../public/games/farm/data/npcs/residents.json';
@@ -29,10 +30,11 @@ import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelO
 
 const ITEMS = makeItems(RAW_ITEMS, MACHINES); // 加工品（g:機器:原料）的名字和價錢是算出來的
 
-const MAPS = { farm: MAP_FARM, house: MAP_HOUSE, road: MAP_ROAD, lake: MAP_LAKE, town: MAP_TOWN, forest: MAP_FOREST, beach: MAP_BEACH, greenhouse: MAP_GREENHOUSE };
+const MAPS = { farm: MAP_FARM, house: MAP_HOUSE, road: MAP_ROAD, lake: MAP_LAKE, town: MAP_TOWN, forest: MAP_FOREST, beach: MAP_BEACH, greenhouse: MAP_GREENHOUSE, uptown: MAP_UPTOWN };
 // 每張地圖上不會動的東西（房子、長椅…）佔了哪些格子：採集物、雜草不會長在這些格子上
-const GRIDS = Object.fromEntries(['town', 'forest', 'beach'].map((m) => [m, walkGrid(MAPS[m], OBJECTS)])); // 居民找路用：每張地圖哪些格子走得到
-const NPC_ENTRIES = { forest: [1.6, 28.0], beach: [1.6, 8.0] }; // 居民從小鎮到這些地圖時，從哪裡走進來
+const NPC_MAPS = ['town', ...Object.keys(MAPS).filter((m) => MAPS[m].npcEntry)]; // 居民會去的地圖：小鎮，加上地圖檔裡寫了 npcEntry（居民從哪裡走進來）的
+const GRIDS = Object.fromEntries(NPC_MAPS.map((m) => [m, walkGrid(MAPS[m], OBJECTS)])); // 居民找路用：每張地圖哪些格子走得到
+const NPC_ENTRIES = Object.fromEntries(NPC_MAPS.filter((m) => MAPS[m].npcEntry).map((m) => [m, MAPS[m].npcEntry]));
 const STATIC = Object.fromEntries(Object.entries(MAPS).map(([id, m]) => [id, new Set(m.objects.flatMap((o) => { const [tw, th] = OBJECTS[o.type].tiles || [1, 1], out = []; for (let x = 0; x < tw; x++) for (let y = 0; y < th; y++) out.push((o.x + x) + ',' + (o.y - y)); return out; }))]));
 const TICK_MS = 10000;                 // 有人在線時，每 10 秒推進一次遊戲時鐘
 const DAY_SPAN = BAL.dayEndMinute - BAL.dayStartMinute;            // 一天有幾個遊戲分鐘（早上 6 點到凌晨 2 點）
