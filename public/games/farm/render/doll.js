@@ -48,7 +48,9 @@ function paint(s, skin, cloth) {
   }
   g.putImageData(d, 0, 0); paintCache.set(key, c); return c;
 }
-const HEAD_PX = 217; // 素體圖裡頭的高度（像素）＝ 1 U
+// 身體比例（單位 U）：頭的高度、身體長、腿長、手長、身體寬（倍數）、手腳粗細（倍數）。data/doll/parts.json 的 body 可以覆寫（紙娃娃對位台調出來的）
+export const BODY_DEFAULT = { head: 1.04, torso: 0.62, leg: 0.62, arm: 0.62, width: 1, limb: 1 };
+const headPx = () => { const h = sprite('base/head/front'); return h ? h.h : 217; }; // 素體圖裡頭的高度（像素）
 
 export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle', t = 0, tool = null) {
   const p = poseOf(action, t), side = dir === 'left' || dir === 'right', back = dir === 'up';
@@ -57,8 +59,11 @@ export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle',
   g.save(); g.translate(x, y - p.hop * U); if (dir === 'left') g.scale(-1, 1);
   g.lineWidth = lw; g.strokeStyle = OUT; g.lineJoin = 'round'; g.lineCap = 'round';
   const sq = 1 + p.squash; g.scale(1 / Math.sqrt(sq), sq); g.rotate(p.lean);
-  const by = -(0.62 - p.sit * 0.22) * U - p.bob * U;      // 屁股的高度（腿的上端）
-  const sh = by - 0.62 * U, hy = sh - 0.52 * U;            // 肩膀、頭的中心
+  const BASE = !!sprite('base/head/front') && !look.plain;  // 有美術素體（沒有的話用程式畫的身體）
+  const B = BASE ? { ...BODY_DEFAULT, ...(parts.body || {}) } : BODY_DEFAULT;
+  const HU = U * B.head / 1.04;                             // 頭的單位：頭、五官、頭髮、帽子跟著頭的大小
+  const by = -(B.leg - p.sit * 0.22) * U - p.bob * U;      // 屁股的高度（腿的上端）
+  const sh = by - B.torso * U, hy = sh - 0.52 * HU;        // 肩膀、頭的中心
   const fill = (c) => { g.fillStyle = c; g.fill(); g.stroke(); };
   const rr = (x0, y0, w, h, r) => { g.beginPath(); g.roundRect(x0, y0, w, h, r); };
   // 美術零件：有圖就畫圖（染成 color），沒有回傳 false 讓呼叫的人畫暫代的
@@ -80,7 +85,7 @@ export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle',
   };
   const dS = (s, color, dx, dy, dw, dh) => (color ? dI(tintSprite(s.img, s.x, s.y, s.w, s.h, color), null, null, null, null, dx, dy, dw, dh) : dI(s.img, s.x, s.y, s.w, s.h, dx, dy, dw, dh));
   // ---- 美術素體（頭、臉、身體、手腳）：素材到了就用，沒有就用下面程式畫的 ----
-  const BASE = !!sprite('base/head/front') && !look.plain, k0 = U / HEAD_PX, mirror = dir === 'left';
+  const k0 = U / headPx(), kH = HU / headPx(), mirror = dir === 'left';
   const put = (name, cx, top, opt = {}) => { // 畫一張零件：以 (cx, top) 為上緣中心；可以指定寬高、旋轉（繞上緣中心）、換色
     const s = sprite(name); if (!s) return false;
     const sc = (opt.k || 1) * k0, w = opt.w || s.w * sc, h = opt.h || s.h * sc;
@@ -89,13 +94,13 @@ export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle',
     if (src) g.drawImage(src, -w / 2, opt.mid ? -h / 2 : 0, w, h); else g.drawImage(s.img, s.x, s.y, s.w, s.h, -w / 2, opt.mid ? -h / 2 : 0, w, h);
     g.restore(); return true;
   };
-  const vk = back ? 'b' : side ? 's' : 'f';
+  const vk = back ? 'b' : side ? 's' : 'f', FT = parts.fit || {};
   const armArt = (front) => {
-    const ang = front ? p.armF : p.armB, ax = side ? (front ? 0.04 : -0.06) * U : (front ? 0.3 : -0.3) * U;
+    const ang = front ? p.armF : p.armB, ax = side ? (front ? 0.04 : -0.06) * U : (front ? 0.3 : -0.3) * U * B.width;
     const rot = side ? ang : (front ? -1 : 1) * 0.1 + (action === 'walk' ? ang * 0.25 : front || action === 'happy' ? ang * (front ? 1 : -1) * 0.5 : 0);
     const sl = topArt && top.sleeve !== 'long' ? 'arm' : top.sleeve === 'long' ? 'arml' : 'arms', who = side ? (front ? 'sf' : 'sb') : back ? (front ? 'br' : 'bl') : (front ? 'fr' : 'fl');
-    const L = 0.62 * U, s = sprite(`base/${sl}/${who}`); if (!s) return false;
-    const w = L * s.w / s.h;
+    const L = B.arm * U, s = sprite(`base/${sl}/${who}`); if (!s) return false;
+    const w = L * s.w / s.h * B.limb;
     put(`base/${sl}/${who}`, ax, sh - 0.02 * U, { w, h: L, ang: rot, cloth: sl === 'arm' ? null : look.topColor });
     if (front && tool && p.tool) { g.save(); g.translate(ax, sh); g.rotate(rot); g.translate(0, L * 0.9); g.rotate(-0.5); rr(-0.03 * U, -0.75 * U, 0.06 * U, 0.85 * U, 0.02 * U); fill('#8a5a34'); rr(-0.14 * U, -0.86 * U, 0.3 * U, 0.16 * U, 0.04 * U); fill(tool === 'water' ? '#6aa8e8' : tool === 'broom' ? '#d9b45a' : tool === 'rod' ? '#8a5a34' : '#a9a59c'); if (tool === 'rod') { g.strokeStyle = '#ffffff'; g.lineWidth = Math.max(1, U * 0.02); g.beginPath(); g.moveTo(0.02 * U, -0.86 * U); g.lineTo(0.5 * U, -0.1 * U); g.stroke(); g.strokeStyle = OUT; } g.restore(); }
     return true;
@@ -103,51 +108,55 @@ export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle',
   const legArt = (sx, ang) => {
     const who = side ? (sx > 0 ? 'sf' : 'sb') : back ? (sx > 0 ? 'br' : 'bl') : (sx > 0 ? 'fr' : 'fl');
     const L = -by + 0.02 * U - (side ? 0 : Math.max(0, ang * sx) * 0.1 * U), s = sprite(`base/leg/${who}`); if (!s) return false;
-    put(`base/leg/${who}`, side ? 0 : sx * 0.14 * U, by - 0.02 * U, { w: L * s.w / s.h, h: L, ang: side ? ang : 0 });
+    const lx = side ? 0 : sx * 0.14 * U * B.width;
+    put(`base/leg/${who}`, lx, by - 0.02 * U, { w: L * s.w / s.h * B.limb, h: L, ang: side ? ang : 0 });
     const sc = look.shoesColor, tall = look.shoes === 'boot' || look.shoes === 'rain' || (parts.shoes.find((v) => v.id === look.shoes) || {}).tall;
     const ss = sprite(`shoes/${look.shoes}/${view}`);
     if (ss) { // 美術鞋子：每隻腳一隻，鞋底貼著腳底；長靴比較高
-      const sw = (side ? 0.4 : 0.3) * U, sh2 = Math.min(sw * ss.h / ss.w, (tall ? 0.42 : 0.24) * U), sw2 = sh2 * ss.w / ss.h;
-      g.save(); g.translate(side ? 0 : sx * 0.14 * U, by - 0.02 * U); g.rotate(side ? ang : 0); dI(paint(ss, skin, sc), null, null, null, null, -sw2 / 2 + (side ? 0.04 * U : 0), L - sh2 + 0.02 * U, sw2, sh2); g.restore();
+      const sk = (FT.shoes && FT.shoes.k) || 1, sw = (side ? 0.4 : 0.3) * U * B.limb * sk, sh2 = Math.min(sw * ss.h / ss.w, (tall ? 0.42 : 0.24) * U * B.limb * sk), sw2 = sh2 * ss.w / ss.h;
+      g.save(); g.translate(lx, by - 0.02 * U); g.rotate(side ? ang : 0); dI(paint(ss, skin, sc), null, null, null, null, -sw2 / 2 + (side ? 0.04 * U : 0), L - sh2 + 0.02 * U, sw2, sh2); g.restore();
       return true;
     }
-    g.save(); g.translate(side ? 0 : sx * 0.14 * U, by - 0.02 * U); g.rotate(side ? ang : 0); rr(-0.13 * U, L - (tall ? 0.24 : 0.13) * U, 0.26 * U + (side ? 0.06 * U : 0), (tall ? 0.24 : 0.13) * U, 0.06 * U); fill(look.shoes === 'sandal' ? shade(sc, -0.2) : sc); g.restore();
+    g.save(); g.translate(lx, by - 0.02 * U); g.rotate(side ? ang : 0); rr(-0.13 * U, L - (tall ? 0.24 : 0.13) * U, 0.26 * U + (side ? 0.06 * U : 0), (tall ? 0.24 : 0.13) * U, 0.06 * U); fill(look.shoes === 'sandal' ? shade(sc, -0.2) : sc); g.restore();
     return true;
   };
   // 美術衣服：跟素體用同一個比例（parts.fit），上衣從脖子下面對齊、褲裙從腰對齊，所以會剛好套在身上
-  const FT = parts.fit || {}, torsoTop = hy + 0.42 * U;
-  const wear = (name, color, k, topY, dx = 0, maxH = 0) => {
+  const torsoTop = hy + 0.42 * HU, torsoH = by + 0.12 * U - torsoTop, tStretch = torsoH / (0.84 * U), lStretch = B.leg / 0.62; // 身體、腿比預設長多少
+  const wear = (name, color, k, topY, dx = 0, maxH = 0, hs = 1) => {
     const s = sprite(`${name}/${view}`); if (!s) return false;
-    let w = s.w * k0 * k, h = s.h * k0 * k; if (maxH && h > maxH) { w *= maxH / h; h = maxH; }
+    let w = s.w * k0 * k * B.width, h = s.h * k0 * k * hs; if (maxH && h > maxH) { w *= maxH / h; h = maxH; }
     dS(s, color, dx - w / 2, topY, w, h); return true;
   };
-  const topWear = () => { const f = FT.top || { k: 1, y: 0 }; return wear(`top/${top.id}`, look.topColor, f.k, torsoTop + f.y * U, side ? (f.sx || 0) * U : 0); };
+  const topWear = () => { const f = FT.top || { k: 1, y: 0 }; return wear(`top/${top.id}`, look.topColor, f.k, torsoTop + f.y * U, side ? (f.sx || 0) * U : 0, 0, tStretch); };
   const bottomWear = () => {
     if (top.dress) return true; const f = FT.bottom || { k: 1, y: -0.2 }, b = parts.bottom.find((v) => v.id === look.bottom) || {};
-    return wear(`bottom/${look.bottom}`, look.bottomColor, f.k, by + f.y * U, side ? (f.sx || 0) * U : 0, -by - (f.y * U) - 0.06 * U);
+    return wear(`bottom/${look.bottom}`, look.bottomColor, f.k, by + f.y * U, side ? (f.sx || 0) * U : 0, -by - (f.y * U) - 0.06 * U, lStretch);
   };
   const hatWear = () => {
     if (look.hat === 'none') return true; const f = FT.hat || { k: 1 }, s = sprite(`hat/${look.hat}/${view}`), hp = parts.hat.find((v) => v.id === look.hat) || {}; if (!s) return false;
     const tf = parts.fitTable && parts.fitTable.hat[look.hat] && parts.fitTable.hat[look.hat][view], hb = tf && headBox();
-    if (hb) { dS(s, look.hat === 'straw' || hp.art ? null : look.hatColor, hb.x + tf[0] * hb.w, hb.y + tf[1] * hb.h, s.w * tf[2] * hb.k, s.h * tf[2] * hb.k); return true; }
-    const w = s.w * k0 * f.k, h = s.h * k0 * f.k, dy = hp.dy != null ? hp.dy : (FT.hatY && FT.hatY[look.hat] != null ? FT.hatY[look.hat] : -0.38);
     const col = look.hat === 'straw' || hp.art ? null : look.hatColor;
-    dS(s, col, -w / 2 + (side ? 0.02 * U : 0), hy + dy * U - h / 2, w, h); return true;
+    if (hb) { const x = hb.x + tf[0] * hb.w, y = hb.y + tf[1] * hb.h, w = s.w * tf[2] * hb.k, h = s.h * tf[2] * hb.k;
+      if (side && parts.fitTable.hat[look.hat].sideFlip === false) g.drawImage(col ? tintSprite(s.img, s.x, s.y, s.w, s.h, col) : s.img, ...(col ? [] : [s.x, s.y, s.w, s.h]), x, y, w, h); // 這頂的側面圖本來就面向右
+      else dS(s, col, x, y, w, h);
+      return true; }
+    const w = s.w * kH * f.k, h = s.h * kH * f.k, dy = hp.dy != null ? hp.dy : (FT.hatY && FT.hatY[look.hat] != null ? FT.hatY[look.hat] : -0.38);
+    dS(s, col, -w / 2 + (side ? 0.02 * HU : 0), hy + dy * HU - h / 2, w, h); return true;
   };
-  const bodyArt = () => { const s = sprite(`base/torso/${view}`); if (!s) return false; const h = by + 0.12 * U - (hy + 0.42 * U); put(`base/torso/${view}`, side ? -0.02 * U : 0, hy + 0.42 * U, { w: h * s.w / s.h, h }); return true; };
-  const headArt = () => put(`base/head/${view}`, side ? -0.03 * U : 0, hy - 0.52 * U, { h: 1.04 * U, w: 1.04 * U * sprite(`base/head/${view}`).w / sprite(`base/head/${view}`).h });
+  const bodyArt = () => { const s = sprite(`base/torso/${view}`); if (!s) return false; put(`base/torso/${view}`, side ? -0.02 * U : 0, torsoTop, { w: torsoH * s.w / s.h * B.width, h: torsoH }); return true; };
+  const headArt = () => put(`base/head/${view}`, side ? -0.03 * HU : 0, hy - 0.52 * HU, { h: 1.04 * HU, w: 1.04 * HU * sprite(`base/head/${view}`).w / sprite(`base/head/${view}`).h });
   const faceArt = () => {
     if (back) return true;
     const blink = action !== 'happy' && (t % 4.3) < 0.14, eyes = look.asleep || blink ? 'closed' : action === 'happy' ? 'happy' : look.eyes;
-    const fs = (name, cx, cy, k) => { const s = sprite(name); if (!s) return; const w = s.w * k0 * k, h = s.h * k0 * k; g.drawImage(s.img, s.x, s.y, s.w, s.h, cx - w / 2, cy - h / 2, w, h); };
-    if (side) { const fx = 0.24 * U; fs(`face/s/mouth/blush`, fx - 0.08 * U, hy + 0.22 * U, 0.3); fs(`face/s/eyes/${eyes}`, fx, hy + 0.06 * U, 0.42); fs(`face/s/brows/${look.brows}`, fx, hy - 0.17 * U, 0.42); fs(`face/s/mouth/${look.mouths}`, fx + 0.06 * U, hy + 0.3 * U, 0.38); return true; }
-    fs('face/f/mouth/blush', 0, hy + 0.2 * U, 0.85); fs(`face/f/eyes/${eyes}`, 0, hy + 0.06 * U, 0.82); fs(`face/f/brows/${look.brows}`, 0, hy - 0.16 * U, 0.82); fs(`face/s/mouth/${look.mouths}`, 0, hy + 0.3 * U, 0.38);
+    const fs = (name, cx, cy, k) => { const s = sprite(name); if (!s) return; const w = s.w * kH * k, h = s.h * kH * k; g.drawImage(s.img, s.x, s.y, s.w, s.h, cx - w / 2, cy - h / 2, w, h); };
+    if (side) { const fx = 0.24 * HU; fs(`face/s/mouth/blush`, fx - 0.08 * HU, hy + 0.22 * HU, 0.3); fs(`face/s/eyes/${eyes}`, fx, hy + 0.06 * HU, 0.42); fs(`face/s/brows/${look.brows}`, fx, hy - 0.17 * HU, 0.42); fs(`face/s/mouth/${look.mouths}`, fx + 0.06 * HU, hy + 0.3 * HU, 0.38); return true; }
+    fs('face/f/mouth/blush', 0, hy + 0.2 * HU, 0.85); fs(`face/f/eyes/${eyes}`, 0, hy + 0.06 * HU, 0.82); fs(`face/f/brows/${look.brows}`, 0, hy - 0.16 * HU, 0.82); fs(`face/s/mouth/${look.mouths}`, 0, hy + 0.3 * HU, 0.38);
     return true;
   };
   // 髮型的圖：五個零件（正面前髮 ff、正面後髮 fb、背面 bk、側面前髮 sf、側面後髮 sb）都照原圖的比例畫，頂端對齊頭頂上方一點
   // 髮型：每一款照「後腦勺那一片（bk）的寬度」對齊頭的寬度（各款的圖大小不一，這樣才會剛好包住頭），頂端貼著頭頂上方一點
   // 頭畫在哪裡（跟 headArt 一樣的算法）：髮型、帽子照 fit.json 對齊到這個框
-  const headBox = () => { const hs = sprite(`base/head/${view}`); if (!hs) return null; const h = 1.04 * U, w = h * hs.w / hs.h; return { x: (side ? -0.03 * U : 0) - w / 2, y: hy - 0.52 * U, w, h, k: h / hs.h }; };
+  const headBox = () => { const hs = sprite(`base/head/${view}`); if (!hs) return null; const h = 1.04 * HU, w = h * hs.w / hs.h; return { x: (side ? -0.03 * HU : 0) - w / 2, y: hy - 0.52 * HU, w, h, k: h / hs.h }; };
   // 髮型：照 data/doll/fit.json（tools/farm-assets/fit-doll.mjs 自動對位算出來的）放；沒有對位資料的用舊的算法
   const hairArt = (v) => {
     const s = sprite(`hair/${look.hair}/${v}`); if (!s) return false;
@@ -156,10 +165,10 @@ export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle',
       if (side && F.sideFlip === false) g.drawImage(tintSprite(s.img, s.x, s.y, s.w, s.h, look.hairColor), x, y, w, h); // 這款的側面圖本來就面向右，不用翻
       else dS(s, look.hairColor, x, y, w, h);
       return true; }
-    const ref = sprite(`hair/${look.hair}/bk`) || s, headW = art ? 1.04 * U * 245 / 217 : 1.06 * U;
-    const k = art ? Math.min(1.25, Math.max(0.85, headW * HAIR.wrap / ref.w / (U / HAIR.px))) * U / HAIR.px : U / HAIR.px;
-    const w = s.w * k, h = s.h * k, top = art ? hy - 0.52 * U - (v === 'bk' ? HAIR.liftBack : HAIR.lift) * U : hy + HAIR.top * U;
-    dS(s, look.hairColor, -w / 2 + (side ? (art ? HAIR.sxArt : HAIR.sx) : 0) * U, top, w, h); return true;
+    const ref = sprite(`hair/${look.hair}/bk`) || s, headW = art ? 1.04 * HU * 245 / 217 : 1.06 * U;
+    const k = art ? Math.min(1.25, Math.max(0.85, headW * HAIR.wrap / ref.w / (HU / HAIR.px))) * HU / HAIR.px : U / HAIR.px;
+    const w = s.w * k, h = s.h * k, top = art ? hy - 0.52 * HU - (v === 'bk' ? HAIR.liftBack : HAIR.lift) * HU : hy + HAIR.top * U;
+    dS(s, look.hairColor, -w / 2 + (side ? (art ? HAIR.sxArt * HU : HAIR.sx * U) : 0), top, w, h); return true;
   };
   // ---- 各個零件 ----
   const hairBack = () => {
@@ -235,7 +244,7 @@ export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle',
   };
   const hairFront = () => {
     const c = look.hairColor, h = look.hair; g.lineWidth = lw; g.strokeStyle = OUT;
-    if (back && sprite(`hair/${h}/bk`)) { g.beginPath(); g.arc(0, hy, 0.5 * U, 0, 7); fill(shade(c, -0.12)); } // 背面：後腦勺先塗成髮色，短髮才不會露出光頭
+    if (back && sprite(`hair/${h}/bk`)) { g.beginPath(); g.arc(0, hy, 0.5 * (BASE ? HU : U), 0, 7); fill(shade(c, -0.12)); } // 背面：後腦勺先塗成髮色，短髮才不會露出光頭
     if (hairArt(back ? 'bk' : side ? 'sf' : 'ff')) return;
     if (back) { g.beginPath(); g.arc(0, hy, 0.53 * U, 0, 7); fill(c); return; }                         // 背面：整顆後腦勺都是頭髮
     g.beginPath(); g.arc(0, hy, 0.53 * U, Math.PI * (side ? 0.72 : 1.0), Math.PI * (side ? 1.95 : 2.0)); // 頭頂
@@ -260,8 +269,8 @@ export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle',
     if (sl.behind && layer === 'behind' && back) return true; // 背面時，背包和翅膀改到身體前面畫（離鏡頭比較近）
     const sv = sl.behind ? (back ? 'front' : side ? 'side' : 'back') : view, s = sprite(`acc/${a.id}/${sv}`); if (!s) return true;
     if (!sl.behind && back && ['face', 'cheek', 'bow', 'tie', 'necklace', 'badge', 'apron'].includes(a.slot)) return true; // 背面看不到臉上和胸前的東西
-    const base = sl.y === 'hy' ? hy : sl.y === 'by' ? by : sh, w = a.w * (side ? sl.sw || 0.7 : 1) * U, h = w * s.h / s.w;
-    const cx = (side ? sl.sx || 0 : sl.dx || 0) * U, cy = base + (sl.dy || 0) * U;
+    const AU = sl.y === 'hy' ? HU : U, base = sl.y === 'hy' ? hy : sl.y === 'by' ? by : sh, w = a.w * (side ? sl.sw || 0.7 : 1) * AU * (sl.y === 'hy' ? 1 : B.width), h = w * s.h / s.w;
+    const cx = (side ? sl.sx || 0 : sl.dx || 0) * AU, cy = base + (sl.dy || 0) * AU;
     dI(s.img, s.x, s.y, s.w, s.h, cx - w / 2, cy - h / 2, w, h); return true;
   };
   const acc = () => {
@@ -278,7 +287,7 @@ export function drawDoll(g, look, parts, x, y, U, dir = 'down', action = 'idle',
     bodyArt(); if (!bottomWear()) bottom(); if (side && dressed) armArt(true); if (!topWear()) topL();
     if (!back && !dressed) { if (!side) armArt(false); armArt(true); }
     if (!back && dressed && (p.tool || action === 'happy' || action === 'eat')) armArt(true); // 舉手、拿工具的時候前面那隻手要在衣服前面
-    headArt(); faceArt(); hairFront(); if (!hatWear()) hat(); acc(); if (back) { const a = parts.acc.find((v) => v.id === look.acc); if (a && a.art && (parts.slots[a.slot] || {}).behind) { const s = sprite(`acc/${a.id}/front`); if (s) { const sl = parts.slots[a.slot], w = a.w * U, h = w * s.h / s.w; g.drawImage(s.img, s.x, s.y, s.w, s.h, -w / 2, sh + sl.dy * U - h / 2, w, h); } } }
+    headArt(); faceArt(); hairFront(); if (!hatWear()) hat(); acc(); if (back) { const a = parts.acc.find((v) => v.id === look.acc); if (a && a.art && (parts.slots[a.slot] || {}).behind) { const s = sprite(`acc/${a.id}/front`); if (s) { const sl = parts.slots[a.slot], w = a.w * U * B.width, h = w * s.h / s.w; g.drawImage(s.img, s.x, s.y, s.w, s.h, -w / 2, sh + sl.dy * U - h / 2, w, h); } } }
   } else {
   hairBack();
   if (side) arm(false); else if (back) { arm(true); arm(false); }
