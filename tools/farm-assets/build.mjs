@@ -127,7 +127,7 @@ const dup = sprites.map((s) => s.name).filter((n, i, a) => a.indexOf(n) !== i);
 if (dup.length) problems.push('名字重複：' + [...new Set(dup)].join('、'));
 // 拼圖集：高的排前面，一列一列排，每張之間留 2 像素（縮放時才不會沾到隔壁）
 const list = [...sprites].sort((a, b) => b.h - a.h || a.name.localeCompare(b.name));
-const AW = Math.min(2048, Math.max(256, 2 ** Math.ceil(Math.log2(Math.sqrt(list.reduce((n, s) => n + (s.w + 2) * (s.h + 2), 0)) * 1.25)))), PAD = 2;
+const AW = Math.min(4096, Math.max(256, 2 ** Math.ceil(Math.log2(Math.sqrt(list.reduce((n, s) => n + (s.w + 2) * (s.h + 2), 0)) * 1.25)))), PAD = 2;
 let x = PAD, y = PAD, rowH = 0; const map = {};
 for (const s of list) {
   if (x + s.w + PAD > AW) { x = PAD; y += rowH + PAD; rowH = 0; }
