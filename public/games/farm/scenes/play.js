@@ -481,7 +481,12 @@ export const play = {
         continue;
       }
       if (it.t) {
-        const d = it.t.def; if (!(d.art && drawSprite(g, d.art.replace('{season}', season), it.t.fx * T, it.t.fy * T, d.w * T, d.h * T, d.hue || 0))) drawObject(g, d, it.t.fx * T, it.t.fy * T, T);
+        const d = it.t.def, art = d.art && d.art.replace('{season}', season);
+        // 人走到大樹、房子後面被擋住的時候，那棵樹（那棟房子）變半透明，看得到自己和對方
+        const sp = art && sprite(art), hide = sp && sp.native && sp.h * T / 32 > T * 1.4 && people.some((pp) => { const px = pp.q.x * T, py = pp.q.y * T, w = sp.w * T / 32, h = sp.h * T / 32; return pp.q.y < it.t.fy && Math.abs(px - it.t.fx * T) < w * 0.45 && py - T * 0.7 > it.t.fy * T - h && py - T * 0.7 < it.t.fy * T - T * 0.3; });
+        if (hide) g.globalAlpha = 0.45;
+        if (!(art && drawSprite(g, art, it.t.fx * T, it.t.fy * T, d.w * T, d.h * T, d.hue || 0))) drawObject(g, d, it.t.fx * T, it.t.fy * T, T);
+        g.globalAlpha = 1;
         if (d.sign) drawSign(g, d.sign, it.t.fx * T, it.t.fy * T - T * (d.signY || 1.25), T); // 組合出來的建築：門口掛招牌
         if (it.t.def.use === 'notes' && this.unreadNotes()) drawBubble(g, '📝', it.t.fx * T, it.t.fy * T - T * 1.3, T, true); // 便條板有對方的新便條
         if (it.t.def.use === 'mail' && (W.self.mail || []).some((m) => !m.got)) drawBubble(g, '✉', it.t.fx * T, it.t.fy * T - T * 1.2, T, true); // 信箱有新的信
