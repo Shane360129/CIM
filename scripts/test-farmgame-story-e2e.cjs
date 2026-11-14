@@ -99,7 +99,7 @@ const { chromium } = require('playwright');
     await new Promise((r) => setTimeout(r, 150)); return W.room.req({ t: 'use', slot: W.self.inv.findIndex((s) => s && s.id === 'hoe'), x: 15, y: 12 });
   });
   await pb.evaluate(() => { const W = window.__game.world; W.me.x = 16.5; W.me.y = 11.4; W.room.send({ t: 'move', x: 16.5, y: 11.4, dir: 'down', vx: 0, vy: 0 }); });
-  const duo = await Promise.all([pa.waitForFunction(() => { const d = document.querySelector('.dialog .dsub'); return d && d.textContent === '第一塊田'; }, null, { timeout: 15000 }).then(() => true).catch(() => false), pb.waitForFunction(() => { const d = document.querySelector('.dialog .dsub'); return d && d.textContent === '第一塊田'; }, null, { timeout: 15000 }).then(() => true).catch(() => false)]);
+  const duo = await Promise.all([pa.waitForFunction(() => { const d = document.querySelector('.dialog .dsub'); return d && d.textContent === '第一塊田'; }, null, { timeout: 40000 }).then(() => true).catch(() => false), pb.waitForFunction(() => { const d = document.querySelector('.dialog .dsub'); return d && d.textContent === '第一塊田'; }, null, { timeout: 40000 }).then(() => true).catch(() => false)]);
   ok('翻了第一塊田、兩個人站在一起：「第一塊田」兩邊同時開始', till && till.t === 'ok' && duo[0] && duo[1], JSON.stringify(till));
   await pa.locator('.dialog').click({ position: { x: 30, y: 20 } }); await pa.locator('.dialog .row button').first().click(); await pb.locator('.dialog').click({ position: { x: 30, y: 20 } }); await pb.locator('.dialog .row button').first().click();
   await pa.waitForTimeout(700);

@@ -130,7 +130,7 @@ export const play = {
     if (this.ctx.noStory || this.eventing || this.talking || hud.hasCard || hud.typing || this.fishing.active || this.player.asleep || !W.ready || !W.farm || this.hunt || this.mapId === 'mine') return;
     // 有開了還沒演完的（演到一半斷線、或對方開始了兩個人的劇情）：先演那一段
     const open = W.self.evOpen; if (open && data.events[open.id] && !(W.self.events || {})[open.id]) return this.playEvent(open.id, open);
-    const s = this.storyState(), now = performance.now();
+    const s = this.storyState(), now = performance.now(); if (now < (this.nextStoryAt || 0)) return; // 剛演完一段：隔一下再演下一段，不要一段接一段
     const id = Object.keys(data.events).find((k) => { const ev = data.events[k]; return ev.kind !== 'heart' && !s.seen[k] && (this.evRetry[k] || 0) < now && eventReady(ev, s); });
     if (id) this.startEvent(id);
   },
@@ -160,7 +160,7 @@ export const play = {
         else if (lines.length) hud.toast(lines.join('　'), 1800);
       }
     } finally {
-      this.eventing = false; this.storyT = 0;
+      this.eventing = false; this.storyT = 0; if (ev.kind !== 'heart') this.nextStoryAt = performance.now() + this.bal.story.gapSeconds * 1000;
       if (this.afterEvent) { const f = this.afterEvent; this.afterEvent = null; f(); }
     }
   },

@@ -1,4 +1,338 @@
 {
+ "ahe_2": {
+  "npc": "ahe",
+  "hearts": 2,
+  "title": "阿禾的記事本",
+  "steps": [
+   {
+    "fade": "打烊前的雜貨店，阿禾趴在櫃台上寫東西……"
+   },
+   {
+    "say": "ahe",
+    "face": "normal",
+    "text": "哎呀，你來啦。等我一下，這個要先記起來。"
+   },
+   {
+    "narrate": "櫃台上攤著一本舊舊的小本子，密密麻麻寫滿了字。"
+   },
+   {
+    "say": "ahe",
+    "face": "happy",
+    "text": "這是我的記事本。鎮上誰要什麼，我都寫在這裡。"
+   },
+   {
+    "say": "ahe",
+    "face": "normal",
+    "text": "春嬸每週要兩袋麵粉。小滿那邊多備一袋，她會打翻。"
+   },
+   {
+    "say": "ahe",
+    "face": "normal",
+    "text": "桐伯腰不好，重的東西我幫他送。芽芽的糖要草莓口味。"
+   },
+   {
+    "choice": [
+     {
+      "text": "我們那頁寫什麼？",
+      "pts": 60,
+      "goto": "mine"
+     },
+     {
+      "text": "你記得好仔細喔",
+      "pts": 40,
+      "goto": "careful"
+     },
+     {
+      "text": "這樣有點可怕耶",
+      "pts": 0,
+      "goto": "scary"
+     }
+    ]
+   },
+   {
+    "label": "mine"
+   },
+   {
+    "say": "ahe",
+    "face": "shy",
+    "text": "你們的喔……『帽子老是忘記戴，要唸』。這條我畫了三個圈。"
+   },
+   {
+    "emote": "❗"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "careful"
+   },
+   {
+    "say": "ahe",
+    "face": "happy",
+    "text": "人家要用的時候，店裡剛好有。這樣就好了，對吧？"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "scary"
+   },
+   {
+    "say": "ahe",
+    "face": "sad",
+    "text": "可、可怕嗎？……我只是怕大家要用的時候，店裡剛好沒有。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "narrate": "最後一頁，同一行字寫了三遍：「還雲岫的食譜」。"
+   },
+   {
+    "say": "ahe",
+    "face": "closed",
+    "text": "……別人的事，我寫一次就記得。自己的事，寫三次也會忘。"
+   },
+   {
+    "say": "ahe",
+    "face": "normal",
+    "text": "好啦，不說這個。帽子要戴，太陽大。我講過了吧？再講一次。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "ahe_4": {
+  "npc": "ahe",
+  "hearts": 4,
+  "title": "顧一個夏天的店",
+  "steps": [
+   {
+    "fade": "下雨的午後，雜貨店裡只有米婆在挑東西。"
+   },
+   {
+    "say": "mipo",
+    "face": "happy",
+    "text": "唉唷，你也來躲雨啊？跟你說，阿禾小時候最愛哭了。"
+   },
+   {
+    "say": "ahe",
+    "face": "shy",
+    "text": "米婆！不要在客人面前講這個啦……"
+   },
+   {
+    "say": "mipo",
+    "face": "normal",
+    "text": "他十歲種的菜苗全枯了，蹲在田邊哭了一下午喔。"
+   },
+   {
+    "narrate": "米婆笑咪咪地撐傘走了，店裡剩下雨聲。"
+   },
+   {
+    "say": "ahe",
+    "face": "closed",
+    "text": "……之前跟你說我比較會算帳，那是說好聽的。"
+   },
+   {
+    "say": "ahe",
+    "face": "normal",
+    "text": "十八歲那年，我跟我爸說想去學種田。他只說——"
+   },
+   {
+    "say": "ahe",
+    "face": "happy",
+    "text": "「那你先幫我顧一個夏天的店。」結果一顧，就是二十幾年。"
+   },
+   {
+    "say": "ahe",
+    "face": "normal",
+    "text": "我爸不用寫，就記得每個人要什麼。我得寫下來才記得住。"
+   },
+   {
+    "say": "ahe",
+    "face": "sad",
+    "text": "有時候會想，我是不是沒當好這間店的老闆。"
+   },
+   {
+    "choice": [
+     {
+      "text": "寫下來也是用心",
+      "pts": 70,
+      "goto": "c0"
+     },
+     {
+      "text": "鎮上很需要這間店",
+      "pts": 50,
+      "goto": "c1"
+     },
+     {
+      "text": "你還想種田嗎？",
+      "pts": 30,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "ahe",
+    "face": "shy",
+    "text": "用心……嗯。被你這麼一說，我好像沒那麼笨了。"
+   },
+   {
+    "emote": "😊"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "ahe",
+    "face": "happy",
+    "text": "也是。我不顧，大家要去哪裡買種子？哈哈。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "ahe",
+    "face": "normal",
+    "text": "想啊。不過看你們種，就像我也在種一樣。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "ahe",
+    "face": "normal",
+    "text": "……謝謝你聽我碎念。雨停了，路上小心喔。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "ahe_6": {
+  "npc": "ahe",
+  "hearts": 6,
+  "title": "阿禾的田",
+  "steps": [
+   {
+    "fade": "清晨，阿禾抱著玻璃罐站在雜貨店門口。"
+   },
+   {
+    "say": "ahe",
+    "face": "normal",
+    "text": "早。跟你說件事，別笑喔。"
+   },
+   {
+    "narrate": "罐子上的標籤泛黃了，寫著：「阿禾的田」。"
+   },
+   {
+    "say": "ahe",
+    "face": "sad",
+    "text": "我爸留下的。裡面是高麗菜種子，他每年春天都換一包新的。"
+   },
+   {
+    "say": "ahe",
+    "face": "closed",
+    "text": "他在等我說『夏天過完了，我要去種田』。我卻一直沒說。"
+   },
+   {
+    "say": "ahe",
+    "face": "normal",
+    "text": "後來換我每年換。好笑吧，不種田的人每年買種子。"
+   },
+   {
+    "say": "ahe",
+    "face": "shy",
+    "text": "所以……能借你們的田一小塊嗎？"
+   },
+   {
+    "choice": [
+     {
+      "text": "現在就去種吧！",
+      "pts": 80,
+      "goto": "now"
+     },
+     {
+      "text": "給你一整排！",
+      "pts": 60,
+      "goto": "row"
+     },
+     {
+      "text": "要是又枯掉呢？",
+      "pts": 20,
+      "goto": "doubt"
+     }
+    ]
+   },
+   {
+    "label": "now"
+   },
+   {
+    "say": "ahe",
+    "face": "happy",
+    "text": "現在？好！店晚點開，我爸會原諒我的。"
+   },
+   {
+    "goto": "plant"
+   },
+   {
+    "label": "row"
+   },
+   {
+    "say": "ahe",
+    "face": "shy",
+    "text": "一整排？那得多買幾包了……哎呀，我在高興什麼。"
+   },
+   {
+    "goto": "plant"
+   },
+   {
+    "label": "doubt"
+   },
+   {
+    "say": "ahe",
+    "face": "closed",
+    "text": "枯了就再蹲在田邊哭一下午吧。哈哈，騙你的。"
+   },
+   {
+    "label": "plant"
+   },
+   {
+    "fade": "你們的田邊，阿禾把種子一顆顆放進土裡。"
+   },
+   {
+    "say": "ahe",
+    "face": "happy",
+    "text": "原來泥土這麼軟。上次種田，我才十歲呢。我爸一定在笑我。"
+   },
+   {
+    "say": "ahe",
+    "face": "normal",
+    "text": "這間店是我爸留下的。看你們把荒地種起來，就像看到小鎮以前的樣子。"
+   },
+   {
+    "say": "ahe",
+    "face": "happy",
+    "text": "我還是比較會算帳。不過今天，我也是農夫。"
+   },
+   {
+    "emote": "❤️"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
  "xiaoman_2": {
   "npc": "xiaoman",
   "hearts": 2,
@@ -137,6 +471,771 @@
    }
   ]
  },
+ "xiaoman_6": {
+  "npc": "xiaoman",
+  "hearts": 6,
+  "title": "醒著的燈",
+  "steps": [
+   {
+    "fade": "天還沒亮，餐館的廚房已經亮著燈。"
+   },
+   {
+    "say": "xiaoman",
+    "face": "happy",
+    "text": "你來了！今天要烤那個麵包，會讓人想回家的那個。"
+   },
+   {
+    "say": "xiaoman",
+    "face": "shy",
+    "text": "我好緊張……幫我揉麵團好不好？"
+   },
+   {
+    "narrate": "麵團在手心裡慢慢變得又軟又暖。"
+   },
+   {
+    "say": "xiaoman",
+    "face": "sad",
+    "text": "迷路那天晚上，我最怕的不是黑，是怕沒有人來找我。"
+   },
+   {
+    "say": "xiaoman",
+    "face": "normal",
+    "text": "後來聞到麵包香，我就知道，這個鎮上有人醒著。"
+   },
+   {
+    "say": "xiaoman",
+    "face": "shy",
+    "text": "所以我想當那個醒著的人。天亮前就點燈烤麵包，讓迷路的人找得到。"
+   },
+   {
+    "narrate": "烤箱「叮」的一聲。小滿深吸一口氣，打開門。"
+   },
+   {
+    "say": "xiaoman",
+    "face": "happy",
+    "text": "沒有焦！第一個給你吃，說好的！"
+   },
+   {
+    "choice": [
+     {
+      "text": "好吃到想回家",
+      "pts": 80,
+      "goto": "home"
+     },
+     {
+      "text": "有你的味道",
+      "pts": 60,
+      "goto": "you"
+     },
+     {
+      "text": "好像有點鹹？",
+      "pts": 20,
+      "goto": "salty"
+     }
+    ]
+   },
+   {
+    "label": "home"
+   },
+   {
+    "say": "xiaoman",
+    "face": "shy",
+    "text": "真的嗎？……不行，我要哭了。哭了麵包會鹹！"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "you"
+   },
+   {
+    "say": "xiaoman",
+    "face": "happy",
+    "text": "我的味道？嘿嘿，一定是很冒失的味道！"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "salty"
+   },
+   {
+    "say": "xiaoman",
+    "face": "sad",
+    "text": "咦？一定是我剛剛偷哭，眼淚滴進去了！"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "chunshen",
+    "face": "happy",
+    "text": "一大早誰在烤麵包？……嗯，這個味道，及格了。"
+   },
+   {
+    "say": "xiaoman",
+    "face": "closed",
+    "text": "……春嬸說及格了。這兩個字，我等了好久。"
+   },
+   {
+    "say": "xiaoman",
+    "face": "happy",
+    "text": "以後累了，就跟著這個味道回來。我每天都點燈！"
+   },
+   {
+    "emote": "❤️"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "shilei_2": {
+  "npc": "shilei",
+  "hearts": 2,
+  "title": "窗邊的風鈴",
+  "steps": [
+   {
+    "fade": "傍晚的鐵匠鋪，爐火小了下來。"
+   },
+   {
+    "say": "shilei",
+    "face": "normal",
+    "text": "……你來了。今天不忙。坐。"
+   },
+   {
+    "narrate": "窗邊掛著一串小鐵片，風一吹，就叮叮噹噹地響。"
+   },
+   {
+    "say": "shilei",
+    "face": "normal",
+    "text": "……那個。打剩的鐵片做的。丟掉可惜。"
+   },
+   {
+    "prompt": "（要說什麼？）",
+    "choice": [
+     {
+      "text": "好好聽的聲音",
+      "pts": 60,
+      "goto": "c0"
+     },
+     {
+      "text": "你也會做這種東西？",
+      "pts": 40,
+      "goto": "c1"
+     },
+     {
+      "text": "打鐵的人掛風鈴？",
+      "pts": 0,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "shilei",
+    "face": "shy",
+    "text": "……是嗎。"
+   },
+   {
+    "narrate": "石磊轉過頭，假裝在擦鐵鎚。耳朵有點紅。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "shilei",
+    "face": "normal",
+    "text": "鐵也可以很小。打得薄，聲音就輕。跟打鋤頭一樣，火候要對。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "shilei",
+    "face": "closed",
+    "text": "……不行嗎。"
+   },
+   {
+    "narrate": "石磊盯著風鈴看了很久，好像在認真想這個問題。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "shilei",
+    "face": "normal",
+    "text": "打鐵的時候很吵。停下來的時候……很安靜。"
+   },
+   {
+    "say": "shilei",
+    "face": "sad",
+    "text": "一個人的鋪子，太安靜了。有點聲音，比較好。"
+   },
+   {
+    "say": "shilei",
+    "face": "normal",
+    "text": "……你們的農場，風大嗎。"
+   },
+   {
+    "narrate": "還沒等你回答，他已經低頭挑起鐵片了。"
+   },
+   {
+    "say": "shilei",
+    "face": "happy",
+    "text": "……沒什麼。問問。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "shilei_4": {
+  "npc": "shilei",
+  "hearts": 4,
+  "title": "不熄的爐火",
+  "steps": [
+   {
+    "fade": "下雨的夜晚，鐵匠鋪的爐火還亮著。"
+   },
+   {
+    "say": "shilei",
+    "face": "normal",
+    "text": "……下雨。爐子的火不能熄。"
+   },
+   {
+    "say": "shilei",
+    "face": "normal",
+    "text": "這爐火，三十年沒熄過。是師父點起來的。"
+   },
+   {
+    "say": "shilei",
+    "face": "closed",
+    "text": "我十五歲來這裡，什麼都不會。師父給我一碗飯，一把錘子。"
+   },
+   {
+    "say": "shilei",
+    "face": "happy",
+    "text": "師父很愛說話。打一把鋤頭，可以講一整個下午。"
+   },
+   {
+    "say": "shilei",
+    "face": "normal",
+    "text": "我都只說『嗯』。他說沒關係，鐵聽得懂。"
+   },
+   {
+    "say": "shilei",
+    "face": "sad",
+    "text": "五年前，師父走了。鋪子一下子，變得很安靜。"
+   },
+   {
+    "say": "shilei",
+    "face": "normal",
+    "text": "所以我顧著這爐火。……有時候會想，我顧得好嗎。"
+   },
+   {
+    "choice": [
+     {
+      "text": "你顧得很好",
+      "pts": 60,
+      "goto": "c0"
+     },
+     {
+      "text": "師父一定很放心",
+      "pts": 70,
+      "goto": "c1"
+     },
+     {
+      "text": "火熄了會怎樣？",
+      "pts": 40,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "shilei",
+    "face": "shy",
+    "text": "……嗯。"
+   },
+   {
+    "narrate": "他往爐子裡添了一塊煤。火光照著他的臉，紅紅的。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "shilei",
+    "face": "closed",
+    "text": "……師父最後也這樣說。『阿磊，我放心了。』"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "shilei",
+    "face": "sad",
+    "text": "……不會怎樣。只是……我會覺得，他真的走了。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "shilei",
+    "face": "normal",
+    "text": "……我說太多了。"
+   },
+   {
+    "say": "shilei",
+    "face": "happy",
+    "text": "跟你說話，不累。……雨小了。路上小心。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "shilei_6": {
+  "npc": "shilei",
+  "hearts": 6,
+  "title": "鐘的聲音",
+  "steps": [
+   {
+    "fade": "深夜的鐵匠鋪，爐火燒得正旺。"
+   },
+   {
+    "say": "shilei",
+    "face": "normal",
+    "text": "……你來得剛好。幫個忙。"
+   },
+   {
+    "say": "shilei",
+    "face": "normal",
+    "text": "鐘樓的鐘舌，是師父年輕時打的。用了幾十年，裂了。"
+   },
+   {
+    "say": "shilei",
+    "face": "sad",
+    "text": "師父走之前說，要我打一個新的。"
+   },
+   {
+    "say": "shilei",
+    "face": "closed",
+    "text": "我打了七個。聲音都不對。"
+   },
+   {
+    "say": "shilei",
+    "face": "normal",
+    "text": "一個人顧火又打鐵，火候總差一點。……你幫我拉風箱。"
+   },
+   {
+    "choice": [
+     {
+      "text": "好，交給我",
+      "pts": 60,
+      "goto": "c0"
+     },
+     {
+      "text": "我力氣不大喔",
+      "pts": 40,
+      "goto": "c1"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "shilei",
+    "face": "happy",
+    "text": "……嗯。慢慢拉。火候很重要，急不得。"
+   },
+   {
+    "goto": "work"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "shilei",
+    "face": "normal",
+    "text": "不用力氣大。要穩。……你，很穩。"
+   },
+   {
+    "label": "work"
+   },
+   {
+    "fade": "風箱呼呼地響，鐵鎚一下一下落下。不知道過了多久……"
+   },
+   {
+    "narrate": "石磊輕輕敲了一下剛打好的鐘舌。「噹——」聲音傳得好遠。"
+   },
+   {
+    "say": "shilei",
+    "face": "closed",
+    "text": "……對了。就是這個聲音。師父的聲音。"
+   },
+   {
+    "say": "shilei",
+    "face": "normal",
+    "text": "師父說，鐘響的時候，全鎮的人會一起抬頭。"
+   },
+   {
+    "say": "shilei",
+    "face": "happy",
+    "text": "我不太會說話。但是你們來了以後，鎮上熱鬧了。這樣，很好。"
+   },
+   {
+    "say": "shilei",
+    "face": "shy",
+    "text": "等它掛上鐘樓……你們兩個，要來聽。"
+   },
+   {
+    "emote": "🎵"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "tongbo_2": {
+  "npc": "tongbo",
+  "hearts": 2,
+  "title": "木頭真的會說話",
+  "steps": [
+   {
+    "fade": "木工屋裡傳出說話的聲音，可是只看到桐伯一個人。"
+   },
+   {
+    "say": "tongbo",
+    "face": "closed",
+    "text": "嗯……嗯。你想當椅子啊？不想？那當櫃子好不好？"
+   },
+   {
+    "say": "tongbo",
+    "face": "shy",
+    "text": "……哇！你什麼時候站在那裡的！"
+   },
+   {
+    "say": "tongbo",
+    "face": "happy",
+    "text": "我、我在跟這塊木頭講話啦。……騙你的啦，哈哈哈！"
+   },
+   {
+    "choice": [
+     {
+      "text": "它想變成什麼？",
+      "pts": 60,
+      "goto": "c0"
+     },
+     {
+      "text": "你剛剛好認真耶",
+      "pts": 50,
+      "goto": "c1"
+     },
+     {
+      "text": "你在自言自語？",
+      "pts": 20,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "tongbo",
+    "face": "happy",
+    "text": "問到重點了！它說想當搖椅。紋路這麼彎，坐起來一定很好晃。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "tongbo",
+    "face": "shy",
+    "text": "被你看穿了……好啦，剛剛那句沒騙你，是真的。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "tongbo",
+    "face": "normal",
+    "text": "我是在跟它商量！老人家啊，跟木頭最談得來。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "tongbo",
+    "face": "normal",
+    "text": "每塊木頭的紋路都不一樣。你順著它，它就不會裂。"
+   },
+   {
+    "say": "tongbo",
+    "face": "closed",
+    "text": "硬要它變成別的樣子，它就裂給你看。……人也是一樣啦。"
+   },
+   {
+    "say": "tongbo",
+    "face": "happy",
+    "text": "哈哈哈！這句是真的，不騙你。……大概啦！"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "tongbo_4": {
+  "npc": "tongbo",
+  "hearts": 4,
+  "title": "孫子的木馬",
+  "steps": [
+   {
+    "fade": "下雨天，桐伯在木工屋裡慢慢磨著一匹小木馬。"
+   },
+   {
+    "say": "tongbo",
+    "face": "normal",
+    "text": "下雨天上不了屋頂，只好在店裡磨這個囉。"
+   },
+   {
+    "say": "tongbo",
+    "face": "happy",
+    "text": "這是我孫子小時候最愛騎的。騎到馬耳朵都掉了，哈哈！"
+   },
+   {
+    "say": "tongbo",
+    "face": "normal",
+    "text": "他說長大要跟我一樣，蓋全鎮最高的房子。"
+   },
+   {
+    "say": "tongbo",
+    "face": "happy",
+    "text": "現在他在城裡蓋大樓喔！比鐘樓還高好幾倍，厲害吧？"
+   },
+   {
+    "wait": 1
+   },
+   {
+    "say": "tongbo",
+    "face": "closed",
+    "text": "……只是很忙。每年的信上都寫，『今年也回不去』。"
+   },
+   {
+    "say": "tongbo",
+    "face": "sad",
+    "text": "我常想，等他回來，我是不是已經爬不上屋頂了。"
+   },
+   {
+    "choice": [
+     {
+      "text": "他一定也很想你",
+      "pts": 60,
+      "goto": "c0"
+     },
+     {
+      "text": "木馬修好要給誰？",
+      "pts": 50,
+      "goto": "c1"
+     },
+     {
+      "text": "你還很年輕啦",
+      "pts": 30,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "tongbo",
+    "face": "shy",
+    "text": "……是嗎。那孩子小時候，晚上都要抓著我的袖子才睡得著。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "tongbo",
+    "face": "happy",
+    "text": "放在店門口。哪天他回來，第一眼就知道，他的馬還在等他。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "tongbo",
+    "face": "happy",
+    "text": "哈哈哈！嘴巴真甜。好，老頭子明天就爬屋頂給你看！"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "tongbo",
+    "face": "normal",
+    "text": "我說過吧，看到你們，就像看到他。"
+   },
+   {
+    "say": "tongbo",
+    "face": "happy",
+    "text": "所以你們兩個要常來，讓老頭子假裝一下。哈哈哈！"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "tongbo_6": {
+  "npc": "tongbo",
+  "hearts": 6,
+  "title": "第一張長椅",
+  "steps": [
+   {
+    "fade": "黃昏的噴水池邊，桐伯蹲在一張舊長椅旁。"
+   },
+   {
+    "say": "tongbo",
+    "face": "happy",
+    "text": "來得正好！幫老頭子扶一下這塊板子。"
+   },
+   {
+    "say": "tongbo",
+    "face": "normal",
+    "text": "這張長椅，是我二十歲替鎮上做的第一樣東西。"
+   },
+   {
+    "say": "tongbo",
+    "face": "closed",
+    "text": "那時候廣場好熱鬧。後來人搬走了，椅子也爛了。"
+   },
+   {
+    "say": "tongbo",
+    "face": "sad",
+    "text": "鎮上那些壞掉的老房子，我一個人修不完。"
+   },
+   {
+    "say": "tongbo",
+    "face": "normal",
+    "text": "要是哪天大家一起動手……哈，我又在作夢了。"
+   },
+   {
+    "choice": [
+     {
+      "text": "這不是作夢",
+      "pts": 80,
+      "goto": "c0"
+     },
+     {
+      "text": "先從這張椅子開始",
+      "pts": 60,
+      "goto": "c1"
+     },
+     {
+      "text": "你該休息一下了",
+      "pts": 20,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "tongbo",
+    "face": "shy",
+    "text": "……你這孩子，講得這麼認真。害我鼻子酸酸的。"
+   },
+   {
+    "goto": "fix"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "tongbo",
+    "face": "happy",
+    "text": "說得好！一間一間來，先從小的開始！"
+   },
+   {
+    "goto": "fix"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "tongbo",
+    "face": "happy",
+    "text": "休息？木頭可不等人！來來來，釘子拿著。"
+   },
+   {
+    "label": "fix"
+   },
+   {
+    "fade": "敲敲打打，換好最後一塊板子時，天已經暗了。"
+   },
+   {
+    "say": "tongbo",
+    "face": "normal",
+    "text": "最後一根釘子，你來敲。……對，順著木紋。"
+   },
+   {
+    "narrate": "「咚」的一聲，釘子穩穩吃進木頭裡。"
+   },
+   {
+    "say": "tongbo",
+    "face": "closed",
+    "text": "四十幾年了，我第一次讓別人敲最後一根釘子。"
+   },
+   {
+    "say": "tongbo",
+    "face": "happy",
+    "text": "坐坐看！跟我二十歲的時候一樣舒服吧？"
+   },
+   {
+    "say": "tongbo",
+    "face": "happy",
+    "text": "大家一起動手……這次，老頭子不說是作夢了。哈哈哈！"
+   },
+   {
+    "emote": "👍"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
  "xiyin_2": {
   "npc": "xiyin",
   "hearts": 2,
@@ -254,6 +1353,1113 @@
    }
   ]
  },
+ "xiyin_6": {
+  "npc": "xiyin",
+  "hearts": 6,
+  "title": "沒有名字的釣點",
+  "steps": [
+   {
+    "fade": "天剛亮，汐音帶你穿過蘆葦，走到湖的另一頭。"
+   },
+   {
+    "say": "xiyin",
+    "face": "normal",
+    "text": "到了。這就是我說的，沒人知道的釣點。"
+   },
+   {
+    "say": "xiyin",
+    "face": "happy",
+    "text": "……好啦，海伯知道。是他告訴我的。他說他老了，懶得走過來。"
+   },
+   {
+    "narrate": "水面平得像一面鏡子，連風都放輕了腳步。"
+   },
+   {
+    "say": "xiyin",
+    "face": "closed",
+    "text": "以前我以為，安靜就是一個人。在港口的時候，越吵，越覺得只有自己。"
+   },
+   {
+    "say": "xiyin",
+    "face": "normal",
+    "text": "來這裡才知道，有人在旁邊，也可以很安靜。"
+   },
+   {
+    "say": "xiyin",
+    "face": "shy",
+    "text": "我沒帶別人來過。……這裡還沒有名字，你取一個吧。"
+   },
+   {
+    "prompt": "（要叫它什麼？）",
+    "choice": [
+     {
+      "text": "安靜的水",
+      "pts": 80,
+      "goto": "c0",
+      "flag": "xiyin_spot_quiet"
+     },
+     {
+      "text": "汐音的秘密",
+      "pts": 60,
+      "goto": "c1",
+      "flag": "xiyin_spot_secret"
+     },
+     {
+      "text": "大魚池",
+      "pts": 30,
+      "goto": "c2",
+      "flag": "xiyin_spot_bigfish"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "xiyin",
+    "face": "shy",
+    "text": "……安靜的水。好像我心裡，早就這樣叫它了。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "xiyin",
+    "face": "happy",
+    "text": "哈，那你就是共犯了。秘密要守好喔。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "xiyin",
+    "face": "happy",
+    "text": "好直接。不過不錯，說不定哪天真的釣到大魚。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "narrate": "浮標輕輕抖了一下。"
+   },
+   {
+    "say": "xiyin",
+    "face": "normal",
+    "text": "別急。……等它自己沉下去。"
+   },
+   {
+    "wait": 2
+   },
+   {
+    "say": "xiyin",
+    "face": "sad",
+    "text": "……啊，跑了。是錦鯉呢。算了，今天又不是來釣魚的。"
+   },
+   {
+    "say": "xiyin",
+    "face": "happy",
+    "text": "想安靜的時候就來。帶你們農場的另一位也行，三個人一起發呆。"
+   },
+   {
+    "emote": "😊"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "baizhi_2": {
+  "npc": "baizhi",
+  "hearts": 2,
+  "title": "藥櫃上的訪客",
+  "steps": [
+   {
+    "fade": "診所裡靜悄悄的。白芷站在藥櫃前，一動也不動。"
+   },
+   {
+    "say": "baizhi",
+    "face": "normal",
+    "text": "……你來了。很好。請慢慢走過來，不要出聲。"
+   },
+   {
+    "say": "baizhi",
+    "face": "closed",
+    "text": "藥櫃上面，第三格。有一個……東西。"
+   },
+   {
+    "narrate": "仔細一看，是一隻圓滾滾的小甲蟲，正慢慢地爬著。"
+   },
+   {
+    "say": "baizhi",
+    "face": "sad",
+    "text": "牠動了。牠剛剛動了，對不對？"
+   },
+   {
+    "choice": [
+     {
+      "text": "我來抓牠出去",
+      "pts": 60,
+      "goto": "c0"
+     },
+     {
+      "text": "開窗讓牠飛走吧",
+      "pts": 50,
+      "goto": "c1"
+     },
+     {
+      "text": "只是小甲蟲啊",
+      "pts": 0,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "narrate": "你輕輕捧起甲蟲，把牠放到門外的草叢裡。"
+   },
+   {
+    "say": "baizhi",
+    "face": "happy",
+    "text": "……得救了。謝謝你。你的手很穩，很適合拿手術刀。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "baizhi",
+    "face": "happy",
+    "text": "對，開窗……牠飛走了。你好冷靜，我剛剛完全沒想到。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "baizhi",
+    "face": "sad",
+    "text": "「只是」？牠有六隻腳。六隻。"
+   },
+   {
+    "narrate": "過了好一會兒，甲蟲自己從窗縫飛走了。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "baizhi",
+    "face": "shy",
+    "text": "我可以面不改色地縫傷口、接骨頭。……可是蟲就是不行。"
+   },
+   {
+    "say": "baizhi",
+    "face": "normal",
+    "text": "從小就這樣。我也不知道為什麼。"
+   },
+   {
+    "say": "baizhi",
+    "face": "shy",
+    "text": "這件事……請不要告訴小樹。他會抓一整罐來給我看。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "baizhi_4": {
+  "npc": "baizhi",
+  "hearts": 4,
+  "title": "醫生也會累",
+  "steps": [
+   {
+    "fade": "夜深了，診所的燈還亮著。白芷趴在桌上睡著了。"
+   },
+   {
+    "narrate": "桌上堆著寫到一半的病歷，旁邊的茶早就涼了。"
+   },
+   {
+    "say": "baizhi",
+    "face": "closed",
+    "text": "……嗯……啊，是你。我沒睡著，只是閉一下眼睛。"
+   },
+   {
+    "say": "baizhi",
+    "face": "normal",
+    "text": "桐伯的腰又閃到了，偏偏不肯休息。我在想別的辦法。"
+   },
+   {
+    "choice": [
+     {
+      "text": "你今天有按時吃飯嗎？",
+      "pts": 80,
+      "goto": "c0"
+     },
+     {
+      "text": "你也該去睡了",
+      "pts": 50,
+      "goto": "c1"
+     },
+     {
+      "text": "醫生也會打瞌睡喔",
+      "pts": 20,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "baizhi",
+    "face": "happy",
+    "text": "……那是我的台詞。被你搶走了。"
+   },
+   {
+    "say": "baizhi",
+    "face": "shy",
+    "text": "……沒有。晚餐忘了。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "baizhi",
+    "face": "normal",
+    "text": "還不行。明天一早桐伯會來，我想先準備好。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "baizhi",
+    "face": "sad",
+    "text": "……被你看到了。這件事也請保密。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "baizhi",
+    "face": "normal",
+    "text": "我常說，體力用完硬撐會昏倒。那是我自己的經驗。"
+   },
+   {
+    "say": "baizhi",
+    "face": "sad",
+    "text": "以前在大醫院，連續值班三十個小時，我在走廊上昏倒了。"
+   },
+   {
+    "say": "baizhi",
+    "face": "closed",
+    "text": "醒來的時候，大家叫我『那個醫生』。我也叫不出他們的名字。"
+   },
+   {
+    "say": "baizhi",
+    "face": "normal",
+    "text": "……所以我才來這裡。可是一忙起來，又忘了照顧自己。"
+   },
+   {
+    "say": "baizhi",
+    "face": "shy",
+    "text": "小廚房還有蘑菇。我煮湯，你也喝一碗，好嗎？"
+   },
+   {
+    "emote": "😊"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "baizhi_6": {
+  "npc": "baizhi",
+  "hearts": 6,
+  "title": "蒲公英的山坡",
+  "steps": [
+   {
+    "fade": "清晨的森林。白芷戴著手套和圍巾，包得只剩一雙眼睛。"
+   },
+   {
+    "say": "baizhi",
+    "face": "shy",
+    "text": "……不要笑。這是防蟲裝備。"
+   },
+   {
+    "say": "baizhi",
+    "face": "normal",
+    "text": "青嵐上山了，診所的蒲公英快用完。一個人來採……不太敢。"
+   },
+   {
+    "narrate": "山坡上開滿了蒲公英。白芷蹲下來，一朵一朵地挑。"
+   },
+   {
+    "say": "baizhi",
+    "face": "happy",
+    "text": "我來這裡的第一天，米婆拿了一罐醃菜給我。"
+   },
+   {
+    "say": "baizhi",
+    "face": "normal",
+    "text": "她說：『白芷醫生，吃飽沒？』……她記得我的名字。"
+   },
+   {
+    "say": "baizhi",
+    "face": "closed",
+    "text": "我來小鎮，是想認識每一個病人的名字。在大醫院做不到。"
+   },
+   {
+    "say": "baizhi",
+    "face": "happy",
+    "text": "結果是這個鎮，先記住了我的名字。"
+   },
+   {
+    "narrate": "一隻毛毛蟲，慢慢爬上了白芷的袖子。"
+   },
+   {
+    "say": "baizhi",
+    "face": "sad",
+    "text": "……那個。我的袖子上，是不是有什麼東西。"
+   },
+   {
+    "choice": [
+     {
+      "text": "別動，我幫你拿掉",
+      "pts": 70,
+      "goto": "c0"
+     },
+     {
+      "text": "牠只是路過啦",
+      "pts": 40,
+      "goto": "c1"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "baizhi",
+    "face": "shy",
+    "text": "……呼。又被你救了一次。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "narrate": "白芷屏住呼吸，等毛毛蟲慢吞吞地爬回草地。"
+   },
+   {
+    "say": "baizhi",
+    "face": "happy",
+    "text": "……路過。嗯，牠只是路過。我很冷靜。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "baizhi",
+    "face": "normal",
+    "text": "你是第一個沒生病，也常來診所的人。"
+   },
+   {
+    "say": "baizhi",
+    "face": "happy",
+    "text": "以後採藥，可以再找你一起嗎？……蟲的部分，拜託你了。"
+   },
+   {
+    "emote": "😊"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "chunshen_2": {
+  "npc": "chunshen",
+  "hearts": 2,
+  "title": "兩顆滷蛋",
+  "steps": [
+   {
+    "fade": "午後的餐館，客人剛走，廚房裡傳來一陣大嗓門……"
+   },
+   {
+    "say": "chunshen",
+    "text": "阿椪！湯是拿來賣的，不是讓你喝光的！"
+   },
+   {
+    "say": "apeng",
+    "face": "sad",
+    "text": "對不起，師父……我只是想確定一下味道……確定了五次。"
+   },
+   {
+    "say": "chunshen",
+    "text": "確定完了就去後面洗碗！洗完才准吃飯！"
+   },
+   {
+    "narrate": "阿椪垂著頭走到後面去了。春嬸一轉身，看到了你。"
+   },
+   {
+    "say": "chunshen",
+    "face": "happy",
+    "text": "唉唷，你來啦！讓你看笑話了。"
+   },
+   {
+    "narrate": "春嬸一邊說，一邊在阿椪的員工餐裡，偷偷多放了兩顆滷蛋。"
+   },
+   {
+    "choice": [
+     {
+      "text": "你明明就很疼他",
+      "pts": 60,
+      "goto": "c0"
+     },
+     {
+      "text": "不怕把他寵壞嗎？",
+      "pts": 30,
+      "goto": "c1"
+     },
+     {
+      "text": "我也想要兩顆蛋",
+      "pts": 40,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "chunshen",
+    "face": "shy",
+    "text": "噓！小聲一點！被他聽到，以後就管不動了。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "chunshen",
+    "text": "寵壞？那孩子切洋蔥切到眼睛都腫了，也沒喊過一聲累。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "chunshen",
+    "face": "happy",
+    "text": "哈哈哈！好啊，坐下！你那麼瘦，給你三顆！"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "chunshen",
+    "face": "closed",
+    "text": "罵他，是要他記得。給他蛋，是要他長大。兩樣都不能少。"
+   },
+   {
+    "say": "chunshen",
+    "text": "你們這些孩子啊，在我眼裡都一樣，都要吃飽。"
+   },
+   {
+    "say": "chunshen",
+    "face": "happy",
+    "text": "所以——你吃飽沒？沒吃的話，坐下！"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "chunshen_4": {
+  "npc": "chunshen",
+  "hearts": 4,
+  "title": "最後一爐麵包",
+  "steps": [
+   {
+    "fade": "打烊後的餐館只留一盞燈，春嬸一個人坐在角落。"
+   },
+   {
+    "say": "chunshen",
+    "text": "喔，是你啊。進來坐。"
+   },
+   {
+    "say": "chunshen",
+    "text": "我在數椅子。三十二張，以前每張都坐滿過。"
+   },
+   {
+    "say": "chunshen",
+    "face": "sad",
+    "text": "後來年輕人都去了城裡。椅子空了，我的大嗓門也沒人聽了。"
+   },
+   {
+    "say": "chunshen",
+    "face": "closed",
+    "text": "跟你說個秘密。很多年前，我本來想關掉這間店。"
+   },
+   {
+    "say": "chunshen",
+    "text": "最後一晚，我烤了一爐麵包，吃完就要關門。"
+   },
+   {
+    "say": "chunshen",
+    "text": "結果門口來了個迷路的小女孩，全身泥巴，哭個不停。"
+   },
+   {
+    "choice": [
+     {
+      "text": "那是小滿吧？",
+      "pts": 60,
+      "goto": "c0"
+     },
+     {
+      "text": "後來怎麼了？",
+      "pts": 40,
+      "goto": "c1"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "chunshen",
+    "face": "happy",
+    "text": "……你很會猜嘛。對，就是那個冒失鬼。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "chunshen",
+    "text": "我給她一碗湯、一塊麵包。她邊哭邊吃，一直說好香。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "chunshen",
+    "text": "我牽她回家，路上她問我：「明天還可以來吃麵包嗎？」"
+   },
+   {
+    "say": "chunshen",
+    "face": "happy",
+    "text": "我說可以啊。……話一出口，就收不回來了。哈哈哈！"
+   },
+   {
+    "say": "chunshen",
+    "text": "第二天我照樣開門，第三天也是。一開就開到現在。"
+   },
+   {
+    "say": "xiaoman",
+    "face": "happy",
+    "text": "春嬸——！我試做的麵包出爐了！這次沒有焦喔！"
+   },
+   {
+    "say": "chunshen",
+    "face": "happy",
+    "text": "聽到沒？那個孩子，現在換她烤給我吃了。"
+   },
+   {
+    "say": "chunshen",
+    "face": "shy",
+    "text": "……要關店的事，別跟小滿說喔。她會哭的。"
+   },
+   {
+    "emote": "😊"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "chunshen_6": {
+  "npc": "chunshen",
+  "hearts": 6,
+  "title": "長長的餐桌",
+  "steps": [
+   {
+    "say": "chunshen",
+    "face": "happy",
+    "text": "唉唷，你來得正好！幫我看看這張圖。"
+   },
+   {
+    "narrate": "紙上畫著一張長長的桌子，從餐館門口一路排到噴水池。"
+   },
+   {
+    "say": "chunshen",
+    "text": "這間餐館以前，客人多到排到廣場去。你信不信？"
+   },
+   {
+    "say": "chunshen",
+    "face": "closed",
+    "text": "我不是想賺錢。我是想再看到那麼多人，一起吃飯的樣子。"
+   },
+   {
+    "say": "chunshen",
+    "text": "所以我想請全鎮的人吃一頓飯。桌子不夠，就一張一張接下去！"
+   },
+   {
+    "say": "chunshen",
+    "face": "sad",
+    "text": "可是我想了好幾天，菜單還是一片空白。"
+   },
+   {
+    "say": "chunshen",
+    "text": "你幫我想想，第一道菜要煮什麼？"
+   },
+   {
+    "prompt": "（要推薦什麼？）",
+    "choice": [
+     {
+      "text": "用我們田裡的菜",
+      "pts": 80,
+      "goto": "c0",
+      "flag": "chunshen_feast_veg"
+     },
+     {
+      "text": "小滿烤的麵包",
+      "pts": 60,
+      "goto": "c1",
+      "flag": "chunshen_feast_bread"
+     },
+     {
+      "text": "阿椪的蛋包飯",
+      "pts": 60,
+      "goto": "c2",
+      "flag": "chunshen_feast_omelet"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "chunshen",
+    "face": "happy",
+    "text": "好！你們種的菜燉成一大鍋，每個人都分得到！"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "chunshen",
+    "face": "happy",
+    "text": "對！焦一點也沒關係，那是我們家的味道。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "chunshen",
+    "text": "那孩子一定會高興到跳起來……然後偷吃掉一半。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "xiaoman",
+    "face": "happy",
+    "text": "春嬸！我們都聽到了！"
+   },
+   {
+    "say": "apeng",
+    "face": "happy",
+    "text": "我負責試吃！……不對，我負責煮！"
+   },
+   {
+    "say": "chunshen",
+    "text": "兩個小鬼頭！偷聽就算了，還不快去備料！"
+   },
+   {
+    "say": "chunshen",
+    "face": "shy",
+    "text": "……唉，這兩個孩子。有他們在，真好。"
+   },
+   {
+    "say": "chunshen",
+    "face": "happy",
+    "text": "到時候，你們兩個也要來。最好的位子，留給你們。"
+   },
+   {
+    "emote": "❤️"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "xiaoshu_2": {
+  "npc": "xiaoshu",
+  "hearts": 2,
+  "title": "牠跑掉了",
+  "steps": [
+   {
+    "fade": "傍晚的森林。小樹抱著一個玻璃罐，蹲在大樹下。"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "happy",
+    "text": "噓——不要動！你看！我抓到一隻超大的甲蟲！"
+   },
+   {
+    "say": "xiaoshu",
+    "text": "牠的殼亮晶晶的，超帥的對不對！"
+   },
+   {
+    "narrate": "小樹把罐子舉得高高的，看了好久好久。"
+   },
+   {
+    "narrate": "然後，他慢慢打開蓋子，把甲蟲放回樹幹上。"
+   },
+   {
+    "emote": "❗"
+   },
+   {
+    "say": "xiaoshu",
+    "text": "……啊。牠跑掉了。"
+   },
+   {
+    "choice": [
+     {
+      "text": "是你放走的吧？",
+      "pts": 60,
+      "goto": "c0"
+     },
+     {
+      "text": "好可惜喔",
+      "pts": 30,
+      "goto": "c1"
+     },
+     {
+      "text": "那再抓一次啊",
+      "pts": 0,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "shy",
+    "text": "才、才不是咧！……好啦，是我放的。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "shy",
+    "text": "不可惜啦……其實，是我自己放走的。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "sad",
+    "text": "不要！牠剛剛一直撞罐子，好像很想回家。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "xiaoshu",
+    "text": "我每次都抓，每次都放。牠的家在這棵樹上，又不在我的罐子裡。"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "sad",
+    "text": "可是說是我放的，好像很愛哭一樣……所以我都說牠跑掉了。"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "happy",
+    "text": "你是第一個知道的大人喔！要幫我保守秘密！"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "closed",
+    "text": "打勾勾，蓋印章！……好，蓋好了，不能反悔喔！"
+   },
+   {
+    "emote": "👍"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "xiaoshu_4": {
+  "npc": "xiaoshu",
+  "hearts": 4,
+  "title": "豆豆的信",
+  "steps": [
+   {
+    "fade": "小樹的秘密基地，是樹林裡一間用樹枝搭的小棚子。"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "happy",
+    "text": "你來啦！快進來！頭要低一點，門很矮！"
+   },
+   {
+    "narrate": "小樹拖出一個貼滿貼紙的鐵盒子。"
+   },
+   {
+    "say": "xiaoshu",
+    "text": "這是我的寶物盒。化石、石英……還有這個。"
+   },
+   {
+    "narrate": "盒子底下壓著三封信，摺得皺皺的。"
+   },
+   {
+    "say": "xiaoshu",
+    "text": "豆豆寫的。他是我最好的朋友，去年搬去城裡了。"
+   },
+   {
+    "say": "xiaoshu",
+    "text": "他說每個禮拜都會寫信。結果寫了三封就沒了。"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "sad",
+    "text": "是不是城裡比較好玩……他就忘記我了？"
+   },
+   {
+    "choice": [
+     {
+      "text": "他一定沒忘記你",
+      "pts": 60,
+      "goto": "c0"
+     },
+     {
+      "text": "那你寫信給他嘛",
+      "pts": 50,
+      "goto": "c1"
+     },
+     {
+      "text": "城裡是比較好玩啦",
+      "pts": 0,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "shy",
+    "text": "你又不認識他……可是，我也覺得他沒有忘記。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "sad",
+    "text": "我有寫啊！可是寫了五張都丟掉了……字太醜了。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "sad",
+    "text": "……你好壞。可是，好像是真的。"
+   },
+   {
+    "say": "xiaoshu",
+    "text": "哼！這裡也很好玩啊！"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "closed",
+    "text": "嗯……我決定了！我要再寫一封，跟他說這裡有多好玩！"
+   },
+   {
+    "narrate": "小樹趴在地上寫了好久，邊寫邊唸：「這裡來了新農夫，人很好。」"
+   },
+   {
+    "say": "xiaoshu",
+    "text": "「探險」的「險」怎麼寫？……喔，原來是這樣！"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "happy",
+    "text": "寫好了！等豆豆回信，我第一個給你看！"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "xiaoshu_6": {
+  "npc": "xiaoshu",
+  "hearts": 6,
+  "title": "時光膠囊",
+  "steps": [
+   {
+    "fade": "秘密基地旁的大樹下，小樹拿著鏟子挖了一個洞。"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "happy",
+    "text": "你來了！剛剛好！我們要來埋時光膠囊！"
+   },
+   {
+    "say": "xiaoshu",
+    "text": "墨老師說，把寶物埋起來，長大再挖出來，就會想起現在。"
+   },
+   {
+    "narrate": "小樹把餅乾盒放進洞裡，裡面有化石碎片，和一張歪歪的地圖。"
+   },
+   {
+    "say": "xiaoshu",
+    "text": "化石是我最寶貝的！好，換你了！"
+   },
+   {
+    "prompt": "（要放什麼進去？）",
+    "choice": [
+     {
+      "text": "我們田裡的種子",
+      "pts": 80,
+      "goto": "c0",
+      "flag": "xiaoshu_capsule_seed"
+     },
+     {
+      "text": "一張寫給你的紙條",
+      "pts": 60,
+      "goto": "c1",
+      "flag": "xiaoshu_capsule_note"
+     },
+     {
+      "text": "身上的一顆鈕扣",
+      "pts": 40,
+      "goto": "c2",
+      "flag": "xiaoshu_capsule_button"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "happy",
+    "text": "種子！好酷！挖出來的時候，說不定已經長成樹了！"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "shy",
+    "text": "寫給我的？……不行不行，要長大才能看！"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "xiaoshu",
+    "text": "鈕扣？好啦，也算寶物。你的衣服不會掉下來吧？"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "narrate": "你跟小樹一起把土蓋好。小樹插了一根樹枝當記號。"
+   },
+   {
+    "say": "xiaoshu",
+    "text": "欸，我跟你說喔。有時候我會想，為什麼鎮上都沒有別的小孩。"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "sad",
+    "text": "豆豆搬走了。芽芽太小了，不能跑太遠。我常常一個人探險。"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "happy",
+    "text": "不過現在有你們，就不無聊了！"
+   },
+   {
+    "say": "xiaoshu",
+    "text": "等我長大，我們一起來挖。你們兩個都要在喔，說好了！"
+   },
+   {
+    "emote": "❤️"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "closed",
+    "text": "我決定了！我長大要當探險家，也要當農夫！"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
  "yunxiu_2": {
   "npc": "yunxiu",
   "hearts": 2,
@@ -334,6 +2540,228 @@
     "say": "yunxiu",
     "face": "normal",
     "text": "下次你來，我幫你留一本好看的。不准逾期。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "yunxiu_4": {
+  "npc": "yunxiu",
+  "hearts": 4,
+  "title": "慢半拍",
+  "steps": [
+   {
+    "fade": "傍晚的圖書室，雲岫低頭在一本小筆記本上寫字。"
+   },
+   {
+    "say": "yunxiu",
+    "text": "……你來得剛好。不對，來得不太好。我正在寫你。"
+   },
+   {
+    "emote": "❗"
+   },
+   {
+    "narrate": "雲岫把筆記本闔上，用手壓住封面。"
+   },
+   {
+    "say": "yunxiu",
+    "text": "我說過會記大家說的話吧。其實，我還會寫下當時應該怎麼回。"
+   },
+   {
+    "say": "yunxiu",
+    "text": "我講話總是慢半拍。別人說完，我要很久才想到該說什麼。"
+   },
+   {
+    "say": "yunxiu",
+    "face": "sad",
+    "text": "小時候大家聊天，我都插不上話。等我想好，話題已經換了三個。"
+   },
+   {
+    "say": "yunxiu",
+    "face": "closed",
+    "text": "只有書不一樣。書不會催我，我可以翻回去，慢慢想。"
+   },
+   {
+    "say": "yunxiu",
+    "text": "所以我一直待在有書的地方。待著待著，就變成館員了。"
+   },
+   {
+    "choice": [
+     {
+      "text": "慢慢想也沒關係",
+      "pts": 60,
+      "goto": "c0"
+     },
+     {
+      "text": "可是你吐槽很快啊",
+      "pts": 50,
+      "goto": "c1"
+     },
+     {
+      "text": "我也常常這樣",
+      "pts": 30,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "yunxiu",
+    "face": "shy",
+    "text": "……這句話，我要記下來。你說得太快了，我還來不及回。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "yunxiu",
+    "face": "happy",
+    "text": "那不一樣。吐槽不用想。真心話，才要想很久。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "yunxiu",
+    "text": "……騙人。你剛剛明明回得很快。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "narrate": "雲岫重新打開筆記本，寫了一行字，又很快地闔上。"
+   },
+   {
+    "say": "yunxiu",
+    "face": "shy",
+    "text": "今天這一頁，我想寫得好看一點。"
+   },
+   {
+    "say": "yunxiu",
+    "text": "……不准偷看。等你借書一百次都沒有逾期，再考慮。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "yunxiu_6": {
+  "npc": "yunxiu",
+  "hearts": 6,
+  "title": "曬書的午後",
+  "steps": [
+   {
+    "fade": "晴朗的午後，圖書館前的空地上攤滿了書。"
+   },
+   {
+    "say": "yunxiu",
+    "text": "你來了。小心腳下，那本是一百年前的鎮誌。"
+   },
+   {
+    "say": "yunxiu",
+    "face": "sad",
+    "text": "這些是以前漏水時泡濕的書，我捨不得丟。"
+   },
+   {
+    "say": "yunxiu",
+    "text": "今天太陽好，要一頁一頁翻開來曬。一個人翻不完。"
+   },
+   {
+    "say": "yunxiu",
+    "face": "shy",
+    "text": "……所以，你要不要幫忙？"
+   },
+   {
+    "narrate": "你和雲岫蹲在書堆中間，把黏住的書頁一張一張分開。"
+   },
+   {
+    "say": "yunxiu",
+    "face": "happy",
+    "text": "你看，這裡寫著「晴谷」。那時候，還沒有「耕」字。"
+   },
+   {
+    "wait": 1
+   },
+   {
+    "say": "yunxiu",
+    "face": "closed",
+    "text": "我以前覺得書比人好懂。書不會突然改變主意，也不會先走掉。"
+   },
+   {
+    "say": "yunxiu",
+    "face": "shy",
+    "text": "最近……有幾個人，我也想慢慢讀懂。"
+   },
+   {
+    "choice": [
+     {
+      "text": "那就慢慢讀吧",
+      "pts": 60,
+      "goto": "c0"
+     },
+     {
+      "text": "是哪幾個人？",
+      "pts": 40,
+      "goto": "c1"
+     },
+     {
+      "text": "讀我的話，不准逾期",
+      "pts": 80,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "yunxiu",
+    "face": "happy",
+    "text": "……嗯。反正你們看起來，不會那麼快就搬走。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "yunxiu",
+    "text": "……明知故問。你們兩個，就是其中兩個。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "yunxiu",
+    "face": "happy",
+    "text": "……那是我的台詞。好，不逾期。我會好好讀完。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "yunxiu",
+    "text": "這本鎮誌，最後一頁停在很多年前。……我想，下一頁可以寫你們。"
+   },
+   {
+    "narrate": "風吹過來，滿地的書頁嘩啦啦地翻動，像在點頭。"
+   },
+   {
+    "say": "yunxiu",
+    "text": "……不要一直看我。看書，還有很多頁。"
    },
    {
     "end": true
@@ -426,6 +2854,230 @@
    }
   ]
  },
+ "ayan_4": {
+  "npc": "ayan",
+  "hearts": 4,
+  "title": "老爸的手",
+  "steps": [
+   {
+    "fade": "夜裡，澡堂打烊了，只有鍋爐間還亮著燈。"
+   },
+   {
+    "say": "ayan",
+    "face": "happy",
+    "text": "喔！是你！這麼晚還沒睡？我在等火慢慢熄。"
+   },
+   {
+    "say": "ayan",
+    "text": "我媽剛剛又打電話來了。每個禮拜都問一樣的事：「水溫幾度？」"
+   },
+   {
+    "say": "ayan",
+    "face": "shy",
+    "text": "我都說剛剛好。……其實我又忘了量。哈哈。"
+   },
+   {
+    "say": "ayan",
+    "text": "以前是我爸在顧的。他把手伸進水裡，就知道幾度，一度都不差。"
+   },
+   {
+    "say": "ayan",
+    "text": "後來他腰受傷，跟我媽搬去城裡養病，澡堂就交給我了。"
+   },
+   {
+    "say": "ayan",
+    "face": "sad",
+    "text": "可是我的手，摸起來只知道燙跟不燙。"
+   },
+   {
+    "choice": [
+     {
+      "text": "你可以慢慢學啊",
+      "pts": 60,
+      "goto": "c0"
+     },
+     {
+      "text": "買支溫度計吧",
+      "pts": 40,
+      "goto": "c1"
+     },
+     {
+      "text": "那收起來算了",
+      "pts": 0,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "ayan",
+    "text": "慢慢學……對耶。我爸好像說過，他也摸了三十年才摸準。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "ayan",
+    "face": "happy",
+    "text": "我有啊！三支！……只是不知道都放到哪裡去了。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "ayan",
+    "face": "sad",
+    "text": "不行！……這是我家的澡堂。再舊再爛，也是我家的。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "ayan",
+    "face": "closed",
+    "text": "我爸說，澡堂是讓人把一整天的累放下來的地方。"
+   },
+   {
+    "say": "ayan",
+    "text": "所以水溫不能隨便。累的人泡到不對的水，只會更累。"
+   },
+   {
+    "say": "ayan",
+    "face": "happy",
+    "text": "……呼，講出來好多了！你果然是好人！"
+   },
+   {
+    "say": "ayan",
+    "text": "啊，今天說的不要跟我媽說喔！尤其是我又忘了量的事！"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "ayan_6": {
+  "npc": "ayan",
+  "hearts": 6,
+  "title": "說好的第一池",
+  "steps": [
+   {
+    "fade": "清晨，澡堂還沒開門，煙囪冒著細細的白煙。"
+   },
+   {
+    "say": "ayan",
+    "face": "happy",
+    "text": "你來啦！快來快來，今天是大日子！"
+   },
+   {
+    "say": "ayan",
+    "text": "四十一度。我量了三次，還用手摸過。跟我爸以前一樣。"
+   },
+   {
+    "narrate": "阿焱把手伸進池子裡，閉上眼睛，好一陣子沒說話。"
+   },
+   {
+    "say": "ayan",
+    "face": "closed",
+    "text": "……嗯。就是這個溫度。"
+   },
+   {
+    "say": "ayan",
+    "face": "happy",
+    "text": "說好要請你泡第一池的！來，先泡個腳，老闆招待！"
+   },
+   {
+    "narrate": "你和阿焱坐在池邊，把腳泡進熱水裡。熱氣慢慢爬上來。"
+   },
+   {
+    "emote": "🎵"
+   },
+   {
+    "say": "ayan",
+    "text": "……老實說，接下澡堂的時候，我很怕做不好。"
+   },
+   {
+    "say": "ayan",
+    "face": "sad",
+    "text": "客人越來越少，我每天燒水，都覺得自己只是在硬撐。"
+   },
+   {
+    "say": "ayan",
+    "text": "可是看你們把那塊荒地弄成那樣……我也想再拚一下。"
+   },
+   {
+    "choice": [
+     {
+      "text": "我們陪你一起拚",
+      "pts": 80,
+      "goto": "c0"
+     },
+     {
+      "text": "你已經做得很好了",
+      "pts": 60,
+      "goto": "c1"
+     },
+     {
+      "text": "水溫真的剛剛好",
+      "pts": 40,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "ayan",
+    "face": "shy",
+    "text": "一、一起？……你這樣說，我會當真喔！"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "ayan",
+    "face": "shy",
+    "text": "真的嗎？……嘿嘿，被你誇，比被我媽誇還開心。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "ayan",
+    "face": "happy",
+    "text": "對吧！對吧！我這次真的有量！"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "ayan",
+    "text": "好！那第一步，冰牛奶！泡完澡來一瓶，一定會紅！"
+   },
+   {
+    "say": "ayan",
+    "face": "happy",
+    "text": "牛奶就跟你們農場訂！以後澡堂的招牌，就是冰牛奶跟剛剛好的水！"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
  "youzi_2": {
   "npc": "youzi",
   "hearts": 2,
@@ -506,6 +3158,235 @@
     "say": "youzi",
     "face": "normal",
     "text": "這朵送你。要記得跟它說早安喔。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "youzi_4": {
+  "npc": "youzi",
+  "hearts": 4,
+  "title": "說給花聽",
+  "steps": [
+   {
+    "fade": "打烊後的花店，柚子對著鬱金香小聲說話……"
+   },
+   {
+    "say": "youzi",
+    "text": "歡、歡迎光臨……請問花要送給誰呢？……不對，要笑。"
+   },
+   {
+    "narrate": "柚子一轉頭看到你，臉一下子紅了。"
+   },
+   {
+    "say": "youzi",
+    "face": "shy",
+    "text": "你、你都聽到了？……我在練習。不要笑我。"
+   },
+   {
+    "say": "youzi",
+    "text": "今天有客人問我，道歉要送什麼花。我一緊張就說不出話。"
+   },
+   {
+    "say": "youzi",
+    "face": "sad",
+    "text": "從小就這樣。一跟人說話，腦袋就變成一朵白白的雲。"
+   },
+   {
+    "say": "youzi",
+    "face": "closed",
+    "text": "外婆說過：「說不出口的話，先說給花聽。花會幫你記著。」"
+   },
+   {
+    "say": "youzi",
+    "text": "所以我每天跟花說話。說早安、說晚安，說不敢跟人說的事。"
+   },
+   {
+    "choice": [
+     {
+      "text": "那也說給我聽吧",
+      "pts": 60,
+      "goto": "c0"
+     },
+     {
+      "text": "外婆說得真好",
+      "pts": 50,
+      "goto": "c1"
+     },
+     {
+      "text": "練習真的有用嗎？",
+      "pts": 20,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "youzi",
+    "face": "shy",
+    "text": "說給你聽？那、那你要假裝是一朵花喔。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "youzi",
+    "face": "happy",
+    "text": "對吧！外婆的花園，是全世界最會聽人說話的花園。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "youzi",
+    "face": "sad",
+    "text": "……不知道。可是不練習，我連一句都說不出來。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "youzi",
+    "text": "……那個。謝謝你常常來看我。"
+   },
+   {
+    "narrate": "柚子說完，自己愣了一下。"
+   },
+   {
+    "say": "youzi",
+    "face": "happy",
+    "text": "剛剛那句，我沒有先跟花練習喔！嘿嘿。"
+   },
+   {
+    "emote": "😊"
+   },
+   {
+    "say": "youzi",
+    "text": "下次那位客人再來，我就能說了：道歉，要送白色的鬱金香。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "youzi_6": {
+  "npc": "youzi",
+  "hearts": 6,
+  "title": "招牌上的名字",
+  "steps": [
+   {
+    "fade": "清晨的花店還沒開門，柚子在櫃台上攤開一張畫。"
+   },
+   {
+    "say": "youzi",
+    "face": "happy",
+    "text": "你來得正好！你看，這是小澄幫我畫的。"
+   },
+   {
+    "narrate": "畫裡是一間小小的花店，窗台擺滿了花，門口掛著一塊空白的招牌。"
+   },
+   {
+    "say": "youzi",
+    "face": "shy",
+    "text": "我的夢想，是開一間屬於自己的花店。"
+   },
+   {
+    "say": "youzi",
+    "text": "以前只敢對花說。現在……敢對你說了。"
+   },
+   {
+    "say": "youzi",
+    "face": "sad",
+    "text": "可是招牌上的名字，我想了好久好久，還是想不出來。"
+   },
+   {
+    "say": "youzi",
+    "text": "你幫我想好不好？我覺得你取的名字，花也會喜歡。"
+   },
+   {
+    "prompt": "（招牌要寫什麼？）",
+    "choice": [
+     {
+      "text": "說晚安的花店",
+      "pts": 60,
+      "goto": "c0",
+      "flag": "youzi_shop_goodnight"
+     },
+     {
+      "text": "柚子的花園",
+      "pts": 50,
+      "goto": "c1",
+      "flag": "youzi_shop_garden"
+     },
+     {
+      "text": "會說話的花",
+      "pts": 80,
+      "goto": "c2",
+      "flag": "youzi_shop_talking"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "youzi",
+    "face": "happy",
+    "text": "說晚安的花店……每天晚上都有人跟花說晚安。好溫柔。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "youzi",
+    "face": "shy",
+    "text": "用我的名字？好、好害羞……可是，好像真的不錯。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "youzi",
+    "face": "happy",
+    "text": "你還記得！那天我蹲在門口，說花在跟我說話。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "narrate": "柚子拿起鉛筆，把名字輕輕寫在招牌上。"
+   },
+   {
+    "say": "youzi",
+    "text": "先用鉛筆寫。等真的開店那天，再用顏料寫上去。"
+   },
+   {
+    "say": "youzi",
+    "face": "closed",
+    "text": "到那天，窗台上的第一盆花，我要用你們農場種的。"
+   },
+   {
+    "say": "youzi",
+    "face": "happy",
+    "text": "開幕的時候，你們兩個都要來喔。第一束花，我要送給你們。"
+   },
+   {
+    "emote": "😊"
    },
    {
     "end": true
@@ -598,6 +3479,231 @@
    }
   ]
  },
+ "atie_4": {
+  "npc": "atie",
+  "hearts": 4,
+  "title": "晚了一天",
+  "steps": [
+   {
+    "fade": "末班車開走以後，阿鐵坐在月台的長椅上，擦著一支舊哨子。"
+   },
+   {
+    "say": "atie",
+    "text": "……你來了。坐。"
+   },
+   {
+    "say": "atie",
+    "text": "這支哨子是我父親的。他在這個站，當了三十年的站長。"
+   },
+   {
+    "say": "atie",
+    "text": "我十八歲那年，搭火車去城裡念書。他說，放假回來，他會在月台等。"
+   },
+   {
+    "say": "atie",
+    "text": "第一個暑假，我晚了一天才回來。跟同學去玩，忘了寫信說。"
+   },
+   {
+    "say": "atie",
+    "face": "sad",
+    "text": "他從第一班車，等到最後一班車。"
+   },
+   {
+    "wait": 1
+   },
+   {
+    "say": "atie",
+    "face": "closed",
+    "text": "他沒有罵我。只說了一句：「回來就好。」"
+   },
+   {
+    "choice": [
+     {
+      "text": "所以你才這麼守時",
+      "pts": 60,
+      "goto": "c0"
+     },
+     {
+      "text": "你爸爸一定很擔心",
+      "pts": 50,
+      "goto": "c1"
+     },
+     {
+      "text": "一天而已嘛",
+      "pts": 0,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "atie",
+    "text": "……嗯。時刻表是一種承諾。因為月台上，有人在等。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "atie",
+    "face": "sad",
+    "text": "……那天他連午飯都沒吃。怕一走開，我剛好下車。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "atie",
+    "text": "……一天，是六班車。他每一班都站起來看。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "atie",
+    "text": "從那天起，我沒有再遲到過。一分鐘都沒有。"
+   },
+   {
+    "say": "atie",
+    "face": "happy",
+    "text": "芽芽來看火車，我都給她準備小板凳。等人的人，要有位子坐。"
+   },
+   {
+    "narrate": "阿鐵把哨子擦得發亮，小心地收進胸前的口袋。"
+   },
+   {
+    "say": "atie",
+    "face": "shy",
+    "text": "……今天話說太多了。你也早點回去休息。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "atie_6": {
+  "npc": "atie",
+  "hearts": 6,
+  "title": "芽芽的哨聲",
+  "steps": [
+   {
+    "fade": "傍晚的月台。芽芽坐在小板凳上，阿鐵站在一旁看著懷錶。"
+   },
+   {
+    "say": "atie",
+    "text": "……你來得剛好。芽芽說，想吹一次哨子。"
+   },
+   {
+    "say": "atie",
+    "text": "最後一班車，我想讓她吹。你牽著她，站在黃線後面。"
+   },
+   {
+    "say": "yaya",
+    "face": "shy",
+    "text": "……我、我怕吹不響。"
+   },
+   {
+    "choice": [
+     {
+      "text": "我會牽好芽芽",
+      "pts": 60,
+      "goto": "c0"
+     },
+     {
+      "text": "芽芽一定吹得響",
+      "pts": 60,
+      "goto": "c1"
+     },
+     {
+      "text": "我也想吹看看",
+      "pts": 20,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "yaya",
+    "face": "happy",
+    "text": "……嗯。你的手好暖。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "yaya",
+    "face": "shy",
+    "text": "真、真的嗎？……那我用力吹。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "atie",
+    "face": "closed",
+    "text": "……排隊。芽芽先。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "narrate": "火車來了。阿鐵看了一眼懷錶，對芽芽點點頭。"
+   },
+   {
+    "say": "yaya",
+    "face": "closed",
+    "text": "嗶——！"
+   },
+   {
+    "say": "yaya",
+    "face": "happy",
+    "text": "吹響了！阿鐵叔叔，我吹響了！"
+   },
+   {
+    "emote": "👍"
+   },
+   {
+    "say": "atie",
+    "face": "happy",
+    "text": "……嗯。誤點零分鐘。吹得很好。"
+   },
+   {
+    "narrate": "火車開走了。芽芽抱著小板凳，蹦蹦跳跳地跑回家。"
+   },
+   {
+    "say": "atie",
+    "face": "shy",
+    "text": "……我不太會說話。但你們搬來以後，我每天會多看一次，時刻表以外的東西。"
+   },
+   {
+    "say": "atie",
+    "face": "closed",
+    "text": "像今天的夕陽。像芽芽的哨聲。"
+   },
+   {
+    "say": "atie",
+    "text": "這支哨子，總有一天要交給下一個人。……今天，先借她吹一次。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
  "haibo_2": {
   "npc": "haibo",
   "hearts": 2,
@@ -678,6 +3784,234 @@
     "say": "haibo",
     "face": "normal",
     "text": "海很大，人很小。所以要好好珍惜身邊的人。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "haibo_4": {
+  "npc": "haibo",
+  "hearts": 4,
+  "title": "小滿月的名字",
+  "steps": [
+   {
+    "fade": "傍晚的碼頭，海伯坐在一艘舊漁船上補網。"
+   },
+   {
+    "say": "haibo",
+    "face": "happy",
+    "text": "喲，來得正好！幫我拉住網子這頭，我邊補邊講古給你聽。"
+   },
+   {
+    "say": "haibo",
+    "face": "normal",
+    "text": "這艘就是「小滿月」。名字是我老伴取的。"
+   },
+   {
+    "say": "haibo",
+    "face": "happy",
+    "text": "她說滿月的晚上海面最亮，船最容易找到回家的路。"
+   },
+   {
+    "say": "haibo",
+    "face": "normal",
+    "text": "以前每天傍晚，她都會爬上燈塔，看我的船回來了沒有。"
+   },
+   {
+    "say": "haibo",
+    "face": "sad",
+    "text": "有一年遇上大風浪，我在海上漂了三天三夜。"
+   },
+   {
+    "say": "haibo",
+    "face": "sad",
+    "text": "回來的時候，她還站在燈塔上。三天，都沒有下來過。"
+   },
+   {
+    "wait": 1
+   },
+   {
+    "say": "haibo",
+    "face": "closed",
+    "text": "她走了以後，換我每天爬上去看海。"
+   },
+   {
+    "say": "haibo",
+    "face": "sad",
+    "text": "到現在我才知道，等一個人有多久。我讓她等了一輩子啊。"
+   },
+   {
+    "choice": [
+     {
+      "text": "她等的是你啊",
+      "pts": 70,
+      "goto": "c0"
+     },
+     {
+      "text": "你一定很想她",
+      "pts": 50,
+      "goto": "c1"
+     },
+     {
+      "text": "那次浪有多高？",
+      "pts": 20,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "haibo",
+    "face": "shy",
+    "text": "……是啊。每次我一回來，她都先罵我笨蛋，再煮一大鍋海鮮湯。"
+   },
+   {
+    "emote": "😊"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "haibo",
+    "face": "closed",
+    "text": "想啊，每天都想。她以前站的那扇窗，我每天都擦得乾乾淨淨。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "haibo",
+    "face": "happy",
+    "text": "三層樓高！……這次是真的。好啦，兩層半。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "haibo",
+    "face": "normal",
+    "text": "這些話，我很久沒跟人說了。謝謝你陪老頭子坐一下。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "haibo_6": {
+  "npc": "haibo",
+  "hearts": 6,
+  "title": "最好的港口",
+  "steps": [
+   {
+    "fade": "入夜的碼頭沒有風，海面平得像鏡子。"
+   },
+   {
+    "say": "haibo",
+    "face": "normal",
+    "text": "今晚的星星很清楚。……要不要陪老頭子出海走走？"
+   },
+   {
+    "say": "haibo",
+    "face": "happy",
+    "text": "別緊張，就到港口外面一點點。我還划得動！"
+   },
+   {
+    "narrate": "「小滿月」慢慢離開碼頭。海伯握著船槳的手，抖了一下。"
+   },
+   {
+    "say": "haibo",
+    "face": "sad",
+    "text": "……被你看到了。老實說，她走了以後，我就沒再出過海。"
+   },
+   {
+    "say": "haibo",
+    "face": "closed",
+    "text": "不是划不動，是怕。怕回來的時候，碼頭上沒有人在等。"
+   },
+   {
+    "choice": [
+     {
+      "text": "今天有我在啊",
+      "pts": 70,
+      "goto": "c0"
+     },
+     {
+      "text": "教我看星星吧",
+      "pts": 50,
+      "goto": "c1"
+     },
+     {
+      "text": "要不要先回去？",
+      "pts": 20,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "haibo",
+    "face": "shy",
+    "text": "……是啊，今天船上有人。好，那就再划遠一點。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "haibo",
+    "face": "happy",
+    "text": "好！看那顆最亮的，那是北邊。認得它，就不會迷路。"
+   },
+   {
+    "emote": "😊"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "haibo",
+    "face": "normal",
+    "text": "……不。都出來了，現在回頭，她會笑我的。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "narrate": "海伯停下船槳。從海上看回去，岸邊亮著一點一點的燈。"
+   },
+   {
+    "say": "haibo",
+    "face": "normal",
+    "text": "看，遠遠的那一盞，就是你們農場吧。"
+   },
+   {
+    "say": "haibo",
+    "face": "closed",
+    "text": "老了才知道，最好的港口，是有人等你回來的地方。"
+   },
+   {
+    "say": "haibo",
+    "face": "happy",
+    "text": "回去吧，別讓等你的人等太久。……這句話，我花了一輩子才學會。"
+   },
+   {
+    "emote": "❤️"
    },
    {
     "end": true
@@ -770,6 +4104,233 @@
    }
   ]
  },
+ "yaya_4": {
+  "npc": "yaya",
+  "hearts": 4,
+  "title": "小鳥要回家了",
+  "steps": [
+   {
+    "fade": "早上的寵物店門口，芽芽抱著一個小紙箱。"
+   },
+   {
+    "say": "yaya",
+    "face": "happy",
+    "text": "你來了！小鳥的翅膀好了，阿汪叔說可以放牠回家了。"
+   },
+   {
+    "say": "yaya",
+    "face": "shy",
+    "text": "我、我說好要第一個告訴你的。我們有打勾勾。"
+   },
+   {
+    "say": "awangshu",
+    "face": "happy",
+    "text": "這小傢伙好得超快！都是芽芽每天來陪牠說話！"
+   },
+   {
+    "say": "yaya",
+    "face": "sad",
+    "text": "……可是牠飛走了，就不會回來了吧。"
+   },
+   {
+    "say": "yaya",
+    "face": "shy",
+    "text": "我跟人說話的時候，聲音都會不見。"
+   },
+   {
+    "say": "yaya",
+    "face": "sad",
+    "text": "只有跟小鳥說話，聲音才會跑出來。牠走了，我要跟誰說……"
+   },
+   {
+    "choice": [
+     {
+      "text": "跟我說啊",
+      "pts": 70,
+      "goto": "c0"
+     },
+     {
+      "text": "牠會回來看你的",
+      "pts": 50,
+      "goto": "c1"
+     },
+     {
+      "text": "再多養幾天吧",
+      "pts": 0,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "yaya",
+    "face": "shy",
+    "text": "跟你說？……嗯。你聽，我的聲音現在沒有不見耶。"
+   },
+   {
+    "emote": "😊"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "yaya",
+    "face": "happy",
+    "text": "真的嗎？那我每天都要去樹下等牠。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "awangshu",
+    "face": "normal",
+    "text": "不行喔！翅膀好了就要讓牠飛，一直關著牠會難過的！"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "narrate": "芽芽打開紙箱。小鳥跳到箱子邊，啾了一聲，飛上天空。"
+   },
+   {
+    "narrate": "牠在你們頭上繞了一圈，停在不遠的樹枝上。"
+   },
+   {
+    "say": "yaya",
+    "face": "happy",
+    "text": "牠在看我們！牠沒有飛很遠耶！"
+   },
+   {
+    "say": "yaya",
+    "face": "closed",
+    "text": "……你知道嗎，我今天跟你說了好多好多話。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "yaya_6": {
+  "npc": "yaya",
+  "hearts": 6,
+  "title": "口袋裡的石頭",
+  "steps": [
+   {
+    "fade": "湖邊的石頭灘，芽芽蹲在水邊。"
+   },
+   {
+    "say": "yaya",
+    "face": "happy",
+    "text": "你來了！你看，我口袋裡的三顆石頭。今天可以給你摸摸看。"
+   },
+   {
+    "say": "yaya",
+    "face": "normal",
+    "text": "這顆灰灰的是貓。牠很安靜，可是都會聽我說話。"
+   },
+   {
+    "say": "yaya",
+    "face": "happy",
+    "text": "這顆尖尖的是小樹哥哥。因為他很皮。"
+   },
+   {
+    "say": "yaya",
+    "face": "shy",
+    "text": "這顆亮亮的，本來沒有名字。……現在它叫{me}。"
+   },
+   {
+    "say": "yaya",
+    "face": "shy",
+    "text": "因為你是我第三個朋友。所以你的口袋裡，也要有一顆芽芽。"
+   },
+   {
+    "narrate": "你和芽芽在石頭灘上找了好久，挑出了三顆。"
+   },
+   {
+    "prompt": "（要選哪一顆當芽芽？）",
+    "choice": [
+     {
+      "text": "這顆像雞蛋",
+      "pts": 80,
+      "goto": "c0"
+     },
+     {
+      "text": "這顆有條紋",
+      "pts": 50,
+      "goto": "c1"
+     },
+     {
+      "text": "最大的這顆",
+      "pts": 20,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "yaya",
+    "face": "happy",
+    "text": "真的好像雞蛋！……它會不會孵出小雞啊？"
+   },
+   {
+    "emote": "😊"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "yaya",
+    "face": "happy",
+    "text": "條紋……好像貓的尾巴！好漂亮，我喜歡。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "yaya",
+    "face": "shy",
+    "text": "好、好大喔……你的口袋會破掉啦。……不過沒關係。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "narrate": "芽芽把石頭放在你的手心，再用小手把你的手指頭合起來。"
+   },
+   {
+    "say": "yaya",
+    "face": "closed",
+    "text": "好了。這顆是芽芽，你要一直放在口袋裡喔。"
+   },
+   {
+    "say": "yaya",
+    "face": "happy",
+    "text": "想我的時候就摸摸它。我也會摸摸口袋裡的你。"
+   },
+   {
+    "emote": "❤️"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
  "molaoshi_2": {
   "npc": "molaoshi",
   "hearts": 2,
@@ -856,6 +4417,241 @@
    }
   ]
  },
+ "molaoshi_4": {
+  "npc": "molaoshi",
+  "hearts": 4,
+  "title": "最後一個老師",
+  "steps": [
+   {
+    "fade": "放學後的校門口，小樹和芽芽一前一後跑遠了。"
+   },
+   {
+    "say": "molaoshi",
+    "face": "happy",
+    "text": "跑慢一點！……唉，孩子的腳，總是比大人的話快。"
+   },
+   {
+    "say": "molaoshi",
+    "face": "normal",
+    "text": "你知道嗎？我在城裡教了十年書，才搬來晴耕谷。"
+   },
+   {
+    "say": "molaoshi",
+    "face": "happy",
+    "text": "第一年，班上有二十三個學生。那盆五葉松就是他們送的。"
+   },
+   {
+    "say": "molaoshi",
+    "face": "normal",
+    "text": "後來一年比一年少。孩子長大了，一個一個去了城裡。"
+   },
+   {
+    "say": "molaoshi",
+    "face": "sad",
+    "text": "現在全校，只剩下小樹和芽芽兩個了。"
+   },
+   {
+    "say": "molaoshi",
+    "face": "closed",
+    "text": "等他們畢業……我會不會是這裡最後一個老師呢。"
+   },
+   {
+    "choice": [
+     {
+      "text": "他們很喜歡你",
+      "pts": 70,
+      "goto": "c0"
+     },
+     {
+      "text": "還會有新的孩子",
+      "pts": 50,
+      "goto": "c1"
+     },
+     {
+      "text": "你會回城裡嗎？",
+      "pts": 20,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "molaoshi",
+    "face": "shy",
+    "text": "是嗎？……他們上課老是在問午餐吃什麼呢。"
+   },
+   {
+    "say": "molaoshi",
+    "face": "happy",
+    "text": "不過，這句話你說，我就信了。"
+   },
+   {
+    "emote": "😊"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "molaoshi",
+    "face": "happy",
+    "text": "……也是。以前也沒有人想到，會有人來種那塊荒地。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "molaoshi",
+    "face": "normal",
+    "text": "不回去了。城裡不缺老師，這裡缺。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "molaoshi",
+    "face": "normal",
+    "text": "看你們的田一天天綠起來，我想，還不到放棄的時候。"
+   },
+   {
+    "say": "molaoshi",
+    "face": "happy",
+    "text": "松樹長得慢，可是從來沒停過。我也不該先停下來。"
+   },
+   {
+    "say": "molaoshi",
+    "face": "normal",
+    "text": "改天來給孩子們上一課吧。農夫的課，比我的有趣。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "molaoshi_6": {
+  "npc": "molaoshi",
+  "hearts": 6,
+  "title": "菜園裡的一堂課",
+  "steps": [
+   {
+    "fade": "週末的早上，廣場南邊的小菜園。"
+   },
+   {
+    "say": "molaoshi",
+    "face": "happy",
+    "text": "各位同學，今天的老師不是我，是這位農夫。"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "happy",
+    "text": "耶！老師老師，種子要種多深？跟蚯蚓住的地方一樣深嗎？"
+   },
+   {
+    "say": "yaya",
+    "face": "shy",
+    "text": "……我、我想種會開花的。"
+   },
+   {
+    "say": "molaoshi",
+    "face": "normal",
+    "text": "來，請老師開始吧。我也在旁邊聽。"
+   },
+   {
+    "prompt": "（要怎麼教？）",
+    "choice": [
+     {
+      "text": "先摸摸看土",
+      "pts": 70,
+      "goto": "c0"
+     },
+     {
+      "text": "我先種一次給你們看",
+      "pts": 50,
+      "goto": "c1"
+     },
+     {
+      "text": "直接撒下去就好",
+      "pts": 10,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "yaya",
+    "face": "happy",
+    "text": "軟軟的……好像在摸小雞的肚子。"
+   },
+   {
+    "say": "molaoshi",
+    "face": "happy",
+    "text": "先認識土，再來種。這一課，我教了三十年都沒想到。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "happy",
+    "text": "挖洞、放種子、蓋起來！我會了！我真的會了！"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "happy",
+    "text": "撒——！哇，種子飛到芽芽頭上了！"
+   },
+   {
+    "say": "molaoshi",
+    "face": "closed",
+    "text": "……嗯，也算是一種教法。我們一起撿回來吧。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "narrate": "下課的時候，兩個孩子比賽誰的手比較髒，笑個不停。"
+   },
+   {
+    "say": "molaoshi",
+    "face": "normal",
+    "text": "老實說，我寫好了一封信。打算等他們畢業，就退休。"
+   },
+   {
+    "say": "molaoshi",
+    "face": "closed",
+    "text": "可是今天在旁邊聽你上課……我發現，我還有好多沒學會。"
+   },
+   {
+    "say": "molaoshi",
+    "face": "shy",
+    "text": "那封信，回去我就撕掉。再教幾年吧。……謝謝你，老師。"
+   },
+   {
+    "emote": "❤️"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
  "maisui_2": {
   "npc": "maisui",
   "hearts": 2,
@@ -936,6 +4732,231 @@
     "say": "maisui",
     "face": "normal",
     "text": "下次比賽，我幫你們報名。不准輸。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "maisui_4": {
+  "npc": "maisui",
+  "hearts": 4,
+  "title": "阿公的麥田",
+  "steps": [
+   {
+    "fade": "農會關門後，麥穗坐在門口的台階上，手裡轉著一根麥穗。"
+   },
+   {
+    "say": "maisui",
+    "face": "normal",
+    "text": "……幹嘛？下班時間，我也可以發呆吧。"
+   },
+   {
+    "say": "maisui",
+    "face": "normal",
+    "text": "坐吧。看到麥子，就會想起我阿公。他以前在山腳下有一塊麥田。"
+   },
+   {
+    "say": "maisui",
+    "face": "happy",
+    "text": "我的名字是他取的。他說，麥穗越飽滿，頭就垂得越低。"
+   },
+   {
+    "say": "maisui",
+    "face": "shy",
+    "text": "結果我長成這樣。一點都不會低頭。"
+   },
+   {
+    "say": "maisui",
+    "face": "sad",
+    "text": "我十歲那年，阿公病倒了。那塊田，一個夏天就被雜草吃掉了。"
+   },
+   {
+    "say": "maisui",
+    "face": "sad",
+    "text": "我每天放學都去拔，可是怎麼拔，都比不上它長的速度。"
+   },
+   {
+    "say": "maisui",
+    "face": "closed",
+    "text": "後來，田賣掉了。我什麼都做不到。"
+   },
+   {
+    "choice": [
+     {
+      "text": "所以你才進農會？",
+      "pts": 60,
+      "goto": "c0"
+     },
+     {
+      "text": "阿公會以你為榮",
+      "pts": 70,
+      "goto": "c1"
+     },
+     {
+      "text": "你可以學著低頭",
+      "pts": 0,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "maisui",
+    "face": "normal",
+    "text": "……對。我不想再看到任何一塊地荒掉。一塊都不要。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "maisui",
+    "face": "shy",
+    "text": "……少來。不過，嗯。他大概會先說我太兇。"
+   },
+   {
+    "emote": "😊"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "maisui",
+    "face": "happy",
+    "text": "哈，阿公也這樣說過。……我考慮看看。考慮完了，不要。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "maisui",
+    "face": "normal",
+    "text": "所以我才一直催你們拔草。不是因為我愛管。"
+   },
+   {
+    "say": "maisui",
+    "face": "shy",
+    "text": "……好吧，也有一點是。總之，你們的田，不准荒掉。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "maisui_6": {
+  "npc": "maisui",
+  "hearts": 6,
+  "title": "劃掉的那一行",
+  "steps": [
+   {
+    "fade": "下過雨的傍晚，農會辦公室只剩一盞燈。"
+   },
+   {
+    "say": "maisui",
+    "face": "normal",
+    "text": "你來了。門關上，這個我只給你看。"
+   },
+   {
+    "narrate": "麥穗從抽屜最底下拿出一本舊筆記本，封面寫著「荒地」兩個字。"
+   },
+   {
+    "say": "maisui",
+    "face": "normal",
+    "text": "我進農會那天就開始記了。谷裡每一塊荒掉的地，都在這裡。"
+   },
+   {
+    "say": "maisui",
+    "face": "sad",
+    "text": "五年來，只有多，沒有少。每寫一行，我就想起阿公的田。"
+   },
+   {
+    "say": "maisui",
+    "face": "happy",
+    "text": "可是這一行，寫的是你們的農場。今天，可以劃掉了。"
+   },
+   {
+    "say": "maisui",
+    "face": "shy",
+    "text": "這一筆，我想讓你來劃。……不准笑我幼稚。"
+   },
+   {
+    "prompt": "（要怎麼劃？）",
+    "choice": [
+     {
+      "text": "畫一條直線",
+      "pts": 40,
+      "goto": "c0"
+     },
+     {
+      "text": "旁邊寫「有人種了」",
+      "pts": 70,
+      "goto": "c1"
+     },
+     {
+      "text": "畫一根麥穗",
+      "pts": 60,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "maisui",
+    "face": "happy",
+    "text": "乾淨俐落。很好，跟我做的報表一樣。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "maisui",
+    "face": "shy",
+    "text": "……有人種了。嗯。這四個字，我等了好久。"
+   },
+   {
+    "emote": "❤️"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "maisui",
+    "face": "happy",
+    "text": "……畫得真醜。可是，我很喜歡。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "maisui",
+    "face": "closed",
+    "text": "以前我覺得，什麼事都自己做最快。別人做的，我看不下去。"
+   },
+   {
+    "say": "maisui",
+    "face": "normal",
+    "text": "可是這一行，我一個人劃不掉。是你們，讓那塊地不用再等。"
+   },
+   {
+    "say": "maisui",
+    "face": "shy",
+    "text": "剩下的那些，以後也陪我一起劃，好嗎？……我很少拜託人的。"
    },
    {
     "end": true
@@ -1033,6 +5054,238 @@
    }
   ]
  },
+ "laosong_4": {
+  "npc": "laosong",
+  "hearts": 4,
+  "title": "掃完這一季",
+  "steps": [
+   {
+    "fade": "起霧的清晨，老松拄著舊掃帚，站在小祠前。"
+   },
+   {
+    "say": "laosong",
+    "face": "normal",
+    "text": "……啊……你來了……霧這麼大……也上來……"
+   },
+   {
+    "say": "laosong",
+    "face": "happy",
+    "text": "……這把掃帚……比你……還要老喔……"
+   },
+   {
+    "say": "laosong",
+    "face": "normal",
+    "text": "……我二十歲那年……本來……要下山……去城裡……"
+   },
+   {
+    "say": "laosong",
+    "face": "normal",
+    "text": "……走的前一天……守祠的老爺爺……把它……交給我……"
+   },
+   {
+    "say": "laosong",
+    "face": "closed",
+    "text": "……他說……掃完這一季……再走……"
+   },
+   {
+    "wait": 1
+   },
+   {
+    "say": "laosong",
+    "face": "happy",
+    "text": "……一季……又一季……掃著掃著……就五十年了……"
+   },
+   {
+    "choice": [
+     {
+      "text": "為什麼沒有走？",
+      "pts": 60,
+      "goto": "c0"
+     },
+     {
+      "text": "你掃得好乾淨",
+      "pts": 40,
+      "goto": "c1"
+     },
+     {
+      "text": "你被騙了嘛",
+      "pts": 20,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "laosong",
+    "face": "closed",
+    "text": "……每掃一次……落葉少一點……心……就靜一點……"
+   },
+   {
+    "say": "laosong",
+    "face": "normal",
+    "text": "……等我發現……已經……捨不得了……"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "laosong",
+    "face": "happy",
+    "text": "……乾淨……不重要……每天……有人在……就好……"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "laosong",
+    "face": "happy",
+    "text": "……呵呵……是啊……騙得……很好……"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "laosong",
+    "face": "sad",
+    "text": "……只是……我老了……掃不動那天……誰來掃呢……"
+   },
+   {
+    "say": "laosong",
+    "face": "normal",
+    "text": "……後面的神木……也跟我一樣……在等……"
+   },
+   {
+    "say": "laosong",
+    "face": "closed",
+    "text": "……今天……話說多了……霧散了……下山小心……"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "laosong_6": {
+  "npc": "laosong",
+  "hearts": 6,
+  "title": "為來的人種樹",
+  "steps": [
+   {
+    "fade": "午後的山路兩旁，松樹高高矮矮，排了好長一列。"
+   },
+   {
+    "say": "laosong",
+    "face": "normal",
+    "text": "……你看……這些松樹……都是我種的……"
+   },
+   {
+    "say": "laosong",
+    "face": "sad",
+    "text": "……谷裡……每走一個人……我就種一棵……"
+   },
+   {
+    "say": "laosong",
+    "face": "closed",
+    "text": "……種著種著……就變成……一整片林子了……"
+   },
+   {
+    "narrate": "老松從口袋裡拿出一顆松果，輕輕放在你的手心。"
+   },
+   {
+    "say": "laosong",
+    "face": "happy",
+    "text": "……今天……我想種一棵……不一樣的……"
+   },
+   {
+    "say": "laosong",
+    "face": "shy",
+    "text": "……為來的人……種的……第一棵……"
+   },
+   {
+    "choice": [
+     {
+      "text": "我們一起種吧",
+      "pts": 70,
+      "goto": "c0"
+     },
+     {
+      "text": "種在神木旁邊",
+      "pts": 50,
+      "goto": "c1"
+     },
+     {
+      "text": "種在我們農場？",
+      "pts": 30,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "narrate": "你和老松一起挖了一個小坑。他的手很慢，可是很穩。"
+   },
+   {
+    "emote": "😊"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "laosong",
+    "face": "happy",
+    "text": "……好……讓祂……看著它……長大……"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "laosong",
+    "face": "normal",
+    "text": "……呵呵……山裡拿的……要還給山……"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "laosong",
+    "face": "closed",
+    "text": "……我守了五十年……一直在等……有人回來……種那塊地……"
+   },
+   {
+    "say": "laosong",
+    "face": "happy",
+    "text": "……等到了……這一棵……是謝謝……"
+   },
+   {
+    "say": "laosong",
+    "face": "normal",
+    "text": "……神木……已經很多年……沒有開花了……"
+   },
+   {
+    "say": "laosong",
+    "face": "happy",
+    "text": "……祂的事……還有一個……很老的傳說……等時候到了……再說給你聽……"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
  "liuli_2": {
   "npc": "liuli",
   "hearts": 2,
@@ -1113,6 +5366,241 @@
     "say": "liuli",
     "face": "normal",
     "text": "流浪的人也需要一個會想回來的地方。……我是說，順便看看你們的田啦。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "liuli_4": {
+  "npc": "liuli",
+  "hearts": 4,
+  "title": "奶奶的規矩",
+  "steps": [
+   {
+    "fade": "下雨的傍晚，琉璃在公車站的屋簷下扳著手指。"
+   },
+   {
+    "say": "liuli",
+    "face": "happy",
+    "text": "哎呀，是你。雨天沒生意，正好聊天。"
+   },
+   {
+    "say": "liuli",
+    "face": "normal",
+    "text": "我在數，這次待了幾天。……數不清了。"
+   },
+   {
+    "say": "liuli",
+    "face": "normal",
+    "text": "我是在奶奶的貨車上長大的。她有條規矩。"
+   },
+   {
+    "say": "liuli",
+    "face": "closed",
+    "text": "同一個地方，不要待超過七天。待久了，腳會長根。"
+   },
+   {
+    "say": "liuli",
+    "face": "happy",
+    "text": "我七歲第一次來這裡，就是跟著她。還用自己賺的錢，買了一張這裡的明信片。"
+   },
+   {
+    "say": "liuli",
+    "face": "sad",
+    "text": "後來我自己做生意，也照著規矩走。只有這裡，我老是破戒。"
+   },
+   {
+    "choice": [
+     {
+      "text": "那就別數了",
+      "pts": 70,
+      "goto": "c0"
+     },
+     {
+      "text": "腳長根不好嗎？",
+      "pts": 60,
+      "goto": "c1"
+     },
+     {
+      "text": "你要走了嗎？",
+      "pts": 30,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "liuli",
+    "face": "shy",
+    "text": "……你這個人，講得好像很簡單一樣。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "liuli",
+    "face": "happy",
+    "text": "好不好啊……我也不知道。這才麻煩。"
+   },
+   {
+    "emote": "😊"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "liuli",
+    "face": "happy",
+    "text": "嘻嘻，緊張了？還沒啦，雨都還沒停呢。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "liuli",
+    "face": "normal",
+    "text": "說個好笑的。奶奶六十歲那年，在海邊的小鎮住下來，再也沒走了。"
+   },
+   {
+    "say": "liuli",
+    "face": "closed",
+    "text": "她說啊，規矩是給還沒找到地方的人用的。"
+   },
+   {
+    "say": "liuli",
+    "face": "sad",
+    "text": "我啊……還不知道，自己是不是找到了。"
+   },
+   {
+    "say": "liuli",
+    "face": "happy",
+    "text": "……剛剛那些，一半是騙你的。哪一半？你猜。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "liuli_6": {
+  "npc": "liuli",
+  "hearts": 6,
+  "title": "地圖上的記號",
+  "steps": [
+   {
+    "fade": "黃昏的路口，琉璃把一張大地圖攤在貨箱上。"
+   },
+   {
+    "say": "liuli",
+    "face": "happy",
+    "text": "來來來，給你看一個比明信片更不能賣的東西。"
+   },
+   {
+    "narrate": "地圖上密密麻麻，畫滿了小小的叉叉。"
+   },
+   {
+    "say": "liuli",
+    "face": "normal",
+    "text": "每個叉叉，都是我去過的地方。去過了，就畫一個，然後走。"
+   },
+   {
+    "say": "liuli",
+    "face": "normal",
+    "text": "可是你看這裡。晴耕谷，什麼記號都沒有。"
+   },
+   {
+    "say": "liuli",
+    "face": "sad",
+    "text": "我一直畫不下去。畫了叉叉，就好像在說我不會再來了。"
+   },
+   {
+    "say": "liuli",
+    "face": "shy",
+    "text": "所以啊，這個記號，交給你畫。畫什麼都可以。"
+   },
+   {
+    "prompt": "（要畫什麼記號？）",
+    "choice": [
+     {
+      "text": "畫一間小房子",
+      "pts": 70,
+      "goto": "c0"
+     },
+     {
+      "text": "畫一顆星星",
+      "pts": 60,
+      "goto": "c1"
+     },
+     {
+      "text": "也畫一個叉叉",
+      "pts": 0,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "liuli",
+    "face": "shy",
+    "text": "……房子啊。你很狡猾耶，偏偏選一個最難反駁的。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "liuli",
+    "face": "happy",
+    "text": "星星好。迷路的時候，抬頭就找得到。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "liuli",
+    "face": "sad",
+    "text": "……喂。"
+   },
+   {
+    "say": "liuli",
+    "face": "happy",
+    "text": "那我在外面再畫一個圈。圈起來的叉叉，不算數。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "liuli",
+    "face": "closed",
+    "text": "以前我覺得，流浪的人，不該有想回去的地方。"
+   },
+   {
+    "say": "liuli",
+    "face": "shy",
+    "text": "……麻煩了。我好像有了。"
+   },
+   {
+    "say": "liuli",
+    "face": "happy",
+    "text": "以後走到哪裡，我都寄明信片給你們農場。不准不回喔。"
+   },
+   {
+    "emote": "😊"
    },
    {
     "end": true
@@ -1205,6 +5693,236 @@
    }
   ]
  },
+ "apeng_4": {
+  "npc": "apeng",
+  "hearts": 4,
+  "title": "第一次的員工餐",
+  "steps": [
+   {
+    "fade": "打烊後的餐館，廚房只剩一盞燈。"
+   },
+   {
+    "narrate": "阿椪對著一鍋湯發呆，湯勺還握在手上。"
+   },
+   {
+    "say": "apeng",
+    "face": "sad",
+    "text": "啊，是你……今天師父第一次讓我煮員工餐。"
+   },
+   {
+    "say": "apeng",
+    "face": "sad",
+    "text": "結果小滿姐喝了一口，就默默去倒水了。"
+   },
+   {
+    "say": "apeng",
+    "face": "closed",
+    "text": "我小時候爸媽去外地工作，我常常一個人吃泡麵。"
+   },
+   {
+    "say": "apeng",
+    "face": "shy",
+    "text": "是師父叫我每天來吃晚餐的。一吃就吃了好多年。"
+   },
+   {
+    "say": "apeng",
+    "face": "sad",
+    "text": "我想煮好吃的東西還給師父。可是大家都說，我只會吃……"
+   },
+   {
+    "prompt": "（要說什麼？）",
+    "choice": [
+     {
+      "text": "會吃的人才懂好吃",
+      "pts": 80,
+      "goto": "c0"
+     },
+     {
+      "text": "讓我喝一口看看",
+      "pts": 60,
+      "goto": "c1"
+     },
+     {
+      "text": "多練習就好了",
+      "pts": 30,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "apeng",
+    "face": "happy",
+    "text": "會吃的人……才懂好吃？對耶！師父的菜，我的舌頭全都記得！"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "narrate": "湯有點鹹，可是喝得出來，裡面放了好多種菜。"
+   },
+   {
+    "say": "apeng",
+    "face": "shy",
+    "text": "鹹、鹹了對不對……可是你喝完了耶。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "apeng",
+    "text": "嗯……師父說洋蔥切到一百顆就不會哭了。我才切五十顆。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "chunshen",
+    "text": "阿椪！湯太鹹就加水，不准倒掉！"
+   },
+   {
+    "say": "apeng",
+    "face": "shy",
+    "text": "是、是！……師父全都聽到了啦。"
+   },
+   {
+    "say": "apeng",
+    "face": "happy",
+    "text": "謝謝你。明天的員工餐，我再煮一次！"
+   },
+   {
+    "emote": "😊"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "apeng_6": {
+  "npc": "apeng",
+  "hearts": 6,
+  "title": "晴耕谷農場特餐",
+  "steps": [
+   {
+    "fade": "一大早，餐館門口的小黑板擦得乾乾淨淨。"
+   },
+   {
+    "say": "apeng",
+    "face": "happy",
+    "text": "你來了！師父答應了，明天的今日特餐由我來煮！"
+   },
+   {
+    "say": "apeng",
+    "face": "shy",
+    "text": "我想做「晴耕谷農場特餐」。用你們農場的菜。"
+   },
+   {
+    "say": "apeng",
+    "face": "sad",
+    "text": "可是我昨天緊張到睡不著……萬一沒有人點怎麼辦？"
+   },
+   {
+    "choice": [
+     {
+      "text": "我第一個點",
+      "pts": 80,
+      "goto": "c0"
+     },
+     {
+      "text": "一起想要放什麼吧",
+      "pts": 60,
+      "goto": "c1"
+     },
+     {
+      "text": "那就先睡飽再說",
+      "pts": 20,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "apeng",
+    "face": "happy",
+    "text": "真的？那我一定要煮得超好吃！"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "apeng",
+    "face": "happy",
+    "text": "好！你們的菜，加一顆荷包蛋，再淋師父教的醬汁！"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "apeng",
+    "face": "closed",
+    "text": "……也對。可是師父說，手忙起來就不會緊張了。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "fade": "整個上午，廚房裡的爐火都沒有停過。"
+   },
+   {
+    "narrate": "你在旁邊幫忙削皮，阿椪在爐子前忙得滿頭大汗。"
+   },
+   {
+    "say": "xiaoman",
+    "face": "happy",
+    "text": "好香喔！阿椪，我可以先偷吃一口嗎？"
+   },
+   {
+    "say": "apeng",
+    "face": "shy",
+    "text": "不行！第一口……要給你。"
+   },
+   {
+    "narrate": "一口吃下去，你忍不住笑了出來。"
+   },
+   {
+    "say": "apeng",
+    "face": "closed",
+    "text": "我以前覺得自己只會吃。可是你每次都願意吃我煮的東西。"
+   },
+   {
+    "say": "apeng",
+    "face": "happy",
+    "text": "所以我想一直煮下去，煮到大家吃了都會笑。"
+   },
+   {
+    "say": "chunshen",
+    "face": "happy",
+    "text": "好啦好啦！明天黑板上就寫阿椪的名字。不准燒焦啊！"
+   },
+   {
+    "emote": "🎵"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
  "qinglan_2": {
   "npc": "qinglan",
   "hearts": 2,
@@ -1285,6 +6003,239 @@
     "say": "qinglan",
     "face": "normal",
     "text": "……今天採到一株很好的藥草。給你們農場。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "qinglan_4": {
+  "npc": "qinglan",
+  "hearts": 4,
+  "title": "長得很像的草",
+  "steps": [
+   {
+    "fade": "雨後的森林，青嵐蹲在一叢草前面。"
+   },
+   {
+    "say": "qinglan",
+    "text": "……你來得正好。看這兩株。"
+   },
+   {
+    "say": "qinglan",
+    "text": "一株能退燒。一株吃了會吐，燒得更厲害。哪一株是藥？"
+   },
+   {
+    "prompt": "（看起來都一樣……）",
+    "choice": [
+     {
+      "text": "左邊的",
+      "pts": 50,
+      "goto": "c0"
+     },
+     {
+      "text": "右邊的",
+      "pts": 20,
+      "goto": "c1"
+     },
+     {
+      "text": "我分不出來",
+      "pts": 60,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "qinglan",
+    "face": "happy",
+    "text": "……對。葉子背面有細毛的，才是。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "qinglan",
+    "text": "……不對。右邊的，葉子背面是滑的。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "qinglan",
+    "face": "happy",
+    "text": "……好答案。分不出來，就不要採。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "qinglan",
+    "face": "closed",
+    "text": "……我十二歲那年，也分不出來。"
+   },
+   {
+    "say": "qinglan",
+    "text": "我妹半夜發高燒。爸媽不在，我自己上山找藥。"
+   },
+   {
+    "say": "qinglan",
+    "face": "sad",
+    "text": "我採錯了。她喝下去，燒得更厲害。"
+   },
+   {
+    "say": "qinglan",
+    "face": "sad",
+    "text": "是鎮上的老醫生守了一整夜，才把她救回來。"
+   },
+   {
+    "say": "qinglan",
+    "text": "那天以後，每一種草我都記住了。白芷的藥，我不會讓它出錯。"
+   },
+   {
+    "choice": [
+     {
+      "text": "所以你才這麼小心",
+      "pts": 50
+     },
+     {
+      "text": "她一定很感謝你",
+      "pts": 60
+     }
+    ]
+   },
+   {
+    "say": "qinglan",
+    "face": "happy",
+    "text": "……嗯。她現在在城裡當護理師。很吵，常寫信來。"
+   },
+   {
+    "say": "qinglan",
+    "face": "shy",
+    "text": "……我很少說這麼多話。別說出去。"
+   },
+   {
+    "emote": "😊"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "qinglan_6": {
+  "npc": "qinglan",
+  "hearts": 6,
+  "title": "山上的藥草地",
+  "steps": [
+   {
+    "fade": "天剛亮，山腰的霧正一點一點散開。"
+   },
+   {
+    "say": "qinglan",
+    "text": "……跟我來。今天不採藥。"
+   },
+   {
+    "narrate": "穿過長滿苔蘚的石頭，眼前是一小塊整齊的藥草地。"
+   },
+   {
+    "say": "qinglan",
+    "text": "……我種的。採多少，就種回多少。"
+   },
+   {
+    "say": "qinglan",
+    "face": "sad",
+    "text": "上次的大雨，沖掉了一半。"
+   },
+   {
+    "say": "qinglan",
+    "face": "closed",
+    "text": "這裡，我沒帶別人來過。……幫我把苗種回去。"
+   },
+   {
+    "prompt": "（要怎麼種？）",
+    "choice": [
+     {
+      "text": "這株要種在樹蔭下？",
+      "pts": 80,
+      "goto": "c0"
+     },
+     {
+      "text": "照你說的一株一株種",
+      "pts": 60,
+      "goto": "c1"
+     },
+     {
+      "text": "種快一點比較好吧",
+      "pts": 20,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "qinglan",
+    "face": "happy",
+    "text": "……對。它怕曬。你看出來了。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "qinglan",
+    "text": "……嗯。根埋好，土壓實。你學得很快。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "qinglan",
+    "text": "……不急。山不趕時間。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "fade": "太陽慢慢爬上了樹梢。"
+   },
+   {
+    "say": "qinglan",
+    "text": "……我習慣一個人走。可是最近下山，會繞去看你們的田。"
+   },
+   {
+    "say": "qinglan",
+    "face": "shy",
+    "text": "看到田裡有東西在長，就覺得……下山也不錯。"
+   },
+   {
+    "say": "qinglan",
+    "text": "回去的路，你帶。聽鳥叫，看苔蘚。……早就想教你了。"
+   },
+   {
+    "narrate": "你走在前面。在岔路口猶豫時，身後傳來一聲很輕的笑。"
+   },
+   {
+    "say": "qinglan",
+    "face": "happy",
+    "text": "……往右。不過，走得不錯。"
+   },
+   {
+    "emote": "👍"
    },
    {
     "end": true
@@ -1377,6 +6328,231 @@
    }
   ]
  },
+ "mipo_4": {
+  "npc": "mipo",
+  "hearts": 4,
+  "title": "棚架下的市集",
+  "steps": [
+   {
+    "fade": "傍晚的廣場，米婆坐在長椅上，望著那座大棚架。"
+   },
+   {
+    "say": "mipo",
+    "text": "唉唷，是你啊。來，坐婆婆旁邊。"
+   },
+   {
+    "say": "mipo",
+    "face": "happy",
+    "text": "你看那個棚架。以前每月初一，底下都是市集喔。"
+   },
+   {
+    "say": "mipo",
+    "face": "happy",
+    "text": "賣菜的、賣魚的、賣麥芽糖的。阿禾那孩子每次都在那裡哭著要糖。"
+   },
+   {
+    "say": "mipo",
+    "face": "shy",
+    "text": "婆婆在那裡賣醃菜。隔壁賣竹籃的，就是我老伴。"
+   },
+   {
+    "say": "mipo",
+    "face": "closed",
+    "text": "他每次都說要試吃一塊蘿蔔乾。一試，就試了三年。"
+   },
+   {
+    "say": "mipo",
+    "text": "後來他走了，擺攤的人也一年比一年少。"
+   },
+   {
+    "say": "mipo",
+    "face": "sad",
+    "text": "婆婆常想，哪天我也走了，這些事就沒人記得了。"
+   },
+   {
+    "choice": [
+     {
+      "text": "我會記得的",
+      "pts": 80,
+      "goto": "c0"
+     },
+     {
+      "text": "再多講一點給我聽",
+      "pts": 60,
+      "goto": "c1"
+     },
+     {
+      "text": "婆婆別說這種話",
+      "pts": 30,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "mipo",
+    "face": "happy",
+    "text": "……好，好。有你記得，婆婆就放心了。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "mipo",
+    "face": "happy",
+    "text": "好啊！有一年他把竹籃編成一隻雞送我，傻不傻？"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "mipo",
+    "face": "closed",
+    "text": "呵呵，婆婆不怕老。只是怕大家忘了。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "narrate": "米婆從籃子裡拿出一小包蘿蔔乾，塞進你手裡。"
+   },
+   {
+    "say": "mipo",
+    "text": "照以前市集的做法醃的。拿回去，兩個人一起吃。"
+   },
+   {
+    "say": "mipo",
+    "face": "happy",
+    "text": "晚上風涼，要多穿一件喔。"
+   },
+   {
+    "emote": "❤️"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "mipo_6": {
+  "npc": "mipo",
+  "hearts": 6,
+  "title": "一年一罈",
+  "steps": [
+   {
+    "fade": "米婆家的地窖裡，罈子排得整整齊齊。"
+   },
+   {
+    "say": "mipo",
+    "text": "小心腳步。每年醃的菜，婆婆都留一小罈，貼上那年的事。"
+   },
+   {
+    "narrate": "泛黃的紅紙上寫著「市集最熱鬧」「火車載來好多人」……"
+   },
+   {
+    "say": "mipo",
+    "face": "happy",
+    "text": "這罈是最熱鬧那年的。廣場上天天有人唱歌呢。"
+   },
+   {
+    "say": "mipo",
+    "face": "sad",
+    "text": "這罈是老伴走的那年。特別鹹，婆婆一邊醃一邊哭。"
+   },
+   {
+    "say": "mipo",
+    "face": "closed",
+    "text": "後來好幾年，紅紙上寫的都一樣：「今年也很安靜」。"
+   },
+   {
+    "say": "mipo",
+    "text": "今年的罈子，婆婆想跟你一起醃。紅紙上的字，你來寫。"
+   },
+   {
+    "prompt": "（紅紙上要寫什麼？）",
+    "choice": [
+     {
+      "text": "新鄰居搬來了",
+      "pts": 60,
+      "goto": "c0",
+      "flag": "mipo_jar_neighbor"
+     },
+     {
+      "text": "又聽到笑聲了",
+      "pts": 80,
+      "goto": "c1",
+      "flag": "mipo_jar_laugh"
+     },
+     {
+      "text": "婆婆來寫就好",
+      "pts": 30,
+      "goto": "c2",
+      "flag": "mipo_jar_mipo"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "mipo",
+    "face": "happy",
+    "text": "好，就寫這個。兩個好孩子，搬來荒地種田。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "mipo",
+    "face": "shy",
+    "text": "……你怎麼知道，婆婆就想寫這句？"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "mipo",
+    "text": "那婆婆寫：「有孩子陪我醃菜」。好不好？"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "fade": "抹鹽、壓石頭……地窖裡飄著鹹香。"
+   },
+   {
+    "narrate": "米婆把紅紙貼上新罈子，輕輕拍了兩下。"
+   },
+   {
+    "say": "mipo",
+    "face": "happy",
+    "text": "這個鎮，婆婆看過它熱鬧，也看過它安靜。今年又聽到笑聲了。"
+   },
+   {
+    "say": "mipo",
+    "text": "這罈明年再開。到時候，你們兩個都要來喔。"
+   },
+   {
+    "emote": "😊"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
  "atuo_2": {
   "npc": "atuo",
   "hearts": 2,
@@ -1457,6 +6633,240 @@
     "say": "atuo",
     "face": "normal",
     "text": "下次下礦坑叫我！我幫你扛礦石！"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "atuo_4": {
+  "npc": "atuo",
+  "hearts": 4,
+  "title": "大聲的理由",
+  "steps": [
+   {
+    "fade": "礦坑深處，阿拓坐在礦車旁邊吃便當。"
+   },
+   {
+    "say": "atuo",
+    "face": "happy",
+    "text": "喔！你也下來啦！坐坐坐！這裡最涼！"
+   },
+   {
+    "narrate": "四周很安靜，只聽得到遠處滴水的聲音。"
+   },
+   {
+    "say": "atuo",
+    "text": "……很安靜對吧。我小時候，這裡有二十幾個礦工。"
+   },
+   {
+    "say": "atuo",
+    "face": "happy",
+    "text": "吃飯的時候大家坐一排，用喊的聊天，整個礦坑都是笑聲！"
+   },
+   {
+    "say": "atuo",
+    "face": "sad",
+    "text": "後來礦越挖越少，大家一個一個去城裡。我爸腰受傷，也去了。"
+   },
+   {
+    "say": "atuo",
+    "face": "sad",
+    "text": "現在下面只剩我一個。安靜到……我會怕。"
+   },
+   {
+    "say": "atuo",
+    "face": "closed",
+    "text": "所以我每天大聲喊。回音會回我，就好像大家都還在。"
+   },
+   {
+    "prompt": "（要說什麼？）",
+    "choice": [
+     {
+      "text": "以後我陪你喊",
+      "pts": 80,
+      "goto": "c0"
+     },
+     {
+      "text": "你爸爸還好嗎？",
+      "pts": 50,
+      "goto": "c1"
+     },
+     {
+      "text": "原來你也會怕",
+      "pts": 20,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "atuo",
+    "face": "happy",
+    "text": "真的？……哈哈！說好了喔！"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "atuo",
+    "face": "happy",
+    "text": "很好啦！在城裡學種花，每封信都叫我戴頭盔！"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "atuo",
+    "face": "shy",
+    "text": "怕、怕又怎樣！蝙蝠我也怕！……啊，說出來了。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "atuo",
+    "face": "shy",
+    "text": "講出來好丟臉……不要跟石磊哥說喔！來，一起喊！"
+   },
+   {
+    "say": "atuo",
+    "text": "喂——！"
+   },
+   {
+    "say": "@me",
+    "text": "喂——！"
+   },
+   {
+    "say": "atuo",
+    "face": "happy",
+    "text": "……哈哈哈！今天的回音，比較熱鬧！"
+   },
+   {
+    "emote": "🎵"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "atuo_6": {
+  "npc": "atuo",
+  "hearts": 6,
+  "title": "牆上的名字",
+  "steps": [
+   {
+    "fade": "礦坑入口，阿拓揮著一封信跑了過來。"
+   },
+   {
+    "say": "atuo",
+    "face": "happy",
+    "text": "你來得正好！我爸寫信來了！"
+   },
+   {
+    "say": "atuo",
+    "text": "舊礦道最裡面有一面牆，刻著以前礦工的名字。我爸想知道還在不在。"
+   },
+   {
+    "say": "atuo",
+    "face": "shy",
+    "text": "你、你可以陪我去嗎？不是怕喔！是舊礦道的蝙蝠比較多！"
+   },
+   {
+    "choice": [
+     {
+      "text": "走，一起去",
+      "pts": 60,
+      "goto": "c0"
+     },
+     {
+      "text": "我走前面幫你擋",
+      "pts": 80,
+      "goto": "c1"
+     },
+     {
+      "text": "明明就是怕",
+      "pts": 30,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "atuo",
+    "face": "happy",
+    "text": "好！就知道你最夠意思！"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "atuo",
+    "face": "shy",
+    "text": "你、你走前面？……好啦。謝謝。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "atuo",
+    "face": "sad",
+    "text": "……好啦，是有一點怕。一點點而已。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "fade": "舊礦道又窄又暗，腳步聲一直在迴響。"
+   },
+   {
+    "narrate": "提燈照過去，石牆上密密麻麻刻滿了名字。"
+   },
+   {
+    "say": "atuo",
+    "face": "closed",
+    "text": "……在這裡。這個，是我爸的名字。"
+   },
+   {
+    "say": "atuo",
+    "face": "sad",
+    "text": "旁邊這些，是小時候抱過我的叔叔伯伯。名字……都還在。"
+   },
+   {
+    "narrate": "阿拓拿起鑿子，在爸爸的名字旁邊，一筆一筆刻下自己的名字。"
+   },
+   {
+    "say": "atuo",
+    "face": "happy",
+    "text": "換你！你們兩個的名字也刻上去！"
+   },
+   {
+    "say": "atuo",
+    "text": "我沒什麼優點，就是力氣大。以後你們喊一聲，我馬上到！"
+   },
+   {
+    "say": "atuo",
+    "face": "happy",
+    "text": "比回音還快！哈哈哈！"
+   },
+   {
+    "emote": "❤️"
    },
    {
     "end": true
@@ -1549,6 +6959,236 @@
    }
   ]
  },
+ "xiaocheng_4": {
+  "npc": "xiaocheng",
+  "hearts": 4,
+  "title": "沒有人的風景",
+  "steps": [
+   {
+    "fade": "午後的湖邊，小澄坐在石頭上畫湖面的倒影。"
+   },
+   {
+    "narrate": "一陣風吹過，素描本嘩啦啦翻開，好幾張畫飛了出去。"
+   },
+   {
+    "say": "xiaocheng",
+    "face": "sad",
+    "text": "啊……！對、對不起……可以幫我撿嗎……"
+   },
+   {
+    "narrate": "撿回來的每一張都是風景：山、湖、空空的街道。沒有一個人。"
+   },
+   {
+    "say": "xiaocheng",
+    "text": "……你發現了吧。我的畫裡，以前都沒有人。"
+   },
+   {
+    "say": "xiaocheng",
+    "face": "sad",
+    "text": "我在城裡的美術班……畫過一次同學。"
+   },
+   {
+    "say": "xiaocheng",
+    "face": "sad",
+    "text": "大家圍過來看，說一點都不像……然後就笑了。"
+   },
+   {
+    "say": "xiaocheng",
+    "face": "closed",
+    "text": "從那天起，我只畫風景。風景……不會笑我。"
+   },
+   {
+    "prompt": "（要說什麼？）",
+    "choice": [
+     {
+      "text": "笑的人不懂你的畫",
+      "pts": 60,
+      "goto": "c0"
+     },
+     {
+      "text": "可是你畫了我們的田",
+      "pts": 80,
+      "goto": "c1"
+     },
+     {
+      "text": "畫我看看嘛",
+      "pts": 30,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "xiaocheng",
+    "face": "shy",
+    "text": "……柚子也這樣說過。你們……都好溫柔。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "xiaocheng",
+    "face": "shy",
+    "text": "……嗯。那是我第一次……把人畫進去。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "xiaocheng",
+    "face": "sad",
+    "text": "現、現在？不行不行……手會抖……"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "xiaocheng",
+    "text": "可是……畫你們的田那天，我發現有人在的風景，比較溫暖。"
+   },
+   {
+    "say": "xiaocheng",
+    "face": "shy",
+    "text": "我還是不敢給別人看。可是你看的話……好像沒關係。"
+   },
+   {
+    "say": "xiaocheng",
+    "face": "happy",
+    "text": "這張給你。今天的湖……裡面有你的倒影。"
+   },
+   {
+    "emote": "😊"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "xiaocheng_6": {
+  "npc": "xiaocheng",
+  "hearts": 6,
+  "title": "佈告欄上的畫",
+  "steps": [
+   {
+    "fade": "清晨的佈告欄前，小澄抱著一卷大大的畫紙。"
+   },
+   {
+    "say": "xiaocheng",
+    "face": "shy",
+    "text": "你、你來了……我在等你。"
+   },
+   {
+    "say": "xiaocheng",
+    "text": "我畫了一張……有很多人的畫。傍晚的廣場，大家都在。"
+   },
+   {
+    "say": "xiaocheng",
+    "face": "sad",
+    "text": "我想貼在這裡給大家看……可是手一直抖。"
+   },
+   {
+    "say": "xiaocheng",
+    "text": "你可以……陪我一起貼嗎？"
+   },
+   {
+    "choice": [
+     {
+      "text": "我們一起貼",
+      "pts": 80,
+      "goto": "c0"
+     },
+     {
+      "text": "我幫你壓著畫紙",
+      "pts": 60,
+      "goto": "c1"
+     },
+     {
+      "text": "要不要明天再貼？",
+      "pts": 20,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "xiaocheng",
+    "face": "happy",
+    "text": "嗯……一起。數到三喔。一、二、三……"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "xiaocheng",
+    "face": "happy",
+    "text": "謝謝……那、那我來釘。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "xiaocheng",
+    "face": "closed",
+    "text": "……不行。明天的我，一定也會這樣說。今天貼。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "narrate": "畫裡是傍晚的廣場：米婆在長椅上打盹、柚子抱著花，還有你們兩個。"
+   },
+   {
+    "say": "youzi",
+    "face": "happy",
+    "text": "哇～這是小澄畫的嗎？好像聞得到花的味道！"
+   },
+   {
+    "say": "xiaocheng",
+    "face": "shy",
+    "text": "柚、柚子……你覺得……可以嗎？"
+   },
+   {
+    "say": "youzi",
+    "face": "happy",
+    "text": "當然可以！我要叫大家都來看～"
+   },
+   {
+    "narrate": "小澄的臉紅到了耳朵，可是她沒有躲起來。"
+   },
+   {
+    "say": "xiaocheng",
+    "face": "happy",
+    "text": "以前我只敢畫沒有人的風景。現在，我想把鎮上的大家都畫下來。"
+   },
+   {
+    "say": "xiaocheng",
+    "face": "shy",
+    "text": "第一個畫的，是你們。謝謝你……一直當我的第一個觀眾。"
+   },
+   {
+    "emote": "❤️"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
  "awangshu_2": {
   "npc": "awangshu",
   "hearts": 2,
@@ -1629,6 +7269,241 @@
     "say": "awangshu",
     "face": "normal",
     "text": "你很會照顧動物！你們農場的動物一定很幸福！"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "awangshu_4": {
+  "npc": "awangshu",
+  "hearts": 4,
+  "title": "趕不上的火車",
+  "steps": [
+   {
+    "fade": "夜裡，寵物店的動物都睡了。"
+   },
+   {
+    "say": "awangshu",
+    "face": "closed",
+    "text": "（小聲）噓……老黃睡著了。"
+   },
+   {
+    "say": "awangshu",
+    "text": "牠跟了我十五年。走路慢了，眼睛也白了。"
+   },
+   {
+    "say": "awangshu",
+    "face": "sad",
+    "text": "我醫得好別人家的狗，就是醫不好「老」。"
+   },
+   {
+    "say": "awangshu",
+    "text": "你知道叔叔為什麼當獸醫嗎？"
+   },
+   {
+    "say": "awangshu",
+    "face": "sad",
+    "text": "我的第一隻狗生了重病。那時候，鎮上沒有獸醫。"
+   },
+   {
+    "say": "awangshu",
+    "face": "sad",
+    "text": "我抱著牠坐火車去城裡。火車還沒到站，牠就沒有再醒來了。"
+   },
+   {
+    "say": "awangshu",
+    "text": "所以我去城裡唸書，回來開店。鎮上的孩子，不用再坐那班火車。"
+   },
+   {
+    "prompt": "（要說什麼？）",
+    "choice": [
+     {
+      "text": "老黃一定很幸福",
+      "pts": 80,
+      "goto": "c0"
+     },
+     {
+      "text": "那隻狗一定很愛你",
+      "pts": 60,
+      "goto": "c1"
+     },
+     {
+      "text": "為什麼叫老黃？",
+      "pts": 40,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "awangshu",
+    "face": "happy",
+    "text": "……對啊。牠天天睡在叔叔腳邊，一定很幸福。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "awangshu",
+    "face": "closed",
+    "text": "……嗯。牠最後還舔了舔我的手。我一直記得。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "awangshu",
+    "face": "happy",
+    "text": "因為牠小時候就一臉老成！哈哈……噓，噓。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "narrate": "老黃睜開眼睛，慢慢把下巴靠到你的腳上。"
+   },
+   {
+    "say": "awangshu",
+    "face": "happy",
+    "text": "你看，牠喜歡你。動物不會說話，可是眼睛都說了。"
+   },
+   {
+    "say": "awangshu",
+    "face": "shy",
+    "text": "叔叔嗓門大，眼淚也特別大顆……別、別看啦！"
+   },
+   {
+    "say": "awangshu",
+    "text": "有空就來陪老黃坐坐吧。牠喜歡熱鬧。"
+   },
+   {
+    "emote": "❤️"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "awangshu_6": {
+  "npc": "awangshu",
+  "hearts": 6,
+  "title": "雨天的貓屋",
+  "steps": [
+   {
+    "fade": "寵物店後巷，幾隻野貓從紙箱探出頭。"
+   },
+   {
+    "say": "awangshu",
+    "face": "closed",
+    "text": "（小聲）慢慢靠過來……別嚇到牠們。"
+   },
+   {
+    "say": "awangshu",
+    "text": "這些是鎮上的野貓。叔叔每天都偷偷來餵。"
+   },
+   {
+    "say": "awangshu",
+    "face": "sad",
+    "text": "下雨的時候，牠們只能擠在紙箱裡，一淋就爛了。"
+   },
+   {
+    "say": "awangshu",
+    "face": "happy",
+    "text": "我跟桐伯要了木板！今天來蓋貓屋，你幫叔叔扶著！"
+   },
+   {
+    "prompt": "（要怎麼蓋？）",
+    "choice": [
+     {
+      "text": "門要開小一點",
+      "pts": 60,
+      "goto": "c0"
+     },
+     {
+      "text": "屋頂要斜的",
+      "pts": 60,
+      "goto": "c1"
+     },
+     {
+      "text": "我先進去試躺",
+      "pts": 20,
+      "goto": "c2"
+     }
+    ]
+   },
+   {
+    "label": "c0"
+   },
+   {
+    "say": "awangshu",
+    "face": "happy",
+    "text": "對！門小，狗進不來，風也進不來！你很懂嘛！"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c1"
+   },
+   {
+    "say": "awangshu",
+    "face": "happy",
+    "text": "對！斜的，雨才流得掉！就這樣做！"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "c2"
+   },
+   {
+    "say": "awangshu",
+    "text": "你躺不進去啦！哈哈哈！……噓，貓會跑。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "fade": "敲敲打打，天色慢慢暗了下來。"
+   },
+   {
+    "narrate": "一間小木屋立在屋簷下，最膽小的那隻花貓，第一個鑽了進去。"
+   },
+   {
+    "say": "awangshu",
+    "face": "happy",
+    "text": "進去了！牠進去了！……（小聲）噓，我太大聲了。"
+   },
+   {
+    "say": "awangshu",
+    "text": "人家都說我對動物比對人好。其實是我不太會跟人相處。"
+   },
+   {
+    "say": "awangshu",
+    "face": "closed",
+    "text": "動物不會說謊。對著牠們，叔叔比較放心。"
+   },
+   {
+    "say": "awangshu",
+    "face": "shy",
+    "text": "可是你們不一樣。你們疼動物的樣子，騙不了人。"
+   },
+   {
+    "say": "awangshu",
+    "face": "happy",
+    "text": "以後屋頂要補，叫你們兩個一起來！"
+   },
+   {
+    "emote": "👍"
    },
    {
     "end": true

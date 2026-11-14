@@ -1,13 +1,2037 @@
 {
-  "story_arrive": {
-    "title": "荒地上的家", "shared": true, "when": { "map": "farm", "at": [9, 10, 5] }, "reward": { "items": [["fertilizer", 5]] }, "album": "搬進晴耕谷的那一天",
-    "steps": [
-      { "fade": "（暫時的測試內容）" },
-      { "narrate": "雜草長得比膝蓋還高。" },
-      { "choice": [ { "text": "種滿一整片田", "flag": "dream_field" }, { "text": "養很多動物", "flag": "dream_animals" } ], "prompt": "（你想把這裡變成什麼樣子？）" },
-      { "say": "@me", "text": "就從今天開始吧。" },
-      { "end": true }
-    ]
+ "story_arrive": {
+  "title": "荒地上的家",
+  "shared": true,
+  "when": {
+   "map": "farm",
+   "at": [
+    9,
+    10,
+    5
+   ]
   },
-  "story_town": { "title": "小鎮的老時鐘", "npc": "ahe", "shared": true, "when": { "map": "town", "after": "story_arrive" }, "steps": [ { "say": "ahe", "text": "（暫時的測試內容）" }, { "end": true } ] }
+  "reward": {
+   "items": [
+    [
+     "fertilizer",
+     5
+    ]
+   ]
+  },
+  "album": "搬進晴耕谷的那一天",
+  "steps": [
+   {
+    "fade": "晴耕谷，搬家的這一天。"
+   },
+   {
+    "narrate": "長滿雜草的小路走到盡頭，是一座安安靜靜的老農場。"
+   },
+   {
+    "narrate": "籬笆倒了一大半，田裡的草長得比膝蓋還高。"
+   },
+   {
+    "narrate": "老房子的屋頂缺了幾片瓦，門口的信箱生了一層鏽。"
+   },
+   {
+    "say": "@me",
+    "text": "……這裡，就是我們的家了。"
+   },
+   {
+    "say": "@me",
+    "face": "sad",
+    "text": "跟想像的……好像不太一樣。"
+   },
+   {
+    "narrate": "風吹過草地，沙沙地響。遠遠的山裡，有鳥在叫。"
+   },
+   {
+    "say": "@me",
+    "face": "happy",
+    "text": "不過，空氣好好聞。是青草和泥土的味道。"
+   },
+   {
+    "narrate": "你蹲下來，抓起一把土。黑黑的，濕濕軟軟的。"
+   },
+   {
+    "say": "@me",
+    "text": "土還活著。只是睡了很久很久。"
+   },
+   {
+    "narrate": "這座農場，是你和 {partner} 一起決定要接下來的。"
+   },
+   {
+    "say": "@me",
+    "face": "happy",
+    "text": "一個人的話，大概不敢來吧。兩個人，就沒在怕的。"
+   },
+   {
+    "prompt": "（你想把這裡變成什麼樣子？）",
+    "choice": [
+     {
+      "text": "一大片金黃色的田",
+      "flag": "dream_field",
+      "goto": "field"
+     },
+     {
+      "text": "滿院子可愛的動物",
+      "flag": "dream_animals",
+      "goto": "animals"
+     },
+     {
+      "text": "一個溫暖的家",
+      "flag": "dream_home",
+      "goto": "home"
+     }
+    ]
+   },
+   {
+    "label": "field"
+   },
+   {
+    "say": "@me",
+    "face": "happy",
+    "text": "我想看這裡種滿作物。風一吹，整片田都跟著搖。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "animals"
+   },
+   {
+    "say": "@me",
+    "face": "happy",
+    "text": "雞在院子裡跑，牛在樹下睡午覺……一定很熱鬧。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "home"
+   },
+   {
+    "say": "@me",
+    "face": "shy",
+    "text": "一個不管在外面多累，回來都會覺得「到家了」的地方。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "narrate": "你拍拍手上的土，站了起來。屋簷下，放著一袋沒拆過的肥料。"
+   },
+   {
+    "narrate": "像是有誰早就知道，總有一天，會有人回來種這塊地。"
+   },
+   {
+    "say": "@me",
+    "face": "happy",
+    "text": "好！先從拔草開始吧！"
+   },
+   {
+    "emote": "😊"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "story_town": {
+  "title": "小鎮的老時鐘",
+  "npc": "ahe",
+  "shared": true,
+  "when": {
+   "map": "town",
+   "after": "story_arrive"
+  },
+  "reward": {
+   "items": [
+    [
+     "dish_veg_soup",
+     1
+    ]
+   ]
+  },
+  "album": "第一次走進小鎮",
+  "steps": [
+   {
+    "fade": "沿著田間小路走了一陣子，前面出現一排老房子。"
+   },
+   {
+    "say": "ahe",
+    "face": "happy",
+    "text": "哎呀，你就是新搬來的農場主人吧？我是雜貨店的阿禾。"
+   },
+   {
+    "say": "ahe",
+    "text": "聽說那塊荒地有人接手，我一直在等你們來呢。"
+   },
+   {
+    "say": "ahe",
+    "text": "這裡就是晴耕谷的小鎮。你看那邊，那是鎮上的鐘樓。"
+   },
+   {
+    "narrate": "鐘樓的指針停在三點十五分，不知道已經停了多少年。"
+   },
+   {
+    "say": "ahe",
+    "text": "那個鐘壞了好多年囉。現在大家都看太陽過日子。"
+   },
+   {
+    "say": "ahe",
+    "face": "closed",
+    "text": "以前啊，週末有市集，火車把谷裡的菜載去城裡，晚上燈塔照著漁船回港。"
+   },
+   {
+    "say": "ahe",
+    "face": "sad",
+    "text": "後來年輕人一個一個去了城裡。學校沒了學生，車站也沒有火車停了。"
+   },
+   {
+    "say": "ahe",
+    "text": "……唉，我又在碎念了。"
+   },
+   {
+    "choice": [
+     {
+      "text": "好想看看以前的樣子",
+      "pts": 60,
+      "goto": "old"
+     },
+     {
+      "text": "安靜的小鎮也不錯",
+      "pts": 40,
+      "goto": "quiet"
+     }
+    ]
+   },
+   {
+    "label": "old"
+   },
+   {
+    "say": "ahe",
+    "face": "happy",
+    "text": "你這麼說，我都想再年輕一次了。"
+   },
+   {
+    "goto": "board"
+   },
+   {
+    "label": "quiet"
+   },
+   {
+    "say": "ahe",
+    "face": "happy",
+    "text": "你人真好。不過太安靜了，連我都會想念以前吵吵鬧鬧的樣子。"
+   },
+   {
+    "label": "board"
+   },
+   {
+    "say": "ahe",
+    "text": "對了，廣場的佈告欄貼了一張「修復小鎮」的單子。"
+   },
+   {
+    "say": "ahe",
+    "text": "壞掉的地方，鎮上的人想一個一個修回來。你們有空也去看看吧。"
+   },
+   {
+    "say": "chunshen",
+    "face": "happy",
+    "text": "唉唷！阿禾，你又在路口攔人講古喔！"
+   },
+   {
+    "say": "chunshen",
+    "text": "新來的農夫對吧？瘦成這樣怎麼行！我是春嬸，這碗湯拿去！"
+   },
+   {
+    "narrate": "一碗熱騰騰的蔬菜湯塞進你手裡。高麗菜煮得又軟又甜。"
+   },
+   {
+    "say": "@me",
+    "face": "happy",
+    "text": "……好好喝。謝謝春嬸！"
+   },
+   {
+    "say": "chunshen",
+    "face": "happy",
+    "text": "以後種的菜賣給我，我算你好價錢！"
+   },
+   {
+    "say": "ahe",
+    "face": "happy",
+    "text": "歡迎來到晴耕谷！缺什麼就來店裡。對了，帽子要戴，太陽大。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "story_ship": {
+  "title": "第一車出貨",
+  "npc": "maisui",
+  "shared": true,
+  "when": {
+   "map": "farm",
+   "stats": {
+    "ship": 1
+   },
+   "day": 2,
+   "hour": [
+    6,
+    12
+   ],
+   "after": "story_town"
+  },
+  "reward": {
+   "items": [
+    [
+     "fertilizer",
+     5
+    ]
+   ]
+  },
+  "album": "農場的東西第一次出貨了",
+  "steps": [
+   {
+    "fade": "早上，農場門口傳來「叭叭」兩聲喇叭。"
+   },
+   {
+    "narrate": "一台小貨車停在路邊，車斗上疊著好幾個木箱。"
+   },
+   {
+    "say": "maisui",
+    "text": "早。農會的麥穗。記得吧？不記得的話，現在記起來。"
+   },
+   {
+    "say": "maisui",
+    "text": "你們出貨箱裡的東西，都是我開這台車來收的。"
+   },
+   {
+    "narrate": "麥穗翻開手上的小本子，用筆尖點了點其中一行。"
+   },
+   {
+    "say": "maisui",
+    "text": "第一次出貨。量不多，品質還可以，算及格。"
+   },
+   {
+    "say": "maisui",
+    "face": "happy",
+    "text": "……做得不錯嘛。我說真的，我很少誇人。"
+   },
+   {
+    "say": "@me",
+    "text": "我們種的東西，會被載去哪裡呢？"
+   },
+   {
+    "say": "maisui",
+    "text": "城裡。以前谷裡的菜，都是坐火車一車一車載出去的。"
+   },
+   {
+    "say": "maisui",
+    "text": "早上採的菜，中午就擺上城裡的菜攤。那時候的車站，可熱鬧了。"
+   },
+   {
+    "say": "maisui",
+    "face": "sad",
+    "text": "現在火車經過也不停了。只剩農會這台小貨車，一趟一趟慢慢載。"
+   },
+   {
+    "narrate": "麥穗拍了拍車門。烤漆掉了好幾塊，看得出來跑了很多年。"
+   },
+   {
+    "say": "maisui",
+    "text": "不過，路再遠也要載。地有人種，我就有東西載。"
+   },
+   {
+    "choice": [
+     {
+      "text": "我們會種更多的！",
+      "pts": 60,
+      "goto": "more"
+     },
+     {
+      "text": "每天跑這麼遠，辛苦了",
+      "pts": 40,
+      "goto": "thanks"
+     }
+    ]
+   },
+   {
+    "label": "more"
+   },
+   {
+    "say": "maisui",
+    "face": "happy",
+    "text": "好。這句話我記下來了，下一季我會來對帳。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "thanks"
+   },
+   {
+    "say": "maisui",
+    "face": "shy",
+    "text": "……不辛苦。看到地荒著，我才會累。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "maisui",
+    "text": "這袋肥料給你們，農會送的。還有，雜草長得比你想的快。去拔。"
+   },
+   {
+    "narrate": "小貨車噗噗噗地開走了，車斗上的木箱輕輕晃著。"
+   },
+   {
+    "emote": "👍"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "story_fix1": {
+  "title": "第一個修好的地方",
+  "npc": "mipo",
+  "shared": true,
+  "when": {
+   "map": "town",
+   "restored": 1,
+   "after": "story_town"
+  },
+  "reward": {
+   "money": 300
+  },
+  "album": "修好了小鎮的第一個地方",
+  "steps": [
+   {
+    "fade": "修好第一個地方的消息，一下子就傳遍了整個小鎮。"
+   },
+   {
+    "narrate": "佈告欄前圍了好幾個人，大家指著單子上打了勾的那一格。"
+   },
+   {
+    "say": "ahe",
+    "face": "happy",
+    "text": "修好了！真的修好了！我要在店門口貼紅紙！"
+   },
+   {
+    "say": "chunshen",
+    "face": "happy",
+    "text": "今天餐館的湯，每碗多加一塊肉！"
+   },
+   {
+    "say": "mipo",
+    "text": "唉唷，讓一讓，讓婆婆看看。"
+   },
+   {
+    "narrate": "一位老奶奶拄著拐杖慢慢走過來，瞇著眼睛看了你好一會兒。"
+   },
+   {
+    "say": "mipo",
+    "face": "happy",
+    "text": "就是你啊。好孩子。婆婆是米婆，在這鎮上住了七十幾年囉。"
+   },
+   {
+    "say": "mipo",
+    "text": "婆婆小時候，大人常說一句老話。"
+   },
+   {
+    "say": "mipo",
+    "face": "closed",
+    "text": "「鎮上熱鬧起來的時候，山上的神木就會開花。」"
+   },
+   {
+    "say": "mipo",
+    "text": "山上的小祠旁邊，有一棵好老好老的樹，大家叫它神木。"
+   },
+   {
+    "say": "mipo",
+    "face": "sad",
+    "text": "它啊，已經三十年沒開過花了。就從年輕人一個一個走掉的那時候起。"
+   },
+   {
+    "choice": [
+     {
+      "text": "神木一定會再開花的",
+      "pts": 60,
+      "goto": "bloom"
+     },
+     {
+      "text": "婆婆看過它開花嗎？",
+      "pts": 50,
+      "goto": "seen"
+     }
+    ]
+   },
+   {
+    "label": "bloom"
+   },
+   {
+    "say": "mipo",
+    "face": "happy",
+    "text": "嗯，婆婆也這麼覺得。今天啊，婆婆聽到好多笑聲。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "seen"
+   },
+   {
+    "say": "mipo",
+    "face": "closed",
+    "text": "看過喔。淡淡的金色，風一吹，整座山都是香的。"
+   },
+   {
+    "say": "mipo",
+    "face": "happy",
+    "text": "婆婆還想再看一次。醃菜要等，花也要等。婆婆等得起。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "mipo",
+    "text": "你有空的話，去森林裡的小祠找老松吧。神木的故事，他知道得最多。"
+   },
+   {
+    "say": "mipo",
+    "face": "happy",
+    "text": "就是講話慢了點，你要有耐心。……來，這個紅包拿著，給你們兩個的。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "story_shrine": {
+  "title": "神木的傳說",
+  "npc": "laosong",
+  "shared": true,
+  "when": {
+   "map": "forest",
+   "at": [
+    34,
+    8,
+    5
+   ],
+   "after": "story_fix1"
+  },
+  "reward": {
+   "pts": {
+    "laosong": 40
+   }
+  },
+  "album": "聽老松說神木的故事",
+  "steps": [
+   {
+    "fade": "山路的盡頭，一棵好大的樹，靜靜地站在小祠旁邊。"
+   },
+   {
+    "narrate": "樹幹粗得要好幾個人才抱得住，枝葉遮住了大半片天空。"
+   },
+   {
+    "say": "laosong",
+    "text": "……喔……有客人……是米婆……叫你來的吧……"
+   },
+   {
+    "say": "laosong",
+    "text": "她的腳……走不上山了……就叫年輕人……上來……"
+   },
+   {
+    "say": "laosong",
+    "face": "closed",
+    "text": "這棵樹……是神木……比這座祠……還要老……"
+   },
+   {
+    "say": "laosong",
+    "text": "想聽……它的故事嗎……不急……坐下……慢慢聽……"
+   },
+   {
+    "narrate": "你在石階上坐下來。風吹過樹梢，葉子沙沙地響。"
+   },
+   {
+    "say": "laosong",
+    "text": "很久……很久以前……這座山谷……還沒有人住……"
+   },
+   {
+    "say": "laosong",
+    "text": "有一天……兩個旅人……走進了山谷……是一對……很要好的朋友……"
+   },
+   {
+    "say": "laosong",
+    "text": "他們走了……很遠的路……累了……就在這裡……停了下來……"
+   },
+   {
+    "say": "laosong",
+    "text": "一個人……挖了一個洞……另一個人……放進一顆種子……"
+   },
+   {
+    "say": "laosong",
+    "face": "happy",
+    "text": "那顆種子……就是這棵神木……"
+   },
+   {
+    "say": "laosong",
+    "text": "後來……他們在山腳下……開了第一塊田……蓋了一間小屋……"
+   },
+   {
+    "narrate": "老松說到這裡，停了下來，意味深長地看了你一眼。"
+   },
+   {
+    "choice": [
+     {
+      "text": "然後呢？",
+      "pts": 60,
+      "goto": "then"
+     },
+     {
+      "text": "他們一定很快樂",
+      "pts": 50,
+      "goto": "happy"
+     }
+    ]
+   },
+   {
+    "label": "then"
+   },
+   {
+    "say": "laosong",
+    "face": "happy",
+    "text": "……呵呵……年輕人……急……"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "happy"
+   },
+   {
+    "say": "laosong",
+    "face": "happy",
+    "text": "……嗯……兩個人……看同一片天……就夠了……"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "laosong",
+    "text": "這個故事……還有……最後一句……"
+   },
+   {
+    "say": "laosong",
+    "face": "closed",
+    "text": "等神木……開花的那天……再說給你聽……"
+   },
+   {
+    "say": "laosong",
+    "text": "它……三十年沒開花了……可是……還活得好好的……樹……比人有耐心……"
+   },
+   {
+    "narrate": "一片葉子落在你的肩膀上。老松瞇起眼睛，慢慢地笑了。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "story_bell": {
+  "title": "鐘聲又響了",
+  "npc": "tongbo",
+  "shared": true,
+  "when": {
+   "map": "town",
+   "fixed": "clocktower",
+   "hour": [
+    6,
+    20
+   ],
+   "after": "story_town"
+  },
+  "reward": {
+   "money": 300
+  },
+  "album": "鐘樓的鐘聲又響了",
+  "steps": [
+   {
+    "fade": "修好的鐘樓底下，聚了一小群人。"
+   },
+   {
+    "narrate": "新換上的齒輪擦得亮晶晶的，指針一格一格，走向整點。"
+   },
+   {
+    "say": "ahe",
+    "face": "happy",
+    "text": "要響了、要響了！大家安靜！"
+   },
+   {
+    "say": "chunshen",
+    "text": "阿禾，最吵的就是你啦！"
+   },
+   {
+    "wait": 1
+   },
+   {
+    "narrate": "噹——噹——噹——"
+   },
+   {
+    "narrate": "鐘聲越過屋頂、越過田埂，一路傳到很遠很遠的山上。"
+   },
+   {
+    "say": "tongbo",
+    "face": "closed",
+    "text": "……"
+   },
+   {
+    "say": "tongbo",
+    "face": "sad",
+    "text": "哈……哈哈。奇怪，今天風沙怎麼這麼大。"
+   },
+   {
+    "say": "ahe",
+    "text": "桐伯，你在哭喔？"
+   },
+   {
+    "say": "tongbo",
+    "text": "誰哭了！木屑跑進眼睛啦！"
+   },
+   {
+    "say": "tongbo",
+    "text": "……跟你說，這座鐘樓的木架，我也有份。"
+   },
+   {
+    "say": "tongbo",
+    "text": "那年我十五歲，在師父底下當學徒，每天扛木頭扛到肩膀破皮。"
+   },
+   {
+    "say": "tongbo",
+    "face": "happy",
+    "text": "鐘第一次響的時候，師父拍拍我的頭說：「聽，這是你做的。」"
+   },
+   {
+    "say": "tongbo",
+    "face": "sad",
+    "text": "後來鐘壞了，師父也走了。我一個人，修不動啊。"
+   },
+   {
+    "say": "tongbo",
+    "face": "happy",
+    "text": "今天又聽到了。跟那時候一模一樣。"
+   },
+   {
+    "choice": [
+     {
+      "text": "桐伯做的架子好穩",
+      "pts": 60,
+      "goto": "frame"
+     },
+     {
+      "text": "師父一定也聽到了",
+      "pts": 50,
+      "goto": "master"
+     }
+    ]
+   },
+   {
+    "label": "frame"
+   },
+   {
+    "say": "tongbo",
+    "face": "happy",
+    "text": "那當然！快五十年了，一根釘子都沒鬆！哈哈哈！"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "master"
+   },
+   {
+    "say": "tongbo",
+    "face": "shy",
+    "text": "……嗯。他耳朵很好，一定聽到了。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "ahe",
+    "face": "happy",
+    "text": "有了鐘，店也可以開晚一點囉！這是大家湊的一點心意，拿去買種子吧！"
+   },
+   {
+    "say": "chunshen",
+    "face": "happy",
+    "text": "今天晚上大家來餐館！我煮一大鍋燉菜！"
+   },
+   {
+    "say": "tongbo",
+    "face": "happy",
+    "text": "燉菜！你看看，鐘一響，好事就來了！"
+   },
+   {
+    "narrate": "大家都笑了。鐘樓的指針，又開始一格一格地往前走。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "story_library": {
+  "title": "回到架上的書",
+  "npc": "yunxiu",
+  "shared": true,
+  "when": {
+   "map": "uptown",
+   "fixed": "library",
+   "at": [
+    5,
+    11,
+    6
+   ],
+   "after": "story_town"
+  },
+  "reward": {
+   "pts": {
+    "yunxiu": 30
+   }
+  },
+  "album": "書回到了圖書館",
+  "steps": [
+   {
+    "fade": "修好的圖書館裡，堆滿了一箱一箱的書。"
+   },
+   {
+    "narrate": "雲岫捲起袖子，正把書一本一本放回架上。"
+   },
+   {
+    "say": "yunxiu",
+    "text": "……啊，是你。腳步聲有點大，不過今天原諒你。"
+   },
+   {
+    "say": "yunxiu",
+    "text": "屋頂漏水那年，書全都裝箱搬走了。這些箱子，在倉庫裡等了好久。"
+   },
+   {
+    "say": "yunxiu",
+    "text": "要幫忙的話，那箱放下面兩層。照書背的編號排，不要亂插。"
+   },
+   {
+    "narrate": "你們一起排了好一陣子。舊紙張的味道，混著新木頭的香氣。"
+   },
+   {
+    "say": "yunxiu",
+    "text": "……咦。"
+   },
+   {
+    "narrate": "雲岫從箱底拿出一本厚厚的舊書，封面的字都快看不清楚了。"
+   },
+   {
+    "say": "yunxiu",
+    "text": "《晴耕谷誌》……鎮上最老的一本書。我以為早就不見了。"
+   },
+   {
+    "narrate": "她小心地翻開。紙黃得像秋天的葉子，翻到某一頁，停了下來。"
+   },
+   {
+    "narrate": "那頁畫著一棵大樹。樹下站著兩個人，背著行李，並肩看著山谷。"
+   },
+   {
+    "say": "yunxiu",
+    "text": "這棵樹，應該就是山上的神木。旁邊這兩個人……沒有寫名字。"
+   },
+   {
+    "say": "yunxiu",
+    "face": "sad",
+    "text": "下面本來有一行字，被漏水泡糊了。只看得出開頭兩個字：「晴天」。"
+   },
+   {
+    "choice": [
+     {
+      "text": "後面寫了什麼呢？",
+      "pts": 60,
+      "goto": "words"
+     },
+     {
+      "text": "這兩個人是誰？",
+      "pts": 50,
+      "goto": "who"
+     }
+    ]
+   },
+   {
+    "label": "words"
+   },
+   {
+    "say": "yunxiu",
+    "text": "不知道。不過我會查。我很會找東西……除了阿禾借走的食譜。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "who"
+   },
+   {
+    "say": "yunxiu",
+    "text": "不知道。不過看他們站的樣子，感情應該很好。"
+   },
+   {
+    "narrate": "雲岫看了你一眼，又低頭看看那頁畫，什麼也沒說。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "yunxiu",
+    "text": "這本書不外借。想看的話，來這裡看。……我幫你留著。"
+   },
+   {
+    "say": "yunxiu",
+    "face": "shy",
+    "text": "……謝謝你們。書回到架上，這裡才像圖書館。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "story_spa": {
+  "title": "熱騰騰的溫泉",
+  "npc": "ayan",
+  "shared": true,
+  "when": {
+   "map": "uptown",
+   "fixed": "spa",
+   "at": [
+    35,
+    11,
+    6
+   ],
+   "after": "story_town"
+  },
+  "reward": {
+   "items": [
+    [
+     "tonic",
+     2
+    ]
+   ]
+  },
+  "album": "溫泉澡堂重新開張",
+  "steps": [
+   {
+    "fade": "鎮北街的澡堂門口，排起了長長的隊伍。"
+   },
+   {
+    "narrate": "排隊的大多是鎮上的老人家，每個人都抱著臉盆和毛巾。"
+   },
+   {
+    "say": "mipo",
+    "face": "happy",
+    "text": "唉唷，好久沒泡了。婆婆這把老腰，就等今天。"
+   },
+   {
+    "say": "haibo",
+    "face": "happy",
+    "text": "在海上漂了四十年，今天換我泡在熱水裡！哈哈！"
+   },
+   {
+    "say": "ayan",
+    "face": "happy",
+    "text": "不要擠、不要擠！水溫剛剛好！……大概啦，我等一下再量！"
+   },
+   {
+    "narrate": "阿焱滿頭大汗地跑出來，一看到你，眼睛就亮了。"
+   },
+   {
+    "say": "ayan",
+    "face": "happy",
+    "text": "你來了！你看你看，新的木頭、新的屋頂！泉水還是原來的泉水！"
+   },
+   {
+    "say": "ayan",
+    "text": "木頭爛掉的那幾年，我只能東補一塊、西補一塊，撐一天算一天。"
+   },
+   {
+    "say": "ayan",
+    "face": "sad",
+    "text": "我媽說乾脆收掉算了。可是這是我爺爺蓋的澡堂啊。"
+   },
+   {
+    "say": "ayan",
+    "face": "closed",
+    "text": "爺爺說，泡完澡，人就會笑。人一笑，鎮就活了。"
+   },
+   {
+    "narrate": "澡堂裡傳出老人家舒服的嘆氣聲，還有一陣一陣的笑聲。"
+   },
+   {
+    "say": "ayan",
+    "face": "happy",
+    "text": "你聽，大家在笑！爺爺的澡堂……終於回來了！"
+   },
+   {
+    "choice": [
+     {
+      "text": "你爺爺一定很驕傲",
+      "pts": 60,
+      "goto": "proud"
+     },
+     {
+      "text": "你撐了好久，辛苦了",
+      "pts": 50,
+      "goto": "hard"
+     },
+     {
+      "text": "我也想泡！",
+      "pts": 40,
+      "goto": "bath"
+     }
+    ]
+   },
+   {
+    "label": "proud"
+   },
+   {
+    "say": "ayan",
+    "face": "shy",
+    "text": "嘿嘿……那我更要好好顧，不能讓爺爺丟臉！"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "hard"
+   },
+   {
+    "say": "ayan",
+    "face": "shy",
+    "text": "……是你們幫我撐起來的啦。我一個人，怎麼可能修得好。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "bath"
+   },
+   {
+    "say": "ayan",
+    "face": "happy",
+    "text": "當然！本來想讓你泡第一池的，結果被老人家搶先了，哈哈！"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "ayan",
+    "text": "對了，泡完要喝冰牛奶！你們捐的牛奶，我全拿去冰了！"
+   },
+   {
+    "say": "ayan",
+    "face": "happy",
+    "text": "這兩瓶補藥是白芷醫生送的開張禮，分你們！做完農來泡，保證復活！"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "story_train": {
+  "title": "第一班火車",
+  "npc": "atie",
+  "shared": true,
+  "when": {
+   "map": "uptown",
+   "fixed": "station",
+   "at": [
+    42,
+    21,
+    6
+   ],
+   "after": "story_town"
+  },
+  "reward": {
+   "items": [
+    [
+     "dish_salmon_onigiri",
+     2
+    ]
+   ]
+  },
+  "album": "火車又停靠晴耕谷了",
+  "steps": [
+   {
+    "fade": "火車站的月台上，站著一個穿著筆挺制服的人。"
+   },
+   {
+    "narrate": "阿鐵的制服燙得一條皺摺都沒有，帽子戴得端端正正。"
+   },
+   {
+    "say": "atie",
+    "text": "……你來了。還有三分鐘。"
+   },
+   {
+    "say": "atie",
+    "text": "這些年，火車每天都從這裡經過。我每一班都看著它開走。"
+   },
+   {
+    "say": "atie",
+    "text": "時刻表上，早就沒有晴耕谷這一站了。可是月台，我每天都擦。"
+   },
+   {
+    "say": "atie",
+    "face": "closed",
+    "text": "今天起，重新排上了。……晴耕谷站，停車兩分鐘。"
+   },
+   {
+    "narrate": "阿鐵拿出一個舊舊的哨子，用袖子擦了又擦。"
+   },
+   {
+    "say": "atie",
+    "text": "這是我父親的哨子。他以前，也是這個站的站長。"
+   },
+   {
+    "say": "yaya",
+    "face": "happy",
+    "text": "阿鐵叔叔！火車！火車來了！"
+   },
+   {
+    "narrate": "遠方傳來長長的汽笛聲。月台輕輕地震動起來。"
+   },
+   {
+    "narrate": "火車慢慢地、慢慢地，停在了晴耕谷站。"
+   },
+   {
+    "narrate": "嗶——！阿鐵吹響了哨子。"
+   },
+   {
+    "say": "atie",
+    "face": "closed",
+    "text": "……誤點，零分鐘。"
+   },
+   {
+    "say": "maisui",
+    "face": "happy",
+    "text": "停了！真的停了！谷裡的菜，可以直接坐火車進城了！"
+   },
+   {
+    "say": "maisui",
+    "text": "早上採的菜，中午就擺上城裡的菜攤。你們的菜，會賣得更好。"
+   },
+   {
+    "choice": [
+     {
+      "text": "恭喜你，站長",
+      "pts": 60,
+      "goto": "yay"
+     },
+     {
+      "text": "你父親也會很高興",
+      "pts": 50,
+      "goto": "dad"
+     }
+    ]
+   },
+   {
+    "label": "yay"
+   },
+   {
+    "say": "atie",
+    "face": "shy",
+    "text": "……嗯。謝謝。被這樣叫，好像第一天上班一樣。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "dad"
+   },
+   {
+    "say": "atie",
+    "face": "closed",
+    "text": "……嗯。這個哨子，今天終於吹響了。他會知道的。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "maisui",
+    "text": "對了，春嬸做了一籃鮭魚飯糰，說要慶祝。這兩個給你們。"
+   },
+   {
+    "say": "atie",
+    "text": "下一班，明天早上七點零五分。……時刻表，是一種承諾。"
+   },
+   {
+    "narrate": "阿鐵挺直了背，站回白線後面。他的嘴角，好像有一點點在笑。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "story_light": {
+  "title": "燈塔的光",
+  "npc": "haibo",
+  "shared": true,
+  "when": {
+   "map": "beach",
+   "fixed": "lighthouse",
+   "hour": [
+    18,
+    26
+   ],
+   "after": "story_town"
+  },
+  "reward": {
+   "items": [
+    [
+     "fish_sea_bream",
+     1
+    ]
+   ]
+  },
+  "album": "燈塔重新亮起來",
+  "steps": [
+   {
+    "fade": "天黑了。海風鹹鹹的，吹過安靜的碼頭。"
+   },
+   {
+    "narrate": "燈塔底下，海伯提著一盞小油燈，好像在等什麼。"
+   },
+   {
+    "say": "haibo",
+    "face": "happy",
+    "text": "喲，年輕人！來得正好，來得正好！"
+   },
+   {
+    "say": "haibo",
+    "text": "今天傍晚，港口的船全都出海了。好多年沒有這樣囉。"
+   },
+   {
+    "say": "haibo",
+    "face": "sad",
+    "text": "燈塔不亮的那些年，天一黑，誰也不敢出海。海太黑，找不到回家的路。"
+   },
+   {
+    "say": "haibo",
+    "text": "來，跟我上去。今天晚上，這盞燈要重新點起來。"
+   },
+   {
+    "narrate": "你跟著海伯，一階一階爬上燈塔。海風越來越大。"
+   },
+   {
+    "narrate": "海伯把油燈湊近燈芯——"
+   },
+   {
+    "wait": 1
+   },
+   {
+    "narrate": "一道溫暖的光亮了起來，慢慢地轉著，照向黑漆漆的海面。"
+   },
+   {
+    "say": "haibo",
+    "face": "closed",
+    "text": "……亮了。"
+   },
+   {
+    "narrate": "遠遠的海上，一盞、兩盞……小小的船燈跟著光，一艘一艘靠了過來。"
+   },
+   {
+    "say": "xiyin",
+    "face": "happy",
+    "text": "海伯——！看到了！第一艘船進港了！"
+   },
+   {
+    "say": "haibo",
+    "face": "happy",
+    "text": "哈哈！燈塔的燈每晚都要亮，不然魚會迷路。……騙你的，是船。"
+   },
+   {
+    "say": "haibo",
+    "text": "海上的人啊，只要看到這盞燈，就知道家在哪裡。"
+   },
+   {
+    "choice": [
+     {
+      "text": "這盞燈好溫暖",
+      "pts": 50,
+      "goto": "warm"
+     },
+     {
+      "text": "以後每晚都會亮的",
+      "pts": 60,
+      "goto": "every"
+     }
+    ]
+   },
+   {
+    "label": "warm"
+   },
+   {
+    "say": "haibo",
+    "face": "happy",
+    "text": "是吧？我守了一輩子的燈，今天這一盞，最亮。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "every"
+   },
+   {
+    "say": "haibo",
+    "face": "happy",
+    "text": "對！只要我這把老骨頭還爬得上來，每天晚上都亮！"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "narrate": "下了燈塔，汐音拎著一條魚，從碼頭那邊走過來。"
+   },
+   {
+    "say": "xiyin",
+    "text": "船上的人給的，說要謝謝修燈塔的人。……今天的魚，都大得不像話。"
+   },
+   {
+    "narrate": "燈塔的光一圈一圈地轉著，照亮了海，也照亮了回家的路。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "story_market": {
+  "title": "週末的市集",
+  "npc": "liuli",
+  "shared": true,
+  "when": {
+   "map": "town",
+   "fixed": "market",
+   "hour": [
+    8,
+    18
+   ],
+   "after": "story_town"
+  },
+  "reward": {
+   "money": 500
+  },
+  "album": "市集廣場又擠滿了人",
+  "steps": [
+   {
+    "fade": "市集廣場的大棚架底下，好久沒有這麼熱鬧了。"
+   },
+   {
+    "narrate": "賣菜的、賣花的、賣果醬的……叫賣聲和笑聲混在一起。"
+   },
+   {
+    "say": "youzi",
+    "face": "happy",
+    "text": "要不要買花～？今天的鬱金香特別愛撒嬌喔。"
+   },
+   {
+    "narrate": "棚架的柱子旁，小澄抱著素描本，畫得好認真。"
+   },
+   {
+    "say": "xiaocheng",
+    "face": "shy",
+    "text": "人、人好多……可是……好想全部畫下來……"
+   },
+   {
+    "narrate": "廣場角落的貨箱上，坐著一個晃著腳的人。"
+   },
+   {
+    "say": "liuli",
+    "face": "happy",
+    "text": "哎呀哎呀，是種田的那位。我就知道你會來。"
+   },
+   {
+    "say": "liuli",
+    "text": "我走過很多地方的市集。大的、小的、吵的、臭的，都有。"
+   },
+   {
+    "say": "liuli",
+    "text": "可是這裡的人，買個東西還要跟你聊天氣。太老實了，害我都不好意思抬價。"
+   },
+   {
+    "say": "liuli",
+    "text": "以前我來這裡，最多待三天就走。流浪的人，不能停太久。"
+   },
+   {
+    "narrate": "琉璃從貨箱裡拿出一塊布招牌，慢慢地掛了上去。"
+   },
+   {
+    "say": "liuli",
+    "face": "shy",
+    "text": "……這次，我想多擺一陣子。"
+   },
+   {
+    "say": "liuli",
+    "text": "不要誤會喔。是這裡的貨，外地人搶著要。生意好，就多待幾天。"
+   },
+   {
+    "choice": [
+     {
+      "text": "那就多待一陣子吧",
+      "pts": 60,
+      "goto": "stay"
+     },
+     {
+      "text": "真的只是生意好？",
+      "pts": 50,
+      "goto": "tease"
+     }
+    ]
+   },
+   {
+    "label": "stay"
+   },
+   {
+    "say": "liuli",
+    "face": "happy",
+    "text": "嘻嘻，你說的喔。那我就多待幾天，看看你們的田會長成什麼樣子。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "tease"
+   },
+   {
+    "say": "liuli",
+    "text": "哎呀，你猜。……猜對了，也不告訴你。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "youzi",
+    "face": "happy",
+    "text": "琉璃姐要留下來嗎？那我每天送一朵花給你的攤位！"
+   },
+   {
+    "say": "xiaocheng",
+    "face": "shy",
+    "text": "那、那個……我可以畫你的攤位嗎……"
+   },
+   {
+    "say": "liuli",
+    "face": "happy",
+    "text": "可以，畫漂亮一點。……還有，這袋給你們。修好棚架的謝禮。"
+   },
+   {
+    "say": "liuli",
+    "text": "別推辭。流浪商人最討厭欠人情了。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "story_shrine_fixed": {
+  "title": "藤蔓底下",
+  "npc": "laosong",
+  "shared": true,
+  "when": {
+   "map": "forest",
+   "fixed": "shrine",
+   "at": [
+    34,
+    8,
+    5
+   ],
+   "after": "story_shrine"
+  },
+  "reward": {
+   "pts": {
+    "laosong": 40
+   }
+  },
+  "album": "神木小祠的藤蔓清乾淨了",
+  "steps": [
+   {
+    "fade": "清掉藤蔓的小祠，終於露出了原本的樣子。"
+   },
+   {
+    "narrate": "石砌的屋簷，刻著花紋的木門。陽光從樹葉間灑下來，照在乾淨的石階上。"
+   },
+   {
+    "say": "laosong",
+    "face": "happy",
+    "text": "……你來了……來……來看看……"
+   },
+   {
+    "say": "laosong",
+    "text": "藤蔓底下……原來……還藏著這些花紋……我都……快忘了……"
+   },
+   {
+    "say": "qinglan",
+    "text": "……你也來了。剛好。"
+   },
+   {
+    "say": "qinglan",
+    "text": "早上採藥經過，看到一個東西。老松說，要等你來再看。"
+   },
+   {
+    "say": "laosong",
+    "text": "……這邊……樹幹的這邊……你靠近一點……"
+   },
+   {
+    "narrate": "你走到神木旁邊。粗粗的樹皮上，冒出了幾顆小小的東西。"
+   },
+   {
+    "narrate": "不是新芽。是圓圓的、淡綠色的花苞，還緊緊地包著。"
+   },
+   {
+    "say": "laosong",
+    "face": "closed",
+    "text": "……三十年了……三十年……第一次……"
+   },
+   {
+    "say": "laosong",
+    "face": "sad",
+    "text": "我還以為……這輩子……等不到了……"
+   },
+   {
+    "say": "qinglan",
+    "text": "還沒開。不過花苞很硬，是好的。……樹，活得很好。"
+   },
+   {
+    "say": "laosong",
+    "face": "happy",
+    "text": "鎮上……熱鬧起來了吧……神木……都聽得到……"
+   },
+   {
+    "choice": [
+     {
+      "text": "什麼時候會開呢？",
+      "pts": 50,
+      "goto": "when"
+     },
+     {
+      "text": "我們會讓它開花的",
+      "pts": 60,
+      "goto": "promise"
+     }
+    ]
+   },
+   {
+    "label": "when"
+   },
+   {
+    "say": "laosong",
+    "text": "……不急……花……跟人一樣……準備好了……就會開……"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "promise"
+   },
+   {
+    "say": "laosong",
+    "face": "happy",
+    "text": "……好……好……祂聽到了……我也……聽到了……"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "qinglan",
+    "text": "……以後下山，我會繞過來看看。"
+   },
+   {
+    "say": "laosong",
+    "text": "等它開花的那天……故事的最後一句……我會說給你們聽……"
+   },
+   {
+    "narrate": "風吹過樹梢，花苞輕輕地晃了一下，像在點頭。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "story_school": {
+  "title": "上課的鐘聲",
+  "npc": "molaoshi",
+  "shared": true,
+  "when": {
+   "map": "uptown",
+   "fixed": "school",
+   "hour": [
+    8,
+    17
+   ],
+   "after": "story_town"
+  },
+  "reward": {
+   "pts": {
+    "xiaoshu": 30,
+    "yaya": 30
+   }
+  },
+  "album": "學校又有了上課的聲音",
+  "steps": [
+   {
+    "fade": "學校的窗戶裡，傳出了好久沒聽見的聲音。"
+   },
+   {
+    "narrate": "噹噹噹——上課鐘響了。教室裡，只有兩張桌子坐了人。"
+   },
+   {
+    "say": "molaoshi",
+    "face": "happy",
+    "text": "啊，你來得正好。請進，請進。今天是第一堂課。"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "happy",
+    "text": "是種田的！老師，是那個種田的！"
+   },
+   {
+    "say": "yaya",
+    "face": "shy",
+    "text": "……你、你好。"
+   },
+   {
+    "say": "molaoshi",
+    "text": "這間教室空了好多年。黑板還在，粉筆也還在，就是沒有人。"
+   },
+   {
+    "say": "molaoshi",
+    "face": "happy",
+    "text": "現在有兩個學生了。兩個，就夠上課了。"
+   },
+   {
+    "narrate": "墨老師在黑板上，寫了三個大大的字：晴耕谷。"
+   },
+   {
+    "say": "molaoshi",
+    "text": "你們知道嗎？這個鎮以前叫「晴谷」，後來才多了一個「耕」字。"
+   },
+   {
+    "say": "xiaoshu",
+    "text": "為什麼？"
+   },
+   {
+    "say": "molaoshi",
+    "text": "因為很久很久以前，有人在這裡開了第一塊田。"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "happy",
+    "text": "那我要聽種田的事！農夫老師，你教我們！"
+   },
+   {
+    "say": "yaya",
+    "face": "shy",
+    "text": "……我也想聽。養小雞……也算種田嗎？"
+   },
+   {
+    "say": "molaoshi",
+    "face": "happy",
+    "text": "哈哈，那今天就請你當老師吧。"
+   },
+   {
+    "prompt": "（要教他們什麼？）",
+    "choice": [
+     {
+      "text": "種子要先泡水睡一覺",
+      "pts": 50,
+      "goto": "seed"
+     },
+     {
+      "text": "雜草每天都要拔",
+      "pts": 40,
+      "goto": "weed"
+     },
+     {
+      "text": "用心照顧，它就會長",
+      "pts": 60,
+      "goto": "care"
+     }
+    ]
+   },
+   {
+    "label": "seed"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "happy",
+    "text": "種子也會睡覺？那它會打呼嗎？"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "weed"
+   },
+   {
+    "say": "xiaoshu",
+    "face": "sad",
+    "text": "每天？我討厭拔草……可是我喜歡抓草裡的蟲！"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "care"
+   },
+   {
+    "say": "yaya",
+    "face": "happy",
+    "text": "……跟養小雞一樣！要每天看牠，跟牠說話。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "say": "molaoshi",
+    "face": "happy",
+    "text": "很好的一課。讀萬卷書，也要行萬里田埂啊。"
+   },
+   {
+    "say": "molaoshi",
+    "text": "下次，帶孩子們去你們的田裡看看吧。……老實說，我也想去。"
+   },
+   {
+    "narrate": "下課鐘響了。小樹衝出教室，芽芽在門口回頭，朝你揮了揮手。"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "story_dinner": {
+  "title": "餐館裡的謝謝晚餐",
+  "npc": "chunshen",
+  "shared": true,
+  "when": {
+   "map": "town",
+   "restored": 4,
+   "hour": [
+    17,
+    23
+   ],
+   "after": "story_fix1"
+  },
+  "reward": {
+   "items": [
+    [
+     "dish_cream_stew",
+     2
+    ]
+   ]
+  },
+  "album": "春嬸的謝謝晚餐",
+  "steps": [
+   {
+    "fade": "傍晚，餐館門口掛起了一串小燈泡。"
+   },
+   {
+    "say": "chunshen",
+    "face": "happy",
+    "text": "來了來了！快進來，大家都在等呢！"
+   },
+   {
+    "narrate": "餐館裡擠滿了人。桌子拼成長長的一排，上面擺滿了菜。"
+   },
+   {
+    "say": "ahe",
+    "text": "坐這邊、坐這邊！位子幫你留好了。"
+   },
+   {
+    "say": "xiaoman",
+    "face": "happy",
+    "text": "今天的麵包是我烤的！……只焦了一盤！只有一盤喔！"
+   },
+   {
+    "say": "apeng",
+    "face": "happy",
+    "text": "我負責試吃！已經試了三輪了！"
+   },
+   {
+    "say": "chunshen",
+    "text": "阿椪！那是要給客人吃的！"
+   },
+   {
+    "say": "mipo",
+    "face": "happy",
+    "text": "好熱鬧啊。婆婆好久沒看到餐館坐滿了。"
+   },
+   {
+    "say": "tongbo",
+    "face": "happy",
+    "text": "壞掉的地方，一個一個修好了！你們兩個，真有你們的！"
+   },
+   {
+    "say": "chunshen",
+    "text": "好了好了，大家安靜！"
+   },
+   {
+    "say": "chunshen",
+    "text": "這間餐館啊，以前客人多到排到廣場去。後來，連一桌都坐不滿。"
+   },
+   {
+    "say": "chunshen",
+    "face": "happy",
+    "text": "今天，又坐滿了。這頓飯，是謝謝你們的。"
+   },
+   {
+    "say": "chunshen",
+    "text": "來，你說幾句！大家拿起杯子，等你乾杯！"
+   },
+   {
+    "prompt": "（要說什麼祝酒詞？）",
+    "choice": [
+     {
+      "text": "敬晴耕谷！",
+      "pts": 50,
+      "goto": "town"
+     },
+     {
+      "text": "敬大家，謝謝你們",
+      "pts": 60,
+      "goto": "all"
+     },
+     {
+      "text": "敬春嬸的好手藝！",
+      "pts": 40,
+      "goto": "food"
+     }
+    ]
+   },
+   {
+    "label": "town"
+   },
+   {
+    "say": "@me",
+    "face": "happy",
+    "text": "敬晴耕谷！敬越來越熱鬧的小鎮！"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "all"
+   },
+   {
+    "say": "@me",
+    "face": "happy",
+    "text": "敬大家！是大家一起，才修得好的。謝謝你們！"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "food"
+   },
+   {
+    "say": "@me",
+    "face": "happy",
+    "text": "敬春嬸！還有這一桌，全世界最好吃的菜！"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "narrate": "「乾杯！」杯子碰在一起，叮叮噹噹響成一片。"
+   },
+   {
+    "say": "chunshen",
+    "face": "happy",
+    "text": "好！吃飽沒？沒吃飽的不准走！"
+   },
+   {
+    "narrate": "那天晚上，餐館的燈亮到很晚很晚。"
+   },
+   {
+    "say": "chunshen",
+    "text": "這兩份奶油燉菜帶回去。你們兩個啊，要互相照顧，知道嗎？"
+   },
+   {
+    "end": true
+   }
+  ]
+ },
+ "story_bloom": {
+  "title": "神木開花",
+  "npc": "laosong",
+  "when": {
+   "map": "forest",
+   "at": [
+    34,
+    8,
+    6
+   ],
+   "restored": 8,
+   "together": true,
+   "after": [
+    "story_shrine_fixed",
+    "story_dinner"
+   ]
+  },
+  "reward": {
+   "money": 2000,
+   "items": [
+    [
+     "fertilizer_gold",
+     10
+    ]
+   ]
+  },
+  "album": "神木開花了",
+  "steps": [
+   {
+    "fade": "鐘聲、汽笛、市集的叫賣聲……晴耕谷，醒過來了。"
+   },
+   {
+    "narrate": "你們兩個一起走上山。小祠前擠滿了人，鎮上的人好像全都來了。"
+   },
+   {
+    "narrate": "神木的枝頭，掛滿了圓滾滾的花苞，在風裡輕輕地晃。"
+   },
+   {
+    "say": "laosong",
+    "face": "happy",
+    "text": "……你們……來了……神木……在等你們……兩個人……都到了……"
+   },
+   {
+    "wait": 1
+   },
+   {
+    "narrate": "一陣風從山谷吹上來。第一朵花開了，接著是第二朵、第三朵……"
+   },
+   {
+    "narrate": "整棵神木開滿了淡金色的花。花瓣在陽光裡，像金粉一樣飄下來。"
+   },
+   {
+    "say": "mipo",
+    "face": "closed",
+    "text": "……跟婆婆小時候看到的，一模一樣……"
+   },
+   {
+    "say": "@a",
+    "face": "happy",
+    "text": "……好漂亮。"
+   },
+   {
+    "say": "@b",
+    "face": "happy",
+    "text": "嗯。真的開了。"
+   },
+   {
+    "say": "laosong",
+    "text": "我答應過……要把故事的最後一句……說給你們聽……"
+   },
+   {
+    "say": "laosong",
+    "text": "那兩個旅人……在樹下……說了一句話……後來……就成了這個山谷的名字……"
+   },
+   {
+    "say": "laosong",
+    "face": "happy",
+    "text": "「晴天耕田、雨天休息、有人陪就好。」"
+   },
+   {
+    "narrate": "老松看著你們兩個，慢慢地笑了，像是看見了很久很久以前的那兩個旅人。"
+   },
+   {
+    "say": "@a",
+    "text": "……還記得剛搬來那天嗎？草長得比膝蓋還高。"
+   },
+   {
+    "say": "@b",
+    "face": "happy",
+    "text": "記得。籬笆倒了一大半，屋頂還缺了好幾片瓦。"
+   },
+   {
+    "narrate": "金色的花瓣，靜靜地落在你和 {partner} 的肩膀上。"
+   },
+   {
+    "ask": "@me",
+    "prompt": "（想對 {partner} 說什麼？）",
+    "choice": [
+     {
+      "text": "謝謝你陪我來這裡",
+      "flag": "bloom_thanks",
+      "goto": "thanks"
+     },
+     {
+      "text": "以後也一起種田吧",
+      "flag": "bloom_together",
+      "goto": "always"
+     },
+     {
+      "text": "有你在，真好",
+      "flag": "bloom_glad",
+      "goto": "glad"
+     }
+    ]
+   },
+   {
+    "label": "thanks"
+   },
+   {
+    "say": "@me",
+    "face": "happy",
+    "text": "謝謝你陪我來這裡。一個人的話，我一定走不到今天。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "always"
+   },
+   {
+    "say": "@me",
+    "face": "happy",
+    "text": "晴天一起耕田，雨天一起休息。以後，也一起吧。"
+   },
+   {
+    "goto": "end"
+   },
+   {
+    "label": "glad"
+   },
+   {
+    "say": "@me",
+    "face": "shy",
+    "text": "……有你在，真的太好了。"
+   },
+   {
+    "label": "end"
+   },
+   {
+    "emote": "😊",
+    "who": "@a"
+   },
+   {
+    "emote": "😊",
+    "who": "@b"
+   },
+   {
+    "say": "@a",
+    "face": "happy",
+    "text": "走吧，回家。"
+   },
+   {
+    "say": "@b",
+    "face": "happy",
+    "text": "嗯。回我們的農場。"
+   },
+   {
+    "end": true
+   }
+  ]
+ }
 }

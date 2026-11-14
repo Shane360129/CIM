@@ -82,6 +82,19 @@ for (const [id, ev] of Object.entries(all)) {
     else if (t === 'fade') { if (typeof s.fade !== 'string' && s.fade !== true) err(at, 'fade 要是一句話或 true'); else if (typeof s.fade === 'string' && len(s.fade) > LIMIT.text) warn(at, `fade 太長（${len(s.fade)} 字）`); }
   });
   for (const l of labels) if (!used.has(l)) warn(id, `標籤「${l}」沒有人跳過來`);
+  // 每一種選法都照遊戲的演法（systems/cutscene.js）走一遍：要走得到結尾、不會繞圈圈，而且每一種選法最後都會經過同一段結尾
+  const at = new Map(ev.steps.map((x, i) => [x.label, i]).filter(([l]) => l)), paths = [], walk = (i, seen, picks) => {
+    for (let g = 0; i < ev.steps.length && g < 300; i++, g++) {
+      const x = ev.steps[i]; seen.push(i);
+      if (x.choice) { if (picks > 6) return paths.push(seen); x.choice.forEach((o) => walk(o.goto && at.has(o.goto) ? at.get(o.goto) + 1 : i + 1, [...seen], picks + 1)); return; }
+      if (x.goto && at.has(x.goto)) i = at.get(x.goto);
+      else if (x.end) return paths.push(seen);
+    }
+    paths.push(i >= ev.steps.length ? seen : null);
+  };
+  walk(0, [], 0);
+  if (paths.some((x) => !x)) err(id, '有一種選法會一直繞圈圈，演不完');
+  else { const last = paths.map((x) => x.filter((i) => ev.steps[i].say || ev.steps[i].narrate).pop()); if (new Set(last).size > 1) warn(id, '不同的選法最後一句不一樣（分支沒有會合到同一個結尾）'); }
   if (k !== 'heart') for (const a of list((ev.when || {}).after || [])) if (!all[a]) err(id, `when.after「${a}」沒有這段劇情`);
 }
 // 同一位居民的心事件要照心數排（說話時先演心數小的）
