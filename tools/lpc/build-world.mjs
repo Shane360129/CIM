@@ -138,7 +138,8 @@ if (preview) { // 檢查圖：每張小圖放大兩倍，下面寫名字
   for (const slug of [...used].sort()) {
     const p = PACKS[slug]; if (!p) { problems.push(`素材包 ${slug} 不在 oga-packs.json`); continue; }
     const files = [];
-    for (const f of p.creditFiles || []) { const from = path.join(OGA, slug, f); if (!(await exists(from))) continue; const to = path.join(OUT, 'credits', slug, path.basename(f)); await mkdir(path.dirname(to), { recursive: true }); await copyFile(from, to); files.push(`assets/credits/${slug}/${path.basename(f)}`); }
+    // 只抄文字的說明檔（素材包附的 .xcf 這類圖檔不用）
+    for (const f of (p.creditFiles || []).filter((f) => /\.(txt|md|csv)$/i.test(f) || !/\./.test(path.basename(f)))) { const from = path.join(OGA, slug, f); if (!(await exists(from))) continue; const to = path.join(OUT, 'credits', slug, path.basename(f)); await mkdir(path.dirname(to), { recursive: true }); await copyFile(from, to); files.push(`assets/credits/${slug}/${path.basename(f)}`); }
     credits.push({ title: p.title, url: p.url, authors: p.authors, licenses: p.licenses, attribution: p.attribution, files }); p.authors.forEach((a) => authors.add(a));
   }
   await writeFile(path.join(ROOT, 'public/games/farm/data/credits-world.json'), JSON.stringify({ note: '場景、作物、動物、道具的圖（LPC，OpenGameArt）的素材來源，由 tools/lpc/build-world.mjs 產生', authors: [...authors].sort((a, b) => a.localeCompare(b)), packs: credits }, null, 1));

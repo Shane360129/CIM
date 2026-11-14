@@ -1,4 +1,4 @@
-// 圖集裡的圖：素材工具（tools/farm-assets/build.mjs）做出來的 assets/bN.webp ＋ bN.json。
+// 圖集裡的圖：LPC 素材工具（tools/lpc/build-world.mjs）做出來的 assets/w1.png ＋ w1.json（以前手繪的圖集 bN 收在 art-src/farm/舊圖/）。
 // 有圖就畫圖，沒有圖回傳 false，呼叫的人再畫暫代的色塊。圖還沒載入完、或某一批還沒做，遊戲都照樣能跑。
 import { loadImage, loadJSON } from '../core/assets.js';
 const sprites = new Map(); // 名字 → { img, x, y, w, h }

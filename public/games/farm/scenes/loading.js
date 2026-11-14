@@ -21,7 +21,7 @@ export const loading = {
       initLPC(data.lpc, data.parts); warmLPC([data.parts.presets.boy, data.parts.presets.girl]); // LPC 角色：零件圖要用的時候才下載
       data.rawItems = data.items; data.items = makeItems(data.items, data.machines); // 加工品的名字和價錢是算出來的
       data.maps = { farm: data.map_farm, house: data.map_house, road: data.map_road, lake: data.map_lake, town: data.map_town, forest: data.map_forest, beach: data.map_beach, greenhouse: data.map_greenhouse, uptown: data.map_uptown };
-      await Promise.all(['w1', 'b2', 'b3', 'b4'].map((b) => loadAtlas(b))); loadAtlas('b6'); setTerrain(data.terrain); setPixelScale(data.balance.tile); // w1：LPC 像素圖集（場景、作物、道具），同名的圖以它為準 // 第 6 批（夏秋冬作物、果樹）在背景下載，不擋開場；還沒載完的先用暫代圖。角色改用 LPC（render/lpc.js），不再用第 1、5 批的紙娃娃圖
+      await loadAtlas('w1'); setTerrain(data.terrain); setPixelScale(data.balance.tile); // w1：LPC 像素圖集（地面、樹、建築、物件、作物、動物、道具），tools/lpc/build-world.mjs 做的；角色另外用 render/lpc.js // 第 6 批（夏秋冬作物、果樹）在背景下載，不擋開場；還沒載完的先用暫代圖。角色改用 LPC（render/lpc.js），不再用第 1、5 批的紙娃娃圖
       Object.assign(ctx, { data, session }); ctx.audio.setTracks(data.music.tracks);
       this.progress = 1;
       await ctx.scenes.go(title);

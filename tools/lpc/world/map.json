@@ -355,6 +355,67 @@
       ],
       "trim": false,
       "native": false
+    },
+    "obj/bed": {
+      "note": "床：兩張紅被子的單人床並排（兩個人一人一張）",
+      "size": [
+        64,
+        64
+      ],
+      "parts": [
+        {
+          "src": "lpc-wooden-furniture/blonde-wood.png",
+          "rect": [
+            448,
+            416,
+            32,
+            64
+          ],
+          "at": [
+            0,
+            0
+          ]
+        },
+        {
+          "src": "lpc-wooden-furniture/blonde-wood.png",
+          "rect": [
+            448,
+            416,
+            32,
+            64
+          ],
+          "at": [
+            32,
+            0
+          ]
+        }
+      ]
+    },
+    "obj/wardrobe": {
+      "note": "衣櫃：雙門木衣櫃",
+      "src": "lpc-wooden-furniture/blonde-wood.png",
+      "rect": [
+        0,
+        610,
+        64,
+        94
+      ],
+      "isolate": true
+    },
+    "obj/table": {
+      "note": "桌子：圓木桌",
+      "src": "lpc-wooden-furniture/blonde-wood.png",
+      "rect": [
+        222,
+        224,
+        68,
+        60
+      ],
+      "isolate": true
+    },
+    "obj/stall": {
+      "note": "種子攤：紅白條紋遮雨棚的攤子，擺著花和水果",
+      "src": "lpc-bazaar-rework/x/lpc_bazaar_rework-1.0-1.zip/PNG/32x32/bazaar_table-ns-red.png"
     }
   }
 }

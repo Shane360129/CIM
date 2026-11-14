@@ -3,7 +3,7 @@ node_modules/
 .dev.vars
 *.log
 .DS_Store
-tools/farm-assets/preview/
+art-src/farm/舊圖/工具/farm-assets/preview/
 
 # 晴耕谷美術原圖（很大，不進 git；縮圖 *.thumb.png 照常追蹤）
 art-src/farm/第*批/[0-9]*-[0-9][0-9].png

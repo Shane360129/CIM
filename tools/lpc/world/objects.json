@@ -184,6 +184,19 @@
      ]
     },
     {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      418,
+      17,
+      28,
+      27
+     ],
+     "at": [
+      46,
+      90
+     ]
+    },
+    {
      "src": "lpc-medieval-village-decorations/x/decoration_medieval.zip/decoration_medieval/decorations-medieval.png",
      "rect": [
       354,
@@ -202,7 +215,7 @@
     134,
     168
    ],
-   "note": "茅草四坡屋頂（去掉中段縮矮）＋木骨架白牆＋石基、拱門、花台窗、煙囪"
+   "note": "茅草四坡屋頂（去掉中段縮矮）＋木骨架白牆＋石基、拱門、花台窗、圓窗、煙囪、柴堆"
   },
   "obj/bin": {
    "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",

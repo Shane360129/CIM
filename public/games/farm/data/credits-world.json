@@ -2,6 +2,7 @@
  "note": "場景、作物、動物、道具的圖（LPC，OpenGameArt）的素材來源，由 tools/lpc/build-world.mjs 產生",
  "authors": [
   "7Soul",
+  "Anamaris",
   "and many others in CREDITS-plants.txt",
   "and others in credits",
   "and others in CREDITS-conifers.txt",
@@ -9,61 +10,94 @@
   "and others listed in CREDITS-beach-desert.txt",
   "and others per Credits.txt",
   "ansimuz",
+  "AntumDeluge",
+  "Armando Montero (ArMM1998)",
+  "Arthur Carvalho",
   "bagzie",
   "Barbara Rivera",
   "Bart K.",
   "Baŝto",
   "BenCreating",
+  "Bertram",
   "Blarumyrran",
+  "bleutailfly",
   "bluecarrot16",
   "bluecarrot16 (CC0 original)",
   "Bonsaiheldin",
   "brooss",
   "Buch",
+  "caeles",
   "Casper Nilsson",
   "Charles Sanchez (CharlesGabriel)",
   "Chris Phillips",
+  "Clint Bellanger",
   "commissioned by tebruno99",
+  "Cougarmint (Molly Willits)",
+  "Craftpix.net 2D Game Assets",
+  "Croomfolk (YuriNikolai)",
+  "Curt",
   "cynicmusic",
   "Daneeklu",
   "Daniel Armstrong (HughSpectrum)",
+  "Daniel Cook",
   "Daniel Eddeland",
   "Daniel Eddeland (daneeklu)",
   "Daniel Eddeland (Daneeklu)",
   "DCSS Contributors",
   "Demetrius",
+  "Diarandor",
+  "Durrani",
   "Eliza Wyatt (Death's Darling)",
   "Eliza Wyatt (DeathsDarling)",
+  "Eliza Wyatt (ElizaWy)",
   "Evert",
   "Gaurav Munjal",
+  "George Bailey",
   "Guido Bos",
+  "Guido Bos (wood)",
+  "Guilherme Vieira (n2liquid)",
+  "Guillaume Lecollinet",
   "Hyptosis",
   "Inboxninja",
   "Ivan Voirol",
   "Ivan Voirol (Silver IV)",
+  "JaidynReiman (compiler)",
   "Janna/Lilius/Jannax",
   "Jerom",
   "Jetrel",
+  "Johann C",
   "Johann Charlot",
   "Johann Charlot (trunk)",
+  "Johannes Sjölund",
   "Johannes Sjölund (wulax)",
   "Johannes Sjölund (Wulax)",
   "Jordan Irwin (AntumDeluge)",
   "Joshua Taylor",
+  "keith karnage",
+  "Keith Karnage",
+  "Krusmira",
   "Lanea Zimmerman (Sharm)",
+  "Lanea Zimmerman (Sharm) (buckets)",
   "Leonard Pabin",
   "madmarcel (contributor)",
   "Manuel Riecke (MrBeast)",
+  "Michele Bucelli (Buch)",
+  "mold",
   "Molly \"Cougarmint\" Willits",
   "n2liquid",
   "NaRNeRZz",
+  "Nemisys",
   "Open Surge team",
   "Paulina Riva (PauR)",
   "Pierre Vigier",
   "PriorBlue",
   "qubodup",
+  "Rayane Félix (RayaneFLX)",
+  "Redshrike",
   "RedVoxel",
   "Reemax",
+  "Reemax (Tuomo Untinen)",
+  "Reid",
   "Richard Kettering (Jetrel)",
   "Sevarihk (shiba dog, shark, giant rat, walking mushroom, underwater tiles)",
   "Shepardskin (original chicken)",
@@ -71,20 +105,38 @@
   "Stephen Challener (Redshrike)",
   "Surt",
   "swirlingskirts",
+  "Talon (Talosaurus)",
   "Talosaurus",
   "tapatilorenzo",
+  "the Open Surge team",
   "thekingphoenix",
   "Tuomo Untinen",
   "Tuomo Untinen (Reemax)",
   "WhitePaperChan",
   "William Thompson",
   "William Thompson (contributor)",
+  "William Thompson (William.Thompsonj)",
   "William.Thompsonj",
   "Wolthera van Hövell tot Westerflier (TheraHedwig)",
+  "Xenodora",
   "Yar",
-  "Zabin"
+  "YuriNikolai",
+  "Zabin",
+  "Zachariah Husiar (Zabin)"
  ],
  "packs": [
+  {
+   "title": "bulletin board and items",
+   "url": "https://opengameart.org/content/bulletin-board-and-items",
+   "authors": [
+    "bleutailfly"
+   ],
+   "licenses": [
+    "OGA-BY 3.0"
+   ],
+   "attribution": "a link back here will be fine.",
+   "files": []
+  },
   {
    "title": "Chick",
    "url": "https://opengameart.org/content/chick",
@@ -100,6 +152,18 @@
     "assets/credits/chick/LICENSE.txt",
     "assets/credits/chick/README.txt"
    ]
+  },
+  {
+   "title": "Dock tileset",
+   "url": "https://opengameart.org/content/dock-tileset",
+   "authors": [
+    "Reid"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0"
+   ],
+   "attribution": null,
+   "files": []
   },
   {
    "title": "LPC Revised — official GitHub repository (ElizaWy/LPC), selected non-character files",
@@ -181,6 +245,30 @@
    "files": []
   },
   {
+   "title": "LPC Bazaar Rework",
+   "url": "https://opengameart.org/content/lpc-bazaar-rework",
+   "authors": [
+    "Daniel Eddeland (daneeklu)",
+    "Zachariah Husiar (Zabin)",
+    "Tuomo Untinen (Reemax)",
+    "Hyptosis",
+    "Jetrel"
+   ],
+   "licenses": [
+    "CC-BY-SA 4.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "attribution": "Created by Daniel Eddeland (daneeklu) https://opengameart.org/node/11117, Zachariah Husiar (Zabin), Tuomo Untinen (Reemax), Hyptosis, & Jetrel",
+   "files": [
+    "assets/credits/lpc-bazaar-rework/CHANGES.txt",
+    "assets/credits/lpc-bazaar-rework/LICENSE-CC-BY-SA-3.0.txt",
+    "assets/credits/lpc-bazaar-rework/LICENSE-GPL-3.0.txt",
+    "assets/credits/lpc-bazaar-rework/README.txt",
+    "assets/credits/lpc-bazaar-rework/sources.md"
+   ]
+  },
+  {
    "title": "[LPC] Beach / Desert",
    "url": "https://opengameart.org/content/lpc-beach-desert",
    "authors": [
@@ -251,8 +339,7 @@
    ],
    "attribution": "see credits.txt",
    "files": [
-    "assets/credits/lpc-cavern-and-ruin-tiles/credits.txt",
-    "assets/credits/lpc-cavern-and-ruin-tiles/credits.txt~"
+    "assets/credits/lpc-cavern-and-ruin-tiles/credits.txt"
    ]
   },
   {
@@ -474,6 +561,20 @@
    ]
   },
   {
+   "title": "[LPC] Hanging signs",
+   "url": "https://opengameart.org/content/lpc-hanging-signs",
+   "authors": [
+    "Tuomo Untinen (Reemax)",
+    "Guido Bos (wood)"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "attribution": "Please use the LPC attribution instructions for this work",
+   "files": []
+  },
+  {
    "title": "[LPC] House interior and decorations",
    "url": "https://opengameart.org/content/lpc-house-interior-and-decorations",
    "authors": [
@@ -510,6 +611,32 @@
    ]
   },
   {
+   "title": "LPC Lamp Posts Rework",
+   "url": "https://opengameart.org/content/lpc-lamp-posts-rework",
+   "authors": [
+    "Curt",
+    "Lanea Zimmerman (Sharm)",
+    "William Thompson (William.Thompsonj)",
+    "mold",
+    "Jordan Irwin (AntumDeluge)"
+   ],
+   "licenses": [
+    "CC-BY 3.0",
+    "GPL 3.0",
+    "GPL 2.0"
+   ],
+   "attribution": "Created by Curt, Lanea Zimmerman (Sharm), William.Thompsonj, & mold",
+   "files": [
+    "assets/credits/lpc-lamp-posts-rework/CHANGES.txt",
+    "assets/credits/lpc-lamp-posts-rework/LICENSE-CC-BY-3.0.txt",
+    "assets/credits/lpc-lamp-posts-rework/LICENSE-GPL-2.0.txt",
+    "assets/credits/lpc-lamp-posts-rework/LICENSE-GPL-3.0.txt",
+    "assets/credits/lpc-lamp-posts-rework/LICENSE-OGA-BY-3.0.txt",
+    "assets/credits/lpc-lamp-posts-rework/README.txt",
+    "assets/credits/lpc-lamp-posts-rework/sources.md"
+   ]
+  },
+  {
    "title": "[LPC] Meals",
    "url": "https://opengameart.org/content/lpc-meals",
    "authors": [
@@ -525,6 +652,40 @@
    "attribution": "\"[LPC] Meals\" by bluecarrot16, Daniel Eddeland (daneeklu), Joshua Taylor, and Richard Kettering (Jetrel), commissioned by castelonia. CC-BY-SA 3.0 / GPL 3.0.\nhttps://opengameart.org/content/lpc-meals",
    "files": [
     "assets/credits/lpc-meals/CREDITS-meals.txt"
+   ]
+  },
+  {
+   "title": "[LPC] Medieval Village Decorations",
+   "url": "https://opengameart.org/content/lpc-medieval-village-decorations",
+   "authors": [
+    "bluecarrot16",
+    "Lanea Zimmerman (Sharm)",
+    "Reemax (Tuomo Untinen)",
+    "Xenodora",
+    "Johann C",
+    "Johannes Sjölund",
+    "Casper Nilsson",
+    "Daniel Cook",
+    "Rayane Félix (RayaneFLX)",
+    "Wolthera van Hövell tot Westerflier (TheraHedwig)",
+    "Hyptosis",
+    "mold",
+    "Zachariah Husiar (Zabin)",
+    "Clint Bellanger",
+    "Jetrel",
+    "Nemisys",
+    "Guido Bos",
+    "Curt",
+    "Bertram",
+    "Daniel Eddeland (daneeklu)"
+   ],
+   "licenses": [
+    "CC-BY-SA 4.0",
+    "CC-BY-SA 3.0"
+   ],
+   "attribution": "\"[LPC] Medieval Village Decorations\" by bluecarrot16, Lanea Zimmerman (Sharm), Reemax (Tuomo Untinen), Xenodora, Johann C, Johannes Sjölund, Casper Nilsson, Daniel Cook, Rayane Félix (RayaneFLX), Wolthera van Hövell tot Westerflier (TheraHedwig), Hyptosis, mold, Zachariah Husiar (Zabin), Clint Bellanger, Jetrel, Nemisys, Guido Bos, Curt, Bertram, and Daniel Eddeland (daneeklu). License: CC-BY-SA 3.0+. See CREDITS-decorations-medieval.txt. All information in this file must be included.",
+   "files": [
+    "assets/credits/lpc-medieval-village-decorations/CREDITS-decorations-medieval.txt"
    ]
   },
   {
@@ -597,6 +758,28 @@
    ]
   },
   {
+   "title": "[LPC Revised] Base Object Kit!",
+   "url": "https://opengameart.org/content/lpc-revised-base-object-kit",
+   "authors": [
+    "Eliza Wyatt (DeathsDarling)",
+    "Lanea Zimmerman (Sharm)",
+    "bluecarrot16",
+    "Hyptosis"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0"
+   ],
+   "attribution": "DRM-waived. Artists used in this pack: Eliza Wyatt, Lanea Zimmerman (Sharm), BlueCarrot16, Hyptosis. More detailed credits are listed in each subfolder!",
+   "files": [
+    "assets/credits/lpc-revised-base-object-kit/Credits.txt",
+    "assets/credits/lpc-revised-base-object-kit/Credits.txt",
+    "assets/credits/lpc-revised-base-object-kit/Credits.txt",
+    "assets/credits/lpc-revised-base-object-kit/Credits.txt",
+    "assets/credits/lpc-revised-base-object-kit/Credits.txt",
+    "assets/credits/lpc-revised-base-object-kit/Credits.txt"
+   ]
+  },
+  {
    "title": "[LPC Revised] Base Structure Kit!",
    "url": "https://opengameart.org/content/lpc-revised-base-structure-kit",
    "authors": [
@@ -627,6 +810,92 @@
    ]
   },
   {
+   "title": "[LPC Revised] Fully Configured 4-Seasons Tilesets for Tiled Map Editor",
+   "url": "https://opengameart.org/content/lpc-revised-fully-configured-4-seasons-tilesets-for-tiled-map-editor",
+   "authors": [
+    "JaidynReiman (compiler)",
+    "Eliza Wyatt (DeathsDarling)",
+    "Lanea Zimmerman (Sharm)",
+    "Stephen Challener (Redshrike)",
+    "Johannes Sjölund (Wulax)",
+    "bluecarrot16",
+    "BenCreating",
+    "Durrani",
+    "YuriNikolai",
+    "Craftpix.net 2D Game Assets"
+   ],
+   "licenses": [
+    "CC-BY 3.0",
+    "OGA-BY 3.0"
+   ],
+   "attribution": "JaidynReiman for compiling the assets from LPC Revised and configuring the Tiled Map Editor tilesets for it. Also created a winter version of the bushes with a simple palette recolor to make the collision easier to convert between seasons.\n\nOriginal LPC Revised (https://github.com/ElizaWy/LPC) asset contributors include Eliza Wyatt (DeathsDarling), Lanea Zimmerman (Sharm), Stephen Challener (Redshrike), Johannes Sjölund (Wulax), BlueCarrot16, BenCreating, Durrani, YuriNikolai and Craftpix.net 2D Game Assets.\n\nhttps://github.com/ElizaWy/LPC/blob/main/Credits.txt",
+   "files": []
+  },
+  {
+   "title": "[LPC] Rocks",
+   "url": "https://opengameart.org/content/lpc-rocks",
+   "authors": [
+    "bluecarrot16",
+    "Johann Charlot",
+    "Yar",
+    "Hyptosis",
+    "Evert",
+    "Lanea Zimmerman (Sharm)",
+    "Guillaume Lecollinet",
+    "Richard Kettering (Jetrel)",
+    "Zachariah Husiar (Zabin)",
+    "Redshrike",
+    "Rayane Félix (RayaneFLX)",
+    "Michele Bucelli (Buch)"
+   ],
+   "licenses": [
+    "CC-BY-SA 4.0",
+    "CC-BY-SA 3.0"
+   ],
+   "attribution": "[LPC] Rocks by bluecarrot16, Johann Charlot, Yar, Hyptosis, Evert, Lanea Zimmerman (Sharm), Guillaume Lecollinet, Richard Kettering (Jetrel), Zachariah Husiar (Zabin), Jetrel, Hyptosis, Redshrike, Rayane Félix (RayaneFLX), Michele Bucelli (Buch) <https://opengameart.org/users/buch>. See CREDITS-rocks.txt . You MUST include all information in this file.",
+   "files": [
+    "assets/credits/lpc-rocks/CREDITS-rocks.txt"
+   ]
+  },
+  {
+   "title": "[LPC] Roofs",
+   "url": "https://opengameart.org/content/lpc-roofs",
+   "authors": [
+    "bluecarrot16",
+    "Lanea Zimmerman (Sharm)",
+    "Michele Bucelli (Buch)",
+    "Casper Nilsson",
+    "Xenodora",
+    "keith karnage",
+    "NaRNeRZz",
+    "Talon (Talosaurus)"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "attribution": "\"[LPC] Roofs\" by bluecarrot16, Lanea Zimmerman (Sharm), Michele Bucelli (Buch), Casper Nilsson, Xenodora, keith karnage, NaRNeRZz, and Talon (Talosaurus). CC-BY-SA 3.0/GPL v3+. See CREDITS-roofs.txt",
+   "files": [
+    "assets/credits/lpc-roofs/CREDITS-roofs.txt",
+    "assets/credits/lpc-roofs/CREDITS-colonial.txt"
+   ]
+  },
+  {
+   "title": "[LPC] Signposts, graves, line cloths and scare crow",
+   "url": "https://opengameart.org/content/lpc-signposts-graves-line-cloths-and-scare-crow",
+   "authors": [
+    "Tuomo Untinen (Reemax)",
+    "Nemisys",
+    "Daniel Eddeland"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "attribution": "Attribution to Nemisys,Daniel Eddeland (http://opengameart.org/content/lpc-farming-tilesets-magic-animations-and-ui-elements) and Tuomo Untinen",
+   "files": []
+  },
+  {
    "title": "LPC style farm animals",
    "url": "https://opengameart.org/content/lpc-style-farm-animals",
    "authors": [
@@ -636,6 +905,20 @@
    "licenses": [
     "CC-BY 3.0",
     "GPL 2.0"
+   ],
+   "attribution": null,
+   "files": []
+  },
+  {
+   "title": "LPC Style Well",
+   "url": "https://opengameart.org/content/lpc-style-well",
+   "authors": [
+    "Xenodora",
+    "Lanea Zimmerman (Sharm) (buckets)"
+   ],
+   "licenses": [
+    "CC-BY 3.0",
+    "GPL 3.0"
    ],
    "attribution": null,
    "files": []
@@ -690,6 +973,22 @@
    ]
   },
   {
+   "title": "[LPC] Thatched-roof Cottage",
+   "url": "https://opengameart.org/content/lpc-thatched-roof-cottage",
+   "authors": [
+    "bluecarrot16",
+    "Lanea Zimmerman (Sharm)",
+    "Daniel Armstrong (HughSpectrum)",
+    "Casper Nilsson"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "attribution": "\"LPC Thatched-roof Cottage\" by bluecarrot16. License: CC-BY-SA 3.0 / GPL 3.0+\n\nBased on:\n\"LPC Base Assets\" by Lanea Zimmerman (AKA Sharm) and Daniel Armstrong (AKA HughSpectrum).\nLicense: CC-BY-SA 3.0 / GPL 3.0+.\nhttp://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles\n\"LPC art entry\" by Casper Nilsson.\nLicense: CC-BY-SA 3.0 / GPL 3.0+.\nhttp://opengameart.org/content/lpc-cnilsson",
+   "files": []
+  },
+  {
    "title": "[LPC] Trees",
    "url": "https://opengameart.org/content/lpc-trees",
    "authors": [
@@ -728,6 +1027,82 @@
    ]
   },
   {
+   "title": "[LPC] Troughs Expanded",
+   "url": "https://opengameart.org/content/lpc-troughs-expanded",
+   "authors": [
+    "Croomfolk (YuriNikolai)",
+    "bluecarrot16",
+    "Eliza Wyatt (ElizaWy)"
+   ],
+   "licenses": [
+    "CC-BY 3.0",
+    "OGA-BY 3.0"
+   ],
+   "attribution": null,
+   "files": [
+    "assets/credits/lpc-troughs-expanded/Credits.txt"
+   ]
+  },
+  {
+   "title": "[LPC] Victorian Town Decorations",
+   "url": "https://opengameart.org/content/lpc-victorian-town-decorations",
+   "authors": [
+    "bluecarrot16",
+    "Casper Nilsson",
+    "Lanea Zimmerman (Sharm)",
+    "William Thompson",
+    "mold",
+    "AntumDeluge",
+    "Curt",
+    "Daniel Eddeland (daneeklu)",
+    "caeles",
+    "George Bailey",
+    "Jetrel",
+    "Yar",
+    "Guido Bos",
+    "Ivan Voirol (Silver IV)",
+    "Stephen Challener (Redshrike)",
+    "the Open Surge team",
+    "Arthur Carvalho",
+    "Guilherme Vieira (n2liquid)",
+    "NaRNeRZz",
+    "Diarandor",
+    "Armando Montero (ArMM1998)",
+    "Tuomo Untinen (Reemax)",
+    "Buch"
+   ],
+   "licenses": [
+    "CC-BY-SA 4.0"
+   ],
+   "attribution": "[LPC] Victorian Town Decorations by bluecarrot16, Casper Nilsson, Lanea Zimmerman (Sharm), William Thompson, mold, AntumDeluge, Curt, Daniel Eddeland (daneeklu), caeles, George Bailey, Jetrel, Yar, Guido Bos, Ivan Voirol (Silver IV), Stephen Challener (Redshrike), the Open Surge team, Arthur Carvalho, Guilherme Vieira (n2liquid), NaRNeRZz, Diarandor, Armando Montero (ArMM1998), Tuomo Untinen (Reemax), Buch. See CREDITS-decorations-victorian.txt. You MUST include all information in this file when attributing the art, including a link back to https://opengameart.org/content/lpc-victorian-town-decorations .",
+   "files": [
+    "assets/credits/lpc-victorian-town-decorations/CREDITS-decorations-victorian.txt"
+   ]
+  },
+  {
+   "title": "[LPC] Windows & Doors",
+   "url": "https://opengameart.org/content/lpc-windows-doors",
+   "authors": [
+    "bluecarrot16",
+    "Lanea Zimmerman (Sharm)",
+    "Daniel Armstrong (HughSpectrum)",
+    "Casper Nilsson",
+    "Anamaris",
+    "Krusmira",
+    "Keith Karnage",
+    "Guido Bos",
+    "Talosaurus"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "attribution": "\"LPC Windows & Doors\" by bluecarrot16, Lanea Zimmerman (Sharm) and Daniel Armstrong (HughSpectrum), Casper Nilsson, Anamaris, Krusmira, Keith Karnage, Guido Bos, and Talosaurus. License: CC-BY-SA 3.0 / GPL 3.0+ Please link back to this page on OpenGameArt: https://opengameart.org/content/lpc-windows-doors  . See CREDITS-windows-doors.txt. You MUST include all information in this file when distributing these images!",
+   "files": [
+    "assets/credits/lpc-windows-doors/CREDITS-windows-doors.txt"
+   ]
+  },
+  {
    "title": "[LPC] Wooden Furniture",
    "url": "https://opengameart.org/content/lpc-wooden-furniture",
    "authors": [
@@ -745,7 +1120,6 @@
    ],
    "attribution": "\"LPC Wooden Furniture\" by bluecarrot16, Baŝto, Lanea Zimmerman (Sharm), William Thompson, Tuomo Untinen (Reemax), Janna/Lilius/Jannax. Please link back to https://opengameart.org/content/lpc-wooden-furniture .\nsee CREDITS-*.txt. All information in this file must be included.",
    "files": [
-    "assets/credits/lpc-wooden-furniture/credits-furniture.txt_.zip",
     "assets/credits/lpc-wooden-furniture/CREDITS-furniture.txt"
    ]
   },
@@ -765,6 +1139,22 @@
    "attribution": "\"[LPC] Woodshop\" by bluecarrot16. OGA-BY 3.0+ / CC-BY-3.0+ / GPL v2.0+.",
    "files": [
     "assets/credits/lpc-woodshop/CREDITS-woodshop.txt"
+   ]
+  },
+  {
+   "title": "Maibox Sprite Pack",
+   "url": "https://opengameart.org/content/maibox-sprite-pack",
+   "authors": [
+    "Cougarmint (Molly Willits)"
+   ],
+   "licenses": [
+    "CC-BY 3.0",
+    "OGA-BY 3.0"
+   ],
+   "attribution": "\"Mailbox Sprites\" by Molly \"Cougarmint\" Willits",
+   "files": [
+    "assets/credits/maibox-sprite-pack/Mailbox-ReadMe.txt",
+    "assets/credits/maibox-sprite-pack/MailboxPatch-ReadMe.txt"
    ]
   },
   {
