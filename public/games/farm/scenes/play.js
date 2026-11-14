@@ -407,7 +407,7 @@ export const play = {
     camera.follow(me.x * T, me.y * T, view, this.map.w * T, this.map.h * T, 0.18);
     g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = this.map.outdoor ? '#5f9c4a' : '#3b2f22'; g.fillRect(0, 0, view.canvas.width, view.canvas.height);
     camera.apply(view);
-    g.imageSmoothingEnabled = true;
+    g.imageSmoothingEnabled = !this.ground.pixel; // LPC 地形是像素圖：放大不要糊
     g.drawImage(this.ground, 0, 0, this.ground.width * this.ground.scale, this.ground.height * this.ground.scale);
     if (this.map.walls) { g.fillStyle = '#b08a5e'; g.fillRect(0, 0, this.map.w * T, T); g.fillStyle = '#8a6a44'; g.fillRect(0, T * 0.86, this.map.w * T, T * 0.14); }
     const x0 = camera.x / T - 3, x1 = (camera.x + view.w / camera.zoom) / T + 3, y0 = camera.y / T - 1, y1 = (camera.y + view.h / camera.zoom) / T + 4;

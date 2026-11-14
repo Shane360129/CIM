@@ -6,16 +6,21 @@ export async function loadAtlas(name) {
   try {
     const meta = await loadJSON(`assets/${name}.json`), img = await loadImage(`assets/${meta.image}`);
     if (!img) return 0;
-    for (const [k, [x, y, w, h]] of Object.entries(meta.sprites)) sprites.set(k, { img, x, y, w, h, src: `assets/${meta.image}`, aw: meta.w, ah: meta.h });
+    // 像素圖集（LPC，meta.pixel）：放大時不要糊；第 5 個數字是 1 的是「場景裡的東西」，照原本的像素大小畫（一格 32 像素），不塞進框裡
+    for (const [k, [x, y, w, h, f]] of Object.entries(meta.sprites)) sprites.set(k, { img, x, y, w, h, src: `assets/${meta.image}`, aw: meta.w, ah: meta.h, pixel: !!meta.pixel, native: f === 1 });
     return Object.keys(meta.sprites).length;
   } catch { return 0; }
 }
 export const sprite = (name) => sprites.get(name) || null;
-// 畫在一個框裡：腳底中心在 (x, y)，最寬 w、最高 h，保持比例、貼著底
-export function drawSprite(g, name, x, y, w, h, hue = 0) {
+let PX = 2; // 一個 LPC 像素在世界裡多大（一格 = balance.tile，LPC 一格 32 像素）
+export const setPixelScale = (tile) => { PX = tile / 32; };
+// 畫在一個框裡：腳底中心在 (x, y)，最寬 w、最高 h，保持比例、貼著底。像素圖的「場景裡的東西」照原本的像素大小畫，scale 可以再縮放（例如小動物）
+export function drawSprite(g, name, x, y, w, h, hue = 0, scale = 1) {
   const s = sprites.get(name); if (!s) return false;
-  const k = Math.min(w / s.w, h / s.h), dw = s.w * k, dh = s.h * k;
+  const k = s.native ? PX * scale : Math.min(w / s.w, h / s.h), dw = s.w * k, dh = s.h * k;
+  const was = g.imageSmoothingEnabled; if (s.pixel) g.imageSmoothingEnabled = false;
   if (hue) g.drawImage(hueSprite(s, hue), x - dw / 2, y - dh, dw, dh); else g.drawImage(s.img, s.x, s.y, s.w, s.h, x - dw / 2, y - dh, dw, dh);
+  if (s.pixel) g.imageSmoothingEnabled = was;
   return true;
 }
 // 同一張建築圖換個顏色：把鮮豔的部分（屋頂、門、窗框）的色相轉 hue 度，米白色的牆和描邊不動。算一次就記起來
@@ -43,7 +48,7 @@ export function drawSign(g, text, x, y, T) {
 }
 // 介面上的小圖示（一般的網頁元素）：用圖集當背景，移到那張小圖的位置
 export function iconEl(name, size = 34) {
-  const s = sprites.get(name), el = document.createElement('span'); el.className = 'icon';
+  const s = sprites.get(name), el = document.createElement('span'); el.className = s && s.pixel ? 'icon pixel' : 'icon';
   if (!s) return null;
   const k = Math.min(size / s.w, size / s.h);
   el.style.width = s.w * k + 'px'; el.style.height = s.h * k + 'px';
