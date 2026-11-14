@@ -56,6 +56,12 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #1d2a1f; col
 @media (max-width: 720px) { .maker { left: 0; top: 36%; width: auto; border-left: 0; border-top: 3px solid #5a3d22; border-radius: 16px 16px 0 0; } }
 .maker h2 { margin: 0 0 10px; font-size: 19px; }
 .mrow { display: flex; align-items: center; gap: 8px; margin: 7px 0; }
+/* 建角：現成的角色（橫的一排，可以左右滑） */
+.mhint { margin: 0 0 4px; font-size: 13px; color: #7a5a3a; }
+.mgallery { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 8px; margin: 0 0 6px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+.mpreset { flex: none; width: 74px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 2px 6px; border: 2px solid #5a3d22; border-radius: 10px; background: #fffaf0; color: #5a3d22; font: inherit; font-size: 12px; line-height: 1.2; cursor: pointer; scroll-snap-align: start; }
+.mpreset canvas { width: 60px; height: 68px; image-rendering: crisp-edges; image-rendering: pixelated; }
+.mpreset.on { background: #ffd76a; }
 .mrow.sub { margin-top: -2px; }
 .mrow.actions { flex-wrap: wrap; margin-top: 14px; }
 .mlabel { flex: none; width: 3.2em; font-weight: 700; font-size: 14px; }

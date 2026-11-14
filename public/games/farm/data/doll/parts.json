@@ -50,6 +50,10 @@
    "name": "平常"
   },
   {
+   "id": "happy",
+   "name": "開心"
+  },
+  {
    "id": "blush",
    "name": "臉紅"
   }
@@ -745,5 +749,313 @@
    "a44a": "scarf",
    "a49a": "scarf"
   }
- }
+ },
+ "bodies": [
+  {
+   "id": "male",
+   "name": "男生"
+  },
+  {
+   "id": "female",
+   "name": "女生"
+  },
+  {
+   "id": "teen",
+   "name": "少年"
+  }
+ ],
+ "heads": [
+  {
+   "id": "male",
+   "name": "男生"
+  },
+  {
+   "id": "female",
+   "name": "女生"
+  },
+  {
+   "id": "male_small",
+   "name": "娃娃臉（男）"
+  },
+  {
+   "id": "female_small",
+   "name": "娃娃臉（女）"
+  },
+  {
+   "id": "male_plump",
+   "name": "圓臉"
+  },
+  {
+   "id": "male_gaunt",
+   "name": "瘦臉"
+  },
+  {
+   "id": "male_elderly",
+   "name": "爺爺"
+  },
+  {
+   "id": "female_elderly",
+   "name": "奶奶"
+  }
+ ],
+ "gallery": [
+  {
+   "name": "農家男孩",
+   "look": {
+    "gender": "boy",
+    "skin": "#e4a47c",
+    "eyes": "brown",
+    "brows": "thick",
+    "mouths": "normal",
+    "hair": "bangsshort",
+    "hairColor": "#5f1f04",
+    "top": "tshirt",
+    "topColor": "#466ac9",
+    "bottom": "shorts",
+    "bottomColor": "#3c49ad",
+    "shoes": "shoes",
+    "shoesColor": "#744b30",
+    "hat": "none",
+    "hatColor": "#ab1e1e",
+    "acc": "none"
+   }
+  },
+  {
+   "name": "農家女孩",
+   "look": {
+    "gender": "girl",
+    "skin": "#e4a47c",
+    "eyes": "brown",
+    "brows": "thin",
+    "mouths": "normal",
+    "hair": "pigtails",
+    "hairColor": "#b6550e",
+    "top": "tshirt_vneck",
+    "topColor": "#8a3d28",
+    "bottom": "skirt",
+    "bottomColor": "#3c49ad",
+    "shoes": "shoes2",
+    "shoesColor": "#75502d",
+    "hat": "none",
+    "hatColor": "#ab1e1e",
+    "acc": "none"
+   }
+  },
+  {
+   "name": "吊帶褲農夫",
+   "look": {
+    "gender": "boy",
+    "skin": "#ae6b3f",
+    "eyes": "brown",
+    "brows": "thick",
+    "mouths": "normal",
+    "hair": "messy1",
+    "hairColor": "#31313e",
+    "top": "overalls",
+    "topColor": "#466ac9",
+    "bottom": "pants2",
+    "bottomColor": "#4a5057",
+    "shoes": "boots",
+    "shoesColor": "#744b30",
+    "hat": "bandana",
+    "hatColor": "#ab1e1e",
+    "acc": "none"
+   }
+  },
+  {
+   "name": "小帽子農夫",
+   "look": {
+    "gender": "girl",
+    "skin": "#e4a47c",
+    "eyes": "green",
+    "brows": "thin",
+    "mouths": "happy",
+    "hair": "long",
+    "hairColor": "#fccf56",
+    "top": "overalls",
+    "topColor": "#b7996a",
+    "bottom": "pants",
+    "bottomColor": "#996b4a",
+    "shoes": "boots",
+    "shoesColor": "#744b30",
+    "hat": "bowler",
+    "hatColor": "#f3c03f",
+    "acc": "none"
+   }
+  },
+  {
+   "name": "麻花辮少女",
+   "look": {
+    "gender": "girl",
+    "body": "teen",
+    "head": "female_small",
+    "skin": "#e4a47c",
+    "eyes": "brown",
+    "brows": "thin",
+    "mouths": "blush",
+    "hair": "braid",
+    "hairColor": "#faa301",
+    "top": "longsleeve",
+    "topColor": "#2f8136",
+    "bottom": "skirt",
+    "bottomColor": "#b7996a",
+    "shoes": "shoes",
+    "shoesColor": "#744b30",
+    "hat": "none",
+    "hatColor": "#ab1e1e",
+    "acc": "none"
+   }
+  },
+  {
+   "name": "釣魚少年",
+   "look": {
+    "gender": "boy",
+    "body": "teen",
+    "head": "male_small",
+    "skin": "#ea9f54",
+    "eyes": "brown",
+    "brows": "thick",
+    "mouths": "happy",
+    "hair": "spiked",
+    "hairColor": "#f68764",
+    "top": "tshirt",
+    "topColor": "#0098b2",
+    "bottom": "shorts",
+    "bottomColor": "#797580",
+    "shoes": "sandals",
+    "shoesColor": "#744b30",
+    "hat": "none",
+    "hatColor": "#ab1e1e",
+    "acc": "none"
+   }
+  },
+  {
+   "name": "文青",
+   "look": {
+    "gender": "boy",
+    "skin": "#e4a47c",
+    "eyes": "brown",
+    "brows": "thick",
+    "mouths": "normal",
+    "hair": "parted",
+    "hairColor": "#b6550e",
+    "top": "cardigan",
+    "topColor": "#134507",
+    "bottom": "pants2",
+    "bottomColor": "#996b4a",
+    "shoes": "shoes2",
+    "shoesColor": "#744b30",
+    "hat": "none",
+    "hatColor": "#ab1e1e",
+    "acc": "glasses_round"
+   }
+  },
+  {
+   "name": "咖啡店店員",
+   "look": {
+    "gender": "girl",
+    "skin": "#e4a47c",
+    "eyes": "brown",
+    "brows": "thin",
+    "mouths": "normal",
+    "hair": "bob",
+    "hairColor": "#31313e",
+    "top": "apron",
+    "topColor": "#832121",
+    "bottom": "skirt",
+    "bottomColor": "#4a5057",
+    "shoes": "shoes2",
+    "shoesColor": "#2a3034",
+    "hat": "hairtie",
+    "hatColor": "#ab1e1e",
+    "acc": "none"
+   }
+  },
+  {
+   "name": "冒險家",
+   "look": {
+    "gender": "boy",
+    "skin": "#7f4c31",
+    "eyes": "brown",
+    "brows": "thick",
+    "mouths": "normal",
+    "hair": "unkempt",
+    "hairColor": "#ae682a",
+    "top": "longsleeve",
+    "topColor": "#744b30",
+    "bottom": "pants",
+    "bottomColor": "#4a5057",
+    "shoes": "boots",
+    "shoesColor": "#2a3034",
+    "hat": "hood",
+    "hatColor": "#134507",
+    "acc": "none"
+   }
+  },
+  {
+   "name": "小鎮姊姊",
+   "look": {
+    "gender": "girl",
+    "skin": "#e4a47c",
+    "eyes": "purple",
+    "brows": "thin",
+    "mouths": "normal",
+    "hair": "long_straight",
+    "hairColor": "#0d384d",
+    "top": "dress",
+    "topColor": "#a966dd",
+    "bottom": "skirt",
+    "bottomColor": "#621e78",
+    "shoes": "shoes2",
+    "shoesColor": "#2a3034",
+    "hat": "none",
+    "hatColor": "#ab1e1e",
+    "acc": "none"
+   }
+  },
+  {
+   "name": "老爺爺",
+   "look": {
+    "gender": "boy",
+    "head": "male_elderly",
+    "skin": "#e4a47c",
+    "eyes": "brown",
+    "brows": "thick",
+    "mouths": "happy",
+    "hair": "balding",
+    "hairColor": "#d8dcdc",
+    "top": "cardigan",
+    "topColor": "#797580",
+    "bottom": "formal",
+    "bottomColor": "#4a5057",
+    "shoes": "shoes2",
+    "shoesColor": "#744b30",
+    "hat": "none",
+    "hatColor": "#ab1e1e",
+    "acc": "mustache"
+   }
+  },
+  {
+   "name": "老奶奶",
+   "look": {
+    "gender": "girl",
+    "head": "female_elderly",
+    "skin": "#e4a47c",
+    "eyes": "brown",
+    "brows": "thin",
+    "mouths": "happy",
+    "hair": "bangs_bun",
+    "hairColor": "#d8dcdc",
+    "top": "cardigan",
+    "topColor": "#8a3d28",
+    "bottom": "skirt",
+    "bottomColor": "#621e78",
+    "shoes": "slippers",
+    "shoesColor": "#744b30",
+    "hat": "none",
+    "hatColor": "#ab1e1e",
+    "acc": "glasses_halfmoon"
+   }
+  }
+ ]
 }

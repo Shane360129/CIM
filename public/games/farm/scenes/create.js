@@ -1,6 +1,7 @@
 // 建立角色／衣櫃換裝：左邊（手機是上面）預覽，右邊一列一列選零件和顏色。按「完成」存到伺服器，對方馬上看到。
 // 第一次進農場還沒有角色時會先到這裡；之後在家裡選「換衣服」也是這個畫面（edit: true）。
 import { drawDoll } from '../render/doll.js';
+import { drawLPC } from '../render/lpc.js';
 import { upgradeLook } from '../shared/look.js';
 import { play } from './play.js';
 
@@ -17,6 +18,17 @@ export const create = {
     const root = (this.root = mk('div', 'maker')), ui = document.getElementById('ui');
     root.append(mk('h2', '', this.edit ? '換衣服' : '建立你的角色'));
     const refresh = [];
+    // 現成的角色：一排小圖，點一下整套換上（名字不變），之後每一項都還能改
+    const same = (a, b) => [...new Set([...Object.keys(a), ...Object.keys(b)])].every((k) => a[k] === b[k]);
+    const gal = mk('div', 'mgallery'); this.thumbs = [];
+    (parts.gallery || []).forEach((gp, i) => {
+      const b = mk('button', 'mpreset'), c = document.createElement('canvas'); b.type = 'button'; b.dataset.preset = String(i); b.setAttribute('aria-label', '換成「' + gp.name + '」');
+      c.width = 120; c.height = 136; b.append(c, mk('span', '', gp.name)); gal.append(b);
+      b.addEventListener('click', () => { this.look = upgradeLook({ ...gp.look }, parts); refresh.forEach((f) => f()); });
+      refresh.push(() => b.classList.toggle('on', same(this.look, gp.look)));
+      this.thumbs.push({ c, look: gp.look, done: false });
+    });
+    if (this.thumbs.length) root.append(mk('p', 'mhint', '選一個現成的角色，或在下面一項一項自己配'), gal);
     // 男生／女生：決定預設的五官、髮型、服裝（之後每一項都還能改，所有服裝男女都能穿）
     const g = mk('div', 'mrow'); g.append(mk('span', 'mlabel', '角色'));
     for (const [id, name] of [['boy', '男生'], ['girl', '女生']]) {
@@ -31,6 +43,18 @@ export const create = {
       return row;
     };
     const skin = mk('div', 'mrow'); skin.append(mk('span', 'mlabel', '膚色'), colorRow('skin', 'skin')); root.append(skin);
+    // 體型（男生、女生、少年）和臉型（男、女、娃娃臉、圓臉、瘦臉、爺爺、奶奶）：沒選的話照上面的男生／女生
+    const pickRow = (key, label, list) => {
+      if (!list || !list.length) return;
+      const row = mk('div', 'mrow'), prev = mk('button', 'marrow', '◀'), next = mk('button', 'marrow', '▶'), name = mk('span', 'mname');
+      prev.type = next.type = 'button'; prev.setAttribute('aria-label', '上一個' + label); next.setAttribute('aria-label', '下一個' + label); next.dataset.next = key;
+      const cur = () => this.look[key] || (parts.genders[this.look.gender] || parts.genders.boy)[key];
+      const step = (d) => { const i = list.findIndex((v) => v.id === cur()); this.look[key] = list[(i + d + list.length) % list.length].id; refresh.forEach((f) => f()); };
+      prev.addEventListener('click', () => step(-1)); next.addEventListener('click', () => step(1));
+      refresh.push(() => { name.textContent = (list.find((v) => v.id === cur()) || {}).name || ''; });
+      row.append(mk('span', 'mlabel', label), prev, name, next); root.append(row);
+    };
+    pickRow('body', '體型', parts.bodies); pickRow('head', '臉型', parts.heads);
     for (const [key, label, colorKey, colorList] of ROWS) {
       const row = mk('div', 'mrow'), prev = mk('button', 'marrow', '◀'), next = mk('button', 'marrow', '▶'), name = mk('span', 'mname');
       prev.type = next.type = 'button'; prev.setAttribute('aria-label', '上一個' + label); next.setAttribute('aria-label', '下一個' + label); next.dataset.next = key;
@@ -49,7 +73,9 @@ export const create = {
     b('🎲 隨機', 'ghost', () => {
       const pick = (l) => l[Math.floor(Math.random() * l.length)];
       for (const [key, , colorKey, colorList] of ROWS) { this.look[key] = pick(parts[key]).id; if (colorKey) this.look[colorKey] = pick(parts.colors[colorList]); }
-      this.look.skin = pick(parts.colors.skin); refresh.forEach((f) => f());
+      this.look.skin = pick(parts.colors.skin);
+      if (parts.bodies) { this.look.body = pick(parts.bodies).id; this.look.head = pick(parts.heads.filter((h) => !/elderly/.test(h.id) || Math.random() < 0.3)).id; } // 老人臉少一點
+      refresh.forEach((f) => f());
     }).dataset.act = 'random';
     b('↻ 轉身', 'ghost', () => { this.dir = (this.dir + 1) % 4; });
     const wb = b('走路', 'ghost', () => { this.walk = !this.walk; wb.classList.toggle('on', this.walk); }); wb.classList.add('on');
@@ -62,7 +88,15 @@ export const create = {
     refresh.forEach((f) => f());
   },
   exit() { this.root.remove(); },
-  update(dt) { this.t += dt; },
+  update(dt) {
+    this.t += dt;
+    // 現成角色的小圖：零件圖下載好了才畫得出來，畫好的就不再畫
+    for (const th of this.thumbs || []) {
+      if (th.done) continue;
+      const g = th.c.getContext('2d'); g.clearRect(0, 0, th.c.width, th.c.height);
+      th.done = drawLPC(g, th.look, th.c.width / 2, th.c.height - 6, 2, 'down', 'idle', 0);
+    }
+  },
   render({ view }) {
     const g = view.ctx, k = view.dpr; g.setTransform(k, 0, 0, k, 0, 0);
     g.fillStyle = '#cfe8b0'; g.fillRect(0, 0, view.w, view.h);

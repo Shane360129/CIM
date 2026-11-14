@@ -54,6 +54,8 @@ export function cleanLook(look) {
   const out = { gender: look.gender };
   for (const k of LOOK_IDS) { if (!PARTS[k].some((v) => v.id === look[k])) return null; out[k] = look[k]; }
   for (const [k, list] of Object.entries(LOOK_COLORS)) { if (!PARTS.colors[list].includes(look[k])) return null; out[k] = look[k]; }
+  // 體型、臉型：可以不給（照男生／女生）；給了就要是清單上的
+  for (const [k, list] of [['body', PARTS.bodies || []], ['head', PARTS.heads || []]]) { if (look[k] == null) continue; if (!list.some((v) => v.id === look[k])) return null; out[k] = look[k]; }
   return out;
 }
 const cleanName = (name) => String(name || '').replace(/[\u0000-\u001f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 10);

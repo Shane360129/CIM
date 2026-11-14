@@ -715,6 +715,10 @@
       "name": "平常"
     },
     {
+      "id": "happy",
+      "name": "開心"
+    },
+    {
       "id": "blush",
       "name": "臉紅"
     }
@@ -936,5 +940,280 @@
       "a44a": "scarf",
       "a49a": "scarf"
     }
+  },
+  "headNames": {
+    "male": "男生",
+    "female": "女生",
+    "male_small": "娃娃臉（男）",
+    "female_small": "娃娃臉（女）",
+    "male_plump": "圓臉",
+    "male_gaunt": "瘦臉",
+    "male_elderly": "爺爺",
+    "female_elderly": "奶奶"
+  },
+  "gallery": [
+    {
+      "name": "農家男孩",
+      "look": {
+        "gender": "boy",
+        "skin": "light",
+        "eyes": "brown",
+        "brows": "thick",
+        "mouths": "normal",
+        "hair": "bangsshort",
+        "hairColor": "dark_brown",
+        "top": "tshirt",
+        "topColor": "blue",
+        "bottom": "shorts",
+        "bottomColor": "navy",
+        "shoes": "shoes",
+        "shoesColor": "brown",
+        "hat": "none",
+        "hatColor": "red",
+        "acc": "none"
+      }
+    },
+    {
+      "name": "農家女孩",
+      "look": {
+        "gender": "girl",
+        "skin": "light",
+        "eyes": "brown",
+        "brows": "thin",
+        "mouths": "normal",
+        "hair": "pigtails",
+        "hairColor": "chestnut",
+        "top": "tshirt_vneck",
+        "topColor": "rose",
+        "bottom": "skirt",
+        "bottomColor": "navy",
+        "shoes": "shoes2",
+        "shoesColor": "leather",
+        "hat": "none",
+        "hatColor": "red",
+        "acc": "none"
+      }
+    },
+    {
+      "name": "吊帶褲農夫",
+      "look": {
+        "gender": "boy",
+        "skin": "olive",
+        "eyes": "brown",
+        "brows": "thick",
+        "mouths": "normal",
+        "hair": "messy1",
+        "hairColor": "black",
+        "top": "overalls",
+        "topColor": "blue",
+        "bottom": "pants2",
+        "bottomColor": "charcoal",
+        "shoes": "boots",
+        "shoesColor": "brown",
+        "hat": "bandana",
+        "hatColor": "red",
+        "acc": "none"
+      }
+    },
+    {
+      "name": "小帽子農夫",
+      "look": {
+        "gender": "girl",
+        "skin": "light",
+        "eyes": "green",
+        "brows": "thin",
+        "mouths": "happy",
+        "hair": "long",
+        "hairColor": "blonde",
+        "top": "overalls",
+        "topColor": "tan",
+        "bottom": "pants",
+        "bottomColor": "walnut",
+        "shoes": "boots",
+        "shoesColor": "brown",
+        "hat": "bowler",
+        "hatColor": "yellow",
+        "acc": "none"
+      }
+    },
+    {
+      "name": "麻花辮少女",
+      "look": {
+        "gender": "girl",
+        "body": "teen",
+        "head": "female_small",
+        "skin": "light",
+        "eyes": "brown",
+        "brows": "thin",
+        "mouths": "blush",
+        "hair": "braid",
+        "hairColor": "ginger",
+        "top": "longsleeve",
+        "topColor": "green",
+        "bottom": "skirt",
+        "bottomColor": "tan",
+        "shoes": "shoes",
+        "shoesColor": "brown",
+        "hat": "none",
+        "hatColor": "red",
+        "acc": "none"
+      }
+    },
+    {
+      "name": "釣魚少年",
+      "look": {
+        "gender": "boy",
+        "body": "teen",
+        "head": "male_small",
+        "skin": "amber",
+        "eyes": "brown",
+        "brows": "thick",
+        "mouths": "happy",
+        "hair": "spiked",
+        "hairColor": "carrot",
+        "top": "tshirt",
+        "topColor": "teal",
+        "bottom": "shorts",
+        "bottomColor": "gray",
+        "shoes": "sandals",
+        "shoesColor": "brown",
+        "hat": "none",
+        "hatColor": "red",
+        "acc": "none"
+      }
+    },
+    {
+      "name": "文青",
+      "look": {
+        "gender": "boy",
+        "skin": "light",
+        "eyes": "brown",
+        "brows": "thick",
+        "mouths": "normal",
+        "hair": "parted",
+        "hairColor": "chestnut",
+        "top": "cardigan",
+        "topColor": "forest",
+        "bottom": "pants2",
+        "bottomColor": "walnut",
+        "shoes": "shoes2",
+        "shoesColor": "brown",
+        "hat": "none",
+        "hatColor": "red",
+        "acc": "glasses_round"
+      }
+    },
+    {
+      "name": "咖啡店店員",
+      "look": {
+        "gender": "girl",
+        "skin": "light",
+        "eyes": "brown",
+        "brows": "thin",
+        "mouths": "normal",
+        "hair": "bob",
+        "hairColor": "black",
+        "top": "apron",
+        "topColor": "maroon",
+        "bottom": "skirt",
+        "bottomColor": "charcoal",
+        "shoes": "shoes2",
+        "shoesColor": "black",
+        "hat": "hairtie",
+        "hatColor": "red",
+        "acc": "none"
+      }
+    },
+    {
+      "name": "冒險家",
+      "look": {
+        "gender": "boy",
+        "skin": "bronze",
+        "eyes": "brown",
+        "brows": "thick",
+        "mouths": "normal",
+        "hair": "unkempt",
+        "hairColor": "light_brown",
+        "top": "longsleeve",
+        "topColor": "brown",
+        "bottom": "pants",
+        "bottomColor": "charcoal",
+        "shoes": "boots",
+        "shoesColor": "black",
+        "hat": "hood",
+        "hatColor": "forest",
+        "acc": "none"
+      }
+    },
+    {
+      "name": "小鎮姊姊",
+      "look": {
+        "gender": "girl",
+        "skin": "light",
+        "eyes": "purple",
+        "brows": "thin",
+        "mouths": "normal",
+        "hair": "long_straight",
+        "hairColor": "raven",
+        "top": "dress",
+        "topColor": "lavender",
+        "bottom": "skirt",
+        "bottomColor": "purple",
+        "shoes": "shoes2",
+        "shoesColor": "black",
+        "hat": "none",
+        "hatColor": "red",
+        "acc": "none"
+      }
+    },
+    {
+      "name": "老爺爺",
+      "look": {
+        "gender": "boy",
+        "head": "male_elderly",
+        "skin": "light",
+        "eyes": "brown",
+        "brows": "thick",
+        "mouths": "happy",
+        "hair": "balding",
+        "hairColor": "white",
+        "top": "cardigan",
+        "topColor": "gray",
+        "bottom": "formal",
+        "bottomColor": "charcoal",
+        "shoes": "shoes2",
+        "shoesColor": "brown",
+        "hat": "none",
+        "hatColor": "red",
+        "acc": "mustache"
+      }
+    },
+    {
+      "name": "老奶奶",
+      "look": {
+        "gender": "girl",
+        "head": "female_elderly",
+        "skin": "light",
+        "eyes": "brown",
+        "brows": "thin",
+        "mouths": "happy",
+        "hair": "bangs_bun",
+        "hairColor": "white",
+        "top": "cardigan",
+        "topColor": "rose",
+        "bottom": "skirt",
+        "bottomColor": "purple",
+        "shoes": "slippers",
+        "shoesColor": "brown",
+        "hat": "none",
+        "hatColor": "red",
+        "acc": "glasses_halfmoon"
+      }
+    }
+  ],
+  "bodyNames": {
+    "male": "男生",
+    "female": "女生",
+    "teen": "少年"
   }
 }

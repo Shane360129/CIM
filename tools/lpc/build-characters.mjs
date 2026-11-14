@@ -149,6 +149,9 @@ const parts = {
   note: '由 tools/lpc/build-characters.mjs 從 tools/lpc/characters.json 產生，不要手改。顏色存的是 LPC 色票的代表色（lpcColors 對回色票名稱）；legacy 是舊零件名稱對到新零件',
   eyes: CAT.eyes, brows: listOf('brows'), mouths: CAT.mouths, hair: listOf('hair'), top: listOf('top'), bottom: listOf('bottom'), shoes: listOf('shoes'), hat: listOf('hat'), acc: listOf('acc'),
   colors, lpcColors, genders: CAT.genders, presets: { boy: presetHex(CAT.presets.boy), girl: presetHex(CAT.presets.girl) }, legacy: CAT.legacy,
+  // 體型、臉型（不選的話照男生／女生）；現成的角色（建角畫面最上面那排，點一下整套換上）
+  bodies: CAT.bodies.filter((b) => data.body[b]).map((id) => ({ id, name: (CAT.bodyNames || {})[id] || id })), heads: Object.keys(CAT.heads).map((id) => ({ id, name: (CAT.headNames || {})[id] || id })),
+  gallery: (CAT.gallery || []).map((g) => ({ name: g.name, look: presetHex(g.look) })),
 };
 await writeFile(path.join(ROOT, 'public/games/farm/data/doll/parts.json'), JSON.stringify(parts, null, 1));
 

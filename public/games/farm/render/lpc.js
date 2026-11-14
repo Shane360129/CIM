@@ -67,7 +67,7 @@ function resolve(look) {
   };
   const part = (cat, id) => { let e = LPC.parts[cat][id]; if (e && !e[body] && e.else) e = LPC.parts[cat][e.else]; return e ? e[body] : null; };
   add(LPC.body[body]); add(LPC.heads[head] && LPC.heads[head][body]);
-  if (L.mouths === 'blush') add(face('blush', head, body));
+  if (L.mouths === 'blush' || L.mouths === 'happy') add(face(L.mouths, head, body)); // 表情：臉紅、開心
   add(part('brows', L.brows)); add(part('hair', L.hair));
   add(part('top', L.top), cloth(L.topColor)); add(part('bottom', L.bottom), cloth(L.bottomColor)); add(part('shoes', L.shoes), cloth(L.shoesColor));
   add(part('hat', L.hat), cloth(L.hatColor)); add(part('acc', L.acc));

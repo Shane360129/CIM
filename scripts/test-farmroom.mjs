@@ -269,6 +269,13 @@ Bc.clear(); A.send({ t: 'look', look: LOOK, name: '  晴<b>晴  ' + '長'.repeat
 const lk = await Bc.wait('look'); check('外觀存起來並通知對方；名字去掉奇怪的字、最多 10 個字', !!lk && lk.look.hair === 'bob' && lk.name.startsWith('晴b晴') && lk.name.length === 10, lk && lk.name);
 Bc.clear(); A.send({ t: 'look', look: { ...LOOK, hair: 'dragon' } }); A.send({ t: 'look', look: { ...LOOK, topColor: 'url(x)' } }); A.send({ t: 'look', look: { ...LOOK, extra: 1, top: undefined } }); await sleep(300);
 check('清單以外的零件、顏色不收', !Bc.log.some((m) => m.t === 'look'));
+// 體型、臉型（可以不選；選了要是清單上的）、現成的角色
+const G = PARTS.gallery.find((g) => g.look.body && g.look.head) || PARTS.gallery[0];
+Bc.clear(); A.send({ t: 'look', look: { ...G.look }, name: '晴晴' });
+const lk2 = await Bc.wait('look'); check('選現成的角色（' + G.name + '）：體型、臉型存起來，對方看到一樣的', !!lk2 && lk2.look.body === G.look.body && lk2.look.head === G.look.head && lk2.look.hair === G.look.hair);
+Bc.clear(); A.send({ t: 'look', look: { ...LOOK, body: 'giant' } }); A.send({ t: 'look', look: { ...LOOK, head: 'robot' } }); await sleep(300);
+check('清單以外的體型、臉型不收', !Bc.log.some((m) => m.t === 'look'));
+Bc.clear(); A.send({ t: 'look', look: LOOK, name: '  晴<b>晴  ' + '長'.repeat(30) }); await Bc.wait('look'); // 換回原本的造型，後面的檢查照舊
 
 // ---- 睡覺、換日、成長、出貨結算、備份 ----
 check('不在床邊不能睡', (await req(A, { t: 'sleep', on: true })).reason === 'far');

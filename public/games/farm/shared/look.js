@@ -19,5 +19,8 @@ export function upgradeLook(look, parts) {
     if (!has(out[k])) out[k] = base[k];
   }
   for (const [k, list] of COLORS) if (!parts.colors[list].includes(out[k])) out[k] = nearest(out[k], parts.colors[list]) || base[k];
+  // 體型、臉型可以不選（照男生／女生）；選了但清單上沒有的拿掉
+  if (out.body != null && !(parts.bodies || []).some((v) => v.id === out.body)) delete out.body;
+  if (out.head != null && !(parts.heads || []).some((v) => v.id === out.head)) delete out.head;
   return out;
 }
