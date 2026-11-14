@@ -1,0 +1,5566 @@
+{
+ "note": "晴耕谷 inventory icons, machines, mine objects, monsters and animals from LPC packs. Icons (item/tool/fish/dish/good) are native:false; everything else is drawn at native pixel size. \"note\" fields are documentation only.",
+ "sprites": {
+  "item/asparagus": {
+   "note": "GROUP crops & produce: lpc-food fruits-veggies (32x32; band rows +0 single, +1 few, +2 pile)",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    960,
+    512,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/bamboo_shoot": {
+   "note": "stand-in: cassava/yuca root chunk (no bamboo shoot in LPC)",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    448,
+    512,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/beet": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    512,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/carrot": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    768,
+    640,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/daikon": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    608,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/fern_shoot": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    96,
+    512,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/komatsuna": {
+   "note": "stand-in: arugula greens",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    704,
+    192,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/rapeseed": {
+   "note": "mustard plant in yellow flower",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    544,
+    640,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/scallion": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    864,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/spinach": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    544,
+    512,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/strawberry": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    0,
+    672,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/wild_scallion": {
+   "note": "stand-in: chives",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    928,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/cabbage": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    352,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/fava": {
+   "note": "stand-in: bean pod",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    256,
+    320,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/potato": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    0,
+    32,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/pea": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    0,
+    352,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/lettuce": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    32,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/wildberry": {
+   "note": "blackberries",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    32,
+    672,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/cauliflower": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    448,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/amaranth": {
+   "note": "stand-in: red chard (red-veined greens)",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    576,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/basil": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    160,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/bell_chili": {
+   "note": "habanero (bell-shaped chili)",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    576,
+    32,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/bell_pepper": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    416,
+    0,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/big_pumpkin": {
+   "note": "two pumpkins (bigger than item/pumpkin)",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    896,
+    32,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/bitter_melon": {
+   "note": "stand-in: chayote",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    832,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/blueberry": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    96,
+    672,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/bok_choy": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    384,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/broccoli": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    480,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/buckwheat": {
+   "note": "stand-in: barley stalk",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    768,
+    320,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/celery": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    896,
+    640,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/chamomile": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    224,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/chive": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    928,
+    512,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/coriander": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    928,
+    640,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/corn": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    928,
+    320,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/cucumber": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    928,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/dragonfruit": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    928,
+    992,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/eggplant": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    288,
+    32,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/garland": {
+   "note": "stand-in: mugwort (feathery greens)",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    736,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/garlic": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    736,
+    512,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/garlic_sprout": {
+   "note": "stand-in: leek",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    896,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/ginseng": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    448,
+    640,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/gold_carrot": {
+   "note": "carrot, hue-shifted golden",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    768,
+    640,
+    32,
+    32
+   ],
+   "hue": 28,
+   "native": false
+  },
+  "item/gourd": {
+   "note": "butternut (bottle-gourd shape)",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    960,
+    0,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/grape": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    320,
+    640,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/green_pepper": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    384,
+    0,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/honey_beet": {
+   "note": "sugar beet",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    640,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/hops": {
+   "note": "hop leaves",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    608,
+    672,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/kale": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    288,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/kohlrabi": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    544,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/lavender": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    224,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/lemongrass": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    576,
+    320,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/loofah": {
+   "note": "stand-in: zucchini",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    864,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/melon": {
+   "note": "cantaloupe",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    768,
+    0,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/mint": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    256,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/moonmelon": {
+   "note": "fantasy: honeydew recoloured pale moon-blue",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    736,
+    0,
+    32,
+    32
+   ],
+   "recolor": [
+    [
+     "#edd9a8",
+     "#d6def8"
+    ],
+    [
+     "#ffeebf",
+     "#eef2ff"
+    ],
+    [
+     "#fff8e5",
+     "#ffffff"
+    ],
+    [
+     "#879d69",
+     "#7f8fc0"
+    ],
+    [
+     "#aeb584",
+     "#a8b4e0"
+    ],
+    [
+     "#3e4c4d",
+     "#3e4470"
+    ],
+    [
+     "#ccbd7b",
+     "#b8c0e8"
+    ],
+    [
+     "#eee6bc",
+     "#e6eaff"
+    ]
+   ],
+   "native": false
+  },
+  "item/mustard": {
+   "note": "stand-in: lacinato greens",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    256,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/napa": {
+   "note": "romaine (napa-cabbage look)",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    0,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/onion": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    768,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/passionfruit": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    480,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/perilla": {
+   "note": "stand-in: oregano leaves hue-shifted purple",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    192,
+    480,
+    32,
+    32
+   ],
+   "hue": 185,
+   "native": false
+  },
+  "item/pineapple": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    384,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/radish": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    576,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/rainbow_corn": {
+   "note": "fantasy: corn cob hue-shifted red/purple",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    928,
+    320,
+    32,
+    32
+   ],
+   "hue": -75,
+   "native": false
+  },
+  "item/raspberry": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    64,
+    672,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/red_spinach": {
+   "note": "stand-in: spinach hue-shifted purple",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    544,
+    512,
+    32,
+    32
+   ],
+   "hue": 180,
+   "native": false
+  },
+  "item/rice": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    704,
+    320,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/rosemary": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    320,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/shallot": {
+   "note": "red onion",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    800,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/snow_mustard": {
+   "note": "stand-in: dill-like dark greens",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    960,
+    640,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/snow_strawberry": {
+   "note": "fantasy: strawberries recoloured white",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    0,
+    672,
+    32,
+    32
+   ],
+   "recolor": [
+    [
+     "#ea071a",
+     "#f3eef1"
+    ],
+    [
+     "#ff5442",
+     "#ffffff"
+    ],
+    [
+     "#ef4755",
+     "#fbe3e8"
+    ],
+    [
+     "#a40425",
+     "#d8c5cf"
+    ],
+    [
+     "#74022d",
+     "#a98a9b"
+    ],
+    [
+     "#f27981",
+     "#ff8fa6"
+    ]
+   ],
+   "native": false
+  },
+  "item/sorghum": {
+   "note": "quinoa plume (sorghum look)",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    864,
+    320,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/starfruit": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    672,
+    992,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/sugarcane": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    960,
+    352,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/sun_tomato": {
+   "note": "fantasy: tomato hue-shifted golden",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    192,
+    0,
+    32,
+    32
+   ],
+   "hue": 35,
+   "native": false
+  },
+  "item/tomato": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    192,
+    0,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/wasabi": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    512,
+    640,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/water_bamboo": {
+   "note": "stand-in: heart of palm (pale shoot)",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    192,
+    1120,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/water_spinach": {
+   "note": "stand-in: cress",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    800,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/watermelon": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    704,
+    0,
+    32,
+    30
+   ],
+   "native": false
+  },
+  "item/wheat": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    832,
+    320,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/winter_melon": {
+   "note": "stand-in: dark green acorn squash",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    864,
+    0,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/winter_radish": {
+   "note": "turnip",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    640,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/winter_scallion": {
+   "note": "stand-in: leeks",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    896,
+    512,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/winter_spinach": {
+   "note": "spinach, hue-shifted bluish",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    544,
+    480,
+    32,
+    32
+   ],
+   "hue": 25,
+   "native": false
+  },
+  "item/ginger": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    384,
+    640,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/ice_plant": {
+   "note": "stand-in: artichoke (frosty grey-green)",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    96,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/okra": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    672,
+    640,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/kiwi": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    416,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/giant_bean": {
+   "note": "stand-in: big heap of pea pods",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    0,
+    384,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/pumpkin": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    896,
+    0,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/taro": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    640,
+    320,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/burdock": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    192,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/chili": {
+   "note": "cayenne",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    608,
+    32,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/cloud_cotton": {
+   "note": "fantasy: cotton pile",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    640,
+    704,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/sesame": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    576,
+    640,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/pea_shoot": {
+   "note": "stand-in: fenugreek sprigs",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    480,
+    320,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/water_caltrop": {
+   "note": "stand-in: dark bean pod",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    96,
+    320,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/aloe": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    32,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/brussels": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    416,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/coffee": {
+   "note": "coffee beans",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    288,
+    352,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/sweet_pea": {
+   "note": "single pea pod",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    0,
+    320,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/tea": {
+   "note": "green tea leaves",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    736,
+    640,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/green_bean": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    32,
+    352,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/yam": {
+   "note": "stand-in: horseradish root",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    480,
+    640,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/cotton": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    640,
+    640,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/cranberry": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    160,
+    640,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/edamame": {
+   "note": "soybean pods",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    64,
+    320,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/soybean": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    64,
+    352,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/vanilla": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    672,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/red_bean": {
+   "note": "kidney beans",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    160,
+    352,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/cactus_fruit": {
+   "note": "nopal pads with fruit",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    128,
+    512,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/lotus_root": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    608,
+    352,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/sweet_potato": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    96,
+    32,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/cacao": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    576,
+    1120,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/peanut": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    448,
+    352,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/coconut": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    128,
+    1120,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/chestnut": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    864,
+    1120,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/persimmon": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    480,
+    1152,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/hazelnut": {
+   "note": "stand-in: walnuts (no hazelnut in LPC)",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    928,
+    1120,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/wild_blueberry": {
+   "note": "juniper berries",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    256,
+    1120,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/crystal_fruit": {
+   "note": "fantasy: kiwano hue-shifted icy blue",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    800,
+    0,
+    32,
+    32
+   ],
+   "hue": 170,
+   "native": false
+  },
+  "item/crystal_berry": {
+   "note": "fantasy: blueberries hue-shifted cyan",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    96,
+    672,
+    32,
+    32
+   ],
+   "hue": -45,
+   "native": false
+  },
+  "item/winter_root": {
+   "note": "parsnip",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    800,
+    640,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/wild_mushroom": {
+   "note": "portobello mushrooms",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    192,
+    832,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/lingzhi": {
+   "note": "stand-in: shelf fungus recoloured reishi red-brown",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    96,
+    800,
+    32,
+    32
+   ],
+   "recolor": [
+    [
+     "#ff5442",
+     "#a8402a"
+    ],
+    [
+     "#ff7b3a",
+     "#c45a2e"
+    ],
+    [
+     "#ae424a",
+     "#6e2418"
+    ],
+    [
+     "#e43c3c",
+     "#8a3020"
+    ],
+    [
+     "#ffa749",
+     "#d88a3a"
+    ],
+    [
+     "#d9b75c",
+     "#f0d890"
+    ],
+    [
+     "#c39753",
+     "#d0b070"
+    ]
+   ],
+   "native": false
+  },
+  "item/pinecone": {
+   "note": "stand-in: durian recoloured brown (no LPC pinecone)",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    544,
+    1120,
+    32,
+    32
+   ],
+   "recolor": [
+    [
+     "#2c2d16",
+     "#2b190d"
+    ],
+    [
+     "#684415",
+     "#5c3818"
+    ],
+    [
+     "#b78c41",
+     "#a8743c"
+    ],
+    [
+     "#986a20",
+     "#86552a"
+    ],
+    [
+     "#3e2613",
+     "#3a2311"
+    ],
+    [
+     "#dedf65",
+     "#d9aa62"
+    ]
+   ],
+   "native": false
+  },
+  "item/tulip": {
+   "note": "GROUP flowers: plants.png / LPC Revised flowers / 4-season garden flowers",
+   "src": "lpc-flowers-plants-fungi-wood/x/lpc-flowers-plants-fungi-wood.zip/lpc-flowers-plants-fungi-wood/plants.png",
+   "rect": [
+    135,
+    230,
+    17,
+    23
+   ],
+   "native": false
+  },
+  "item/dandelion": {
+   "note": "stand-in: yellow garden flowers",
+   "src": "lpc-revised-4-season-terrain/x/4-season_terrain.zip/Terrain Objects/Flowers - Garden.png",
+   "rect": [
+    160,
+    96,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/sunflower": {
+   "src": "lpc-flowers-plants-fungi-wood/x/lpc-flowers-plants-fungi-wood.zip/lpc-flowers-plants-fungi-wood/plants.png",
+   "rect": [
+    135,
+    199,
+    18,
+    25
+   ],
+   "native": false
+  },
+  "item/cosmos": {
+   "note": "pink daisy-like flower",
+   "src": "lpc-flowers-plants-fungi-wood/x/lpc-flowers-plants-fungi-wood.zip/lpc-flowers-plants-fungi-wood/plants.png",
+   "rect": [
+    160,
+    288,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/daisy": {
+   "src": "lpc-revised-4-season-terrain/x/4-season_terrain.zip/Terrain Objects/Flowers - Garden.png",
+   "rect": [
+    0,
+    96,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/hydrangea": {
+   "note": "round purple flower head",
+   "src": "lpc-flowers-plants-fungi-wood/x/lpc-flowers-plants-fungi-wood.zip/lpc-flowers-plants-fungi-wood/plants.png",
+   "rect": [
+    7,
+    5,
+    16,
+    22
+   ],
+   "native": false
+  },
+  "item/lily": {
+   "note": "stand-in: cream flower",
+   "src": "lpc-flowers-plants-fungi-wood/x/lpc-flowers-plants-fungi-wood.zip/lpc-flowers-plants-fungi-wood/plants.png",
+   "rect": [
+    40,
+    4,
+    16,
+    22
+   ],
+   "native": false
+  },
+  "item/rose": {
+   "note": "red roses on stems",
+   "src": "lpc-flowers-plants-fungi-wood/x/lpc-flowers-plants-fungi-wood.zip/lpc-flowers-plants-fungi-wood/plants.png",
+   "rect": [
+    164,
+    198,
+    20,
+    24
+   ],
+   "native": false
+  },
+  "item/morning_glory": {
+   "note": "blue bell flower",
+   "src": "lpc-flowers-plants-fungi-wood/x/lpc-flowers-plants-fungi-wood.zip/lpc-flowers-plants-fungi-wood/plants.png",
+   "rect": [
+    294,
+    399,
+    17,
+    17
+   ],
+   "native": false
+  },
+  "item/snowdrop": {
+   "src": "lpc-flowers-plants-fungi-wood/x/lpc-flowers-plants-fungi-wood.zip/lpc-flowers-plants-fungi-wood/plants.png",
+   "rect": [
+    295,
+    365,
+    21,
+    19
+   ],
+   "native": false
+  },
+  "item/flax": {
+   "note": "stand-in: pale blue garden flowers",
+   "src": "lpc-revised-4-season-terrain/x/4-season_terrain.zip/Terrain Objects/Flowers - Garden.png",
+   "rect": [
+    256,
+    96,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/snow_lotus": {
+   "note": "stand-in: pink lotus on lily pad",
+   "src": "lpc-flowers-plants-fungi-wood/x/lpc-flowers-plants-fungi-wood.zip/lpc-flowers-plants-fungi-wood/plants.png",
+   "rect": [
+    64,
+    512,
+    32,
+    24
+   ],
+   "native": false
+  },
+  "item/truffle": {
+   "note": "stand-in: sprouting seed (truffle-oak sapling)",
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    192,
+    256,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/maple_leaf": {
+   "note": "GROUP forage & materials",
+   "src": "lpc-flowers-plants-fungi-wood/x/lpc-flowers-plants-fungi-wood.zip/lpc-flowers-plants-fungi-wood/plants.png",
+   "rect": [
+    354,
+    559,
+    17,
+    17
+   ],
+   "native": false
+  },
+  "item/branch": {
+   "src": "lpc-flowers-plants-fungi-wood/x/lpc-flowers-plants-fungi-wood.zip/lpc-flowers-plants-fungi-wood/plants.png",
+   "rect": [
+    96,
+    904,
+    32,
+    22
+   ],
+   "native": false
+  },
+  "item/wood": {
+   "note": "firewood pile",
+   "src": "lpc-tavern/x/lpc-tavern.zip/lpc-tavern/tavern-cooking.png",
+   "rect": [
+    130,
+    17,
+    30,
+    32
+   ],
+   "native": false
+  },
+  "item/hardwood": {
+   "note": "hollow dark log",
+   "src": "lpc-flowers-plants-fungi-wood/x/lpc-flowers-plants-fungi-wood.zip/lpc-flowers-plants-fungi-wood/plants.png",
+   "rect": [
+    138,
+    971,
+    40,
+    21
+   ],
+   "native": false
+  },
+  "item/stone": {
+   "note": "plain rock (ore.png)",
+   "src": "lpc-ore-and-forge/ore.png",
+   "rect": [
+    195,
+    106,
+    28,
+    21
+   ],
+   "native": false
+  },
+  "item/clay": {
+   "note": "stand-in: small reddish ore lump",
+   "src": "lpc-ore-and-forge/ore.png",
+   "rect": [
+    40,
+    328,
+    16,
+    14
+   ],
+   "native": false,
+   "hue": 8
+  },
+  "item/fiber": {
+   "note": "stand-in: middle of a tied straw sheaf (fibre bundle; also used for bandage)",
+   "src": "lpc-farm/x/lpc-farm.zip/lpc-farm/barn.png",
+   "rect": [
+    192,
+    1190,
+    32,
+    44
+   ],
+   "native": false
+  },
+  "item/weeds": {
+   "note": "weed tuft (junk from fishing)",
+   "src": "lpc-flowers-plants-fungi-wood/x/lpc-flowers-plants-fungi-wood.zip/lpc-flowers-plants-fungi-wood/plants.png",
+   "rect": [
+    9,
+    330,
+    17,
+    19
+   ],
+   "native": false
+  },
+  "item/sap": {
+   "note": "small glass jar + amber liquid overlay (also used for jelly drop)",
+   "parts": [
+    {
+     "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+     "rect": [
+      12,
+      1479,
+      10,
+      23
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container-contents-3.png",
+     "rect": [
+      12,
+      1479,
+      10,
+      23
+     ],
+     "at": [
+      0,
+      0
+     ]
+    }
+   ],
+   "size": [
+    10,
+    23
+   ],
+   "native": false
+  },
+  "item/fertilizer": {
+   "note": "open dark sack (containers)",
+   "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+   "rect": [
+    256,
+    864,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/fertilizer_gold": {
+   "note": "open tan sack, hue-shifted golden",
+   "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+   "rect": [
+    320,
+    864,
+    32,
+    32
+   ],
+   "native": false,
+   "hue": 14
+  },
+  "item/seedbag": {
+   "note": "plain tied burlap sack; the game draws the crop icon over it",
+   "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+   "rect": [
+    320,
+    832,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/coral": {
+   "src": "lpc-beach-desert/x/lpc-beach-desert-v2.zip/lpc-beach-desert/beach-desert.png",
+   "rect": [
+    131,
+    69,
+    25,
+    23
+   ],
+   "native": false
+  },
+  "item/seashell": {
+   "note": "conch",
+   "src": "lpc-beach-desert/x/lpc-beach-desert-v2.zip/lpc-beach-desert/beach-desert.png",
+   "rect": [
+    196,
+    33,
+    26,
+    28
+   ],
+   "native": false
+  },
+  "item/fossil": {
+   "note": "ammonite-like spiral shell",
+   "src": "lpc-beach-desert/x/lpc-beach-desert-v2.zip/lpc-beach-desert/beach-desert.png",
+   "rect": [
+    12,
+    6,
+    14,
+    17
+   ],
+   "native": false
+  },
+  "item/beetle": {
+   "note": "beetle (cavern sheet)",
+   "src": "lpc-cavern-and-ruin-tiles/x/LPC_cavern_ruins.zip/LPC_cavern_ruins/cavern_ruins.png",
+   "rect": [
+    448,
+    352,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/cicada_shell": {
+   "note": "stand-in: the beetle recoloured pale amber (husk)",
+   "src": "lpc-cavern-and-ruin-tiles/x/LPC_cavern_ruins.zip/LPC_cavern_ruins/cavern_ruins.png",
+   "rect": [
+    448,
+    352,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#75502d",
+     "#c8903c"
+    ],
+    [
+     "#78602d",
+     "#d8a850"
+    ],
+    [
+     "#5a451c",
+     "#a87028"
+    ],
+    [
+     "#4b2b13",
+     "#8a5a20"
+    ],
+    [
+     "#2e2533",
+     "#6a4418"
+    ]
+   ]
+  },
+  "item/butterfly": {
+   "note": "stand-in (no LPC butterfly): bee monster frame, wings recoloured blue, body dark",
+   "src": "lpc-monsters/x/lpc-monsters.zip/lpc-monsters/bee.png",
+   "rect": [
+    4,
+    1,
+    24,
+    23
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#fefefe",
+     "#8fd0ff"
+    ],
+    [
+     "#9c9c94",
+     "#3f7fd0"
+    ],
+    [
+     "#e8c840",
+     "#4a3434"
+    ],
+    [
+     "#ffee82",
+     "#6a5050"
+    ],
+    [
+     "#cd5210",
+     "#2e1c1c"
+    ],
+    [
+     "#834120",
+     "#3b2424"
+    ],
+    [
+     "#601008",
+     "#241414"
+    ]
+   ]
+  },
+  "item/yarn": {
+   "note": "yarn balls",
+   "src": "lpc-tailor/x/lpc-tailor.zip/lpc-tailor/tailor.png",
+   "rect": [
+    5,
+    424,
+    18,
+    15
+   ],
+   "native": false
+  },
+  "item/wool": {
+   "note": "white fleece/cloth pile",
+   "src": "lpc-tailor/x/lpc-tailor.zip/lpc-tailor/tailor.png",
+   "rect": [
+    170,
+    386,
+    38,
+    28
+   ],
+   "native": false
+  },
+  "item/dog_bowl": {
+   "note": "small blue bowl",
+   "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+   "rect": [
+    128,
+    1248,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/milk": {
+   "note": "glass bottle + liquid overlay recoloured white",
+   "parts": [
+    {
+     "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+     "rect": [
+      202,
+      1473,
+      12,
+      29
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container-contents-1.png",
+     "rect": [
+      202,
+      1473,
+      12,
+      29
+     ],
+     "at": [
+      0,
+      0
+     ],
+     "recolor": [
+      [
+       "#346524",
+       "#dde2ea"
+      ],
+      [
+       "#6daa2c",
+       "#f2f4f8"
+      ],
+      [
+       "#dad45e",
+       "#ffffff"
+      ]
+     ]
+    }
+   ],
+   "size": [
+    12,
+    29
+   ],
+   "native": false
+  },
+  "item/egg": {
+   "note": "GROUP animal products: lpc-food animal-products",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    416,
+    32,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/duck_egg": {
+   "note": "white eggs recoloured pale blue-green",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    416,
+    32,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#ffffff",
+     "#d4f0e8"
+    ],
+    [
+     "#e5e6c7",
+     "#b0dccf"
+    ],
+    [
+     "#c4b59f",
+     "#86bcae"
+    ],
+    [
+     "#b19998",
+     "#76a497"
+    ]
+   ]
+  },
+  "item/coal": {
+   "note": "GROUP minerals: lpc-ore-and-forge ore.png / items1 gems",
+   "src": "lpc-ore-and-forge/ore.png",
+   "rect": [
+    0,
+    288,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/copper_ore": {
+   "src": "lpc-ore-and-forge/ore.png",
+   "rect": [
+    96,
+    288,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/iron_ore": {
+   "src": "lpc-ore-and-forge/ore.png",
+   "rect": [
+    32,
+    288,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/gold_ore": {
+   "src": "lpc-ore-and-forge/ore.png",
+   "rect": [
+    160,
+    288,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/copper_bar": {
+   "src": "lpc-ore-and-forge/ore.png",
+   "rect": [
+    96,
+    352,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/iron_bar": {
+   "note": "steel-grey ingot",
+   "src": "lpc-ore-and-forge/ore.png",
+   "rect": [
+    224,
+    352,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/gold_bar": {
+   "src": "lpc-ore-and-forge/ore.png",
+   "rect": [
+    160,
+    352,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/quartz": {
+   "note": "white crystal",
+   "src": "lpc-ore-and-forge/ore.png",
+   "rect": [
+    128,
+    256,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/topaz": {
+   "note": "yellow crystal",
+   "src": "lpc-ore-and-forge/ore.png",
+   "rect": [
+    160,
+    256,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/amethyst": {
+   "note": "orange crystal hue-shifted purple",
+   "src": "lpc-ore-and-forge/ore.png",
+   "rect": [
+    96,
+    256,
+    32,
+    32
+   ],
+   "native": false,
+   "hue": 255
+  },
+  "item/moonstone": {
+   "note": "pale crystal recoloured moon-blue",
+   "src": "lpc-ore-and-forge/ore.png",
+   "rect": [
+    64,
+    256,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#a9c9ca",
+     "#b8c2f4"
+    ],
+    [
+     "#d6e1d3",
+     "#e4e8ff"
+    ],
+    [
+     "#818b8b",
+     "#8a90c8"
+    ],
+    [
+     "#4a5057",
+     "#4c4f86"
+    ]
+   ]
+  },
+  "item/ruby": {
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    384,
+    96,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/sapphire": {
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    384,
+    128,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/jade": {
+   "note": "light green gem",
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    384,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "item/diamond": {
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    480,
+    32,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "tool/pick": {
+   "note": "GROUP tools: items1 icons; *_copper = metal recoloured copper by lightness",
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    96,
+    0,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "tool/pick_copper": {
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    96,
+    0,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#867e7f",
+     "#b25a27"
+    ],
+    [
+     "#4a5057",
+     "#79391a"
+    ],
+    [
+     "#8aaaab",
+     "#c96e35"
+    ],
+    [
+     "#818b8b",
+     "#b65d29"
+    ],
+    [
+     "#726b7e",
+     "#a35022"
+    ]
+   ]
+  },
+  "tool/axe": {
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    192,
+    224,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "tool/axe_copper": {
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    192,
+    224,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#9d9d9d",
+     "#cb7136"
+    ],
+    [
+     "#5d5d5d",
+     "#87411c"
+    ],
+    [
+     "#b5b5b5",
+     "#dd8749"
+    ],
+    [
+     "#5f5e5b",
+     "#87411c"
+    ],
+    [
+     "#9f9f9f",
+     "#cd7338"
+    ],
+    [
+     "#a5a299",
+     "#cd7338"
+    ],
+    [
+     "#bebebe",
+     "#e29052"
+    ],
+    [
+     "#5f5d5a",
+     "#87401c"
+    ],
+    [
+     "#989898",
+     "#c76c33"
+    ]
+   ]
+  },
+  "tool/sickle": {
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    96,
+    288,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "tool/sickle_copper": {
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    96,
+    288,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#69d2b1",
+     "#ffb878"
+    ],
+    [
+     "#71fdd1",
+     "#ffd2a2"
+    ],
+    [
+     "#545c56",
+     "#823e1b"
+    ],
+    [
+     "#6b6e6c",
+     "#9a4a20"
+    ],
+    [
+     "#b1b1b1",
+     "#db8345"
+    ]
+   ]
+  },
+  "tool/sword": {
+   "note": "wooden sword",
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    288,
+    192,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "tool/sword_copper": {
+   "note": "metal sword in the same pose, blade recoloured copper",
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    288,
+    160,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#c5d5c9",
+     "#eb9f61"
+    ],
+    [
+     "#d6e2d4",
+     "#f2af73"
+    ],
+    [
+     "#d5dfd1",
+     "#f1aa6d"
+    ],
+    [
+     "#d5e1cf",
+     "#f1aa6d"
+    ],
+    [
+     "#86a4a1",
+     "#c56a31"
+    ],
+    [
+     "#77969a",
+     "#b95f2a"
+    ],
+    [
+     "#ccdacb",
+     "#eea466"
+    ],
+    [
+     "#d3dfd2",
+     "#f1ab6e"
+    ],
+    [
+     "#a8c2b5",
+     "#dd8749"
+    ],
+    [
+     "#c3d5c5",
+     "#ea9e60"
+    ],
+    [
+     "#7f9f9f",
+     "#c0642c"
+    ],
+    [
+     "#a6c1b3",
+     "#dd8547"
+    ],
+    [
+     "#a3bdb0",
+     "#da8244"
+    ],
+    [
+     "#a2bdb0",
+     "#da8144"
+    ],
+    [
+     "#6f8f8f",
+     "#ae5826"
+    ],
+    [
+     "#7f7f7f",
+     "#ae5826"
+    ],
+    [
+     "#c5cdad",
+     "#e28f51"
+    ],
+    [
+     "#9dac94",
+     "#cd7339"
+    ],
+    [
+     "#4b3731",
+     "#632e15"
+    ],
+    [
+     "#58423b",
+     "#703518"
+    ],
+    [
+     "#482420",
+     "#572912"
+    ]
+   ]
+  },
+  "tool/rod": {
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    384,
+    224,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "tool/rod_fiber": {
+   "note": "same rod recoloured blue-white (fibreglass)",
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    384,
+    224,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#65553a",
+     "#3c6f8a"
+    ],
+    [
+     "#916b2f",
+     "#5f9dc2"
+    ],
+    [
+     "#a87b2e",
+     "#8cc6e2"
+    ],
+    [
+     "#72562c",
+     "#4a7e9c"
+    ],
+    [
+     "#483e30",
+     "#2e4a5a"
+    ],
+    [
+     "#4a3c2c",
+     "#2e4a5a"
+    ],
+    [
+     "#4f402c",
+     "#35505e"
+    ]
+   ]
+  },
+  "tool/hoe": {
+   "note": "no LPC hoe icon: upright hoe from the medieval farm-tool set",
+   "src": "lpc-medieval-village-decorations/x/decoration_medieval.zip/decoration_medieval/decorations-medieval.png",
+   "rect": [
+    256,
+    600,
+    32,
+    40
+   ],
+   "native": false
+  },
+  "tool/hoe_copper": {
+   "src": "lpc-medieval-village-decorations/x/decoration_medieval.zip/decoration_medieval/decorations-medieval.png",
+   "rect": [
+    256,
+    600,
+    32,
+    40
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#2e2533",
+     "#4e2410"
+    ],
+    [
+     "#45415c",
+     "#763819"
+    ],
+    [
+     "#726b7e",
+     "#a35022"
+    ],
+    [
+     "#404053",
+     "#703518"
+    ]
+   ]
+  },
+  "tool/can": {
+   "note": "no LPC can icon: one frame of the hand-tools watering-can overlay, recoloured tin grey",
+   "src": "lpc-hand-tools/x/lpc-hand-tools.zip/lpc-hand-tools/tools/thrust/watering-can.png",
+   "rect": [
+    658,
+    296,
+    21,
+    14
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#9d6639",
+     "#9aa3ad"
+    ],
+    [
+     "#8f5030",
+     "#7f8893"
+    ],
+    [
+     "#613025",
+     "#5b6470"
+    ],
+    [
+     "#aa8550",
+     "#c7ced5"
+    ],
+    [
+     "#411e05",
+     "#3c424b"
+    ]
+   ]
+  },
+  "tool/can_copper": {
+   "src": "lpc-hand-tools/x/lpc-hand-tools.zip/lpc-hand-tools/tools/thrust/watering-can.png",
+   "rect": [
+    658,
+    296,
+    21,
+    14
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#9d6639",
+     "#d27a3c"
+    ],
+    [
+     "#8f5030",
+     "#b45e2c"
+    ],
+    [
+     "#613025",
+     "#86401c"
+    ],
+    [
+     "#aa8550",
+     "#f2aa6c"
+    ],
+    [
+     "#411e05",
+     "#582a10"
+    ]
+   ]
+  },
+  "tool/net": {
+   "note": "no LPC net: composite of a rope loop (items1) on a wooden shaft (spear shaft without the tip)",
+   "parts": [
+    {
+     "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+     "rect": [
+      78,
+      238,
+      18,
+      18
+     ],
+     "at": [
+      20,
+      10
+     ]
+    },
+    {
+     "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+     "rect": [
+      322,
+      209,
+      29,
+      15
+     ],
+     "at": [
+      0,
+      0
+     ]
+    }
+   ],
+   "size": [
+    38,
+    28
+   ],
+   "native": false
+  },
+  "tool/net_copper": {
+   "note": "same, loop recoloured copper",
+   "parts": [
+    {
+     "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+     "rect": [
+      78,
+      238,
+      18,
+      18
+     ],
+     "at": [
+      20,
+      10
+     ]
+    },
+    {
+     "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+     "rect": [
+      322,
+      209,
+      29,
+      15
+     ],
+     "at": [
+      0,
+      0
+     ],
+     "recolor": [
+      [
+       "#ae764b",
+       "#e08a4a"
+      ],
+      [
+       "#9d6639",
+       "#c0642c"
+      ],
+      [
+       "#62351c",
+       "#7a3a18"
+      ],
+      [
+       "#2b1c1d",
+       "#4a2210"
+      ]
+     ]
+    }
+   ],
+   "size": [
+    38,
+    28
+   ],
+   "native": false
+  },
+  "fish/sardine": {
+   "note": "GROUP fish: lpc-food animal-products (row 15 = single fish facing left; big fish rows 25-26), beach shells | anchovies (small silver fish, several)",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    0,
+    544,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "fish/goldfish": {
+   "note": "stand-in: small perch recoloured orange",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    32,
+    480,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#d2cf77",
+     "#ffa040"
+    ],
+    [
+     "#a09f44",
+     "#f07830"
+    ],
+    [
+     "#7b763a",
+     "#d05a20"
+    ],
+    [
+     "#54242e",
+     "#c24a1c"
+    ],
+    [
+     "#904237",
+     "#e05a28"
+    ],
+    [
+     "#e43c3c",
+     "#ff6a3a"
+    ],
+    [
+     "#5c5951",
+     "#c06030"
+    ]
+   ]
+  },
+  "fish/salmon": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    64,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "fish/rainbow_trout": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    96,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "fish/trout": {
+   "note": "trout hue-shifted (no pink stripe)",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    96,
+    480,
+    32,
+    32
+   ],
+   "native": false,
+   "hue": 40
+  },
+  "fish/catfish": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    128,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "fish/crucian": {
+   "note": "stand-in: walleye",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    160,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "fish/carp": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    192,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "fish/koi": {
+   "note": "carp recoloured orange and white",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    192,
+    480,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#7b763a",
+     "#e05a28"
+    ],
+    [
+     "#a09f44",
+     "#f28a42"
+    ],
+    [
+     "#d2cf77",
+     "#fff2e6"
+    ],
+    [
+     "#f6f4c0",
+     "#ffffff"
+    ],
+    [
+     "#5c5951",
+     "#d6c4bc"
+    ]
+   ]
+  },
+  "fish/bass": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    224,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "fish/flounder": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    256,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "fish/goby": {
+   "note": "stand-in: cod",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    288,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "fish/tilapia": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    320,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "fish/mackerel": {
+   "note": "stand-in: herring",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    352,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "fish/horse_mackerel": {
+   "note": "stand-in: herring hue-shifted",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    352,
+    480,
+    32,
+    32
+   ],
+   "native": false,
+   "hue": -40
+  },
+  "fish/ayu": {
+   "note": "stand-in: haddock",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    384,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "fish/squid": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    416,
+    480,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "fish/octopus": {
+   "note": "stand-in: squid hue-shifted red",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    416,
+    480,
+    32,
+    32
+   ],
+   "native": false,
+   "hue": -28
+  },
+  "fish/river_shrimp": {
+   "note": "stand-in: lobster hue-shifted orange",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    448,
+    480,
+    32,
+    32
+   ],
+   "native": false,
+   "hue": 18
+  },
+  "fish/pufferfish": {
+   "note": "stand-in: round yellow spotted fish",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    298,
+    804,
+    49,
+    25
+   ],
+   "native": false
+  },
+  "fish/sea_bream": {
+   "note": "stand-in: deep-bodied fish hue-shifted red",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    368,
+    804,
+    36,
+    25
+   ],
+   "native": false,
+   "hue": -80
+  },
+  "fish/tuna": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    426,
+    801,
+    48,
+    29
+   ],
+   "native": false
+  },
+  "fish/swordfish": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    297,
+    838,
+    42,
+    19
+   ],
+   "native": false
+  },
+  "fish/baby_shark": {
+   "note": "stand-in: tuna recoloured grey",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    426,
+    801,
+    48,
+    29
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#414b72",
+     "#5d666e"
+    ],
+    [
+     "#586b90",
+     "#7d878f"
+    ],
+    [
+     "#7b763a",
+     "#6c7277"
+    ],
+    [
+     "#a09f44",
+     "#8b9196"
+    ],
+    [
+     "#d2cf77",
+     "#b3b8bb"
+    ],
+    [
+     "#f6f4c0",
+     "#d7dbdd"
+    ],
+    [
+     "#a9c9ca",
+     "#c4ccd0"
+    ],
+    [
+     "#eef9ff",
+     "#f2f4f5"
+    ]
+   ]
+  },
+  "fish/eel": {
+   "note": "stand-in: pike recoloured dark",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    363,
+    841,
+    36,
+    16
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#4d5c34",
+     "#3b3c4c"
+    ],
+    [
+     "#67882d",
+     "#4b4c60"
+    ],
+    [
+     "#a09f44",
+     "#6e6f84"
+    ],
+    [
+     "#7b763a",
+     "#56576c"
+    ],
+    [
+     "#d2cf77",
+     "#aaaab9"
+    ],
+    [
+     "#003023",
+     "#1c1c28"
+    ]
+   ]
+  },
+  "fish/loach": {
+   "note": "stand-in: pike recoloured brown",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    363,
+    841,
+    36,
+    16
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#4d5c34",
+     "#5c4630"
+    ],
+    [
+     "#67882d",
+     "#7a5e3a"
+    ],
+    [
+     "#a09f44",
+     "#a58a55"
+    ],
+    [
+     "#7b763a",
+     "#8c6e44"
+    ],
+    [
+     "#d2cf77",
+     "#d6bd86"
+    ],
+    [
+     "#003023",
+     "#2c1e14"
+    ]
+   ]
+  },
+  "fish/saury": {
+   "note": "stand-in: pike recoloured blue-silver",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    363,
+    841,
+    36,
+    16
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#4d5c34",
+     "#2f4c78"
+    ],
+    [
+     "#67882d",
+     "#466898"
+    ],
+    [
+     "#a09f44",
+     "#a2bad2"
+    ],
+    [
+     "#7b763a",
+     "#6f8db2"
+    ],
+    [
+     "#d2cf77",
+     "#e8eff7"
+    ],
+    [
+     "#003023",
+     "#15213a"
+    ]
+   ]
+  },
+  "fish/starfish": {
+   "src": "lpc-beach-desert/x/lpc-beach-desert-v2.zip/lpc-beach-desert/beach-desert.png",
+   "rect": [
+    35,
+    2,
+    28,
+    29
+   ],
+   "native": false
+  },
+  "fish/clam": {
+   "note": "clam shell (beach sheet)",
+   "src": "lpc-beach-desert/x/lpc-beach-desert-v2.zip/lpc-beach-desert/beach-desert.png",
+   "rect": [
+    72,
+    6,
+    21,
+    22
+   ],
+   "native": false
+  },
+  "fish/hairy_crab": {
+   "note": "crab hue-shifted olive-brown",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    994,
+    489,
+    25,
+    16
+   ],
+   "native": false,
+   "hue": 55
+  },
+  "fish/sea_urchin": {
+   "note": "stand-in: spiky durian recoloured dark purple",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    544,
+    1120,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#2c2d16",
+     "#1e1426"
+    ],
+    [
+     "#684415",
+     "#3f2452"
+    ],
+    [
+     "#b78c41",
+     "#6e4b8e"
+    ],
+    [
+     "#986a20",
+     "#573b74"
+    ],
+    [
+     "#3e2613",
+     "#2a1838"
+    ],
+    [
+     "#dedf65",
+     "#ad86cc"
+    ]
+   ]
+  },
+  "fish/hermit_crab": {
+   "note": "composite: crab + spiral shell",
+   "parts": [
+    {
+     "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+     "rect": [
+      994,
+      489,
+      25,
+      16
+     ],
+     "at": [
+      0,
+      8
+     ],
+     "hue": 20
+    },
+    {
+     "src": "lpc-beach-desert/x/lpc-beach-desert-v2.zip/lpc-beach-desert/beach-desert.png",
+     "rect": [
+      12,
+      107,
+      14,
+      17
+     ],
+     "at": [
+      6,
+      0
+     ]
+    }
+   ],
+   "size": [
+    25,
+    24
+   ],
+   "native": false
+  },
+  "dish/cocoa": {
+   "note": "GROUP dishes: lpc-meals (composited with parts), more-lpc-meals, lpc-cakes, LPC Revised food | glass mug of dark drink with foam (tavern)",
+   "src": "lpc-tavern/x/lpc-tavern.zip/lpc-tavern/tavern-deco.png",
+   "rect": [
+    96,
+    544,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/gingerbread": {
+   "note": "stand-in: round spiced cookie",
+   "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+   "rect": [
+    352,
+    0,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/smoothie": {
+   "note": "glass + purple liquid overlay",
+   "parts": [
+    {
+     "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+     "rect": [
+      171,
+      1415,
+      12,
+      22
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container-contents-4.png",
+     "rect": [
+      171,
+      1415,
+      12,
+      22
+     ],
+     "at": [
+      0,
+      0
+     ]
+    }
+   ],
+   "size": [
+    12,
+    22
+   ],
+   "native": false
+  },
+  "dish/strawberry_milk": {
+   "note": "glass mug + liquid overlay recoloured pink",
+   "parts": [
+    {
+     "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+     "rect": [
+      202,
+      1414,
+      15,
+      19
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container-contents-2.png",
+     "rect": [
+      202,
+      1414,
+      15,
+      19
+     ],
+     "at": [
+      0,
+      0
+     ],
+     "recolor": [
+      [
+       "#442434",
+       "#e48ca3"
+      ],
+      [
+       "#d04648",
+       "#f6b2c2"
+      ],
+      [
+       "#d2aa99",
+       "#ffe0e8"
+      ]
+     ]
+    }
+   ],
+   "size": [
+    15,
+    19
+   ],
+   "native": false
+  },
+  "dish/strawberry_cake": {
+   "src": "lpc-cakes/lpc_food_cakes.png",
+   "rect": [
+    64,
+    0,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/carrot_cake": {
+   "note": "cake slice recoloured: orange sponge, orange carrot decoration",
+   "src": "lpc-cakes/lpc_food_cakes.png",
+   "rect": [
+    64,
+    0,
+    32,
+    32
+   ],
+   "recolor": [
+    [
+     "#e5e6c7",
+     "#d89a5e"
+    ],
+    [
+     "#c4b59f",
+     "#b47a44"
+    ],
+    [
+     "#9d6639",
+     "#f6f0e0"
+    ],
+    [
+     "#ef4755",
+     "#f08a2a"
+    ],
+    [
+     "#f27981",
+     "#f8b060"
+    ]
+   ],
+   "native": false
+  },
+  "dish/salmon_onigiri": {
+   "note": "composite: rice pile + nori sheet + salmon bits",
+   "parts": [
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      420,
+      41,
+      22,
+      14
+     ],
+     "at": [
+      1,
+      0
+     ]
+    },
+    {
+     "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+     "rect": [
+      70,
+      489,
+      22,
+      16
+     ],
+     "at": [
+      1,
+      9
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      394,
+      199,
+      13,
+      11
+     ],
+     "at": [
+      5,
+      0
+     ],
+     "recolor": [
+      [
+       "#a40425",
+       "#e0603a"
+      ],
+      [
+       "#4e0a14",
+       "#9c3a20"
+      ],
+      [
+       "#ea071a",
+       "#f2784a"
+      ],
+      [
+       "#f27981",
+       "#f8a070"
+      ],
+      [
+       "#fbbdbd",
+       "#ffd0b0"
+      ]
+     ]
+    }
+   ],
+   "size": [
+    24,
+    25
+   ],
+   "native": false
+  },
+  "dish/chestnut_rice": {
+   "note": "composite: rice bowl + chestnuts",
+   "parts": [
+    {
+     "src": "elizawy-lpc-revised-github/Objects/Small Items/Food/Meals.png",
+     "rect": [
+      37,
+      70,
+      22,
+      19
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+     "rect": [
+      864,
+      1120,
+      32,
+      32
+     ],
+     "at": [
+      -5,
+      -11
+     ]
+    }
+   ],
+   "size": [
+    22,
+    19
+   ],
+   "native": false
+  },
+  "dish/grilled_corn": {
+   "note": "corn cob recoloured toasted",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    928,
+    320,
+    32,
+    32
+   ],
+   "recolor": [
+    [
+     "#ffd558",
+     "#e2a040"
+    ],
+    [
+     "#ffe28c",
+     "#f2c46c"
+    ],
+    [
+     "#ffad4d",
+     "#b0622a"
+    ],
+    [
+     "#136d24",
+     "#5a3a1a"
+    ],
+    [
+     "#4ab525",
+     "#8a5a2a"
+    ],
+    [
+     "#133e1e",
+     "#3a2410"
+    ],
+    [
+     "#b4e652",
+     "#b08040"
+    ]
+   ],
+   "native": false
+  },
+  "dish/egg_soup": {
+   "note": "composite: bowl + yellow soup + green bits",
+   "parts": [
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      64,
+      0,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      192,
+      32,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      832,
+      192,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    }
+   ],
+   "size": [
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/salad": {
+   "note": "caesar salad",
+   "src": "more-lpc-meals/foods.png",
+   "rect": [
+    192,
+    0,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/potato_salad": {
+   "note": "composite: plate + diced potato + carrot",
+   "parts": [
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      160,
+      0,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      128,
+      96,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      128,
+      128,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      128,
+      160,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      32,
+      192,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    }
+   ],
+   "size": [
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/cream_stew": {
+   "note": "composite: bowl + cream soup + carrot, broccoli, potato",
+   "parts": [
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      64,
+      0,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      192,
+      32,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ],
+     "recolor": [
+      [
+       "#ffad4d",
+       "#eee0c0"
+      ],
+      [
+       "#ffe28c",
+       "#fffaee"
+      ],
+      [
+       "#ae764b",
+       "#c8b28c"
+      ]
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      32,
+      96,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      800,
+      128,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      224,
+      32,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ],
+     "recolor": [
+      [
+       "#ffad4d",
+       "#eee0c0"
+      ],
+      [
+       "#ffe28c",
+       "#fffaee"
+      ],
+      [
+       "#ae764b",
+       "#c8b28c"
+      ]
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      128,
+      160,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    }
+   ],
+   "size": [
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/crepe": {
+   "note": "stand-in: waffles with strawberries and cream",
+   "src": "elizawy-lpc-revised-github/Objects/Small Items/Food/Meals.png",
+   "rect": [
+    192,
+    32,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/seafood_soup": {
+   "note": "composite: bowl + tomato broth + shrimp bits + a mussel",
+   "parts": [
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      64,
+      0,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      128,
+      32,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ],
+     "hue": 20
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      384,
+      192,
+      32,
+      32
+     ],
+     "at": [
+      -3,
+      0
+     ],
+     "recolor": [
+      [
+       "#a40425",
+       "#e0603a"
+      ],
+      [
+       "#4e0a14",
+       "#9c3a20"
+      ],
+      [
+       "#ea071a",
+       "#f2784a"
+      ],
+      [
+       "#f27981",
+       "#f8a070"
+      ],
+      [
+       "#fbbdbd",
+       "#ffd0b0"
+      ]
+     ]
+    },
+    {
+     "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+     "rect": [
+      914,
+      496,
+      11,
+      10
+     ],
+     "at": [
+      17,
+      12
+     ]
+    }
+   ],
+   "size": [
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/apple_pie": {
+   "note": "lattice pie",
+   "src": "elizawy-lpc-revised-github/Objects/Small Items/Food/Dessert.png",
+   "rect": [
+    32,
+    0,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/pumpkin_pie": {
+   "note": "pie with a slice cut (orange filling)",
+   "src": "elizawy-lpc-revised-github/Objects/Small Items/Food/Dessert.png",
+   "rect": [
+    6,
+    107,
+    26,
+    21
+   ],
+   "native": false
+  },
+  "dish/baked_potato": {
+   "note": "composite: plate + potato",
+   "parts": [
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      160,
+      0,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      96,
+      64,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      -2
+     ]
+    }
+   ],
+   "size": [
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/sushi_roll": {
+   "note": "stand-in: heart-of-palm roll recoloured nori/rice",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    192,
+    1120,
+    32,
+    32
+   ],
+   "recolor": [
+    [
+     "#cbba7b",
+     "#22402a"
+    ],
+    [
+     "#b7996a",
+     "#0f2014"
+    ],
+    [
+     "#cfc587",
+     "#33583a"
+    ],
+    [
+     "#c0aa76",
+     "#1a3420"
+    ],
+    [
+     "#e5e6c7",
+     "#f6f6f0"
+    ]
+   ],
+   "native": false
+  },
+  "dish/chicken_leg": {
+   "note": "large drumstick",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    96,
+    160,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/stew": {
+   "note": "composite: bowl + brown soup + carrot, potato, meatball",
+   "parts": [
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      64,
+      0,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      320,
+      32,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      32,
+      96,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      128,
+      128,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      352,
+      32,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      160,
+      608,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    }
+   ],
+   "size": [
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/corn_soup": {
+   "note": "composite: bowl + yellow soup + corn",
+   "parts": [
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      64,
+      0,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      192,
+      32,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      416,
+      192,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    }
+   ],
+   "size": [
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/mushroom_soup": {
+   "note": "composite: bowl + beige soup + mushrooms",
+   "parts": [
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      64,
+      0,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      320,
+      32,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ],
+     "recolor": [
+      [
+       "#51221e",
+       "#8c6a46"
+      ],
+      [
+       "#803526",
+       "#b9946a"
+      ],
+      [
+       "#43181c",
+       "#6c5036"
+      ]
+     ]
+    },
+    {
+     "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+     "rect": [
+      39,
+      809,
+      8,
+      10
+     ],
+     "at": [
+      9,
+      9
+     ]
+    },
+    {
+     "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+     "rect": [
+      51,
+      810,
+      6,
+      7
+     ],
+     "at": [
+      18,
+      12
+     ]
+    }
+   ],
+   "size": [
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/veg_soup": {
+   "note": "composite: bowl + green soup + vegetables",
+   "parts": [
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      64,
+      0,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      256,
+      32,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      32,
+      96,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      448,
+      128,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      288,
+      32,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      128,
+      160,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    }
+   ],
+   "size": [
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/jam_toast": {
+   "note": "composite: bread slice + red jam",
+   "parts": [
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      864,
+      32,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      160,
+      32,
+      32,
+      32
+     ],
+     "at": [
+      1,
+      -11
+     ]
+    }
+   ],
+   "size": [
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/fried_egg": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    512,
+    0,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/pancake": {
+   "note": "pancake stack with butter",
+   "src": "elizawy-lpc-revised-github/Objects/Small Items/Food/Meals.png",
+   "rect": [
+    192,
+    0,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/grilled_fish": {
+   "note": "composite: plate + browned fish (cod)",
+   "parts": [
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      160,
+      0,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+     "rect": [
+      290,
+      489,
+      29,
+      14
+     ],
+     "at": [
+      2,
+      10
+     ]
+    }
+   ],
+   "size": [
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/omurice": {
+   "note": "composite: plate + yellow omelette + ketchup",
+   "parts": [
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      160,
+      0,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      192,
+      32,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      160,
+      32,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      -1
+     ]
+    }
+   ],
+   "size": [
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/stir_fry": {
+   "note": "plate of mixed vegetables",
+   "src": "elizawy-lpc-revised-github/Objects/Small Items/Food/Meals.png",
+   "rect": [
+    64,
+    64,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/curry_rice": {
+   "note": "composite: plate + rice + brown curry",
+   "parts": [
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      160,
+      0,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      416,
+      32,
+      32,
+      32
+     ],
+     "at": [
+      -5,
+      0
+     ]
+    },
+    {
+     "src": "lpc-meals/x/lpc-meals.zip/lpc-meals/meals.png",
+     "rect": [
+      320,
+      32,
+      32,
+      32
+     ],
+     "at": [
+      5,
+      1
+     ]
+    }
+   ],
+   "size": [
+    32,
+    32
+   ],
+   "native": false
+  },
+  "dish/tomato_pasta": {
+   "note": "pasta primavera",
+   "src": "more-lpc-meals/foods.png",
+   "rect": [
+    0,
+    0,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "good/honey": {
+   "note": "GROUP goods (machine products) | wide glass jar + orange liquid overlay",
+   "parts": [
+    {
+     "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+     "rect": [
+      391,
+      1477,
+      16,
+      22
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container-contents-3.png",
+     "rect": [
+      391,
+      1477,
+      16,
+      22
+     ],
+     "at": [
+      0,
+      0
+     ]
+    }
+   ],
+   "size": [
+    16,
+    22
+   ],
+   "native": false
+  },
+  "good/jam": {
+   "note": "glass jar + red liquid overlay",
+   "parts": [
+    {
+     "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+     "rect": [
+      423,
+      1473,
+      18,
+      31
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container-contents-2.png",
+     "rect": [
+      423,
+      1473,
+      18,
+      31
+     ],
+     "at": [
+      0,
+      0
+     ]
+    }
+   ],
+   "size": [
+    18,
+    31
+   ],
+   "native": false
+  },
+  "good/pickle": {
+   "note": "tall jar + green overlay",
+   "parts": [
+    {
+     "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+     "rect": [
+      455,
+      1472,
+      19,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container-contents-1.png",
+     "rect": [
+      455,
+      1472,
+      19,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    }
+   ],
+   "size": [
+    19,
+    32
+   ],
+   "native": false
+  },
+  "good/juice": {
+   "note": "bottle + orange overlay (also tonic)",
+   "parts": [
+    {
+     "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+     "rect": [
+      42,
+      1475,
+      12,
+      27
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container-contents-3.png",
+     "rect": [
+      42,
+      1475,
+      12,
+      27
+     ],
+     "at": [
+      0,
+      0
+     ]
+    }
+   ],
+   "size": [
+    12,
+    27
+   ],
+   "native": false
+  },
+  "good/wine": {
+   "note": "long-neck bottle + red overlay",
+   "parts": [
+    {
+     "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+     "rect": [
+      107,
+      1474,
+      9,
+      27
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container-contents-2.png",
+     "rect": [
+      107,
+      1474,
+      9,
+      27
+     ],
+     "at": [
+      0,
+      0
+     ]
+    }
+   ],
+   "size": [
+    9,
+    27
+   ],
+   "native": false
+  },
+  "good/oil": {
+   "note": "round flask + yellow-green overlay",
+   "parts": [
+    {
+     "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+     "rect": [
+      329,
+      1474,
+      16,
+      27
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container-contents-1.png",
+     "rect": [
+      329,
+      1474,
+      16,
+      27
+     ],
+     "at": [
+      0,
+      0
+     ]
+    }
+   ],
+   "size": [
+    16,
+    27
+   ],
+   "native": false
+  },
+  "good/mayo": {
+   "note": "white ceramic jar",
+   "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+   "rect": [
+    32,
+    1216,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "good/yogurt": {
+   "note": "small white pot",
+   "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+   "rect": [
+    0,
+    1152,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "good/cheese": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    128,
+    32,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "good/butter": {
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    576,
+    32,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "good/dried": {
+   "note": "dried fruit (dates)",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/fruits-veggies.png",
+   "rect": [
+    160,
+    1152,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "good/smoked": {
+   "note": "stand-in: hanging (vertical) cod, reads as smoked fish",
+   "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+   "rect": [
+    288,
+    512,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "good/tea": {
+   "note": "dried black tea leaves",
+   "src": "elizawy-lpc-revised-github/Objects/Small Items/Food/Tea, Coffee, Medicinal Herbs.png",
+   "rect": [
+    128,
+    32,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "good/flour": {
+   "note": "stand-in: closed sack",
+   "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+   "rect": [
+    48,
+    801,
+    32,
+    31
+   ],
+   "native": false
+  },
+  "good/icecream": {
+   "note": "composite: glass sundae dish + three scoops (cheese balls recoloured pink)",
+   "parts": [
+    {
+     "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+     "rect": [
+      134,
+      1511,
+      20,
+      16
+     ],
+     "at": [
+      0,
+      8
+     ]
+    },
+    {
+     "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+     "rect": [
+      294,
+      11,
+      17,
+      16
+     ],
+     "at": [
+      2,
+      3
+     ],
+     "recolor": [
+      [
+       "#ccbd7b",
+       "#e88aa6"
+      ],
+      [
+       "#ffe28c",
+       "#ffc2d2"
+      ],
+      [
+       "#ae764b",
+       "#a8466a"
+      ]
+     ]
+    }
+   ],
+   "size": [
+    20,
+    24
+   ],
+   "native": false
+  },
+  "good/cakebox": {
+   "note": "whole cake",
+   "src": "lpc-cakes/lpc_food_cakes.png",
+   "rect": [
+    0,
+    0,
+    32,
+    32
+   ],
+   "native": false
+  },
+  "machine/cheese": {
+   "note": "GROUP machines (native size, ~1 tile wide where possible) | lpc-farm cheese press",
+   "src": "lpc-farm/x/lpc-farm.zip/lpc-farm/barn.png",
+   "rect": [
+    192,
+    1251,
+    32,
+    60
+   ]
+  },
+  "machine/mayo": {
+   "note": "lpc-farm mayonnaise maker",
+   "src": "lpc-farm/x/lpc-farm.zip/lpc-farm/barn.png",
+   "rect": [
+    291,
+    1261,
+    29,
+    41
+   ]
+  },
+  "machine/hive": {
+   "note": "lpc-farm bee skep on a stump",
+   "src": "lpc-farm/x/lpc-farm.zip/lpc-farm/barn.png",
+   "rect": [
+    161,
+    996,
+    31,
+    60
+   ]
+  },
+  "machine/oil": {
+   "note": "stand-in: lpc-farm butter churn (no oil press in LPC)",
+   "src": "lpc-farm/x/lpc-farm.zip/lpc-farm/barn.png",
+   "rect": [
+    99,
+    1254,
+    25,
+    53
+   ]
+  },
+  "machine/furnace": {
+   "note": "LPC Revised smelter crucible with molten metal (1 tile)",
+   "src": "elizawy-lpc-revised-github/Objects/Furniture/Smithing/Smelter.png",
+   "rect": [
+    0,
+    86,
+    30,
+    40
+   ]
+  },
+  "machine/keg": {
+   "note": "barrel on a cabinet stand (house interior)",
+   "src": "lpc-house-interior-and-decorations/x/LPC_house_interior.zip/LPC_house_interior/interior.png",
+   "rect": [
+    416,
+    0,
+    32,
+    64
+   ]
+  },
+  "machine/pickle": {
+   "note": "grey pickling crock",
+   "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+   "rect": [
+    258,
+    1175,
+    28,
+    40
+   ]
+  },
+  "machine/jam": {
+   "note": "cauldron of red preserves (tavern)",
+   "src": "lpc-tavern/x/lpc-tavern.zip/lpc-tavern/tavern-cooking.png",
+   "rect": [
+    11,
+    364,
+    42,
+    45
+   ]
+  },
+  "machine/dryer": {
+   "note": "stand-in: tailor fabric drying rack",
+   "src": "lpc-tailor/x/lpc-tailor.zip/lpc-tailor/tailor.png",
+   "rect": [
+    7,
+    323,
+    52,
+    61
+   ]
+  },
+  "machine/smoker": {
+   "note": "stand-in: cast-iron stove with fire and stovepipe (house interior)",
+   "src": "lpc-house-interior-and-decorations/x/LPC_house_interior.zip/LPC_house_interior/interior.png",
+   "rect": [
+    352,
+    224,
+    32,
+    59
+   ]
+  },
+  "machine/seed_maker": {
+   "note": "stand-in: grindstone",
+   "src": "lpc-woodshop/x/lpc-woodshop.zip/lpc-woodshop/woodshop.png",
+   "rect": [
+    160,
+    176,
+    32,
+    42
+   ]
+  },
+  "machine/stove": {
+   "note": "kitchen counter with cooktop and oven",
+   "src": "lpc-house-interior-and-decorations/x/LPC_house_interior.zip/LPC_house_interior/interior.png",
+   "rect": [
+    128,
+    108,
+    32,
+    46
+   ]
+  },
+  "machine/fridge": {
+   "note": "stand-in: tall white two-door cabinet",
+   "src": "lpc-wooden-furniture/white-wood.png",
+   "rect": [
+    320,
+    64,
+    32,
+    64
+   ]
+  },
+  "machine/storage": {
+   "note": "wooden chest",
+   "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+   "rect": [
+    256,
+    256,
+    32,
+    32
+   ]
+  },
+  "machine/workbench": {
+   "note": "LPC Revised workbench with tools",
+   "src": "elizawy-lpc-revised-github/Objects/Furniture/Smithing/Workbench, Smith.png",
+   "rect": [
+    66,
+    0,
+    61,
+    64
+   ]
+  },
+  "machine/carpenter": {
+   "note": "woodshop workbench with vise",
+   "src": "lpc-woodshop/x/lpc-woodshop.zip/lpc-woodshop/woodshop.png",
+   "rect": [
+    15,
+    10,
+    77,
+    52
+   ]
+  },
+  "machine/composter": {
+   "note": "stand-in: open wooden bin (dark inside)",
+   "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+   "rect": [
+    256,
+    384,
+    32,
+    32
+   ]
+  },
+  "machine/crab_pot": {
+   "note": "stand-in: round wicker basket",
+   "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+   "rect": [
+    160,
+    736,
+    32,
+    32
+   ]
+  },
+  "mine/rock_s": {
+   "note": "GROUP mine (native) | ore.png plain flat rock",
+   "src": "lpc-ore-and-forge/ore.png",
+   "rect": [
+    195,
+    106,
+    28,
+    21
+   ]
+  },
+  "mine/rock_l": {
+   "note": "ore.png plain big rock",
+   "src": "lpc-ore-and-forge/ore.png",
+   "rect": [
+    193,
+    193,
+    30,
+    30
+   ]
+  },
+  "mine/copper_node": {
+   "src": "lpc-ore-and-forge/ore.png",
+   "rect": [
+    99,
+    67,
+    28,
+    28
+   ]
+  },
+  "mine/iron_node": {
+   "src": "lpc-ore-and-forge/ore.png",
+   "rect": [
+    35,
+    67,
+    28,
+    28
+   ]
+  },
+  "mine/gold_node": {
+   "src": "lpc-ore-and-forge/ore.png",
+   "rect": [
+    163,
+    67,
+    28,
+    28
+   ]
+  },
+  "mine/gem_node": {
+   "note": "crystal node, crystals recoloured violet",
+   "src": "lpc-ore-and-forge/ore.png",
+   "rect": [
+    67,
+    67,
+    28,
+    28
+   ],
+   "recolor": [
+    [
+     "#a9c9ca",
+     "#c27be0"
+    ],
+    [
+     "#d6e1d3",
+     "#e8b8f8"
+    ],
+    [
+     "#818b8b",
+     "#9452b8"
+    ],
+    [
+     "#4a5057",
+     "#5a2a78"
+    ]
+   ]
+  },
+  "mine/stairs_down": {
+   "note": "small hole (LPC base hole tile)",
+   "src": "liberated-pixel-cup-lpc-base-assets-sprites-map-tiles/x/lpc_base_assets.zip/LPC Base Assets/tiles/hole.png",
+   "rect": [
+    0,
+    0,
+    32,
+    32
+   ]
+  },
+  "mine/elevator": {
+   "note": "stand-in: timber mine-shaft entrance",
+   "src": "lpc-mine/x/lpc-mine.zip/lpc-mine/mine.png",
+   "rect": [
+    64,
+    423,
+    96,
+    89
+   ]
+  },
+  "mine/support": {
+   "note": "timber post/plank support",
+   "src": "lpc-mine/x/lpc-mine.zip/lpc-mine/mine.png",
+   "rect": [
+    480,
+    297,
+    32,
+    106
+   ]
+  },
+  "monster/jelly/front": {
+   "note": "GROUP monsters (native) | lpc-monsters slime, row 2 = facing down",
+   "src": "lpc-monsters/x/lpc-monsters.zip/lpc-monsters/slime.png",
+   "rect": [
+    0,
+    128,
+    64,
+    64
+   ]
+  },
+  "monster/jelly/side": {
+   "note": "row 3 = facing right",
+   "src": "lpc-monsters/x/lpc-monsters.zip/lpc-monsters/slime.png",
+   "rect": [
+    0,
+    192,
+    64,
+    64
+   ]
+  },
+  "monster/jelly/hit": {
+   "note": "squashed frame recoloured very light",
+   "src": "lpc-monsters/x/lpc-monsters.zip/lpc-monsters/slime.png",
+   "rect": [
+    192,
+    128,
+    64,
+    64
+   ],
+   "recolor": [
+    [
+     "#005218",
+     "#bfe9cb"
+    ],
+    [
+     "#002908",
+     "#9dd2ad"
+    ],
+    [
+     "#109452",
+     "#dcf7e4"
+    ],
+    [
+     "#5acd73",
+     "#f2fff5"
+    ],
+    [
+     "#e6d5b4",
+     "#ffffff"
+    ],
+    [
+     "#130e13",
+     "#6f9a7d"
+    ]
+   ]
+  },
+  "monster/stone_sprite/front": {
+   "note": "lpc-golem walk, row 2 = facing down",
+   "src": "lpc-golem/golem-walk.png",
+   "rect": [
+    0,
+    128,
+    56,
+    64
+   ]
+  },
+  "monster/stone_sprite/side": {
+   "note": "row 3 = facing right",
+   "src": "lpc-golem/golem-walk.png",
+   "rect": [
+    0,
+    192,
+    64,
+    64
+   ]
+  },
+  "monster/stone_sprite/hit": {
+   "note": "flinch frame of the death animation, recoloured very light",
+   "src": "lpc-golem/golem-die.png",
+   "rect": [
+    64,
+    0,
+    64,
+    64
+   ],
+   "recolor": [
+    [
+     "#061015",
+     "#8aa1a8"
+    ],
+    [
+     "#253947",
+     "#c3d4da"
+    ],
+    [
+     "#70959c",
+     "#e3eff1"
+    ],
+    [
+     "#151a1e",
+     "#9db0b6"
+    ],
+    [
+     "#b1c3c3",
+     "#f3fafa"
+    ],
+    [
+     "#eaffff",
+     "#ffffff"
+    ]
+   ]
+  },
+  "monster/mushroom/front": {
+   "note": "Sevarihk fly-amanita mushroom walker (32x32, no baked shadow; fits the 0.9-tile monster better than the 64px lpc-big-mushroom one), row 0 = facing down",
+   "src": "lpc-bears-deer-lions-and-more/x/lpc_animals_2022_v1.1.zip/lpc animals 2022 v1.1/individual creature spritesheets/mushroom walker, fly amanita (Sevarihk).png",
+   "rect": [
+    0,
+    0,
+    32,
+    32
+   ]
+  },
+  "monster/mushroom/side": {
+   "note": "row 2 = facing right",
+   "src": "lpc-bears-deer-lions-and-more/x/lpc_animals_2022_v1.1.zip/lpc animals 2022 v1.1/individual creature spritesheets/mushroom walker, fly amanita (Sevarihk).png",
+   "rect": [
+    0,
+    64,
+    32,
+    32
+   ]
+  },
+  "monster/mushroom/hit": {
+   "note": "front frame recoloured very light",
+   "src": "lpc-bears-deer-lions-and-more/x/lpc_animals_2022_v1.1.zip/lpc animals 2022 v1.1/individual creature spritesheets/mushroom walker, fly amanita (Sevarihk).png",
+   "rect": [
+    0,
+    0,
+    32,
+    32
+   ],
+   "recolor": [
+    [
+     "#bf4000",
+     "#f6c8b0"
+    ],
+    [
+     "#cf6f30",
+     "#fad8c4"
+    ],
+    [
+     "#a42600",
+     "#efb8a0"
+    ],
+    [
+     "#6a1d16",
+     "#c89488"
+    ],
+    [
+     "#faece7",
+     "#ffffff"
+    ],
+    [
+     "#cc8665",
+     "#f6e0d4"
+    ],
+    [
+     "#f9d5ba",
+     "#fff2ea"
+    ],
+    [
+     "#e4a47c",
+     "#fbe6da"
+    ],
+    [
+     "#7b2008",
+     "#d0a090"
+    ]
+   ]
+  },
+  "animal/chicken/side": {
+   "note": "GROUP animals (native; side faces right) | lpc-style-farm-animals chicken, row 3 faces right",
+   "src": "lpc-style-farm-animals/chicken_walk.png",
+   "rect": [
+    1,
+    100,
+    30,
+    25
+   ]
+  },
+  "animal/chicken/baby_side": {
+   "note": "chick (faces left in source, flipped), recoloured yellow",
+   "src": "chick/x/chick-1.0.zip/PNG/chick_24x24.png",
+   "rect": [
+    73,
+    6,
+    22,
+    18
+   ],
+   "flip": true,
+   "recolor": [
+    [
+     "#e7dbca",
+     "#f1cf4e"
+    ],
+    [
+     "#ffffff",
+     "#fff27c"
+    ],
+    [
+     "#e7e4df",
+     "#f7e066"
+    ]
+   ]
+  },
+  "animal/duck/side": {
+   "note": "stand-in (no LPC duck): chicken with comb cropped off, wattle/beak/legs recoloured orange",
+   "src": "lpc-style-farm-animals/chicken_walk.png",
+   "rect": [
+    1,
+    103,
+    30,
+    22
+   ],
+   "recolor": [
+    [
+     "#9e3e37",
+     "#e48b2c"
+    ],
+    [
+     "#c84141",
+     "#e48b2c"
+    ],
+    [
+     "#5c1f1a",
+     "#9c5a1c"
+    ],
+    [
+     "#cf7b49",
+     "#f6b43c"
+    ]
+   ]
+  },
+  "animal/duck/baby_side": {
+   "note": "stand-in: white chick with orange bill (duckling look), flipped",
+   "src": "chick/x/chick-1.0.zip/PNG/chick_24x24.png",
+   "rect": [
+    73,
+    6,
+    22,
+    18
+   ],
+   "flip": true
+  },
+  "animal/cow/side": {
+   "note": "cow_walk row 3 faces right",
+   "src": "lpc-style-farm-animals/cow_walk.png",
+   "rect": [
+    36,
+    429,
+    71,
+    44
+   ]
+  },
+  "animal/cow/baby_side": {
+   "note": "stand-in calf: livestock-0 small cow, faces right",
+   "src": "livestock-0/x/livestock.zip/livestock/tiles.png",
+   "rect": [
+    97,
+    38,
+    31,
+    23
+   ]
+  },
+  "animal/sheep/side": {
+   "note": "sheep_walk row 3 faces right",
+   "src": "lpc-style-farm-animals/sheep_walk.png",
+   "rect": [
+    42,
+    428,
+    49,
+    38
+   ]
+  },
+  "animal/sheep/baby_side": {
+   "note": "stand-in lamb: livestock-0 small sheep, faces right",
+   "src": "livestock-0/x/livestock.zip/livestock/tiles.png",
+   "rect": [
+    32,
+    38,
+    31,
+    20
+   ]
+  },
+  "animal/cat/side": {
+   "note": "ginger cat, row 0 faces right",
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    132,
+    8,
+    24,
+    19
+   ]
+  },
+  "animal/cat/baby_side": {
+   "note": "stand-in kitten: the cat frame with body middle and leg rows cut out",
+   "parts": [
+    {
+     "src": "lpc-cats-and-dogs/cat.png",
+     "rect": [
+      132,
+      8,
+      8,
+      13
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-cats-and-dogs/cat.png",
+     "rect": [
+      145,
+      8,
+      11,
+      13
+     ],
+     "at": [
+      8,
+      0
+     ]
+    },
+    {
+     "src": "lpc-cats-and-dogs/cat.png",
+     "rect": [
+      132,
+      23,
+      8,
+      4
+     ],
+     "at": [
+      0,
+      13
+     ]
+    },
+    {
+     "src": "lpc-cats-and-dogs/cat.png",
+     "rect": [
+      145,
+      23,
+      11,
+      4
+     ],
+     "at": [
+      8,
+      13
+     ]
+    }
+   ],
+   "size": [
+    19,
+    17
+   ]
+  },
+  "animal/dog/side": {
+   "note": "yellow dog, row 0 faces right",
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    259,
+    8,
+    26,
+    21
+   ]
+  },
+  "animal/dog/baby_side": {
+   "note": "stand-in puppy: the dog frame with body middle and leg rows cut out",
+   "parts": [
+    {
+     "src": "lpc-cats-and-dogs/dog.png",
+     "rect": [
+      259,
+      8,
+      8,
+      15
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-cats-and-dogs/dog.png",
+     "rect": [
+      274,
+      8,
+      11,
+      15
+     ],
+     "at": [
+      8,
+      0
+     ]
+    },
+    {
+     "src": "lpc-cats-and-dogs/dog.png",
+     "rect": [
+      259,
+      25,
+      8,
+      4
+     ],
+     "at": [
+      0,
+      15
+     ]
+    },
+    {
+     "src": "lpc-cats-and-dogs/dog.png",
+     "rect": [
+      274,
+      25,
+      11,
+      4
+     ],
+     "at": [
+      8,
+      15
+     ]
+    }
+   ],
+   "size": [
+    19,
+    19
+   ]
+  }
+ }
+}
