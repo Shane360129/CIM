@@ -4,7 +4,7 @@ import { drawObject, drawPlayer, drawBubble, drawTilled, drawShadow, drawName } 
 import { drawDoll, portraitEl } from '../render/doll.js';
 import { drawSprite, drawSign } from '../render/sprites.js';
 import { groundAt, levelOf, sellPrice, animalPos, hearts, mineMap, monPos, npcPos, walkGrid, seasonIndex, rng } from '../shared/rules.js';
-import { iconEl } from '../render/sprites.js';
+import { iconEl, sprite } from '../render/sprites.js';
 import { openPanel, itemIcon, setToolLv } from '../ui/panels.js';
 import { create } from './create.js';
 import { createFishing } from '../systems/fishing.js';
@@ -75,7 +75,7 @@ export const play = {
   setMap(id) {
     this.ctx.audio.music(id, (this.world.farm && this.world.farm.season) || 'spring');
     const { ctx } = this, mine = id === 'mine' && this.world.mine, map = mine ? mineMap(this.bal, mine.floor) : ctx.data.maps[id] || ctx.data.maps.farm, objects = ctx.data.objects;
-    this.mapId = mine ? 'mine' : ctx.data.maps[id] ? id : 'farm'; this.map = map; this.ground = buildGround(map, this.T, !!(this.world.farm && (this.world.farm.land || {}).field2));
+    this.mapId = mine ? 'mine' : ctx.data.maps[id] ? id : 'farm'; this.map = map; this.ground = buildGround(map, this.T, !!(this.world.farm && (this.world.farm.land || {}).field2), (this.world.farm && this.world.farm.season) || 'spring');
     this.solid = new Set(); this.useAt = new Map(); this.things = [];
     for (const o of map.objects) {
       const def = objects[o.type]; if (def.tool) continue;
@@ -409,7 +409,11 @@ export const play = {
     camera.apply(view);
     g.imageSmoothingEnabled = !this.ground.pixel; // LPC 地形是像素圖：放大不要糊
     g.drawImage(this.ground, 0, 0, this.ground.width * this.ground.scale, this.ground.height * this.ground.scale);
-    if (this.map.walls) { g.fillStyle = '#b08a5e'; g.fillRect(0, 0, this.map.w * T, T); g.fillStyle = '#8a6a44'; g.fillRect(0, T * 0.86, this.map.w * T, T * 0.14); }
+    if (this.map.walls) { // 室內最上面一排是牆：有 LPC 的壁紙圖就一段一段貼，沒有就畫色塊
+      const ws = sprite('terrain/wall');
+      if (ws) { g.imageSmoothingEnabled = false; const dw = ws.w * T / 32; for (let x = 0; x < this.map.w * T; x += dw) g.drawImage(ws.img, ws.x, ws.y, ws.w, ws.h, x, 0, dw, T); }
+      else { g.fillStyle = '#b08a5e'; g.fillRect(0, 0, this.map.w * T, T); g.fillStyle = '#8a6a44'; g.fillRect(0, T * 0.86, this.map.w * T, T * 0.14); }
+    }
     const x0 = camera.x / T - 3, x1 = (camera.x + view.w / camera.zoom) / T + 3, y0 = camera.y / T - 1, y1 = (camera.y + view.h / camera.zoom) / T + 4;
     const list = [];
     for (const t of W.tiles.values()) {

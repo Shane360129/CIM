@@ -27,7 +27,19 @@ export function openSettings(ctx) {
     root.append(mk('p', 'hint', '鍵盤：WASD／方向鍵走路、空白鍵動作、E 背包、T 說話、1～0 切換快捷列、Esc 關閉。'));
     // 素材來源：LPC 的圖用 CC-BY-SA 等授權，規定要在遊戲裡看得到作者
     const cr = ctx.data.creditsLpc;
-    if (cr) { root.append(mk('h3', '', '素材來源')); const p = mk('p', 'hint credits', `角色圖：Liberated Pixel Cup（LPC）的素材（${cr.licenses.join('、')}）。作者：${cr.authors.join('、')}。`); const a = mk('a', '', '完整名單（每張圖的作者、授權、出處）'); a.href = 'assets/lpc/CREDITS.csv'; a.target = '_blank'; a.rel = 'noopener'; root.append(p, a); }
+    const link = (text, href) => { const a = mk('a', '', text); a.href = href; a.target = '_blank'; a.rel = 'noopener'; return a; };
+    if (cr) { root.append(mk('h3', '', '素材來源')); const p = mk('p', 'hint credits', `角色圖：Liberated Pixel Cup（LPC）的素材（${cr.licenses.join('、')}）。作者：${cr.authors.join('、')}。`); root.append(p, link('角色圖的完整名單（每張圖的作者、授權、出處）', 'assets/lpc/CREDITS.csv')); }
+    // 場景、作物、動物、道具的圖：OpenGameArt 上的 LPC 素材包，每一包列出作者、授權、原始網頁和它附的說明檔
+    const cw = ctx.data.creditsWorld;
+    if (cw && cw.packs && cw.packs.length) {
+      const box = mk('details', 'credits'); box.append(mk('summary', '', `場景、作物、動物、道具的圖：OpenGameArt 上 ${cw.packs.length} 個 LPC 素材包（點開看作者）`));
+      for (const k of cw.packs) {
+        const row = mk('p', 'hint'); row.append(link(k.title, k.url), mk('span', '', `　作者：${k.authors.join('、')}；授權：${k.licenses.join('、')}`));
+        for (const f of k.files || []) { row.append(' '); row.append(link('（說明）', f)); }
+        box.append(row);
+      }
+      root.append(box);
+    }
   }
   draw();
   const off = W.on('farm', (m) => { if (m && m.t === 'opts') draw(); });

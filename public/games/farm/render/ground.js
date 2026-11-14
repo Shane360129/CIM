@@ -14,27 +14,31 @@ const COLORS = {
 const rnd = (s) => () => ((s = (s * 9301 + 49297) % 233280) / 233280);
 
 // ---------- LPC 地形（像素圖） ----------
-// data/terrain.json：每種地面用哪張圖。layout 'lpc' 是 LPC 標準的 3×6 格地形圖（上面兩列是凹角和小點綴，中間 3×3 是一塊地的四角、四邊、中間，最下面一列是三種中間的變化）；
-// 'fill' 是整張重複鋪滿（室內地板、礦坑）。一塊長方形的地，四邊畫在格線往外半格的地方，看起來邊緣剛好在格子邊上，一格寬的路也畫得出來。
+// data/terrain.json：每種地面用哪張圖（名字裡的 {season} 換成現在的季節）。
+//   layout 'lpc'：LPC 地形圖。block 是「一塊地的四角、四邊、中間」那 3×3 格的左上角在第幾欄、第幾列（標準的 3×6 地形圖是 [0, 2]），
+//                 fills 是鋪滿時輪流用的格子（第一格最常用）。一塊長方形的地，四邊畫在格線往外半格的地方，看起來邊緣剛好在格子邊上，一格寬的路也畫得出來
+//   layout 'fill'：整張重複鋪滿（室內地板、礦坑）；layout 'image'：整張圖照原本大小畫在那塊地的正中間（地毯）
 let TERRAIN = null;
 export const setTerrain = (t) => { TERRAIN = t; };
-function lpcGround(map, tile, unlocked) {
+function lpcGround(map, tile, unlocked, season) {
   const P = 32, c = document.createElement('canvas'); c.width = map.w * P; c.height = map.h * P;
   const g = c.getContext('2d'); g.imageSmoothingEnabled = false; const q = rnd(7);
-  const tex = (type) => { const t = TERRAIN[type] || TERRAIN.grass; const s = sprite(t.sprite); return s && { ...t, s }; };
+  const tex = (type) => { const t = TERRAIN[type] || TERRAIN.grass; const s = sprite(t.sprite.replace('{season}', season)); return s && { block: [0, 2], fills: [[1, 3], [0, 5], [1, 5], [2, 5]], ...t, s }; };
+  const one = (t, dx, dy) => { const f = t.fills, r = q(), c = f.length > 1 && r > 0.7 ? f[1 + Math.floor((r - 0.7) / 0.3 * (f.length - 1))] : f[0]; piece(t.s, c[0], c[1], dx, dy); };
   const piece = (s, col, row, dx, dy, w = 1, h = 1) => g.drawImage(s.img, s.x + col * P, s.y + row * P, P * w, P * h, dx, dy, P * w, P * h);
   const fill = (t, x, y, w, h) => { // 鋪滿：中間那格和最下面一列的三種變化隨機用
     for (let i = 0; i < w; i++) for (let j = 0; j < h; j++) {
       if (t.layout === 'fill') { const tw = t.s.w / P, th = t.s.h / P; piece(t.s, (x + i) % tw, (y + j) % th, (x + i) * P, (y + j) * P); continue; }
-      const r = q(); if (r < 0.7) piece(t.s, 1, 3, (x + i) * P, (y + j) * P); else piece(t.s, Math.floor((r - 0.7) / 0.1), 5, (x + i) * P, (y + j) * P);
+      one(t, (x + i) * P, (y + j) * P);
     }
   };
   const patch = (t, x, y, w, h) => {
     if (t.layout === 'fill') return fill(t, x, y, w, h);
+    if (t.layout === 'image') { g.drawImage(t.s.img, t.s.x, t.s.y, t.s.w, t.s.h, Math.round((x + w / 2) * P - t.s.w / 2), Math.round((y + h / 2) * P - t.s.h / 2), t.s.w, t.s.h); return; }
+    const [bx, by] = t.block;
     for (let i = 0; i <= w; i++) for (let j = 0; j <= h; j++) {
-      const col = i === 0 ? 0 : i === w ? 2 : 1, row = j === 0 ? 2 : j === h ? 4 : 3, dx = (x - 0.5 + i) * P, dy = (y - 0.5 + j) * P;
-      if (col === 1 && row === 3) { const r = q(); if (r < 0.7) piece(t.s, 1, 3, dx, dy); else piece(t.s, Math.floor((r - 0.7) / 0.1), 5, dx, dy); }
-      else piece(t.s, col, row, dx, dy);
+      const col = i === 0 ? 0 : i === w ? 2 : 1, row = j === 0 ? 0 : j === h ? 2 : 1, dx = (x - 0.5 + i) * P, dy = (y - 0.5 + j) * P;
+      if (col === 1 && row === 1) one(t, dx, dy); else piece(t.s, bx + col, by + row, dx, dy);
     }
   };
   const base = tex(map.ground || 'grass'); if (!base) return null;
@@ -48,8 +52,8 @@ function lpcGround(map, tile, unlocked) {
   return c;
 }
 
-export function buildGround(map, tile, unlocked = false) {
-  if (TERRAIN) { const c = lpcGround(map, tile, unlocked); if (c) return c; } // 地形圖還沒載到就先用下面程式畫的
+export function buildGround(map, tile, unlocked = false, season = 'spring') {
+  if (TERRAIN) { const c = lpcGround(map, tile, unlocked, season); if (c) return c; } // 地形圖還沒載到就先用下面程式畫的
   // 還沒開墾的田（locked）先當草地畫，上面蓋一層淡淡的土色，看得出以後可以開墾
   // 手機的畫布有大小上限：離線畫布每格最多 32 像素，畫的時候再放大（地面本來就是柔和的色塊，看不出來）
   const px = Math.min(tile, 32), c = document.createElement('canvas');

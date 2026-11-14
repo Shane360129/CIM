@@ -1,0 +1,13 @@
+{
+  "note": "每種地面用 LPC 圖集（assets/w1）裡的哪張地形圖、怎麼拼（說明在 render/ground.js）。{season} 換成現在的季節",
+  "grass": { "sprite": "terrain/grass/{season}", "layout": "lpc", "block": [0, 0], "fills": [[1, 1]] },
+  "path": { "sprite": "terrain/path", "layout": "lpc" },
+  "water": { "sprite": "terrain/water", "layout": "lpc" },
+  "soil": { "sprite": "terrain/soil", "layout": "lpc", "block": [0, 0], "fills": [[1, 1]] },
+  "garden": { "sprite": "terrain/soil", "layout": "lpc", "block": [0, 0], "fills": [[1, 1]] },
+  "sand": { "sprite": "terrain/sand", "layout": "lpc" },
+  "floor": { "sprite": "terrain/floor", "layout": "fill" },
+  "rug": { "sprite": "terrain/rug", "layout": "image" },
+  "cave": { "sprite": "terrain/cave", "layout": "fill" },
+  "wall": { "sprite": "terrain/wall" }
+}

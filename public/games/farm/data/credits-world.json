@@ -1,0 +1,229 @@
+{
+ "note": "場景、作物、動物、道具的圖（LPC，OpenGameArt）的素材來源，由 tools/lpc/build-world.mjs 產生",
+ "authors": [
+  "and others in CREDITS-conifers.txt",
+  "and others per Credits.txt",
+  "ansimuz",
+  "Barbara Rivera",
+  "Bart K.",
+  "Blarumyrran",
+  "bluecarrot16",
+  "Buch",
+  "Casper Nilsson",
+  "Charles Sanchez (CharlesGabriel)",
+  "Chris Phillips",
+  "Daniel Armstrong (HughSpectrum)",
+  "Daniel Eddeland (daneeklu)",
+  "Demetrius",
+  "Eliza Wyatt (DeathsDarling)",
+  "Evert",
+  "Gaurav Munjal",
+  "Guido Bos",
+  "Hyptosis",
+  "Ivan Voirol (Silver IV)",
+  "Jetrel",
+  "Johann Charlot",
+  "Lanea Zimmerman (Sharm)",
+  "Leonard Pabin",
+  "Manuel Riecke (MrBeast)",
+  "Open Surge team",
+  "Paulina Riva (PauR)",
+  "qubodup",
+  "Stephen Challener",
+  "Stephen Challener (Redshrike)",
+  "Surt",
+  "Talosaurus",
+  "William Thompson",
+  "Yar",
+  "Zabin"
+ ],
+ "packs": [
+  {
+   "title": "LPC Revised — official GitHub repository (ElizaWy/LPC), selected non-character files",
+   "url": "https://github.com/ElizaWy/LPC",
+   "authors": [
+    "Eliza Wyatt (DeathsDarling)",
+    "Lanea Zimmerman (Sharm)",
+    "Hyptosis",
+    "bluecarrot16",
+    "Demetrius",
+    "and others per Credits.txt"
+   ],
+   "licenses": [
+    "CC-BY 3.0",
+    "OGA-BY 3.0"
+   ],
+   "attribution": "README.md: \"Each asset is listed in a credit.txt file located in the same directory as the asset file, containing the name of the original author and any other relevant information about their work. [...] All of our assets are licensed under the Creative Commons Attribution 3.0 (CC-BY-3.0) or OGA-by 3.0 License, allowing you to freely use, modify, and distribute these assets in your own projects, provided you give appropriate attribution.\" (Per-folder Credits.txt files list each sheet as OGA-BY 3.0.)",
+   "files": [
+    "assets/credits/elizawy-lpc-revised-github/Credits.txt",
+    "assets/credits/elizawy-lpc-revised-github/README.md",
+    "assets/credits/elizawy-lpc-revised-github/Credits.txt",
+    "assets/credits/elizawy-lpc-revised-github/Credits.txt",
+    "assets/credits/elizawy-lpc-revised-github/Credits.txt",
+    "assets/credits/elizawy-lpc-revised-github/Credits.txt",
+    "assets/credits/elizawy-lpc-revised-github/Credits.txt",
+    "assets/credits/elizawy-lpc-revised-github/Credits.txt",
+    "assets/credits/elizawy-lpc-revised-github/Credits.txt",
+    "assets/credits/elizawy-lpc-revised-github/Credits.txt",
+    "assets/credits/elizawy-lpc-revised-github/Credits.txt",
+    "assets/credits/elizawy-lpc-revised-github/Credits.txt",
+    "assets/credits/elizawy-lpc-revised-github/Credits.txt"
+   ]
+  },
+  {
+   "title": "Liberated Pixel Cup (LPC) Base Assets (sprites & map tiles)",
+   "url": "https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles",
+   "authors": [
+    "Lanea Zimmerman (Sharm)",
+    "Stephen Challener (Redshrike)",
+    "Charles Sanchez (CharlesGabriel)",
+    "Manuel Riecke (MrBeast)",
+    "Daniel Armstrong (HughSpectrum)"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "attribution": null,
+   "files": [
+    "assets/credits/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles/CREDITS.TXT"
+   ]
+  },
+  {
+   "title": "LPC compatible 3/4 view cave interior",
+   "url": "https://opengameart.org/content/lpc-compatible-34-view-cave-interior",
+   "authors": [
+    "Evert"
+   ],
+   "licenses": [
+    "GPL 3.0",
+    "GPL 2.0",
+    "OGA-BY 3.0"
+   ],
+   "attribution": null,
+   "files": []
+  },
+  {
+   "title": "[LPC] Conifers",
+   "url": "https://opengameart.org/content/lpc-conifers",
+   "authors": [
+    "bluecarrot16",
+    "and others in CREDITS-conifers.txt"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0",
+    "GPL 3.0",
+    "GPL 2.0"
+   ],
+   "attribution": "See CREDITS-conifers.txt. You MUST credit all authors with the information in this file, and you must link back to this page on OpenGameArt.",
+   "files": [
+    "assets/credits/lpc-conifers/CREDITS-conifers.txt"
+   ]
+  },
+  {
+   "title": "[LPC] Farming tilesets, magic animations and UI elements",
+   "url": "https://opengameart.org/content/lpc-farming-tilesets-magic-animations-and-ui-elements",
+   "authors": [
+    "Daniel Eddeland (daneeklu)"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "attribution": null,
+   "files": [
+    "assets/credits/lpc-farming-tilesets-magic-animations-and-ui-elements/readme.txt"
+   ]
+  },
+  {
+   "title": "[LPC Revised] 4-Season Terrain",
+   "url": "https://opengameart.org/content/lpc-revised-4-season-terrain",
+   "authors": [
+    "Eliza Wyatt (DeathsDarling)",
+    "Lanea Zimmerman (Sharm)",
+    "Hyptosis",
+    "Stephen Challener (Redshrike)",
+    "Demetrius"
+   ],
+   "licenses": [
+    "OGA-BY 3.0"
+   ],
+   "attribution": "Eliza Wyatt (DeathsDarling), Lanea Zimmerman (Sharm), Hyptosis, Stephen Challener (Redshrike), and Demetrius. Permission granted from Hyptosis to use CC-BY 3.0 content as OGA-BY 3.0.",
+   "files": [
+    "assets/credits/lpc-revised-4-season-terrain/Credits.txt",
+    "assets/credits/lpc-revised-4-season-terrain/Credits.txt",
+    "assets/credits/lpc-revised-4-season-terrain/Credits.txt",
+    "assets/credits/lpc-revised-4-season-terrain/Credits.txt",
+    "assets/credits/lpc-revised-4-season-terrain/Credits.txt"
+   ]
+  },
+  {
+   "title": "[LPC Revised] Base Structure Kit!",
+   "url": "https://opengameart.org/content/lpc-revised-base-structure-kit",
+   "authors": [
+    "Lanea Zimmerman (Sharm)",
+    "Eliza Wyatt (DeathsDarling)"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0"
+   ],
+   "attribution": "DRM-waived. Lanea Zimmerman (Sharm) and Eliza Wyatt. Each sheet has original source links in the Credits.txt files.",
+   "files": [
+    "assets/credits/lpc-revised-base-structure-kit/Credits.txt",
+    "assets/credits/lpc-revised-base-structure-kit/Credits.txt",
+    "assets/credits/lpc-revised-base-structure-kit/Credits.txt",
+    "assets/credits/lpc-revised-base-structure-kit/Credits.txt",
+    "assets/credits/lpc-revised-base-structure-kit/Credits.txt",
+    "assets/credits/lpc-revised-base-structure-kit/Credits.txt",
+    "assets/credits/lpc-revised-base-structure-kit/Credits.txt",
+    "assets/credits/lpc-revised-base-structure-kit/Credits.txt",
+    "assets/credits/lpc-revised-base-structure-kit/Credits.txt",
+    "assets/credits/lpc-revised-base-structure-kit/Credits.txt",
+    "assets/credits/lpc-revised-base-structure-kit/Credits.txt",
+    "assets/credits/lpc-revised-base-structure-kit/Credits.txt",
+    "assets/credits/lpc-revised-base-structure-kit/Credits.txt",
+    "assets/credits/lpc-revised-base-structure-kit/Credits.txt",
+    "assets/credits/lpc-revised-base-structure-kit/Credits.txt",
+    "assets/credits/lpc-revised-base-structure-kit/Credits.txt"
+   ]
+  },
+  {
+   "title": "[LPC] Trees",
+   "url": "https://opengameart.org/content/lpc-trees",
+   "authors": [
+    "bluecarrot16",
+    "Jetrel",
+    "Zabin",
+    "Hyptosis",
+    "Surt",
+    "Buch",
+    "Johann Charlot",
+    "Stephen Challener",
+    "Open Surge team",
+    "Gaurav Munjal",
+    "Ivan Voirol (Silver IV)",
+    "Guido Bos",
+    "Yar",
+    "Paulina Riva (PauR)",
+    "William Thompson",
+    "Casper Nilsson",
+    "ansimuz",
+    "qubodup",
+    "Bart K.",
+    "Blarumyrran",
+    "Lanea Zimmerman (Sharm)",
+    "Leonard Pabin",
+    "Chris Phillips",
+    "Barbara Rivera",
+    "Talosaurus"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0"
+   ],
+   "attribution": "See CREDITS-trees.txt. You MUST credit all authors with the information in this file, and you must link back to this page on OpenGameArt.",
+   "files": [
+    "assets/credits/lpc-trees/CREDITS-trees.txt"
+   ]
+  }
+ ]
+}

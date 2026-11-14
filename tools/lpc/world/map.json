@@ -1,0 +1,272 @@
+{
+  "note": "地圖：地面（terrain/…，給 render/ground.js 拼地面用）、樹、地圖上的物件、建築。src 是 art-src/lpc/oga/ 底下的路徑",
+  "sprites": {
+    "terrain/grass/spring": {
+      "src": "lpc-revised-4-season-terrain/x/4-season_terrain.zip/Terrain/Grass (Spring).png",
+      "trim": false,
+      "native": false
+    },
+    "terrain/grass/summer": {
+      "src": "lpc-revised-4-season-terrain/x/4-season_terrain.zip/Terrain/Grass (Summer).png",
+      "trim": false,
+      "native": false
+    },
+    "terrain/grass/autumn": {
+      "src": "lpc-revised-4-season-terrain/x/4-season_terrain.zip/Terrain/Grass (Autumn).png",
+      "trim": false,
+      "native": false
+    },
+    "terrain/grass/winter": {
+      "src": "lpc-revised-4-season-terrain/x/4-season_terrain.zip/Terrain/Grass (Winter).png",
+      "trim": false,
+      "native": false
+    },
+    "terrain/path": {
+      "src": "liberated-pixel-cup-lpc-base-assets-sprites-map-tiles/x/lpc_base_assets.zip/LPC Base Assets/tiles/dirt.png",
+      "trim": false,
+      "native": false
+    },
+    "terrain/water": {
+      "src": "liberated-pixel-cup-lpc-base-assets-sprites-map-tiles/x/lpc_base_assets.zip/LPC Base Assets/tiles/water.png",
+      "trim": false,
+      "native": false
+    },
+    "terrain/soil": {
+      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+      "rect": [
+        0,
+        0,
+        96,
+        96
+      ],
+      "trim": false,
+      "native": false
+    },
+    "terrain/sand": {
+      "src": "lpc-farming-tilesets-magic-animations-and-ui-elements/x/submission_daneeklu.zip/submission_daneeklu/tilesets/sand.png",
+      "trim": false,
+      "native": false
+    },
+    "terrain/floor": {
+      "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Floor/Wood Floor A.png",
+      "rect": [
+        128,
+        0,
+        64,
+        128
+      ],
+      "trim": false,
+      "native": false
+    },
+    "terrain/rug": {
+      "src": "elizawy-lpc-revised-github/Objects/Furniture/Rugs/Swirling Vine Rug.png",
+      "trim": false,
+      "native": false,
+      "rect": [
+        0,
+        64,
+        160,
+        64
+      ]
+    },
+    "terrain/cave": {
+      "src": "lpc-compatible-34-view-cave-interior/cave3.png",
+      "rect": [
+        0,
+        256,
+        32,
+        32
+      ],
+      "trim": false,
+      "native": false
+    },
+    "terrain/wall": {
+      "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Walls/Striped Wallpaper A.png",
+      "rect": [
+        0,
+        64,
+        64,
+        32
+      ],
+      "trim": false,
+      "native": false
+    },
+    "tilled/dry": {
+      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+      "rect": [
+        32,
+        32,
+        32,
+        32
+      ],
+      "trim": false,
+      "native": false
+    },
+    "tilled/wet": {
+      "size": [
+        32,
+        32
+      ],
+      "trim": false,
+      "native": false,
+      "parts": [
+        {
+          "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+          "rect": [
+            32,
+            32,
+            32,
+            32
+          ],
+          "at": [
+            0,
+            0
+          ]
+        },
+        {
+          "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+          "rect": [
+            128,
+            32,
+            32,
+            32
+          ],
+          "at": [
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "tree/oak/spring": {
+      "src": "lpc-trees/x/lpc-trees.zip/lpc-trees/trees-green.png",
+      "rect": [
+        122,
+        102,
+        107,
+        127
+      ],
+      "isolate": true
+    },
+    "tree/maple/spring": {
+      "src": "lpc-trees/x/lpc-trees.zip/lpc-trees/trees-green.png",
+      "rect": [
+        314,
+        100,
+        108,
+        124
+      ],
+      "isolate": true
+    },
+    "tree/pine/spring": {
+      "src": "lpc-conifers/x/lpc-conifers.zip/lpc-conifers/conifers.png",
+      "rect": [
+        385,
+        0,
+        94,
+        160
+      ],
+      "isolate": true
+    },
+    "tree/oak/summer": {
+      "src": "lpc-trees/x/lpc-trees.zip/lpc-trees/trees-pale.png",
+      "rect": [
+        122,
+        102,
+        107,
+        127
+      ],
+      "isolate": true
+    },
+    "tree/maple/summer": {
+      "src": "lpc-trees/x/lpc-trees.zip/lpc-trees/trees-pale.png",
+      "rect": [
+        314,
+        100,
+        108,
+        124
+      ],
+      "isolate": true
+    },
+    "tree/pine/summer": {
+      "src": "lpc-conifers/x/lpc-conifers.zip/lpc-conifers/conifers.png",
+      "rect": [
+        385,
+        0,
+        94,
+        160
+      ],
+      "isolate": true
+    },
+    "tree/oak/autumn": {
+      "src": "lpc-trees/x/lpc-trees.zip/lpc-trees/trees-orange.png",
+      "rect": [
+        122,
+        102,
+        107,
+        127
+      ],
+      "isolate": true
+    },
+    "tree/maple/autumn": {
+      "src": "lpc-trees/x/lpc-trees.zip/lpc-trees/trees-orange.png",
+      "rect": [
+        314,
+        100,
+        108,
+        124
+      ],
+      "isolate": true,
+      "hue": -14
+    },
+    "tree/pine/autumn": {
+      "src": "lpc-conifers/x/lpc-conifers.zip/lpc-conifers/conifers.png",
+      "rect": [
+        385,
+        0,
+        94,
+        160
+      ],
+      "isolate": true
+    },
+    "tree/oak/winter": {
+      "src": "lpc-trees/x/lpc-trees.zip/lpc-trees/trees-dead.png",
+      "rect": [
+        122,
+        102,
+        107,
+        127
+      ],
+      "isolate": true
+    },
+    "tree/maple/winter": {
+      "src": "lpc-trees/x/lpc-trees.zip/lpc-trees/trees-dead.png",
+      "rect": [
+        314,
+        100,
+        108,
+        124
+      ],
+      "isolate": true
+    },
+    "tree/pine/winter": {
+      "src": "lpc-conifers/x/lpc-conifers.zip/lpc-conifers/conifers.png",
+      "rect": [
+        385,
+        224,
+        94,
+        160
+      ],
+      "isolate": true
+    },
+    "tree/oak/stump": {
+      "src": "lpc-revised-4-season-terrain/x/4-season_terrain.zip/Terrain Objects/Trees, Trunks.png",
+      "rect": [
+        128,
+        0,
+        32,
+        32
+      ]
+    }
+  }
+}

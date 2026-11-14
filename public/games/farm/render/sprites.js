@@ -7,7 +7,7 @@ export async function loadAtlas(name) {
     const meta = await loadJSON(`assets/${name}.json`), img = await loadImage(`assets/${meta.image}`);
     if (!img) return 0;
     // 像素圖集（LPC，meta.pixel）：放大時不要糊；第 5 個數字是 1 的是「場景裡的東西」，照原本的像素大小畫（一格 32 像素），不塞進框裡
-    for (const [k, [x, y, w, h, f]] of Object.entries(meta.sprites)) sprites.set(k, { img, x, y, w, h, src: `assets/${meta.image}`, aw: meta.w, ah: meta.h, pixel: !!meta.pixel, native: f === 1 });
+    for (const [k, [x, y, w, h, f]] of Object.entries(meta.sprites)) if (meta.pixel || !(sprites.get(k) || {}).pixel) sprites.set(k, { img, x, y, w, h, src: `assets/${meta.image}`, aw: meta.w, ah: meta.h, pixel: !!meta.pixel, native: f === 1 });
     return Object.keys(meta.sprites).length;
   } catch { return 0; }
 }

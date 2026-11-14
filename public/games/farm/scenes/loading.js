@@ -1,7 +1,8 @@
 // 載入畫面：讀設定和地圖、確認登入身分，畫一條進度條；出錯就停在這裡把原因寫出來
 import { loadAll } from '../core/assets.js';
 import { signIn } from '../net/auth.js';
-import { loadAtlas } from '../render/sprites.js';
+import { loadAtlas, setPixelScale } from '../render/sprites.js';
+import { setTerrain } from '../render/ground.js';
 import { initLPC, warmLPC } from '../render/lpc.js';
 import { makeItems } from '../shared/rules.js';
 import { title } from './title.js';
@@ -13,14 +14,14 @@ export const loading = {
     try {
       const convId = Number(new URLSearchParams(location.search).get('conv')) || 0;
       const [data, session] = await Promise.all([
-        loadAll([['balance', 'data/balance.json'], ['tutorial', 'data/tutorial.json'], ['chatter', 'data/npcs/chatter.json'], ['music', 'data/music.json'], ['objects', 'data/objects.json'], ['parts', 'data/doll/parts.json'], ['lpc', 'data/doll/lpc.json'], ['creditsLpc', 'data/credits-lpc.json'], ['items', 'data/items.json'], ['crops', 'data/crops.json'],
+        loadAll([['balance', 'data/balance.json'], ['tutorial', 'data/tutorial.json'], ['chatter', 'data/npcs/chatter.json'], ['music', 'data/music.json'], ['objects', 'data/objects.json'], ['parts', 'data/doll/parts.json'], ['lpc', 'data/doll/lpc.json'], ['creditsLpc', 'data/credits-lpc.json'], ['terrain', 'data/terrain.json'], ['creditsWorld', 'data/credits-world.json'], ['items', 'data/items.json'], ['crops', 'data/crops.json'],
           ['map_farm', 'data/maps/farm.json'], ['map_house', 'data/maps/house.json'], ['map_road', 'data/maps/road.json'], ['map_lake', 'data/maps/lake.json'], ['map_forest', 'data/maps/forest.json'], ['map_beach', 'data/maps/beach.json'], ['map_greenhouse', 'data/maps/greenhouse.json'], ['map_uptown', 'data/maps/uptown.json'], ['fish', 'data/fish.json'], ['machines', 'data/machines.json'], ['recipes', 'data/recipes.json'], ['animals', 'data/animals.json'], ['map_town', 'data/maps/town.json'], ['npcs', 'data/npcs/residents.json'], ['shops', 'data/shops.json'], ['events', 'data/events/hearts.json'], ['festivals', 'data/festivals.json'], ['restore', 'data/restore.json'], ['achievements', 'data/achievements.json']], (p) => { this.progress = p * 0.8; }),
         signIn(convId),
       ]);
       initLPC(data.lpc, data.parts); warmLPC([data.parts.presets.boy, data.parts.presets.girl]); // LPC 角色：零件圖要用的時候才下載
       data.rawItems = data.items; data.items = makeItems(data.items, data.machines); // 加工品的名字和價錢是算出來的
       data.maps = { farm: data.map_farm, house: data.map_house, road: data.map_road, lake: data.map_lake, town: data.map_town, forest: data.map_forest, beach: data.map_beach, greenhouse: data.map_greenhouse, uptown: data.map_uptown };
-      await Promise.all(['b2', 'b3', 'b4'].map((b) => loadAtlas(b))); loadAtlas('b6'); // 第 6 批（夏秋冬作物、果樹）在背景下載，不擋開場；還沒載完的先用暫代圖。角色改用 LPC（render/lpc.js），不再用第 1、5 批的紙娃娃圖
+      await Promise.all(['w1', 'b2', 'b3', 'b4'].map((b) => loadAtlas(b))); loadAtlas('b6'); setTerrain(data.terrain); setPixelScale(data.balance.tile); // w1：LPC 像素圖集（場景、作物、道具），同名的圖以它為準 // 第 6 批（夏秋冬作物、果樹）在背景下載，不擋開場；還沒載完的先用暫代圖。角色改用 LPC（render/lpc.js），不再用第 1、5 批的紙娃娃圖
       Object.assign(ctx, { data, session }); ctx.audio.setTracks(data.music.tracks);
       this.progress = 1;
       await ctx.scenes.go(title);

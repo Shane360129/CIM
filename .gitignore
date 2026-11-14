@@ -11,3 +11,5 @@ art-src/farm/舊圖/第*批/[0-9]*-[0-9][0-9].png
 
 # LPC 角色產生器（下載下來的原始素材，不進 git；說明在 tools/lpc/build-characters.mjs）
 art-src/lpc/generator/
+# OpenGameArt 下載的 LPC 素材包（原始檔，不進 git；清單在 tools/lpc/oga-packs.json，用 tools/lpc/fetch-oga.mjs 下載）
+art-src/lpc/oga/
