@@ -371,13 +371,16 @@ export const play = {
     const r = await this.room.req({ t: 'talk', npc: folk.id }); if (r.t !== 'ok') return hud.toast('他好像沒聽到', 900);
     const fr = W.self.friend[folk.id] || { pts: 0 }, h = Math.floor(fr.pts / F.heart);
     // 好感夠了、還沒看過的劇情：先演那一段
-    const evId = Object.keys(data.events).find((k) => data.events[k].kind === 'heart' && data.events[k].npc === folk.id && h >= data.events[k].hearts && !(W.self.events || {})[k] && (this.ctx.settings.get('romance') || !data.events[k].romance));
+    // 戀愛劇情（romance: true）只在戀愛內容打開時演；關掉時演同一個心數的友情版（romance: false）
+    const love = this.ctx.settings.get('romance'), fits = (e) => (love ? e.romance !== false : !e.romance);
+    const evId = Object.keys(data.events).find((k) => data.events[k].kind === 'heart' && data.events[k].npc === folk.id && h >= data.events[k].hearts && !(W.self.events || {})[k] && fits(data.events[k]));
     if (evId) return this.playEvent(evId);
     const wet = ['rain', 'storm'].includes(W.farm.weather);
-    const pool = [...n.talk.any, ...(wet ? n.talk.rain : []), ...(h >= 3 ? n.talk.h3 : []), ...(h >= 6 ? n.talk.h6 : [])];
+    const dating = love && !!(W.self.flags || {})['love_' + folk.id]; // 交往中：多幾句只有交往後才會說的話
+    const pool = [...n.talk.any, ...(wet ? n.talk.rain : []), ...(h >= 3 ? n.talk.h3 : []), ...(h >= 6 ? n.talk.h6 : []), ...(dating ? [...(n.talk.love || []), ...(n.talk.love || [])] : [])];
     const text = r.first ? n.talk.first : r.bday && r.daily ? n.talk.birthday : pool[(W.farm.day * 7 + folk.id.length * 3 + (this.talkN = (this.talkN || 0) + 1)) % pool.length];
     const held = W.self.inv[hud.selected], it = held && data.items[held.id], canGift = it && it.kind !== 'tool';
-    const sub = `${n.job}・${'♥'.repeat(h)}${'♡'.repeat(Math.max(0, 10 - h))}`;
+    const sub = `${n.job}・${'♥'.repeat(h)}${'♡'.repeat(Math.max(0, 10 - h))}${dating ? '・交往中' : ''}`;
     const pick = await hud.dialog({ portrait: face(r.bday ? 'happy' : 'normal'), name: n.name, sub, text, buttons: [...(canGift ? [{ label: `送他 ${it.name}`, value: 'gift', ghost: true }] : []), { label: '再見', value: null }] });
     if (pick !== 'gift') return;
     const g = await this.room.req({ t: 'gift', npc: folk.id, slot: hud.selected });

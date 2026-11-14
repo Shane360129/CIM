@@ -158,6 +158,25 @@ const { chromium } = require('playwright');
   ok('選「幫你試吃」跳到對應的那一段', /吃邊邊沒有焦的地方/.test(await pa.locator('.dialog .dtext').textContent()));
   for (let i = 0; i < 6 && (await pa.locator('.dialog').count()); i++) { await pa.keyboard.press('Space'); await pa.waitForTimeout(80); await pa.locator('.dialog button').first().click().catch(() => {}); await pa.waitForTimeout(900); }
   ok('劇情演完回到遊戲', (await pa.locator('.dialog').count()) === 0);
+  // 戀愛：小滿 10 心時，戀愛內容打開演告白、關掉演友情版；交往後跟她說話，對話框寫「交往中」（一樣是把畫面上的好感、看過的劇情改掉來看流程）
+  const EV = await pa.evaluate(() => { const e = window.__game.data.events; return { on: e.xiaoman_10 && e.xiaoman_10.title, off: e.xiaoman_10f && e.xiaoman_10f.title }; });
+  const fakeLove = (romance, extra) => pa.evaluate(([romance, extra]) => {
+    const g = window.__game, W = g.world, r = W.room; g.settings.set('romance', romance);
+    const fake = () => { W.self.friend.xiaoman = { pts: 2500 }; W.self.events = { ...W.self.events, xiaoman_2: 1, xiaoman_4: 1, xiaoman_6: 1, xiaoman_8: 1, ...extra.events }; W.self.flags = { ...(W.self.flags || {}), ...extra.flags }; };
+    if (!r.orig) r.orig = r.req.bind(r); r.req = async (m) => { const out = await r.orig(m); if (m.t === 'talk') fake(); return out; }; fake();
+  }, [romance, extra]);
+  const talkXm = async () => { const f = (await pa.evaluate(() => window.__game.scenes.current.folks().map((x) => ({ id: x.id, x: x.x, y: x.y })))).find((x) => x.id === 'xiaoman'); await tp(pa, f.x, f.y + 1.0, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(1200); await pa.waitForSelector('.dialog', { timeout: 6000 }).catch(() => {}); return pa.evaluate(() => { const d = document.querySelector('.dialog .dsub'); return d ? d.textContent : ''; }); };
+  const through = async () => { for (let i = 0; i < 90; i++) { if (!(await pa.locator('.dialog').count())) { if (!(await pa.evaluate(() => !!window.__game.scenes.current.eventing))) break; await pa.waitForTimeout(150); continue; } await pa.locator('.dialog').click({ position: { x: 20, y: 15 }, timeout: 2000 }).catch(() => {}); await pa.locator('.dialog .row button').first().click({ timeout: 2000 }).catch(() => {}); } };
+  if (!EV.on || !EV.off) console.log('（還沒有小滿的 10 心劇情，跳過戀愛的檢查）'); else {
+  await fakeLove(true, { events: {}, flags: {} }); const t10 = await talkXm();
+  ok('小滿 10 心、戀愛內容打開：演告白「' + EV.on + '」', !!EV.on && t10 === EV.on, t10); await pa.screenshot({ path: S + '/s6-love.png' }); await through();
+  await fakeLove(false, { events: {}, flags: {} }); const t10f = await talkXm();
+  ok('戀愛內容關掉：演友情版「' + EV.off + '」', !!EV.off && t10f === EV.off, t10f); await through();
+  await fakeLove(true, { events: { xiaoman_10: 1, xiaoman_10f: 1 }, flags: { love_xiaoman: 1 } }); const tl = await talkXm();
+  ok('交往後跟小滿說話：對話框寫「交往中」', /交往中/.test(tl), tl); await pa.screenshot({ path: S + '/s6-dating.png' });
+  for (let i = 0; i < 3 && (await pa.locator('.dialog').count()); i++) { await pa.locator('.dialog button').last().click().catch(() => {}); await pa.waitForTimeout(300); }
+  await pa.evaluate(() => { const g = window.__game, r = g.world.room; g.settings.set('romance', true); if (r.orig) r.req = r.orig; });
+  }
   // 節慶（把畫面上的日子當成節慶、時間縮成 3 秒來看流程；伺服器知道今天不是節慶，所以不會給獎）
   await pa.evaluate(() => { const g = window.__game; g.world.farm.festival = 'flower'; g.data.festivals.flower.seconds = 3; g.data.festivals.egg.seconds = 3; });
   await tp(pa, 22, 21.6, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);

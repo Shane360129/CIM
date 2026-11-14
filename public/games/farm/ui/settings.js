@@ -19,7 +19,7 @@ export function openSettings(ctx) {
       row('字體大小', choice('font', [['s', '小'], ['m', '中'], ['l', '大']])),
       row('觸控搖桿', choice('stick', [['auto', '碰螢幕才出現'], ['always', '一直顯示']])),
       row('搖桿位置', choice('hand', [['right', '左邊搖桿'], ['left', '右邊搖桿']]), '慣用左手可以換邊'),
-      row('戀愛內容', choice('romance', [[true, '開'], [false, '關']]), '關掉後不會出現交往相關的劇情'),
+      row('戀愛內容', choice('romance', [[true, '開'], [false, '關']]), '關掉後，可以交往的居民的告白劇情會換成友情的版本'),
       row('新手教學', choice('tutorial', [[true, '顯示'], [false, '不顯示']])));
     root.append(mk('h3', '', '兩個人共用'));
     const cur = (W.farm.opts || {}).dayLen || bal.dayMinutesReal;

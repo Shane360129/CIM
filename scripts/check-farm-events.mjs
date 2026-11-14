@@ -31,7 +31,15 @@ for (const [id, ev] of Object.entries(all)) {
   if (k === 'heart') {
     if (!NPCS[ev.npc]) err(id, `npc「${ev.npc}」不是居民`);
     if (!(Number.isInteger(ev.hearts) && ev.hearts >= 1 && ev.hearts <= 10)) err(id, `hearts 要是 1～10：${ev.hearts}`);
-    if (id !== `${ev.npc}_${ev.hearts}`) warn(id, `心事件的 id 最好是「居民_心數」（${ev.npc}_${ev.hearts}）`);
+    if (id !== `${ev.npc}_${ev.hearts}` && id !== `${ev.npc}_${ev.hearts}f`) warn(id, `心事件的 id 最好是「居民_心數」（${ev.npc}_${ev.hearts}；關掉戀愛時的友情版加 f）`);
+    // 戀愛：romance true 只在設定打開時演，false 只在關掉時演（同一位居民、同一個心數的友情版）
+    if (ev.romance != null && typeof ev.romance !== 'boolean') err(id, 'romance 只能是 true 或 false');
+    if (ev.romance === true && NPCS[ev.npc] && !NPCS[ev.npc].datable) err(id, `${NPCS[ev.npc].name}不能交往，不能有戀愛劇情`);
+    if (ev.romance === true && ev.hearts < 8) warn(id, '戀愛劇情要 8 心以上');
+    if (ev.romance === true && ev.hearts === 10) { // 告白：一定要讓玩家選交往（love_居民）或當好朋友（friend_居民）
+      const flags = ev.steps.flatMap((x) => (x.choice || []).map((o) => o.flag));
+      if (!flags.includes(`love_${ev.npc}`) || !flags.includes(`friend_${ev.npc}`)) err(id, `10 心的告白要有一個選項記 love_${ev.npc}（交往）、一個記 friend_${ev.npc}（當好朋友）`);
+    }
     if (ev.when || ev.reward || ev.album) warn(id, '心事件不用 when／reward／album（說話時觸發，好感照選項加）');
   } else {
     if (!ev.when || typeof ev.when !== 'object') err(id, '主線、兩個人的劇情要有 when（什麼時候發生）');
@@ -96,6 +104,11 @@ for (const [id, ev] of Object.entries(all)) {
   if (paths.some((x) => !x)) err(id, '有一種選法會一直繞圈圈，演不完');
   else { const last = paths.map((x) => x.filter((i) => ev.steps[i].say || ev.steps[i].narrate).pop()); if (new Set(last).size > 1) warn(id, '不同的選法最後一句不一樣（分支沒有會合到同一個結尾）'); }
   if (k !== 'heart') for (const a of list((ev.when || {}).after || [])) if (!all[a]) err(id, `when.after「${a}」沒有這段劇情`);
+}
+// 戀愛劇情和友情版要成對：設定關掉的人也有那一段
+for (const [id, ev] of Object.entries(all)) if (ev.kind === 'heart' && ev.romance != null) {
+  const twin = Object.values(all).some((x) => x.kind === 'heart' && x.npc === ev.npc && x.hearts === ev.hearts && x.romance === !ev.romance);
+  if (!twin) (ev.romance ? warn : err)(id, ev.romance ? '戀愛劇情沒有友情版（關掉戀愛內容的人這一段會跳過）' : '友情版（romance: false）要有同一個心數的戀愛劇情');
 }
 // 同一位居民的心事件要照心數排（說話時先演心數小的）
 const order = {}; for (const [id, ev] of Object.entries(all)) if (ev.kind === 'heart') { const prev = order[ev.npc]; if (prev != null && prev > ev.hearts) err(id, `${ev.npc} 的心事件要照心數排（${ev.hearts} 心排在 ${prev} 心後面）`); order[ev.npc] = ev.hearts; }

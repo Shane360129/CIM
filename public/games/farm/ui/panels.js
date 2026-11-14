@@ -57,7 +57,7 @@ export function openPanel(ctx, mode, arg = {}) {
       // 看過的劇情：可以再看一次（重看不會再加好感、不會再給獎勵）
       const seen = W.self.events || {}, kinds = bal.story.kinds;
       for (const [kind, label] of Object.entries(kinds)) {
-        const all = Object.entries(evs).filter(([, e]) => e.kind === kind && (kind !== 'heart' || !e.romance || ctx.settings.get('romance'))), got = all.filter(([id]) => seen[id]).sort((x, y) => seen[x[0]] - seen[y[0]]);
+        const love = ctx.settings.get('romance'), all = Object.entries(evs).filter(([id, e]) => e.kind === kind && (seen[id] || (love ? e.romance !== false : !e.romance))), got = all.filter(([id]) => seen[id]).sort((x, y) => seen[x[0]] - seen[y[0]]); // 戀愛劇情和友情版只算一邊（看過的都列）
         root.append(mk('h3', '', `${label} ${got.length}／${all.length}`));
         if (!got.length) { root.append(mk('p', 'hint', kind === 'heart' ? '跟居民變熟（2 心、4 心…）之後跟他說話，就會發生他的故事。' : kind === 'story' ? '照著過日子就會慢慢發生：去小鎮走走、出貨、修好小鎮的設施……' : '兩個人待在一起（同一張地圖、靠近一點）的時候才會發生。')); continue; }
         const el = mk('div', 'shoplist');
