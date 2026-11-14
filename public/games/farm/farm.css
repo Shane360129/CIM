@@ -62,6 +62,10 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #1d2a1f; col
 .mpreset { flex: none; width: 74px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 2px 6px; border: 2px solid #5a3d22; border-radius: 10px; background: #fffaf0; color: #5a3d22; font: inherit; font-size: 12px; line-height: 1.2; cursor: pointer; scroll-snap-align: start; }
 .mpreset canvas { width: 60px; height: 68px; image-rendering: crisp-edges; image-rendering: pixelated; }
 .mpreset.on { background: #ffd76a; }
+/* 我的穿搭：跟現成角色一樣的小圖，右上角一個刪掉的叉叉 */
+.moutfit { position: relative; flex: none; }
+.mdel { position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; padding: 0; border-radius: 50%; border: 2px solid #5a3d22; background: #fff; color: #5a3d22; font: inherit; font-size: 11px; line-height: 1; cursor: pointer; }
+.mdel:disabled { opacity: .4; }
 .mrow.sub { margin-top: -2px; }
 .mrow.actions { flex-wrap: wrap; margin-top: 14px; }
 .mlabel { flex: none; width: 3.2em; font-weight: 700; font-size: 14px; }
@@ -74,7 +78,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #1d2a1f; col
 .swatches { display: flex; flex-wrap: wrap; gap: 5px; flex: 1; }
 .swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #5a3d22; padding: 0; cursor: pointer; }
 .swatch.on { box-shadow: 0 0 0 3px #fff, 0 0 0 5px #e8872e; }
-.minput { flex: 1; min-width: 0; font: inherit; font-size: 16px; padding: 8px 10px; border-radius: 10px; border: 2px solid #5a3d22; background: #fffaf0; -webkit-user-select: text; user-select: text; }
+.minput, .oinput { flex: 1; min-width: 0; font: inherit; font-size: 16px; padding: 8px 10px; border-radius: 10px; border: 2px solid #5a3d22; background: #fffaf0; -webkit-user-select: text; user-select: text; }
 
 /* 階段 4：錢、體力、背包、面板、物品圖示 */
 .chips { position: absolute; left: calc(10px + env(safe-area-inset-left)); top: calc(62px + env(safe-area-inset-top)); display: flex; gap: 6px; align-items: center; }
@@ -121,6 +125,10 @@ button.chip { cursor: pointer; }
 
 .prow { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 .pbtn.eat { margin-top: 6px; }
+/* 背包裡的穿搭：小頭像＋名字，現在穿著的那套是黃色 */
+.pbtn.ofit { display: inline-flex; align-items: center; gap: 4px; background: #fffaf0; color: #5a3d22; padding: 3px 9px 3px 4px; }
+.pbtn.ofit.on { background: #ffd76a; }
+.pbtn.ofit canvas { width: 26px; height: 26px; border-radius: 6px; background: #f3e6c8; }
 
 .chip.hp .ebar i { background: #e5484d; }
 
@@ -134,6 +142,7 @@ button.chip { cursor: pointer; }
 .dialog button { font: inherit; font-weight: 700; padding: 7px 14px; border-radius: 12px; border: 2px solid #5a3d22; background: #e8872e; color: #fff; cursor: pointer; }
 .dialog button.ghost { background: #f3e6c8; color: #5a3d22; }
 @media (max-width: 520px) { .dface { width: 68px; height: 68px; } }
+.dialog.noface .dface { display: none; } .dialog.noface .dtext { font-style: italic; color: #6a4a2a; } /* 旁白 */
 
 /* 階段 6c：劇情的淡出旁白、節慶小遊戲 */
 .fade { position: absolute; inset: 0; background: #1d1712; color: #f3e6c8; display: flex; align-items: center; justify-content: center; padding: 24px; font-size: 18px; line-height: 1.8; text-align: center; opacity: 0; transition: opacity .4s; pointer-events: none; z-index: 6; }

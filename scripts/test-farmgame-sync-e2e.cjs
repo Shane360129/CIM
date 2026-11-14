@@ -193,7 +193,7 @@ const { chromium } = require('playwright');
   ok('木工屋：可以擴建農舍、開墾南邊的田、蓋溫室，寫出要多少錢和材料', (await pa.locator('.panel .shoprow').count()) === 3 && /15000 元/.test(await pa.locator('.panel .shoprow[data-item=greenhouse]').textContent()) && /3000 元/.test(await pa.locator('.panel .shoprow[data-item=house]').textContent()) && /8000 元/.test(await pa.locator('.panel .shoprow[data-item=field2]').textContent()));
   await pa.keyboard.press('Escape');
   await pa.keyboard.press('KeyE'); await pa.waitForTimeout(200); await pa.locator('.panel [data-act=codex]').click(); await pa.waitForTimeout(300);
-  ok('背包 → 圖鑑與成就：六類圖鑑、54 個成就、紀念冊', (await pa.locator('.panel h3').count()) === 8 && /成就 0／54/.test((await pa.locator('.panel h3').allTextContents()).join('|')) && /紀念冊 \d+／\d+/.test((await pa.locator('.panel h3').allTextContents()).join('|')) && (await pa.locator('.panel .cell.unknown').count()) >= 50);
+  ok('背包 → 圖鑑與成就：六類圖鑑、54 個成就、紀念冊、三種劇情', (await pa.locator('.panel h3').count()) === 11 && /居民的故事 \d+／\d+\|晴耕谷的故事 \d+／\d+\|兩個人的回憶 \d+／\d+/.test((await pa.locator('.panel h3').allTextContents()).join('|')) && /成就 0／54/.test((await pa.locator('.panel h3').allTextContents()).join('|')) && /紀念冊 \d+／\d+/.test((await pa.locator('.panel h3').allTextContents()).join('|')) && (await pa.locator('.panel .cell.unknown').count()) >= 50);
   await pa.screenshot({ path: S + '/s7-codex.png' }); await pa.keyboard.press('Escape');
   await tp(pa, 30, 9.7, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
   ok('鐵匠鋪：列出六種工具現在的等級和升級要的錠', (await pa.locator('.panel .shoprow').count()) === 6 && /銅錠×5、1000 元/.test(await pa.locator('.panel .shoprow[data-item=hoe]').textContent()));

@@ -25,7 +25,9 @@ ctx.scenes = createScenes(ctx);
 startLoop({ update: (dt) => ctx.scenes.update(dt), render: (alpha) => ctx.scenes.render(alpha), half: () => ctx.settings.get('low') });
 ctx.scenes.go(loading);
 // 自動化測試用：網址帶 &test 時，讓測試程式看得到遊戲的狀態（正常使用不會出現）
-if (new URLSearchParams(location.search).has('test')) window.__game = ctx;
+// 舊的測試不想被劇情打斷：帶 &test 時主線、兩個人的劇情不會自己發生，除非也帶 &story（劇情的測試用）
+const qs = new URLSearchParams(location.search);
+if (qs.has('test')) { window.__game = ctx; ctx.noStory = !qs.has('story'); }
 
 // 聊天室（外面那一頁）說有新訊息：在遊戲裡提示一下，按 Esc 或右上角的 ✕ 就能回去看
 window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.type === 'chat-message') ctx.hud.toast('💬 聊天室有新訊息', 2500); });

@@ -13,7 +13,7 @@ const mk = (tag, cls, text) => { const n = document.createElement(tag); if (cls)
 export const create = {
   enter(ctx, arg = {}) {
     const parts = (this.parts = ctx.data.parts), W = ctx.world;
-    this.t = 0; this.dir = 0; this.walk = true; this.edit = !!arg.edit;
+    this.t = 0; this.dir = 0; this.walk = true; this.edit = !!arg.edit; this.outKey = null;
     this.look = upgradeLook({ ...(W.me.look || parts.presets.boy) }, parts); // 舊角色的舊零件名稱先換成新的，存檔時伺服器才收
     const root = (this.root = mk('div', 'maker')), ui = document.getElementById('ui');
     root.append(mk('h2', '', this.edit ? '換衣服' : '建立你的角色'));
@@ -28,7 +28,31 @@ export const create = {
       refresh.push(() => b.classList.toggle('on', same(this.look, gp.look)));
       this.thumbs.push({ c, look: gp.look, done: false });
     });
+    // 我的穿搭：自己存起來的幾套（存在伺服器，換手機也在）。點一下整套換上，✕ 刪掉，最下面可以把現在這套存起來
+    const outBox = mk('div', 'moutfits'), refreshAll = () => refresh.forEach((f) => f());
+    const drawOutfits = () => {
+      const list = W.self.outfits || [], max = ctx.data.balance.outfits.max, key = JSON.stringify(list);
+      if (key === this.outKey) return; // 伺服器的 self 不是穿搭變了（例如體力）：不用重畫
+      this.outKey = key; outBox.textContent = ''; this.outThumbs = [];
+      outBox.append(mk('p', 'mhint', list.length ? `我的穿搭（${list.length}／${max}）：點一下整套換上` : '我的穿搭：配好一套之後按最下面的「存成穿搭」，之後就能一鍵換上'));
+      if (list.length) {
+        const row = mk('div', 'mgallery');
+        list.forEach((o, i) => {
+          const wrap = mk('div', 'moutfit'), b = mk('button', 'mpreset'), c = document.createElement('canvas'), del = mk('button', 'mdel', '✕');
+          b.type = del.type = 'button'; b.dataset.outfit = String(i); del.dataset.del = String(i); b.setAttribute('aria-label', '換上「' + o.name + '」'); del.setAttribute('aria-label', '刪掉「' + o.name + '」');
+          c.width = 120; c.height = 136; b.append(c, mk('span', '', o.name)); wrap.append(b, del); row.append(wrap);
+          b.addEventListener('click', () => { this.look = upgradeLook({ ...o.look }, parts); refreshAll(); });
+          del.addEventListener('click', async () => { del.disabled = true; const r = await W.room.req({ t: 'outfit', op: 'del', slot: i }); if (r.t !== 'ok') { del.disabled = false; ctx.hud.toast('刪不掉，再試一次', 1200); } });
+          this.outThumbs.push({ c, b, look: o.look, done: false });
+        });
+        outBox.append(row);
+      }
+      refreshAll();
+    };
+    refresh.push(() => (this.outThumbs || []).forEach((t) => t.b.classList.toggle('on', same(this.look, t.look))));
+    if (this.edit) root.append(outBox);
     if (this.thumbs.length) root.append(mk('p', 'mhint', '選一個現成的角色，或在下面一項一項自己配'), gal);
+    if (!this.edit) root.append(outBox);
     // 男生／女生：決定預設的五官、髮型、服裝（之後每一項都還能改，所有服裝男女都能穿）
     const g = mk('div', 'mrow'); g.append(mk('span', 'mlabel', '角色'));
     for (const [id, name] of [['boy', '男生'], ['girl', '女生']]) {
@@ -68,6 +92,15 @@ export const create = {
     const nameRow = mk('div', 'mrow'), input = (this.input = mk('input', 'minput'));
     input.type = 'text'; input.maxLength = 10; input.value = W.me.name || ''; input.placeholder = '名字（最多 10 個字）';
     nameRow.append(mk('span', 'mlabel', '名字'), input); root.append(nameRow);
+    // 存成穿搭：取個名字（不取就叫「穿搭 1」），滿了要先刪一套
+    const saveRow = mk('div', 'mrow'), oname = mk('input', 'oinput'), sb = mk('button', 'mbtn ghost', '👕 存成穿搭');
+    oname.type = 'text'; oname.maxLength = 8; oname.placeholder = '這套叫什麼（最多 8 個字）'; sb.type = 'button'; sb.dataset.act = 'save-outfit';
+    sb.addEventListener('click', async () => {
+      if ((W.self.outfits || []).length >= ctx.data.balance.outfits.max) return ctx.hud.toast(`最多存 ${ctx.data.balance.outfits.max} 套，先刪掉一套`, 1600);
+      sb.disabled = true; const r = await W.room.req({ t: 'outfit', op: 'save', name: oname.value.trim(), look: { ...this.look } }); sb.disabled = false;
+      if (r.t === 'ok') { oname.value = ''; ctx.hud.toast('存好了！在背包裡也能一鍵換上', 1600); } else ctx.hud.toast(r.reason === 'full' ? '穿搭滿了，先刪掉一套' : '存不起來，再試一次', 1400);
+    });
+    saveRow.append(mk('span', 'mlabel', '穿搭'), oname, sb); root.append(saveRow);
     const act = mk('div', 'mrow actions');
     const b = (text, cls, fn) => { const n = mk('button', 'mbtn ' + cls, text); n.type = 'button'; n.addEventListener('click', fn); act.append(n); return n; };
     b('🎲 隨機', 'ghost', () => {
@@ -85,13 +118,13 @@ export const create = {
       W.setLook({ ...this.look }, name); ctx.scenes.go(play);
     }).dataset.act = 'done';
     root.append(act); ui.append(root);
-    refresh.forEach((f) => f());
+    drawOutfits(); this.offSelf = W.on('self', drawOutfits); // 存好、刪掉之後伺服器回傳新的清單，重畫
   },
-  exit() { this.root.remove(); },
+  exit() { this.root.remove(); if (this.offSelf) this.offSelf(); this.offSelf = null; },
   update(dt) {
     this.t += dt;
     // 現成角色的小圖：零件圖下載好了才畫得出來，畫好的就不再畫
-    for (const th of this.thumbs || []) {
+    for (const th of [...(this.thumbs || []), ...(this.outThumbs || [])]) {
       if (th.done) continue;
       const g = th.c.getContext('2d'); g.clearRect(0, 0, th.c.width, th.c.height);
       th.done = drawLPC(g, th.look, th.c.width / 2, th.c.height - 6, 2, 'down', 'idle', 0);

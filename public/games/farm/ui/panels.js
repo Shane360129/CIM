@@ -1,6 +1,9 @@
 // 遊戲裡的面板：背包、出貨箱、倉庫箱、種子攤。都是一般的網頁元素，蓋在畫面中間；內容每次有變化就整個重畫。
 import { iconEl } from '../render/sprites.js';
 import { sellPrice, planTake, levelOf, hearts, shopItems } from '../shared/rules.js';
+import { portraitEl } from '../render/doll.js';
+import { warmLPC } from '../render/lpc.js';
+import { upgradeLook } from '../shared/look.js';
 const mk = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
 
 // 一個物品的小圖：有圖用圖（種子是「種子袋＋作物」疊起來），沒有圖用名字的第一個字
@@ -46,8 +49,25 @@ export function openPanel(ctx, mode, arg = {}) {
         const all = Object.keys(ctx.data.rawItems).filter((k) => ctx.data.rawItems[k].kind === kind), got = all.filter((k) => cx[k]);
         root.append(mk('h3', '', `${label} ${got.length}／${all.length}`)); const g2 = mk('div', 'grid'); for (const k of all) { const c = mk('span', 'cell' + (cx[k] ? '' : ' unknown')); c.title = cx[k] ? items[k].name : '？？？'; c.append(itemIcon(items, k)); g2.append(c); } root.append(g2);
       }
-      const album = f.album || []; root.append(mk('h3', '', `紀念冊 ${album.length}／${Object.keys(bal.album).length}`));
-      const ab = mk('div', 'shoplist'); for (const e of album) { const r = mk('div', 'shoprow'); r.append(mk('span', 'sname', `第 ${e.day} 天`), mk('span', 'sdesc', bal.album[e.key] || e.key)); ab.append(r); } root.append(ab);
+      // 紀念冊：農場第一次發生的事，加上主線、兩個人的劇情寫的那一頁（key 是 ev:劇情 id）
+      const evs = ctx.data.events, albumText = (k) => (k.startsWith('ev:') ? (evs[k.slice(3)] || {}).album || '' : bal.album[k] || k);
+      const album = (f.album || []).filter((e) => albumText(e.key)), albumAll = Object.keys(bal.album).length + Object.values(evs).filter((e) => e.album).length;
+      root.append(mk('h3', '', `紀念冊 ${album.length}／${albumAll}`));
+      const ab = mk('div', 'shoplist'); for (const e of album) { const r = mk('div', 'shoprow'); r.append(mk('span', 'sname', `第 ${e.day} 天`), mk('span', 'sdesc', albumText(e.key))); ab.append(r); } root.append(ab);
+      // 看過的劇情：可以再看一次（重看不會再加好感、不會再給獎勵）
+      const seen = W.self.events || {}, kinds = bal.story.kinds;
+      for (const [kind, label] of Object.entries(kinds)) {
+        const all = Object.entries(evs).filter(([, e]) => e.kind === kind && (kind !== 'heart' || !e.romance || ctx.settings.get('romance'))), got = all.filter(([id]) => seen[id]).sort((x, y) => seen[x[0]] - seen[y[0]]);
+        root.append(mk('h3', '', `${label} ${got.length}／${all.length}`));
+        if (!got.length) { root.append(mk('p', 'hint', kind === 'heart' ? '跟居民變熟（2 心、4 心…）之後跟他說話，就會發生他的故事。' : kind === 'story' ? '照著過日子就會慢慢發生：去小鎮走走、出貨、修好小鎮的設施……' : '兩個人待在一起（同一張地圖、靠近一點）的時候才會發生。')); continue; }
+        const el = mk('div', 'shoplist');
+        for (const [id, e] of got) {
+          const r = mk('div', 'shoprow'), b = mk('button', 'pbtn', '再看一次'); b.type = 'button'; b.dataset.replay = id;
+          r.append(mk('span', 'sname', e.title), mk('span', 'sdesc', `${e.npc && ctx.data.npcs[e.npc] ? ctx.data.npcs[e.npc].name + '・' : ''}第 ${seen[id]} 天`), b);
+          b.addEventListener('click', () => { hud.closePanel(); if (ctx.replayEvent) ctx.replayEvent(id); }); el.append(r);
+        }
+        root.append(el);
+      }
       const ach = ctx.data.achievements, done = ach.filter((a) => (f.achieved || {})[a.id]); root.append(mk('h3', '', `成就 ${done.length}／${ach.length}`));
       const al = mk('div', 'shoplist'); for (const a of ach) { const r = mk('div', 'shoprow'); r.append(mk('span', 'sname', ((f.achieved || {})[a.id] ? '✔ ' : '') + a.name), mk('span', 'sdesc', a.desc), mk('span', 'sprice', `${a.money} 元`)); al.append(r); } root.append(al);
     } else if (mode === 'restore') {
@@ -148,6 +168,19 @@ export function openPanel(ctx, mode, arg = {}) {
         if (mate) { const b = mk('button', 'pbtn eat', `送給 ${mate.name}（整疊）`); b.type = 'button'; b.dataset.act = 'give'; b.addEventListener('click', async () => { const a = picked; picked = -1; info = ''; const r = await room.req({ t: 'give', slot: a, n: 999 }); if (r.t === 'ok') hud.toast(`送給 ${mate.name} 了`, 1300); else say(r); }); root.append(b); }
       }
       const buffs = Object.keys(bal.buffNames).filter((k) => W.buff(k)).map((k) => bal.buffNames[k]); if (mode === 'bag' && buffs.length) root.append(mk('p', 'hint', '料理的效果：' + buffs.join('、')));
+      if (mode === 'bag') { // 換衣服：打開衣櫃的畫面；存好的穿搭在這裡就能一鍵換上
+        const list = W.self.outfits || [], row = mk('div', 'prow outfits'), wb = mk('button', 'pbtn', '👕 換衣服'); wb.type = 'button'; wb.dataset.act = 'wardrobe';
+        wb.addEventListener('click', () => { hud.closePanel(); if (ctx.wardrobe) ctx.wardrobe(); }); row.append(wb);
+        warmLPC(list.map((o) => o.look), ['walk']);
+        list.forEach((o, i) => {
+          const b = mk('button', 'pbtn ofit'), on = JSON.stringify(upgradeLook({ ...o.look }, ctx.data.parts)) === JSON.stringify(W.me.look); b.type = 'button'; b.dataset.wear = String(i); b.title = '換上「' + o.name + '」';
+          const face = portraitEl(o.look, 'normal', 26); if (face) b.append(face); b.append(mk('span', '', o.name)); if (on) b.classList.add('on');
+          b.addEventListener('click', () => { W.setLook(upgradeLook({ ...o.look }, ctx.data.parts), W.me.name); hud.toast(`換上「${o.name}」了`, 1300); draw(); });
+          row.append(b);
+        });
+        root.append(mk('h3', '', '穿搭'), row);
+        if (!list.length) root.append(mk('p', 'hint', '在「換衣服」裡配好一套、按「存成穿搭」，之後就能在這裡一鍵換上。'));
+      }
       if (mode === 'bag') { const cb = mk('button', 'pbtn', '圖鑑與成就'); cb.type = 'button'; cb.dataset.act = 'codex'; cb.addEventListener('click', () => { hud.closePanel(); openPanel(ctx, 'codex'); }); root.append(cb); }
       if (mode === 'bag') { const sk = Object.entries(bal.skills).map(([k, name]) => `${name} ${ctx.level(k)} 級`).join('　'); root.append(mk('p', 'hint', sk)); }
     }

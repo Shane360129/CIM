@@ -1,0 +1,34 @@
+{
+  "duo_first": {
+    "title": "第一塊田",
+    "when": { "map": "farm", "stats": { "till": 1 }, "after": "story_arrive", "together": true },
+    "album": "翻好了第一塊田",
+    "steps": [
+      { "fade": "鋤頭翻起來的土是深褐色的，還有一點濕。" },
+      { "say": "@a", "face": "happy", "text": "欸，你看。這是我們的第一塊田耶。" },
+      { "say": "@b", "text": "……才這麼一小塊。" },
+      { "say": "@a", "text": "一小塊也是田！以後這裡會長出菜、長出花，說不定還長出西瓜。" },
+      { "say": "@b", "face": "happy", "text": "你連種子都還沒撒，就想到西瓜了。" },
+      { "narrate": "風從田邊吹過來，帶著青草和泥土的味道。" },
+      { "choice": [
+        { "text": "要長得好好的喔", "goto": "kind" },
+        { "text": "拜託不要長雜草", "goto": "weed" },
+        { "text": "先蹲下來摸摸看", "goto": "touch" }
+      ], "prompt": "（你想對這塊田說什麼？）" },
+      { "label": "kind" },
+      { "say": "@me", "face": "happy", "text": "小田田，要長得好好的喔。我們每天都會來看你。" },
+      { "goto": "end" },
+      { "label": "weed" },
+      { "say": "@me", "text": "拜託，長菜就好，雜草請去隔壁。" },
+      { "goto": "end" },
+      { "label": "touch" },
+      { "narrate": "你蹲下來抓了一把土，涼涼的、軟軟的，跟城裡的柏油路完全不一樣。" },
+      { "label": "end" },
+      { "say": "@b", "text": "那說好了，第一批收成，我們要一起吃。" },
+      { "say": "@a", "face": "happy", "text": "說好了。誰偷吃誰洗一個月的碗。" },
+      { "emote": "😊", "who": "@a" },
+      { "emote": "😊", "who": "@b" },
+      { "end": true }
+    ]
+  }
+}

@@ -277,6 +277,43 @@ Bc.clear(); A.send({ t: 'look', look: { ...LOOK, body: 'giant' } }); A.send({ t:
 check('清單以外的體型、臉型不收', !Bc.log.some((m) => m.t === 'look'));
 Bc.clear(); A.send({ t: 'look', look: LOOK, name: '  晴<b>晴  ' + '長'.repeat(30) }); await Bc.wait('look'); // 換回原本的造型，後面的檢查照舊
 
+// ---- 我的穿搭 ----
+const BAL = JSON.parse(readFileSync(new URL('../public/games/farm/data/balance.json', import.meta.url), 'utf8')), OMAX = BAL.outfits.max;
+check('穿搭：把現在這套存起來（名字最多 8 個字），自己的資料裡看得到', (await req(A, { t: 'outfit', op: 'save', name: '週末出門穿的那一套衣服', look: LOOK })).t === 'ok' && A.self.outfits.length === 1 && A.self.outfits[0].name === '週末出門穿的那一' && A.self.outfits[0].look.hair === 'bob');
+check('穿搭：清單以外的零件不收', (await req(A, { t: 'outfit', op: 'save', look: { ...LOOK, hair: 'dragon' } })).reason === 'look' && A.self.outfits.length === 1);
+for (let i = 1; i < OMAX; i++) await req(A, { t: 'outfit', op: 'save', look: { ...G.look } });
+check(`穿搭：最多 ${OMAX} 套，沒取名字的自動叫「穿搭 N」`, A.self.outfits.length === OMAX && A.self.outfits[1].name === '穿搭 2' && (await req(A, { t: 'outfit', op: 'save', look: LOOK })).reason === 'full');
+check('穿搭：可以蓋掉某一套、刪掉某一套；沒有的那一套刪不了', (await req(A, { t: 'outfit', op: 'save', slot: 1, name: '工作服', look: LOOK })).t === 'ok' && A.self.outfits[1].name === '工作服' && A.self.outfits.length === OMAX
+  && (await req(A, { t: 'outfit', op: 'del', slot: 0 })).t === 'ok' && A.self.outfits.length === OMAX - 1 && A.self.outfits[0].name === '工作服' && (await req(A, { t: 'outfit', op: 'del', slot: 9 })).reason === 'slot');
+check('穿搭只有自己看得到（對方的資料裡沒有）', !(Bc.self.outfits || []).length);
+
+// ---- 主線、兩個人的劇情 ----
+// 主線第一章 story_arrive：在農場的家門口；兩個人的劇情 duo_first：第一次翻土之後、兩個人都在農場上
+const STORY = JSON.parse(readFileSync(new URL('../public/games/farm/data/events/story.json', import.meta.url), 'utf8'));
+const exitHouse = async (c) => { await go(c, 4.5, 8.2, 'down'); return req(c, { t: 'warp', i: 0 }); };
+await exitHouse(A); await exitHouse(Bc); await go(A, 9.5, 10.4); await go(Bc, 30.5, 13.4);
+check('劇情：沒有的、心事件不能用 event-start', (await req(A, { t: 'event-start', event: 'nope' })).reason === 'unknown' && (await req(A, { t: 'event-start', event: 'xiaoman_2' })).reason === 'unknown');
+check('主線：條件不符不能開始（第二章要先看過第一章、要在小鎮）', (await req(A, { t: 'event-start', event: 'story_town' })).reason === 'when');
+check('主線：沒開始就說看完了，不算', (await req(A, { t: 'event-done', event: 'story_arrive', picks: [] })).reason === 'closed');
+check('兩個人的劇情：對方不在旁邊不能開始', (await req(A, { t: 'event-start', event: 'duo_first' })).reason === 'when');
+await go(A, 30.5, 13.4); check('主線：離家門口太遠也不行', (await req(A, { t: 'event-start', event: 'story_arrive' })).reason === 'when'); await go(A, 9.5, 10.4);
+Bc.clear(); const st1 = await req(A, { t: 'event-start', event: 'story_arrive' });
+check('主線第一章在家門口開始；對方不在旁邊就自己看（對方那邊沒有開始）', st1.t === 'ok' && st1.open.id === 'story_arrive' && !st1.open.cast && A.self.evOpen.id === 'story_arrive' && !(await Bc.wait('self', (m) => m.evOpen, 400)));
+const ci = STORY.story_arrive.steps.findIndex((x) => x.choice), flag = ci >= 0 && STORY.story_arrive.steps[ci].choice[0].flag, fz = has(A, 'fertilizer'); Bc.clear();
+const d1 = await req(A, { t: 'event-done', event: 'story_arrive', picks: ci >= 0 ? [{ step: ci, opt: 0 }] : [] });
+check('主線看完：記下來、給獎勵、記選項的旗標、紀念冊寫一頁（兩個人都看得到）', d1.t === 'ok' && has(A, 'fertilizer') === fz + 5 && !!A.self.events.story_arrive && !A.self.evOpen && (!flag || A.self.flags[flag] === 1)
+  && !!(await Bc.wait('stat', (m) => m.album.some((e) => e.key === 'ev:story_arrive'))), JSON.stringify({ d1, flag, flags: A.self.flags }).slice(0, 300));
+check('看過的不能再開始、再完成', (await req(A, { t: 'event-start', event: 'story_arrive' })).reason === 'already' && (await req(A, { t: 'event-done', event: 'story_arrive', picks: [] })).reason === 'already');
+await go(Bc, 9.5, 10.6); A.clear(); const st2 = await req(Bc, { t: 'event-start', event: 'story_arrive' });
+check('主線（shared）：這次對方剛好在旁邊，可是他已經看過了，所以只有自己看', st2.t === 'ok' && !!st2.open.cast && !(await A.wait('self', (m) => m.evOpen, 400)));
+const d2 = await req(Bc, { t: 'event-done', event: 'story_arrive', picks: [] });
+check('對方之後也看完：也拿到自己的獎勵；紀念冊還是只有一頁', d2.t === 'ok' && has(Bc, 'fertilizer') >= 5 && (d2.got || []).length === 1);
+Bc.send({ t: 'look', look: { ...G.look }, name: '阿耕' }); await sleep(150); // 對方也建好角色了（劇情裡要畫他）
+Bc.clear(); const sd = await req(A, { t: 'event-start', event: 'duo_first' }), bo = await Bc.wait('self', (m) => m.evOpen && m.evOpen.id === 'duo_first');
+check('兩個人的劇情：站在一起就開始，對方那邊也一起開始；兩邊的 a、b 是同一組人', sd.t === 'ok' && !!bo && sd.open.cast.a.id === a.user.id && sd.open.cast.b.id === b.user.id && bo.evOpen.cast.a.id === a.user.id && !!bo.evOpen.cast.b.look, JSON.stringify({ sd: sd.t, cast: sd.open && sd.open.cast && [sd.open.cast.a.id, sd.open.cast.b.id, !!sd.open.cast.b.look], ab: [a.user.id, b.user.id], bo: bo && bo.evOpen && [bo.evOpen.cast.a.id, !!bo.evOpen.cast.b.look] }));
+check('兩個人的劇情：各自看完各自記下來', (await req(A, { t: 'event-done', event: 'duo_first', picks: [{ step: 6, opt: 1 }] })).t === 'ok' && (await req(Bc, { t: 'event-done', event: 'duo_first', picks: [{ step: 6, opt: 2 }] })).t === 'ok' && !!A.self.events.duo_first && !!Bc.self.events.duo_first);
+await enter(A); await enter(Bc); await go(A, 6.5, 2.5); await go(Bc, 6.5, 2.5); // 回到農舍裡，後面的檢查照舊
+
 // ---- 睡覺、換日、成長、出貨結算、備份 ----
 check('不在床邊不能睡', (await req(A, { t: 'sleep', on: true })).reason === 'far');
 await go(A, 2, 3.4); await go(Bc, 2.6, 3.4); A.clear(); Bc.clear(); A.send({ t: 'sleep', on: true });
@@ -286,7 +323,8 @@ const tileOf = (m, x, y) => m.tiles.find((t) => t.map === 'farm' && t.x === x &&
 check('兩個人都上床才換日：第 2 天早上 6 點', !!nd && nd.farm.day === 2 && Math.abs(nd.farm.minute - 360) < 2, nd && `第 ${nd.farm.day} 天 ${nd.farm.minute}`);
 if (process.env.DEBUG) console.log('tiles', JSON.stringify(nd.tiles), JSON.stringify(F), nd.farm.weather);
 check('有澆水的作物長了一階段，沒澆水的沒長', !!nd && tileOf(nd, F.x, F.y).c.s === 1 && tileOf(nd, F.x + 1, F.y).c.s === 0);
-check('出貨箱結算：木材 4 個 32 元進共用的錢包，明細看得到是誰放的', !!nd && nd.farm.money === 352 && nd.farm.lastShip.total === 32 && nd.farm.lastShip.lines[0].by === a.user.id && nd.farm.ship.length === 0, nd && String(nd.farm.money));
+const ACH = JSON.parse(readFileSync(new URL('../public/games/farm/data/achievements.json', import.meta.url), 'utf8')), achMoney = (m) => (m.farm.newAchievements || []).reduce((t, id) => t + ACH.find((x) => x.id === id).money, 0); // 劇情的獎勵讓圖鑑剛好滿 20 種：多一筆成就獎金
+check('出貨箱結算：木材 4 個 32 元進共用的錢包，明細看得到是誰放的', !!nd && nd.farm.money === 352 + achMoney(nd) && nd.farm.lastShip.total === 32 && nd.farm.lastShip.lines[0].by === a.user.id && nd.farm.ship.length === 0, nd && String(nd.farm.money));
 check('睡覺補滿體力', !!nd && nd.self.energy === 100);
 const bk = (await j(`/api/farmroom/backups?conv=${dm.id}`, {}, a.token)).data.backups;
 check('換日時自動備份', bk.length === 1 && bk[0].day === 1);

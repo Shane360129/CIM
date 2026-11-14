@@ -1,0 +1,13 @@
+{
+  "story_arrive": {
+    "title": "荒地上的家", "shared": true, "when": { "map": "farm", "at": [9, 10, 5] }, "reward": { "items": [["fertilizer", 5]] }, "album": "搬進晴耕谷的那一天",
+    "steps": [
+      { "fade": "（暫時的測試內容）" },
+      { "narrate": "雜草長得比膝蓋還高。" },
+      { "choice": [ { "text": "種滿一整片田", "flag": "dream_field" }, { "text": "養很多動物", "flag": "dream_animals" } ], "prompt": "（你想把這裡變成什麼樣子？）" },
+      { "say": "@me", "text": "就從今天開始吧。" },
+      { "end": true }
+    ]
+  },
+  "story_town": { "title": "小鎮的老時鐘", "npc": "ahe", "shared": true, "when": { "map": "town", "after": "story_arrive" }, "steps": [ { "say": "ahe", "text": "（暫時的測試內容）" }, { "end": true } ] }
+}

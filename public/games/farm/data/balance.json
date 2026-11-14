@@ -644,6 +644,8 @@
     "noteMaxChars": 60,
     "notesKeep": 20
   },
+  "outfits": { "max": 6 },
+  "story": { "togetherReach": 6, "checkSeconds": 2, "kinds": { "heart": "居民的故事", "story": "晴耕谷的故事", "duo": "兩個人的回憶" } },
   "album": {
     "harvest": "第一次收成",
     "fish": "釣到第一條魚",

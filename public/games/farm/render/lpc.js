@@ -154,11 +154,12 @@ export function drawLPC(g, look, x, y, px, dir, action, t, tool) {
 export function warmLPC(looks, anims = ['walk', 'idle']) {
   for (const look of looks) { if (!look) continue; const r = resolve(look); for (const a of anims) for (const l of r.layers) if (!l.custom && l.anims.includes(a)) img(`${l.src}${a}.png`); }
 }
-// 對話框的頭像：正面站著那一格的頭和肩膀放大；表情 happy／sad 疊在臉上
+// 對話框的頭像：正面站著那一格的頭和肩膀放大；表情（開心、難過、害羞臉紅、閉眼）疊在臉上
+const PORTRAIT_FACE = { happy: 'happy', sad: 'sad', shy: 'blush', blush: 'blush', closed: 'closed', sleepy: 'closed' };
 export function portraitLPC(look, expr = 'normal', size = 96) {
   if (!LPC || !look) return null;
-  const r = resolve(look), extra = expr === 'happy' || expr === 'sad' ? face(expr, r.head, r.body) || [] : [];
-  const fr = extra.length ? { ...r, sig: r.sig + '|' + expr, layers: [...r.layers, ...resolveExtra(r, extra)] } : r;
+  const fx = PORTRAIT_FACE[expr], r = resolve(look), extra = fx ? face(fx, r.head, r.body) || [] : [];
+  const fr = extra.length ? { ...r, sig: r.sig + '|' + fx, layers: [...r.layers, ...resolveExtra(r, extra)] } : r;
   const c = sheet(fr, 'walk'); if (!c) return null;
   const out = document.createElement('canvas'); out.width = out.height = size; const g = out.getContext('2d'); g.imageSmoothingEnabled = false;
   g.drawImage(c, 14, 2 * 64 + 6, 36, 36, 0, 0, size, size); // 正面第 0 格：頭在 x 14～50、y 6～42 這一塊

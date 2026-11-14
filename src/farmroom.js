@@ -22,14 +22,18 @@ import FISH from '../public/games/farm/data/fish.json';
 import MAP_TOWN from '../public/games/farm/data/maps/town.json';
 import NPCS from '../public/games/farm/data/npcs/residents.json';
 import SHOPS from '../public/games/farm/data/shops.json';
-import EVENTS from '../public/games/farm/data/events/hearts.json';
+import HEART_EVENTS from '../public/games/farm/data/events/hearts.json';
+import STORY_EVENTS from '../public/games/farm/data/events/story.json';
+import DUO_EVENTS from '../public/games/farm/data/events/duo.json';
 import FESTIVALS from '../public/games/farm/data/festivals.json';
 import RESTORE from '../public/games/farm/data/restore.json';
 import ACHIEVEMENTS from '../public/games/farm/data/achievements.json';
 import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelOf, rollQuality, invAdd, invTake, sellPrice, makeItems, matches, planTake, shopItems, absMinute, animalPos, genFloor, monPos, mineMap, npcPos, walkGrid, giftTaste, seasonIndex } from '../public/games/farm/shared/rules.js';
 import { upgradeLook } from '../public/games/farm/shared/look.js';
+import { eventReady, farmStat, mergeEvents } from '../public/games/farm/shared/rules.js';
 
 const ITEMS = makeItems(RAW_ITEMS, MACHINES); // 加工品（g:機器:原料）的名字和價錢是算出來的
+const EVENTS = mergeEvents(HEART_EVENTS, STORY_EVENTS, DUO_EVENTS); // 劇情：居民的心事件、主線、兩個人的劇情
 
 const MAPS = { farm: MAP_FARM, house: MAP_HOUSE, road: MAP_ROAD, lake: MAP_LAKE, town: MAP_TOWN, forest: MAP_FOREST, beach: MAP_BEACH, greenhouse: MAP_GREENHOUSE, uptown: MAP_UPTOWN };
 // 每張地圖上不會動的東西（房子、長椅…）佔了哪些格子：採集物、雜草不會長在這些格子上
@@ -155,6 +159,7 @@ export class FarmRoom {
     }
     // 美術換成 LPC 之後零件名稱都換了：舊角色的外觀讀進來時換成新的零件（存回去，之後換裝伺服器才收）
     if (p.look) { const up = cleanLook(upgradeLook(p.look, PARTS)); if (up && JSON.stringify(up) !== JSON.stringify(p.look)) { p.look = up; this.dirtyPl.add(id); } }
+    if (Array.isArray(p.outfits)) { const ups = p.outfits.map((o) => ({ name: o.name, look: cleanLook(upgradeLook(o.look, PARTS)) })).filter((o) => o.look); if (JSON.stringify(ups) !== JSON.stringify(p.outfits)) { p.outfits = ups; this.dirtyPl.add(id); } } // 存起來的穿搭也一樣
     this.pl.set(id, p); return p;
   }
   // 每做一件事：統計 +1（成就用）；某種事第一次發生時，在紀念冊記一筆
@@ -165,7 +170,7 @@ export class FarmRoom {
   dayLen() { const v = (this.farm.opts || {}).dayLen; return BAL.dayLenOptions.includes(v) ? v : BAL.dayMinutesReal; }
   minPerMs() { return DAY_SPAN / (this.dayLen() * 60000); } // 現實一毫秒等於幾個遊戲分鐘
   absNow() { return absMinute(this.farm.day, this.minuteNow(), BAL); }
-  pubSelf(a) { const p = this.player(a.id); return { inv: p.inv, energy: p.energy, energyMax: this.energyMax(), skills: p.skills, fishRec: p.fishRec || {}, buffs: p.buffs || {}, hp: p.hp ?? BAL.mine.hpMax, hpMax: BAL.mine.hpMax, friend: p.friend || {}, toolLv: p.toolLv || {}, mail: p.mail || [], events: p.events || {}, fest: p.fest || {} }; }
+  pubSelf(a) { const p = this.player(a.id); return { inv: p.inv, energy: p.energy, energyMax: this.energyMax(), skills: p.skills, fishRec: p.fishRec || {}, buffs: p.buffs || {}, hp: p.hp ?? BAL.mine.hpMax, hpMax: BAL.mine.hpMax, friend: p.friend || {}, toolLv: p.toolLv || {}, mail: p.mail || [], events: p.events || {}, fest: p.fest || {}, outfits: p.outfits || [], evOpen: p.evOpen || null, flags: p.flags || {} }; }
 
   // ---------- 連線 ----------
   sockets() { return this.ctx.getWebSockets(); }
@@ -337,12 +342,36 @@ export class FarmRoom {
     }
     else if (['animal-buy', 'animal', 'feed', 'graze', 'adopt', 'pet'].includes(m.t)) this.onAnimal(a, p, m, { no, done, self, near, farmChanged });
     else if (m.t === 'talk' || m.t === 'gift') this.onNpc(a, p, m, { no, done, self });
-    else if (m.t === 'event-done') { // 看完一段劇情：記下來（每段只看一次），照選的選項加好感、記旗標。要好感夠才算
+    else if (m.t === 'event-start') { // 主線、兩個人的劇情要開始了：在這裡照 when 檢查一次（演的時候時間會過，所以開始時檢查），記下正在演哪一段
+      const ev = EVENTS[m.event]; if (!ev || ev.kind === 'heart') return no('unknown'); if ((p.events ||= {})[m.event]) return no('already');
+      // together：一定要兩個人都在；shared（主線的大事）：對方剛好在旁邊就一起看，不在就自己看、對方之後自己遇到
+      const need = !!(ev.when && ev.when.together), mate = need || ev.shared ? this.mateNear(a) : null, mp = mate && this.player(mate.a.id);
+      if (!eventReady(ev, this.evState(a, p, !!mate))) return no('when');
+      // 對方也要符合條件（例如看過前面那一章）才拉他一起看；位置算自己的（他就站在旁邊）。對方正在演別段就不打擾
+      const mateSeen = mp && !!(mp.events || {})[m.event], mateOk = mp && !mateSeen && eventReady(ev, { ...this.evState(mate.a, mp, true), x: a.x, y: a.y });
+      const mateBusy = mateOk && mp.evOpen && mp.evOpen.id !== m.event && EVENTS[mp.evOpen.id] && !(mp.events || {})[mp.evOpen.id];
+      if (need && !mateSeen && !mateOk) return no('when');
+      if (need && mateBusy) return no('busy');
+      // a 是先開始的人，b 是對方：兩邊畫面上誰說哪句都一樣
+      const cast = mate ? { a: { id: a.id, name: p.nick || a.name, look: p.look }, b: { id: mate.a.id, name: mp.nick || mate.a.name, look: mp.look } } : null;
+      if (mateOk && !mateBusy) { mp.evOpen = { id: m.event, cast }; this.dirtyPl.add(mate.a.id); this.send(mate.ws, { t: 'self', ...this.pubSelf(mate.a) }); }
+      p.evOpen = { id: m.event, ...(cast ? { cast } : {}) }; self(); done({ open: p.evOpen });
+    } else if (m.t === 'event-done') { // 看完一段劇情：記下來（每段只看一次），照選的選項加好感、記旗標；有獎勵的給獎勵、寫進紀念冊
       const ev = EVENTS[m.event]; if (!ev) return no('unknown'); if ((p.events ||= {})[m.event]) return no('already');
-      const fr = (p.friend || {})[ev.npc]; if (!fr || fr.pts < ev.hearts * BAL.friend.heart) return no('hearts');
-      let gain = 0; const seen = new Set();
-      for (const pk of Array.isArray(m.picks) ? m.picks.slice(0, 8) : []) { const st = ev.steps[Number(pk.step)], opt = st && st.choice && st.choice[Number(pk.opt)]; if (!opt || seen.has(pk.step)) continue; seen.add(pk.step); gain += opt.pts || 0; if (opt.flag) (p.flags ||= {})[opt.flag] = 1; }
-      p.events[m.event] = this.farm.day; fr.pts = clamp(fr.pts + gain, 0, BAL.friend.max); this.logEvent(a.id, 'event', { id: m.event }); this.mailCheck(a.id, p); self(); done({ gain, pts: fr.pts });
+      if (ev.kind === 'heart') { const fr0 = (p.friend || {})[ev.npc]; if (!fr0 || fr0.pts < ev.hearts * BAL.friend.heart) return no('hearts'); }
+      else if (!p.evOpen || p.evOpen.id !== m.event) return no('closed'); // 主線、兩個人的劇情：要先 event-start
+      const gains = {}, seen = new Set(), add = (npc, n) => { if (npc && NPCS[npc] && n) gains[npc] = (gains[npc] || 0) + n; };
+      for (const pk of Array.isArray(m.picks) ? m.picks.slice(0, 12) : []) { const st = ev.steps[Number(pk.step)], opt = st && st.choice && st.choice[Number(pk.opt)]; if (!opt || seen.has(pk.step)) continue; seen.add(pk.step); add(opt.npc || ev.npc, opt.pts || 0); if (opt.flag) (p.flags ||= {})[opt.flag] = 1; }
+      const R = ev.reward || {}, got = [], f = this.farm; for (const [npc, n] of Object.entries(R.pts || {})) add(npc, n);
+      for (const [npc, n] of Object.entries(gains)) { const fr = ((p.friend ||= {})[npc] ||= { pts: 0, talk: 0, giftDay: 0, week: 0, gifts: 0, met: false }); fr.pts = clamp(fr.pts + n, 0, BAL.friend.max); }
+      // 東西進自己的背包；背包滿了放進倉庫箱；錢進共用的錢包，兩個人只給一次
+      for (const [item, k] of R.items || []) { if (!ITEMS[item]) continue; if (invAdd(p.inv, BAL.invSlots, item, k)) got.push({ id: item, n: k }); else if (invAdd(f.chest, this.chestSlots(), item, k)) got.push({ id: item, n: k, chest: true }); }
+      let money = 0; if (R.money && !(f.evPaid ||= {})[m.event]) { f.evPaid[m.event] = f.day; f.money += R.money; money = R.money; }
+      if (ev.album && !(f.album ||= []).some((e) => e.key === 'ev:' + m.event)) { f.album.push({ day: f.day, key: 'ev:' + m.event, by: a.id }); this.broadcast({ t: 'stat', key: 'storyev', album: f.album }); }
+      p.events[m.event] = f.day; if (p.evOpen && p.evOpen.id === m.event) p.evOpen = null;
+      this.logEvent(a.id, { heart: 'event', story: 'storyev', duo: 'duoev' }[ev.kind], { id: m.event }); this.mailCheck(a.id, p); self();
+      if (money || got.some((g) => g.chest)) farmChanged();
+      done({ gain: gains[ev.npc] || 0, gains, got, money, pts: ev.npc && p.friend[ev.npc] ? p.friend[ev.npc].pts : 0 });
     } else if (m.t === 'fest-score') { // 節慶小遊戲的成績：一年一次，照分數給獎（錢進共用的錢包、東西進自己的背包）
       const id = this.festivalToday(), F = FESTIVALS[id]; if (!id || id !== m.fest) return no('closed'); if (a.map !== F.map) return no('far');
       const key = `${Math.floor((this.farm.day - 1) / (BAL.seasonDays * 4))}:${id}`; if ((p.fest ||= {})[key] != null) return no('already');
@@ -358,6 +387,15 @@ export class FarmRoom {
       const look = cleanLook(m.look); if (!look) return no('look');
       p.look = look; p.nick = cleanName(m.name) || p.nick; this.dirtyPl.add(a.id);
       this.broadcast({ t: 'look', id: a.id, look, name: p.nick || a.name });
+    } else if (m.t === 'outfit') { // 我的穿搭：把現在這套存起來（或蓋掉某一套、刪掉某一套），之後一鍵換上。換上還是用上面的 look
+      const list = (p.outfits ||= []), i = Math.floor(Number(m.slot));
+      if (m.op === 'del') { if (!(i >= 0 && i < list.length)) return no('slot'); list.splice(i, 1); }
+      else {
+        const look = cleanLook(m.look); if (!look) return no('look');
+        const name = cleanName(m.name).slice(0, 8) || `穿搭 ${list.length + 1}`;
+        if (i >= 0 && i < list.length) list[i] = { name, look }; else { if (list.length >= BAL.outfits.max) return no('full'); list.push({ name, look }); }
+      }
+      self(); done({ n: list.length });
     } else if (m.t === 'bubble') { const text = String(m.text || '').replace(/\s+/g, ' ').trim().slice(0, BAL.bubbleMaxChars); if (text) this.broadcast({ t: 'bubble', id: a.id, text }); }
     else if (m.t === 'emote') { if (BAL.emotes.includes(m.e)) this.broadcast({ t: 'emote', id: a.id, e: m.e }); }
     else if (m.t === 'set') { // 兩個人共用的設定（目前只有一天的長度）：先把時鐘結算到現在再換速度，時間不會跳
@@ -374,7 +412,17 @@ export class FarmRoom {
     this.flush();
   }
   // 成就用的數字：統計次數，加上幾個算出來的
-  statOf(k) { const f = this.farm; return k === 'codex' ? Object.keys(f.codex || {}).length : k === 'day' ? f.day : k === 'mineDeepest' ? f.mineDeepest || 1 : (f.stats || {})[k] || 0; }
+  statOf(k) { return farmStat(this.farm, k); }
+  // 劇情的條件要看的現在狀況（shared/rules.js 的 eventReady）
+  evState(a, p, together) {
+    const f = this.farm;
+    return { map: a.map, x: a.x, y: a.y, minute: this.minuteNow(), day: f.day, season: seasonId(f.day, BAL), weather: weatherOf(f.seed, f.day, BAL), seen: p.events || {}, flags: p.flags || {},
+      stat: (k) => this.statOf(k), restored: Object.values(f.restore || {}).filter((r) => r && r.done).length, houseLv: this.houseLv(), together,
+      fixed: Object.fromEntries(Object.entries(f.restore || {}).filter(([, r]) => r && r.done).map(([k]) => [k, 1])),
+      hearts: Object.fromEntries(Object.entries(p.friend || {}).map(([k, v]) => [k, Math.floor(v.pts / BAL.friend.heart)])) };
+  }
+  // 對方在不在旁邊（同一張地圖、沒睡著、幾格之內）：兩個人的劇情要兩個人都在
+  mateNear(a) { return this.online().find((s) => s.a.id !== a.id && s.a.map === a.map && (a.map !== 'mine' || s.a.floor === a.floor) && !s.a.asleep && Math.hypot(s.a.x - a.x, s.a.y - a.y) <= BAL.story.togetherReach) || null; }
   // 檢查有沒有新達成的成就：獎金進共用的錢包，回傳這次達成的
   checkAchievements() { const f = this.farm, got = (f.achieved ||= {}), fresh = []; for (const a of ACHIEVEMENTS) if (!got[a.id] && this.statOf(a.stat) >= a.need) { got[a.id] = f.day; f.money += a.money; fresh.push(a.id); } if (fresh.length) this.farmDirty = true; return fresh; }
   houseLv() { return this.farm.houseLv || 1; }
