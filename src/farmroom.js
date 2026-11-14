@@ -27,6 +27,7 @@ import FESTIVALS from '../public/games/farm/data/festivals.json';
 import RESTORE from '../public/games/farm/data/restore.json';
 import ACHIEVEMENTS from '../public/games/farm/data/achievements.json';
 import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelOf, rollQuality, invAdd, invTake, sellPrice, makeItems, matches, planTake, shopItems, absMinute, animalPos, genFloor, monPos, mineMap, npcPos, walkGrid, giftTaste, seasonIndex } from '../public/games/farm/shared/rules.js';
+import { upgradeLook } from '../public/games/farm/shared/look.js';
 
 const ITEMS = makeItems(RAW_ITEMS, MACHINES); // 加工品（g:機器:原料）的名字和價錢是算出來的
 
@@ -150,6 +151,8 @@ export class FarmRoom {
       for (const [item, n] of BAL.startItems) invAdd(p.inv, BAL.invSlots, item, n);
       this.sql.exec(`INSERT OR REPLACE INTO players (user_id, name, data, last_seen) VALUES (?, ?, ?, ?)`, id, name, JSON.stringify(p), row ? Date.now() : 0);
     }
+    // 美術換成 LPC 之後零件名稱都換了：舊角色的外觀讀進來時換成新的零件（存回去，之後換裝伺服器才收）
+    if (p.look) { const up = cleanLook(upgradeLook(p.look, PARTS)); if (up && JSON.stringify(up) !== JSON.stringify(p.look)) { p.look = up; this.dirtyPl.add(id); } }
     this.pl.set(id, p); return p;
   }
   // 每做一件事：統計 +1（成就用）；某種事第一次發生時，在紀念冊記一筆

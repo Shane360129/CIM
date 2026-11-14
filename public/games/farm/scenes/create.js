@@ -1,9 +1,10 @@
 // 建立角色／衣櫃換裝：左邊（手機是上面）預覽，右邊一列一列選零件和顏色。按「完成」存到伺服器，對方馬上看到。
 // 第一次進農場還沒有角色時會先到這裡；之後在家裡選「換衣服」也是這個畫面（edit: true）。
 import { drawDoll } from '../render/doll.js';
+import { upgradeLook } from '../shared/look.js';
 import { play } from './play.js';
 
-const ROWS = [['hair', '髮型', 'hairColor', 'hair'], ['eyes', '眼睛'], ['brows', '眉毛'], ['mouths', '嘴巴'], ['top', '上衣', 'topColor', 'cloth'], ['bottom', '下身', 'bottomColor', 'cloth'],
+const ROWS = [['hair', '髮型', 'hairColor', 'hair'], ['eyes', '眼睛'], ['brows', '眉毛'], ['mouths', '表情'], ['top', '上衣', 'topColor', 'cloth'], ['bottom', '下身', 'bottomColor', 'cloth'],
   ['shoes', '鞋子', 'shoesColor', 'cloth'], ['hat', '帽子', 'hatColor', 'cloth'], ['acc', '配件']];
 const DIRS = ['down', 'right', 'up', 'left'];
 const mk = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
@@ -12,7 +13,7 @@ export const create = {
   enter(ctx, arg = {}) {
     const parts = (this.parts = ctx.data.parts), W = ctx.world;
     this.t = 0; this.dir = 0; this.walk = true; this.edit = !!arg.edit;
-    this.look = { ...(W.me.look || parts.presets.boy) };
+    this.look = upgradeLook({ ...(W.me.look || parts.presets.boy) }, parts); // 舊角色的舊零件名稱先換成新的，存檔時伺服器才收
     const root = (this.root = mk('div', 'maker')), ui = document.getElementById('ui');
     root.append(mk('h2', '', this.edit ? '換衣服' : '建立你的角色'));
     const refresh = [];

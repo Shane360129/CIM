@@ -1,7 +1,7 @@
 // 遊戲場景（階段 4）：自家農場、農舍裡、往小鎮的路。自己的走動在這裡先動；格子、物品、錢、時間都聽伺服器的（資料在 core/world.js）
 import { buildGround } from '../render/ground.js';
 import { drawObject, drawPlayer, drawBubble, drawTilled, drawShadow, drawName } from '../render/placeholder.js';
-import { drawDoll } from '../render/doll.js';
+import { drawDoll, portraitEl } from '../render/doll.js';
 import { drawSprite, drawSign } from '../render/sprites.js';
 import { groundAt, levelOf, sellPrice, animalPos, hearts, mineMap, monPos, npcPos, walkGrid, seasonIndex, rng } from '../shared/rules.js';
 import { iconEl } from '../render/sprites.js';
@@ -311,7 +311,7 @@ export const play = {
   async talk(folk) {
     const { hud, data } = this.ctx, W = this.world, n = folk.n, F = this.bal.friend, pl = this.player;
     if (Math.hypot(folk.x - pl.x, folk.y - pl.y) > this.bal.reach + 1) return hud.toast('走近一點再說話', 900);
-    const face = (expr) => iconEl(`${n.portrait}/${expr}`, 96) || iconEl(`${n.portrait}/normal`, 96);
+    const face = (expr) => portraitEl(n.look, expr, 96); // 頭像：用居民的 LPC 角色
     const r = await this.room.req({ t: 'talk', npc: folk.id }); if (r.t !== 'ok') return hud.toast('他好像沒聽到', 900);
     const fr = W.self.friend[folk.id] || { pts: 0 }, h = Math.floor(fr.pts / F.heart);
     // 好感夠了、還沒看過的劇情：先演那一段

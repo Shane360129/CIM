@@ -2,13 +2,13 @@
 //   say（誰說、什麼表情、說什麼）、choice（選項：可以加好感 pts、記旗標 flag、跳到標籤 goto）、label、goto、
 //   emote（自己頭上冒表情）、wait（等幾秒）、fade（畫面暗下來，中間顯示一句旁白）、end
 // 演完回傳玩家選了哪些選項（給伺服器算好感）。之後的心事件、主線都用這個寫，不用改程式。
-import { iconEl } from '../render/sprites.js';
+import { portraitEl } from '../render/doll.js';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export async function runEvent(ctx, ev) {
   const { hud, world: W } = ctx, npcs = ctx.data.npcs, ui = document.getElementById('ui'), picks = [];
   const labels = new Map(ev.steps.map((s, i) => [s.label, i]).filter(([k]) => k));
-  const face = (who, expr) => iconEl(`${npcs[who].portrait}/${expr || 'normal'}`, 96) || iconEl(`${npcs[who].portrait}/normal`, 96);
+  const face = (who, expr) => portraitEl(npcs[who].look, expr || 'normal', 96); // 頭像：用居民的 LPC 角色
   for (let i = 0, guard = 0; i < ev.steps.length && guard < 200; i++, guard++) {
     const s = ev.steps[i];
     if (s.say) await hud.dialog({ portrait: face(s.say, s.face), name: npcs[s.say].name, sub: ev.title, text: s.text, buttons: [{ label: '▶', value: true }] });

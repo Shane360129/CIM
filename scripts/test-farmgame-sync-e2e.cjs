@@ -6,6 +6,10 @@ const { chromium } = require('playwright');
   const B = 'http://localhost:8787', S = process.argv[2] || '.';
   const j = async (p, b, t, m) => (await fetch(B + p, { method: m || (b ? 'POST' : 'GET'), headers: { 'content-type': 'application/json', ...(t ? { authorization: 'Bearer ' + t } : {}) }, body: b ? JSON.stringify(b) : undefined })).json();
   for (let i = 0; i < 40; i++) { try { await j('/api/app-info'); break; } catch { await new Promise((r) => setTimeout(r, 1000)); } }
+  // 外觀零件的清單（LPC）：換髮型、換帽子按一下「下一個」會變成清單上的下一款
+  const PARTS = await (await fetch(B + '/games/farm/data/doll/parts.json')).json();
+  const nextId = (list, id) => { const l = list.filter((v) => !v.hidden), i = l.findIndex((v) => v.id === id); return l[(i + 1) % l.length].id; };
+  const HAIR2 = nextId(PARTS.hair, PARTS.presets.girl.hair), HAT2 = nextId(PARTS.hat, PARTS.presets.girl.hat);
   const a = await j('/api/register', { username: 'sy_a', password: 'pass123456', displayName: '小晴' });
   await j('/api/admin/settings', { inviteCode: 'inv-2' }, a.token, 'PATCH');
   const b = await j('/api/register', { username: 'sy_b', password: 'pass123456', displayName: '阿耕', inviteCode: 'inv-2' });
@@ -37,7 +41,7 @@ const { chromium } = require('playwright');
   const pa = await enter(a.token, async (p) => { await p.locator('.maker [data-gender=girl]').click(); await p.locator('.maker [data-next=hair]').click(); await p.locator('.maker .minput').fill('晴晴'); await p.screenshot({ path: S + '/s3-create.png' }); });
   const pb = await enter(b.token); await pa.waitForTimeout(500);
   let sa = await st(pa), sb = await st(pb);
-  ok('建立角色：A 選女生、換髮型、改名字，B 看到一樣的造型和名字', sa.me.look.gender === 'girl' && sa.me.look.hair === 'bob' && sb.other && sb.other.look.hair === 'bob' && sb.other.name === '晴晴' && sa.other.look.gender === 'boy');
+  ok('建立角色：A 選女生、換髮型、改名字，B 看到一樣的造型和名字', sa.me.look.gender === 'girl' && sa.me.look.hair === HAIR2 && sb.other && sb.other.look.hair === HAIR2 && sb.other.name === '晴晴' && sa.other.look.gender === 'boy');
   await pa.keyboard.down('KeyD'); await pa.waitForTimeout(900); await pa.keyboard.up('KeyD'); await pa.waitForTimeout(500);
   sa = await st(pa); sb = await st(pb);
   ok(`A 走動，B 畫面上的 A 跟著走到差不多的位置（A ${sa.me.x.toFixed(2)}、B 看到 ${sb.other.x.toFixed(2)}）`, sa.me.x > 11 && Math.abs(sb.other.x - sa.me.x) < 0.25 && Math.abs(sb.other.y - sa.me.y) < 0.25);
@@ -238,7 +242,7 @@ const { chromium } = require('playwright');
   await pb.evaluate(([x, y]) => window.__game.world.room.req({ t: 'use', slot: 0, x: x + 1, y }), [F.x, F.y]); // A 在衣櫃裡的時候，B 那邊照常運作
   await pa.locator('.maker [data-next=hat]').click(); await pa.locator('.maker [data-act=done]').click(); await pb.waitForTimeout(600);
   sa = await st(pa); sb = await st(pb);
-  ok('衣櫃換裝（戴上草帽），B 馬上看到；回到農舍畫面時看得到 B 剛翻的土', sa.me.look.hat === 'straw' && sb.other.look.hat === 'straw' && sa.tiles.length === 2);
+  ok('衣櫃換裝（換一頂帽子），B 馬上看到；回到農舍畫面時看得到 B 剛翻的土', sa.me.look.hat === HAT2 && sb.other.look.hat === HAT2 && sa.tiles.length === 2);
   await tp(pa, 8.5, 2.5, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
   ok('對著爐灶按空白鍵：列出 20 道料理，等級不夠的會寫幾級才會煮', (await pa.locator('.panel .shoprow').count()) === 20 && /料理 8 級才會煮/.test(await pa.locator('.panel .shoprow[data-item=strawberry_cake]').textContent()));
   await pa.screenshot({ path: S + '/s5-cook.png' }); await pa.keyboard.press('Escape');
@@ -260,7 +264,7 @@ const { chromium } = require('playwright');
   await pa.close(); await pb.waitForTimeout(300);
   await pb.evaluate(async ([x, y]) => { const w = window.__game.world; w.room.send({ t: 'move', x: 5, y: 7.6, dir: 'down', vx: 0, vy: 0 }); await new Promise((r) => setTimeout(r, 200)); await w.room.req({ t: 'warp', i: 0 }); await new Promise((r) => setTimeout(r, 100)); w.room.send({ t: 'move', x: x + 1.5, y: y - 0.5, dir: 'down', vx: 0, vy: 0 }); await new Promise((r) => setTimeout(r, 200)); const pick = w.self.inv.findIndex((s) => s && s.id === 'pick'); await w.room.req({ t: 'use', slot: pick, x: x + 1, y }); }, [F.x, F.y]);
   const pa2 = await enter(a.token);
-  ok('重新進來不用再建立角色，造型和名字還在，人還在農舍裡', (await st(pa2)).me.look.hat === 'straw' && (await st(pa2)).me.name === '晴晴' && (await st(pa2)).me.map === 'house');
+  ok('重新進來不用再建立角色，造型和名字還在，人還在農舍裡', (await st(pa2)).me.look.hat === HAT2 && (await st(pa2)).me.name === '晴晴' && (await st(pa2)).me.map === 'house');
   const card = await pa2.locator('.card').textContent().catch(() => '');
   ok('A 回來看到「你不在時發生的事」：' + card, /你不在時發生的事/.test(card) && /阿耕/.test(card) && /清理 1 次/.test(card));
   ok('沒有錯誤訊息 ' + errs.join(' | '), errs.length === 0);

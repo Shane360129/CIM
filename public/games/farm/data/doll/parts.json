@@ -1,649 +1,323 @@
 {
- "note": "紙娃娃的零件清單。art 是圖集裡的名字（素材到了才填）；沒有 art 的用程式畫的暫代零件（shape）。tint 是這個零件跟著哪個顏色換色。",
- "layers": [
-  "hairBack",
-  "armBack",
-  "body",
-  "bottom",
-  "shoes",
-  "top",
-  "armFront",
-  "face",
-  "hairFront",
-  "hat",
-  "acc",
-  "tool"
- ],
- "colors": {
-  "skin": [
-   "#ffe0bd",
-   "#f6cfa3",
-   "#e8b98a",
-   "#c98e62",
-   "#9a6541",
-   "#6e4530"
-  ],
-  "hair": [
-   "#2b2421",
-   "#5a3d22",
-   "#8a5a34",
-   "#c98a3c",
-   "#e8c66a",
-   "#f3ead2",
-   "#b0b6bd",
-   "#d9544d",
-   "#e88ab0",
-   "#6aa8e8",
-   "#5fae6a",
-   "#8a6ad8"
-  ],
-  "cloth": [
-   "#ffffff",
-   "#f3e6c8",
-   "#e5484d",
-   "#f0a04a",
-   "#f6d34a",
-   "#7dbb5a",
-   "#4f9a8a",
-   "#6aa8e8",
-   "#3b6ea8",
-   "#8a6ad8",
-   "#e88ab0",
-   "#8a5a34",
-   "#5a5f66",
-   "#2b2421"
-  ]
- },
+ "note": "由 tools/lpc/build-characters.mjs 從 tools/lpc/characters.json 產生，不要手改。顏色存的是 LPC 色票的代表色（lpcColors 對回色票名稱）；legacy 是舊零件名稱對到新零件",
  "eyes": [
   {
-   "id": "round",
-   "name": "大圓眼"
+   "id": "brown",
+   "name": "褐色"
   },
   {
-   "id": "soft",
-   "name": "下垂眼"
+   "id": "gray",
+   "name": "灰色"
   },
   {
-   "id": "sharp",
-   "name": "上揚眼"
+   "id": "blue",
+   "name": "藍色"
   },
   {
-   "id": "smile",
-   "name": "瞇瞇眼"
+   "id": "green",
+   "name": "綠色"
   },
   {
-   "id": "lash",
-   "name": "長睫毛"
+   "id": "purple",
+   "name": "紫色"
   },
   {
-   "id": "cool",
-   "name": "細長眼"
+   "id": "orange",
+   "name": "橘色"
+  },
+  {
+   "id": "yellow",
+   "name": "金色"
+  },
+  {
+   "id": "red",
+   "name": "紅色"
   }
  ],
  "brows": [
   {
-   "id": "plain",
-   "name": "普通眉"
+   "id": "thin",
+   "name": "細眉"
   },
   {
    "id": "thick",
    "name": "粗眉"
-  },
-  {
-   "id": "thin",
-   "name": "細彎眉"
-  },
-  {
-   "id": "worry",
-   "name": "八字眉"
   }
  ],
  "mouths": [
   {
-   "id": "smile",
-   "name": "微笑"
+   "id": "normal",
+   "name": "平常"
   },
   {
-   "id": "open",
-   "name": "大笑"
-  },
-  {
-   "id": "pout",
-   "name": "嘟嘴"
-  },
-  {
-   "id": "o",
-   "name": "驚訝"
+   "id": "blush",
+   "name": "臉紅"
   }
  ],
  "hair": [
   {
-   "id": "short",
+   "id": "bangsshort",
+   "name": "短瀏海"
+  },
+  {
+   "id": "plain",
    "name": "清爽短髮"
   },
   {
-   "id": "spiky",
-   "name": "刺刺短髮"
+   "id": "parted",
+   "name": "旁分短髮"
   },
   {
-   "id": "curly",
-   "name": "自然捲"
+   "id": "swoop",
+   "name": "斜瀏海"
   },
   {
-   "id": "twin",
-   "name": "雙馬尾"
+   "id": "messy1",
+   "name": "凌亂短髮"
   },
   {
-   "id": "bob",
-   "name": "鮑伯短髮"
+   "id": "bedhead",
+   "name": "睡亂頭"
   },
   {
-   "id": "long",
-   "name": "及腰長直髮"
+   "id": "cowlick",
+   "name": "呆毛短髮"
   },
   {
-   "id": "h01a",
-   "name": "中分"
+   "id": "spiked",
+   "name": "刺刺頭"
   },
   {
-   "id": "h01b",
+   "id": "buzzcut",
    "name": "平頭"
   },
   {
-   "id": "h02a",
-   "name": "蓬鬆瀏海"
-  },
-  {
-   "id": "h02b",
-   "name": "側分油頭"
-  },
-  {
-   "id": "h03a",
-   "name": "小狼尾"
-  },
-  {
-   "id": "h03b",
-   "name": "綁小馬尾"
-  },
-  {
-   "id": "h04a",
-   "name": "刺蝟頭"
-  },
-  {
-   "id": "h04b",
-   "name": "超短寸頭"
-  },
-  {
-   "id": "h05a",
-   "name": "高馬尾"
-  },
-  {
-   "id": "h05b",
-   "name": "大波浪捲髮"
-  },
-  {
-   "id": "h06a",
-   "name": "丸子頭"
-  },
-  {
-   "id": "h06b",
-   "name": "雙丸子頭"
-  },
-  {
-   "id": "h07a",
-   "name": "麻花辮"
-  },
-  {
-   "id": "h07b",
-   "name": "公主切"
-  },
-  {
-   "id": "h08a",
+   "id": "curly_short",
    "name": "短捲髮"
   },
   {
-   "id": "h08b",
-   "name": "低馬尾"
+   "id": "pixie",
+   "name": "精靈短髮"
   },
   {
-   "id": "h09a",
-   "name": "半紮髮"
+   "id": "mop",
+   "name": "蘑菇頭"
   },
   {
-   "id": "h09b",
+   "id": "page",
    "name": "西瓜皮"
   },
   {
-   "id": "h10a",
-   "name": "亂翹短髮"
+   "id": "idol",
+   "name": "偶像頭"
   },
   {
-   "id": "h10b",
+   "id": "unkempt",
+   "name": "亂翹髮"
+  },
+  {
+   "id": "balding",
+   "name": "微禿"
+  },
+  {
+   "id": "bob",
+   "name": "鮑伯頭"
+  },
+  {
+   "id": "bob_side_part",
+   "name": "旁分鮑伯"
+  },
+  {
+   "id": "lob",
    "name": "及肩直髮"
   },
   {
-   "id": "h11a",
-   "name": "側邊編髮"
+   "id": "long",
+   "name": "長髮"
   },
   {
-   "id": "h11b",
-   "name": "捲毛蓬蓬頭"
+   "id": "long_straight",
+   "name": "長直髮"
   },
   {
-   "id": "h12a",
-   "name": "遮眼長瀏海"
+   "id": "long_messy",
+   "name": "長亂髮"
   },
   {
-   "id": "h12b",
-   "name": "髮帶短髮"
+   "id": "curly_long",
+   "name": "長捲髮"
+  },
+  {
+   "id": "wavy",
+   "name": "大波浪"
+  },
+  {
+   "id": "xlong",
+   "name": "及腰長髮"
+  },
+  {
+   "id": "ponytail",
+   "name": "馬尾"
+  },
+  {
+   "id": "high_ponytail",
+   "name": "高馬尾"
+  },
+  {
+   "id": "long_tied",
+   "name": "低馬尾"
+  },
+  {
+   "id": "pigtails",
+   "name": "雙馬尾"
+  },
+  {
+   "id": "bunches",
+   "name": "雙束髮"
+  },
+  {
+   "id": "braid",
+   "name": "麻花辮"
+  },
+  {
+   "id": "bangs_bun",
+   "name": "丸子頭"
+  },
+  {
+   "id": "half_up",
+   "name": "半紮髮"
+  },
+  {
+   "id": "afro",
+   "name": "爆炸頭"
   }
  ],
  "top": [
   {
-   "id": "tee",
-   "name": "素面短袖 T 恤",
-   "sleeve": "short"
+   "id": "tshirt",
+   "name": "T 恤"
   },
   {
-   "id": "stripe",
-   "name": "條紋短袖 T 恤",
-   "sleeve": "short"
+   "id": "tshirt_vneck",
+   "name": "V 領 T 恤"
   },
   {
-   "id": "hoodie",
-   "name": "連帽衫",
-   "sleeve": "long"
+   "id": "polo",
+   "name": "POLO 衫"
+  },
+  {
+   "id": "cardigan_short",
+   "name": "短袖外套"
+  },
+  {
+   "id": "longsleeve",
+   "name": "長袖上衣"
   },
   {
    "id": "shirt",
-   "name": "格子長袖襯衫",
-   "sleeve": "long"
+   "name": "長袖襯衫"
   },
   {
-   "id": "sweater",
-   "name": "圓領毛衣",
-   "sleeve": "long"
+   "id": "cardigan",
+   "name": "開襟毛衣"
+  },
+  {
+   "id": "polo_long",
+   "name": "長袖 POLO"
+  },
+  {
+   "id": "sleeveless",
+   "name": "背心"
   },
   {
    "id": "overalls",
-   "name": "吊帶工作服",
-   "sleeve": "short",
-   "dress": true
+   "name": "吊帶褲"
   },
   {
-   "id": "t13a",
-   "name": "口袋 T",
-   "sleeve": "short"
+   "id": "apron",
+   "name": "圍裙"
   },
   {
-   "id": "t13b",
-   "name": "背心",
-   "sleeve": "short"
+   "id": "suspenders",
+   "name": "吊帶襯衫"
   },
   {
-   "id": "t13c",
-   "name": "短袖襯衫",
-   "sleeve": "short"
+   "id": "dress",
+   "name": "洋裝",
+   "else": "longsleeve"
   },
   {
-   "id": "t14a",
-   "name": "POLO 衫",
-   "sleeve": "short"
-  },
-  {
-   "id": "t14b",
-   "name": "高領毛衣",
-   "sleeve": "long"
-  },
-  {
-   "id": "t14c",
-   "name": "針織背心",
-   "sleeve": "short"
-  },
-  {
-   "id": "t15a",
-   "name": "長袖 T 恤",
-   "sleeve": "long"
-  },
-  {
-   "id": "t15b",
-   "name": "牛仔外套",
-   "sleeve": "long"
-  },
-  {
-   "id": "t15c",
-   "name": "工作夾克",
-   "sleeve": "long"
-  },
-  {
-   "id": "t16a",
-   "name": "羽絨外套",
-   "sleeve": "long"
-  },
-  {
-   "id": "t16b",
-   "name": "毛呢大衣",
-   "sleeve": "long"
-  },
-  {
-   "id": "t16c",
-   "name": "雨衣",
-   "sleeve": "long"
-  },
-  {
-   "id": "t17a",
-   "name": "運動外套",
-   "sleeve": "long"
-  },
-  {
-   "id": "t17b",
-   "name": "披風",
-   "sleeve": "long"
-  },
-  {
-   "id": "t17c",
-   "name": "農夫背心",
-   "sleeve": "short"
-  },
-  {
-   "id": "t18a",
-   "name": "短洋裝",
-   "sleeve": "short",
-   "dress": true
-  },
-  {
-   "id": "t18b",
-   "name": "長洋裝",
-   "sleeve": "short",
-   "dress": true
-  },
-  {
-   "id": "t18c",
-   "name": "圍裙洋裝",
-   "sleeve": "short",
-   "dress": true
-  },
-  {
-   "id": "t19a",
+   "id": "kimono",
    "name": "浴衣",
-   "sleeve": "long",
-   "dress": true
-  },
-  {
-   "id": "t19b",
-   "name": "睡衣",
-   "sleeve": "long",
-   "dress": true
-  },
-  {
-   "id": "t19c",
-   "name": "廚師服",
-   "sleeve": "long",
-   "dress": true
-  },
-  {
-   "id": "t20a",
-   "name": "漁夫連身褲",
-   "sleeve": "short",
-   "dress": true
-  },
-  {
-   "id": "t20b",
-   "name": "禮服",
-   "sleeve": "long",
-   "dress": true
-  },
-  {
-   "id": "t20c",
-   "name": "節慶服",
-   "sleeve": "long",
-   "dress": true
-  },
-  {
-   "id": "t21a",
-   "name": "草莓圖案 T",
-   "sleeve": "short"
-  },
-  {
-   "id": "t21b",
-   "name": "小雞圖案 T",
-   "sleeve": "short"
-  },
-  {
-   "id": "t21c",
-   "name": "紅蘿蔔刺繡毛衣",
-   "sleeve": "long"
-  },
-  {
-   "id": "t22a",
-   "name": "星空襯衫",
-   "sleeve": "long"
-  },
-  {
-   "id": "t22b",
-   "name": "落葉毛衣",
-   "sleeve": "long"
-  },
-  {
-   "id": "t22c",
-   "name": "雪花毛衣",
-   "sleeve": "long"
-  },
-  {
-   "id": "t23a",
-   "name": "櫻花上衣",
-   "sleeve": "short"
-  },
-  {
-   "id": "t23b",
-   "name": "西瓜 T",
-   "sleeve": "short"
-  },
-  {
-   "id": "t23c",
-   "name": "漁夫背心",
-   "sleeve": "short"
-  },
-  {
-   "id": "t24a",
-   "name": "礦工外套",
-   "sleeve": "long"
+   "else": "cardigan"
   }
  ],
  "bottom": [
-  {
-   "id": "shorts",
-   "name": "短褲"
-  },
   {
    "id": "pants",
    "name": "長褲"
   },
   {
-   "id": "jeans",
-   "name": "牛仔褲"
+   "id": "pants2",
+   "name": "寬長褲"
+  },
+  {
+   "id": "cuffed",
+   "name": "反摺褲"
+  },
+  {
+   "id": "formal",
+   "name": "西裝褲"
+  },
+  {
+   "id": "pantaloons",
+   "name": "燈籠褲"
+  },
+  {
+   "id": "shorts",
+   "name": "短褲"
+  },
+  {
+   "id": "shorts_short",
+   "name": "熱褲"
   },
   {
    "id": "skirt",
-   "name": "百褶短裙"
+   "name": "裙子"
   },
   {
-   "id": "longskirt",
-   "name": "A 字長裙"
-  },
-  {
-   "id": "work",
-   "name": "工作褲"
-  },
-  {
-   "id": "b25a",
-   "name": "七分褲",
-   "art": true
-  },
-  {
-   "id": "b25b",
-   "name": "運動褲",
-   "art": true,
-   "long": true
-  },
-  {
-   "id": "b25c",
-   "name": "燈籠褲",
-   "art": true,
-   "long": true
-  },
-  {
-   "id": "b26a",
-   "name": "吊帶短褲",
-   "art": true
-  },
-  {
-   "id": "b26b",
-   "name": "卡其褲",
-   "art": true,
-   "long": true
-  },
-  {
-   "id": "b26c",
-   "name": "格子裙",
-   "art": true
-  },
-  {
-   "id": "b27a",
-   "name": "蓬蓬裙",
-   "art": true
-  },
-  {
-   "id": "b27b",
-   "name": "褲裙",
-   "art": true
-  },
-  {
-   "id": "b27c",
-   "name": "燈芯絨褲",
-   "art": true,
-   "long": true
-  },
-  {
-   "id": "b28a",
-   "name": "雪褲",
-   "art": true,
-   "long": true
-  },
-  {
-   "id": "b28b",
-   "name": "海灘褲",
-   "art": true
-  },
-  {
-   "id": "b28c",
-   "name": "牛仔短裙",
-   "art": true
-  },
-  {
-   "id": "b29a",
-   "name": "長圓裙",
-   "art": true,
-   "long": true
-  },
-  {
-   "id": "b29b",
-   "name": "工作吊帶褲",
-   "art": true,
-   "long": true
-  },
-  {
-   "id": "b29c",
-   "name": "燈籠短褲",
-   "art": true
-  },
-  {
-   "id": "b30a",
-   "name": "騎馬褲",
-   "art": true,
-   "long": true
-  },
-  {
-   "id": "b30b",
-   "name": "百慕達短褲",
-   "art": true
-  },
-  {
-   "id": "b30c",
-   "name": "針織長裙",
-   "art": true,
-   "long": true
-  },
-  {
-   "id": "b31a",
-   "name": "節慶紗裙",
-   "art": true
+   "id": "leggings",
+   "name": "內搭褲"
   }
  ],
  "shoes": [
   {
-   "id": "sneaker",
+   "id": "shoes",
    "name": "布鞋"
   },
   {
-   "id": "boot",
-   "name": "短靴"
-  },
-  {
-   "id": "rain",
-   "name": "雨鞋"
-  },
-  {
-   "id": "sandal",
-   "name": "涼鞋"
-  },
-  {
-   "id": "leather",
+   "id": "shoes2",
    "name": "皮鞋"
   },
   {
-   "id": "k32a",
-   "name": "運動鞋"
+   "id": "boots",
+   "name": "靴子"
   },
   {
-   "id": "k32b",
+   "id": "boots_fold",
+   "name": "反摺靴"
+  },
+  {
+   "id": "sandals",
+   "name": "涼鞋"
+  },
+  {
+   "id": "slippers",
    "name": "拖鞋"
   },
   {
-   "id": "k32c",
-   "name": "草鞋"
-  },
-  {
-   "id": "k32d",
-   "name": "雪靴",
-   "tall": true
-  },
-  {
-   "id": "k32e",
-   "name": "娃娃鞋"
-  },
-  {
-   "id": "k33a",
-   "name": "木屐"
-  },
-  {
-   "id": "k33b",
-   "name": "工作靴",
-   "tall": true
-  },
-  {
-   "id": "k33c",
-   "name": "高筒帆布鞋",
-   "tall": true
-  },
-  {
-   "id": "k33d",
-   "name": "毛毛拖鞋"
-  },
-  {
-   "id": "k33e",
-   "name": "長筒靴",
-   "tall": true
+   "id": "barefoot",
+   "name": "光腳"
   }
  ],
  "hat": [
@@ -652,204 +326,56 @@
    "name": "不戴"
   },
   {
-   "id": "straw",
-   "name": "寬邊草帽"
+   "id": "bandana",
+   "name": "頭巾"
   },
   {
-   "id": "beanie",
-   "name": "毛線帽"
+   "id": "bandana2",
+   "name": "滾邊頭巾"
+  },
+  {
+   "id": "kerchief",
+   "name": "三角頭巾"
+  },
+  {
+   "id": "headband",
+   "name": "髮帶"
+  },
+  {
+   "id": "headband_tied",
+   "name": "綁帶頭巾"
+  },
+  {
+   "id": "hairtie",
+   "name": "髮圈"
+  },
+  {
+   "id": "hood",
+   "name": "兜帽"
   },
   {
    "id": "cap",
-   "name": "棒球帽"
+   "name": "羽毛帽"
   },
   {
-   "id": "c34a",
-   "name": "貝雷帽",
-   "art": true
+   "id": "bonnie",
+   "name": "小圓帽"
   },
   {
-   "id": "c34b",
-   "name": "漁夫帽",
-   "art": true
+   "id": "bowler",
+   "name": "圓頂帽"
   },
   {
-   "id": "c34c",
-   "name": "牛仔帽",
-   "art": true
+   "id": "tophat",
+   "name": "高禮帽"
   },
   {
-   "id": "c35a",
-   "name": "頭巾",
-   "art": true
+   "id": "christmas",
+   "name": "聖誕帽"
   },
   {
-   "id": "c35b",
-   "name": "髮箍",
-   "art": true,
-   "band": {
-    "w": 1.12,
-    "at": 0.5,
-    "side": {
-     "h": 0.72,
-     "bottom": 0.55,
-     "sx": 0.45
-    }
-   }
-  },
-  {
-   "id": "c35c",
-   "name": "蝴蝶結",
-   "art": true,
-   "band": {
-    "w": 0.62,
-    "at": 0.16
-   }
-  },
-  {
-   "id": "c36a",
-   "name": "花冠",
-   "art": true,
-   "band": {
-    "w": 1.08,
-    "at": 0.22
-   }
-  },
-  {
-   "id": "c36b",
-   "name": "廚師帽",
-   "art": true
-  },
-  {
-   "id": "c36c",
-   "name": "礦工頭燈帽",
-   "art": true
-  },
-  {
-   "id": "c37a",
-   "name": "雨帽",
-   "art": true
-  },
-  {
-   "id": "c37b",
-   "name": "節慶紅帽",
-   "art": true
-  },
-  {
-   "id": "c37c",
-   "name": "兔耳髮箍",
-   "art": true,
-   "band": {
-    "w": 0.95,
-    "at": 0.3,
-    "side": {
-     "h": 1.25,
-     "bottom": 0.45,
-     "sx": 0.4
-    }
-   }
-  },
-  {
-   "id": "c38a",
-   "name": "貓耳帽",
-   "art": true,
-   "hood": true
-  },
-  {
-   "id": "c38b",
-   "name": "小雞帽",
-   "art": true,
-   "hood": true
-  },
-  {
-   "id": "c38c",
-   "name": "西瓜帽",
-   "art": true,
-   "hood": true
-  },
-  {
-   "id": "c39a",
-   "name": "南瓜帽",
-   "art": true
-  },
-  {
-   "id": "c39b",
-   "name": "雪人毛帽",
-   "art": true,
-   "hood": true
-  },
-  {
-   "id": "c39c",
-   "name": "海盜帽",
-   "art": true
-  },
-  {
-   "id": "c40a",
-   "name": "魔法師帽",
-   "art": true
-  },
-  {
-   "id": "c40b",
-   "name": "皇冠",
-   "art": true,
-   "band": {
-    "w": 0.62,
-    "at": 0.1
-   }
-  },
-  {
-   "id": "c40c",
-   "name": "遮陽帽",
-   "art": true
-  },
-  {
-   "id": "c41a",
-   "name": "安全帽",
-   "art": true
-  },
-  {
-   "id": "c41b",
-   "name": "耳罩",
-   "art": true,
-   "band": {
-    "w": 1.18,
-    "at": 0.58,
-    "mid": true,
-    "side": {
-     "h": 0.85,
-     "bottom": 0.78,
-     "sx": 0.32
-    }
-   }
-  },
-  {
-   "id": "c41c",
-   "name": "髮夾組",
-   "art": true,
-   "band": {
-    "w": 0.95,
-    "at": 0.3
-   }
-  },
-  {
-   "id": "c42a",
-   "name": "花朵頭飾",
-   "art": true,
-   "band": {
-    "w": 1.0,
-    "at": 0.22
-   }
-  },
-  {
-   "id": "c42b",
-   "name": "青蛙帽",
-   "art": true,
-   "hood": true
-  },
-  {
-   "id": "c42c",
-   "name": "蜂蜜罐帽",
-   "art": true
+   "id": "wizard",
+   "name": "魔法帽"
   }
  ],
  "acc": [
@@ -859,323 +385,365 @@
   },
   {
    "id": "glasses",
+   "name": "眼鏡"
+  },
+  {
+   "id": "glasses_round",
    "name": "圓框眼鏡"
+  },
+  {
+   "id": "glasses_halfmoon",
+   "name": "老花眼鏡"
+  },
+  {
+   "id": "sunglasses",
+   "name": "太陽眼鏡"
   },
   {
    "id": "scarf",
    "name": "圍巾"
   },
   {
-   "id": "a43a",
-   "name": "圓框眼鏡",
-   "slot": "face",
-   "w": 0.78,
-   "art": true
+   "id": "beard",
+   "name": "鬍子"
   },
   {
-   "id": "a43b",
-   "name": "方框眼鏡",
-   "slot": "face",
-   "w": 0.8,
-   "art": true
-  },
-  {
-   "id": "a43c",
-   "name": "墨鏡",
-   "slot": "face",
-   "w": 0.8,
-   "art": true
-  },
-  {
-   "id": "a44a",
-   "name": "格紋圍巾",
-   "slot": "neck",
-   "w": 0.72,
-   "art": true
-  },
-  {
-   "id": "a44b",
-   "name": "領結",
-   "slot": "bow",
-   "w": 0.34,
-   "art": true
-  },
-  {
-   "id": "a44c",
-   "name": "領帶",
-   "slot": "tie",
-   "w": 0.22,
-   "art": true
-  },
-  {
-   "id": "a45a",
-   "name": "花朵項鍊",
-   "slot": "necklace",
-   "w": 0.42,
-   "art": true
-  },
-  {
-   "id": "a45b",
-   "name": "後背包",
-   "slot": "back",
-   "w": 0.7,
-   "art": true
-  },
-  {
-   "id": "a45c",
-   "name": "斜背包",
-   "slot": "hip",
-   "w": 0.38,
-   "art": true
-  },
-  {
-   "id": "a46a",
-   "name": "圍裙",
-   "slot": "apron",
-   "w": 0.62,
-   "art": true
-  },
-  {
-   "id": "a47a",
-   "name": "OK 繃",
-   "slot": "cheek",
-   "w": 0.22,
-   "art": true
-  },
-  {
-   "id": "a47b",
-   "name": "花朵髮夾",
-   "slot": "clip",
-   "w": 0.26,
-   "art": true
-  },
-  {
-   "id": "a47c",
-   "name": "星星髮夾",
-   "slot": "clip",
-   "w": 0.26,
-   "art": true
-  },
-  {
-   "id": "a48a",
-   "name": "天使翅膀",
-   "slot": "wings",
-   "w": 1.25,
-   "art": true
-  },
-  {
-   "id": "a48c",
-   "name": "腰包",
-   "slot": "waist",
-   "w": 0.66,
-   "art": true
-  },
-  {
-   "id": "a49a",
-   "name": "披肩",
-   "slot": "cape",
-   "w": 0.86,
-   "art": true
-  },
-  {
-   "id": "a50a",
-   "name": "口哨",
-   "slot": "necklace",
-   "w": 0.36,
-   "art": true
-  },
-  {
-   "id": "a50c",
-   "name": "種子袋腰帶",
-   "slot": "waist",
-   "w": 0.72,
-   "art": true
-  },
-  {
-   "id": "a51b",
-   "name": "鈴鐺項圈",
-   "slot": "collar",
-   "w": 0.5,
-   "art": true
-  },
-  {
-   "id": "a51c",
-   "name": "徽章",
-   "slot": "badge",
-   "w": 0.2,
-   "art": true
-  },
-  {
-   "id": "a52a",
-   "name": "髮帶",
-   "slot": "band",
-   "w": 1.0,
-   "art": true
-  },
-  {
-   "id": "a52b",
-   "name": "圍兜",
-   "slot": "apron",
-   "w": 0.55,
-   "art": true
+   "id": "mustache",
+   "name": "八字鬍"
   }
  ],
+ "colors": {
+  "skin": [
+   "#e4a47c",
+   "#ea9f54",
+   "#ae6b3f",
+   "#936849",
+   "#7f4c31",
+   "#76513a",
+   "#442725"
+  ],
+  "hair": [
+   "#31313e",
+   "#0d384d",
+   "#5f1f04",
+   "#b6550e",
+   "#ae682a",
+   "#faa301",
+   "#f68764",
+   "#c7341b",
+   "#fccf56",
+   "#eddc7e",
+   "#eddf95",
+   "#aaaaaa",
+   "#d8dcdc",
+   "#e976c4",
+   "#fabbc6",
+   "#a966dd",
+   "#0074cb",
+   "#3c49ad",
+   "#007c00"
+  ],
+  "cloth": [
+   "#e5e6c7",
+   "#797580",
+   "#b3afa1",
+   "#4a5057",
+   "#2a3034",
+   "#744b30",
+   "#75502d",
+   "#996b4a",
+   "#b7996a",
+   "#f3c03f",
+   "#ef7e19",
+   "#ab1e1e",
+   "#832121",
+   "#8a3d28",
+   "#c36072",
+   "#a966dd",
+   "#621e78",
+   "#466ac9",
+   "#3c49ad",
+   "#c6eefd",
+   "#0098b2",
+   "#557e85",
+   "#2f8136",
+   "#134507"
+  ]
+ },
+ "lpcColors": {
+  "skin": {
+   "#e4a47c": "light",
+   "#ea9f54": "amber",
+   "#ae6b3f": "olive",
+   "#936849": "taupe",
+   "#7f4c31": "bronze",
+   "#76513a": "brown",
+   "#442725": "black"
+  },
+  "hair": {
+   "#31313e": "black",
+   "#0d384d": "raven",
+   "#5f1f04": "dark_brown",
+   "#b6550e": "chestnut",
+   "#ae682a": "light_brown",
+   "#faa301": "ginger",
+   "#f68764": "carrot",
+   "#c7341b": "redhead",
+   "#fccf56": "blonde",
+   "#eddc7e": "sandy",
+   "#eddf95": "platinum",
+   "#aaaaaa": "gray",
+   "#d8dcdc": "white",
+   "#e976c4": "pink",
+   "#fabbc6": "rose",
+   "#a966dd": "purple",
+   "#0074cb": "blue",
+   "#3c49ad": "navy",
+   "#007c00": "green"
+  },
+  "cloth": {
+   "#e5e6c7": "white",
+   "#797580": "gray",
+   "#b3afa1": "slate",
+   "#4a5057": "charcoal",
+   "#2a3034": "black",
+   "#744b30": "brown",
+   "#75502d": "leather",
+   "#996b4a": "walnut",
+   "#b7996a": "tan",
+   "#f3c03f": "yellow",
+   "#ef7e19": "orange",
+   "#ab1e1e": "red",
+   "#832121": "maroon",
+   "#8a3d28": "rose",
+   "#c36072": "pink",
+   "#a966dd": "lavender",
+   "#621e78": "purple",
+   "#466ac9": "blue",
+   "#3c49ad": "navy",
+   "#c6eefd": "sky",
+   "#0098b2": "teal",
+   "#557e85": "bluegray",
+   "#2f8136": "green",
+   "#134507": "forest"
+  }
+ },
+ "genders": {
+  "boy": {
+   "body": "male",
+   "head": "male"
+  },
+  "girl": {
+   "body": "female",
+   "head": "female"
+  }
+ },
  "presets": {
   "boy": {
    "gender": "boy",
-   "skin": "#ffe0bd",
-   "eyes": "round",
-   "brows": "plain",
-   "mouths": "smile",
-   "hair": "short",
-   "hairColor": "#5a3d22",
-   "top": "tee",
-   "topColor": "#6aa8e8",
+   "skin": "#e4a47c",
+   "eyes": "brown",
+   "brows": "thick",
+   "mouths": "normal",
+   "hair": "bangsshort",
+   "hairColor": "#5f1f04",
+   "top": "tshirt",
+   "topColor": "#466ac9",
    "bottom": "shorts",
-   "bottomColor": "#8a5a34",
-   "shoes": "sneaker",
-   "shoesColor": "#ffffff",
+   "bottomColor": "#3c49ad",
+   "shoes": "shoes",
+   "shoesColor": "#744b30",
    "hat": "none",
-   "hatColor": "#f6d34a",
+   "hatColor": "#ab1e1e",
    "acc": "none"
   },
   "girl": {
    "gender": "girl",
-   "skin": "#ffe0bd",
-   "eyes": "lash",
+   "skin": "#e4a47c",
+   "eyes": "brown",
    "brows": "thin",
-   "mouths": "smile",
-   "hair": "twin",
-   "hairColor": "#8a5a34",
-   "top": "stripe",
-   "topColor": "#e88ab0",
+   "mouths": "normal",
+   "hair": "pigtails",
+   "hairColor": "#b6550e",
+   "top": "tshirt_vneck",
+   "topColor": "#8a3d28",
    "bottom": "skirt",
-   "bottomColor": "#3b6ea8",
-   "shoes": "boot",
-   "shoesColor": "#8a5a34",
+   "bottomColor": "#3c49ad",
+   "shoes": "shoes2",
+   "shoesColor": "#744b30",
    "hat": "none",
-   "hatColor": "#f6d34a",
+   "hatColor": "#f3c03f",
    "acc": "none"
   }
  },
- "slots": {
-  "face": {
-   "y": "hy",
-   "dy": 0.06,
-   "sx": 0.22,
-   "sw": 0.55
+ "legacy": {
+  "note": "舊的手繪紙娃娃零件 → 新的 LPC 零件（舊角色、舊居民資料自動換過來用）",
+  "eyes": {
+   "round": "brown",
+   "soft": "brown",
+   "sharp": "brown",
+   "smile": "brown",
+   "lash": "brown",
+   "cool": "brown"
   },
-  "cheek": {
-   "y": "hy",
-   "dy": 0.22,
-   "dx": 0.24,
-   "sx": 0.18
+  "brows": {
+   "plain": "thin",
+   "worry": "thin"
   },
-  "clip": {
-   "y": "hy",
-   "dy": -0.3,
-   "dx": 0.3,
-   "sx": -0.12
+  "mouths": {
+   "smile": "normal",
+   "open": "normal",
+   "pout": "normal",
+   "o": "normal"
   },
-  "band": {
-   "y": "hy",
-   "dy": -0.42,
-   "sx": -0.04
+  "hair": {
+   "short": "plain",
+   "spiky": "spiked",
+   "curly": "curly_short",
+   "twin": "pigtails",
+   "h01a": "parted",
+   "h01b": "buzzcut",
+   "h02a": "bangsshort",
+   "h02b": "swoop",
+   "h03a": "unkempt",
+   "h03b": "long_tied",
+   "h04a": "spiked",
+   "h04b": "buzzcut",
+   "h05a": "high_ponytail",
+   "h05b": "wavy",
+   "h06a": "bangs_bun",
+   "h06b": "bunches",
+   "h07a": "braid",
+   "h07b": "page",
+   "h08a": "curly_short",
+   "h08b": "long_tied",
+   "h09a": "half_up",
+   "h09b": "mop",
+   "h10a": "messy1",
+   "h10b": "lob",
+   "h11a": "braid",
+   "h11b": "curly_short",
+   "h12a": "idol",
+   "h12b": "bob"
   },
-  "neck": {
-   "y": "sh",
-   "dy": 0.38,
-   "sx": 0.04
-  },
-  "bow": {
-   "y": "sh",
-   "dy": 0.04,
-   "sx": 0.16,
-   "sw": 0.5
-  },
-  "tie": {
-   "y": "sh",
-   "dy": 0.16,
-   "sx": 0.18
-  },
-  "necklace": {
-   "y": "sh",
-   "dy": 0.16,
-   "sx": 0.12,
-   "sw": 0.5
-  },
-  "collar": {
-   "y": "sh",
-   "dy": 0.05,
-   "sx": 0.04
-  },
-  "badge": {
-   "y": "sh",
-   "dy": 0.26,
-   "dx": 0.14,
-   "sx": 0.12
-  },
-  "apron": {
-   "y": "sh",
-   "dy": 0.32,
-   "sx": 0.06,
-   "sw": 0.7
-  },
-  "cape": {
-   "y": "sh",
-   "dy": 0.12,
-   "sx": -0.02,
-   "sw": 0.8
-  },
-  "waist": {
-   "y": "by",
-   "dy": -0.1,
-   "sx": 0.0,
-   "sw": 0.7
-  },
-  "hip": {
-   "y": "by",
-   "dy": -0.1,
-   "dx": 0.3,
-   "sx": -0.12
-  },
-  "back": {
-   "y": "sh",
-   "dy": 0.3,
-   "behind": true,
-   "sx": -0.24,
-   "sw": 0.6
-  },
-  "wings": {
-   "y": "sh",
-   "dy": 0.22,
-   "behind": true,
-   "sx": -0.22,
-   "sw": 0.55
-  }
- },
- "fit": {
   "top": {
-   "k": 0.8,
-   "y": 0.06,
-   "sx": 0.0
+   "tee": "tshirt",
+   "stripe": "tshirt_vneck",
+   "hoodie": "longsleeve",
+   "sweater": "longsleeve",
+   "t13a": "tshirt",
+   "t13b": "sleeveless",
+   "t13c": "polo",
+   "t14a": "polo",
+   "t14b": "longsleeve",
+   "t14c": "sleeveless",
+   "t15a": "longsleeve",
+   "t15b": "cardigan",
+   "t15c": "cardigan",
+   "t16a": "cardigan",
+   "t16b": "cardigan",
+   "t16c": "longsleeve",
+   "t17a": "cardigan",
+   "t17b": "cardigan",
+   "t17c": "suspenders",
+   "t18a": "dress",
+   "t18b": "dress",
+   "t18c": "apron",
+   "t19a": "kimono",
+   "t19b": "longsleeve",
+   "t19c": "apron",
+   "t20a": "overalls",
+   "t20b": "dress",
+   "t20c": "kimono",
+   "t21a": "tshirt",
+   "t21b": "tshirt",
+   "t21c": "longsleeve",
+   "t22a": "shirt",
+   "t22b": "longsleeve",
+   "t22c": "longsleeve",
+   "t23a": "tshirt_vneck",
+   "t23b": "tshirt",
+   "t23c": "sleeveless",
+   "t24a": "cardigan"
   },
   "bottom": {
-   "k": 0.82,
-   "y": -0.2,
-   "sx": 0.0
-  },
-  "hat": {
-   "k": 0.9
+   "jeans": "pants2",
+   "longskirt": "skirt",
+   "work": "cuffed",
+   "b25a": "cuffed",
+   "b25b": "pants",
+   "b25c": "pantaloons",
+   "b26a": "shorts",
+   "b26b": "pants2",
+   "b26c": "skirt",
+   "b27a": "skirt",
+   "b27b": "shorts",
+   "b27c": "pants",
+   "b28a": "pants2",
+   "b28b": "shorts",
+   "b28c": "skirt",
+   "b29a": "skirt",
+   "b29b": "pants2",
+   "b29c": "shorts",
+   "b30a": "leggings",
+   "b30b": "shorts",
+   "b30c": "skirt",
+   "b31a": "skirt"
   },
   "shoes": {
-   "k": 1
+   "sneaker": "shoes",
+   "boot": "boots",
+   "rain": "boots",
+   "sandal": "sandals",
+   "leather": "shoes2",
+   "k32a": "shoes",
+   "k32b": "slippers",
+   "k32c": "sandals",
+   "k32d": "boots_fold",
+   "k32e": "shoes2",
+   "k33a": "sandals",
+   "k33b": "boots",
+   "k33c": "boots_fold",
+   "k33d": "slippers",
+   "k33e": "boots"
   },
-  "note": "美術衣服的比例與位置（單位 U＝頭的高度）。k：圖的像素換成素體比例的倍數",
-  "hatY": {
-   "straw": -0.5,
-   "beanie": -0.62,
-   "cap": -0.52
+  "hat": {
+   "straw": "bowler",
+   "beanie": "bonnie",
+   "c34a": "bonnie",
+   "c34b": "bowler",
+   "c34c": "bowler",
+   "c35a": "bandana",
+   "c35b": "headband",
+   "c35c": "hairtie",
+   "c36a": "headband",
+   "c36b": "kerchief",
+   "c36c": "cap",
+   "c37a": "hood",
+   "c37b": "christmas",
+   "c37c": "headband",
+   "c38a": "hood",
+   "c38b": "hood",
+   "c38c": "hood",
+   "c39a": "hood",
+   "c39b": "christmas",
+   "c39c": "bandana2",
+   "c40a": "wizard",
+   "c40b": "headband",
+   "c40c": "bowler",
+   "c41a": "cap",
+   "c41b": "headband",
+   "c41c": "hairtie",
+   "c42a": "hairtie",
+   "c42b": "hood",
+   "c42c": "tophat"
+  },
+  "acc": {
+   "a43a": "glasses_round",
+   "a43b": "glasses",
+   "a43c": "sunglasses",
+   "a44a": "scarf",
+   "a49a": "scarf"
   }
  }
 }

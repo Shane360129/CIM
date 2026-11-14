@@ -7,4 +7,7 @@ tools/farm-assets/preview/
 
 # 晴耕谷美術原圖（很大，不進 git；縮圖 *.thumb.png 照常追蹤）
 art-src/farm/第*批/[0-9]*-[0-9][0-9].png
-public/games/farm/data/doll/fit.auto.json
+art-src/farm/舊圖/第*批/[0-9]*-[0-9][0-9].png
+
+# LPC 角色產生器（下載下來的原始素材，不進 git；說明在 tools/lpc/build-characters.mjs）
+art-src/lpc/generator/

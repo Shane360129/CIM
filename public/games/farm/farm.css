@@ -81,6 +81,7 @@ button.chip { cursor: pointer; }
 .slot { display: flex; align-items: center; justify-content: center; padding: 0; }
 .slot .num { position: absolute; left: 3px; top: 1px; font-size: 10px; color: #b89a6a; }
 .icon { display: inline-block; background-repeat: no-repeat; }
+.icon.pixel { image-rendering: crisp-edges; image-rendering: pixelated; } /* LPC 像素圖放大時不要糊掉 */
 .iicon { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; }
 .iicon .over { position: absolute; left: 50%; top: 56%; transform: translate(-50%, -50%); }
 .ifallback { font-size: 15px; font-weight: 700; color: #5a3d22; }

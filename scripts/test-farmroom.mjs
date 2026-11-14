@@ -5,6 +5,7 @@
 //   重開 npm run dev（不要刪資料）
 //   npm run test:farmroom -- after-restart   # 確認重開後狀態還在
 //   停掉 npm run dev → node scripts/corrupt-farm-save.mjs farm（再跑一次 player、chunk）→ 重開 → npm run test:farmroom -- after-corrupt   # 存檔壞掉也打得開
+import { readFileSync } from 'node:fs';
 const B = process.env.BASE_URL || 'http://127.0.0.1:8787', WSB = B.replace(/^http/, 'ws'), PASS = 'pass123456';
 const j = async (path, opts = {}, token) => {
   const r = await fetch(B + path, { method: opts.method || (opts.body ? 'POST' : 'GET'), headers: { 'content-type': 'application/json', ...(token ? { authorization: 'Bearer ' + token } : {}), ...(opts.headers || {}) }, body: opts.body ? JSON.stringify(opts.body) : undefined });
@@ -257,9 +258,15 @@ A.send({ t: 'emote', e: '😊' }); check('表情會送到', !!(await Bc.wait('em
 Bc.clear(); A.send({ t: 'emote', e: '<script>' }); await sleep(250); check('清單以外的表情不會送', !Bc.log.some((m) => m.t === 'emote'));
 
 // ---- 外觀（建立角色、換裝）----
-const LOOK = { gender: 'girl', skin: '#ffe0bd', eyes: 'lash', brows: 'thin', mouths: 'smile', hair: 'twin', hairColor: '#8a5a34', top: 'stripe', topColor: '#e88ab0', bottom: 'skirt', bottomColor: '#3b6ea8', shoes: 'boot', shoesColor: '#8a5a34', hat: 'none', hatColor: '#f6d34a', acc: 'none' };
+const PARTS = JSON.parse(readFileSync(new URL('../public/games/farm/data/doll/parts.json', import.meta.url), 'utf8'));
+const { upgradeLook } = await import('../public/games/farm/shared/look.js');
+const LOOK = { ...PARTS.presets.girl, hair: 'bob' }; // 外觀用的是 LPC 的零件（data/doll/parts.json）
+// 舊的手繪紙娃娃外觀（美術換成 LPC 之前存的）：讀進來會換成新的零件和最接近的顏色
+const OLD = { gender: 'girl', skin: '#ffe0bd', eyes: 'lash', brows: 'thin', mouths: 'smile', hair: 'twin', hairColor: '#8a5a34', top: 'stripe', topColor: '#e88ab0', bottom: 'skirt', bottomColor: '#3b6ea8', shoes: 'boot', shoesColor: '#8a5a34', hat: 'straw', hatColor: '#f6d34a', acc: 'a43a' }, UP = upgradeLook(OLD, PARTS);
+const inList = (lk) => ['eyes', 'brows', 'mouths', 'hair', 'top', 'bottom', 'shoes', 'hat', 'acc'].every((k) => PARTS[k].some((v) => v.id === lk[k])) && [['skin', 'skin'], ['hairColor', 'hair'], ['topColor', 'cloth'], ['bottomColor', 'cloth'], ['shoesColor', 'cloth'], ['hatColor', 'cloth']].every(([k, l]) => PARTS.colors[l].includes(lk[k]));
+check('舊造型換成新零件：雙馬尾→LPC 雙馬尾、草帽→圓頂帽、舊眼鏡→圓框眼鏡，顏色都換成清單裡的', UP.hair === 'pigtails' && UP.hat === 'bowler' && UP.acc === 'glasses_round' && UP.top === 'tshirt_vneck' && inList(UP), JSON.stringify(UP));
 Bc.clear(); A.send({ t: 'look', look: LOOK, name: '  晴<b>晴  ' + '長'.repeat(30) });
-const lk = await Bc.wait('look'); check('外觀存起來並通知對方；名字去掉奇怪的字、最多 10 個字', !!lk && lk.look.hair === 'twin' && lk.name.startsWith('晴b晴') && lk.name.length === 10, lk && lk.name);
+const lk = await Bc.wait('look'); check('外觀存起來並通知對方；名字去掉奇怪的字、最多 10 個字', !!lk && lk.look.hair === 'bob' && lk.name.startsWith('晴b晴') && lk.name.length === 10, lk && lk.name);
 Bc.clear(); A.send({ t: 'look', look: { ...LOOK, hair: 'dragon' } }); A.send({ t: 'look', look: { ...LOOK, topColor: 'url(x)' } }); A.send({ t: 'look', look: { ...LOOK, extra: 1, top: undefined } }); await sleep(300);
 check('清單以外的零件、顏色不收', !Bc.log.some((m) => m.t === 'look'));
 
@@ -383,7 +390,7 @@ await go(Bc, 5, 7.6); await req(Bc, { t: 'warp', i: 0 }); await go(Bc, 42.5, 16)
 const fm = Bc.farm.money, fs = await req(Bc, { t: 'fest-score', fest: 'flower', score: 20 });
 check('接花瓣 20 分：拿到第二級的獎（150 元和鬱金香種子 3 包）；一年只能領一次；別的節慶今天不能交', fs.t === 'ok' && fs.tier === 1 && Bc.farm.money === fm + 150 && has(Bc, 'seed_tulip') === 3 && (await req(Bc, { t: 'fest-score', fest: 'flower', score: 99 })).reason === 'already' && (await req(Bc, { t: 'fest-score', fest: 'egg', score: 5 })).reason === 'closed', JSON.stringify(fs));
 const A2 = open(dm.id, a.token); const s2 = await A2.wait('snapshot');
-check('重新上線：造型和名字還在', !!s2 && !!s2.you.look && s2.you.look.hair === 'twin' && s2.you.name.startsWith('晴b晴'));
+check('重新上線：造型和名字還在', !!s2 && !!s2.you.look && s2.you.look.hair === 'bob' && s2.you.name.startsWith('晴b晴'));
 check('重新上線：人還在農舍裡、背包還在、看得到離線時的變化', !!s2 && s2.you.map === 'house' && s2.self.inv.some((x) => x && x.id === 'seed_strawberry') && s2.farm.day === 10 && s2.farm.animals.length === 1 && s2.farm.pets.length === 1);
 check('「你不在時發生的事」：過了 8 天、對方澆水和收成', !!s2 && !!s2.summary && s2.summary.days === 8 && s2.summary.acts.harvest >= 1 && s2.summary.acts.water >= 1, s2 && JSON.stringify(s2.summary));
 check('圖鑑記下拿到過的東西、統計記下做過的事（兩個人共用）', Object.keys(s2.farm.codex).length >= 15 && !!s2.farm.codex.carrot && s2.farm.stats.harvest >= 1 && s2.farm.stats.fish >= 1 && s2.farm.houseLv === 1, `圖鑑 ${Object.keys(s2.farm.codex).length} 種`);
