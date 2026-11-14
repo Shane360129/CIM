@@ -1,7 +1,9 @@
 {
  "note": "場景、作物、動物、道具的圖（LPC，OpenGameArt）的素材來源，由 tools/lpc/build-world.mjs 產生",
  "authors": [
+  "and many others in CREDITS-plants.txt",
   "and others in CREDITS-conifers.txt",
+  "and others listed in CREDITS-beach-desert.txt",
   "and others per Credits.txt",
   "ansimuz",
   "Barbara Rivera",
@@ -12,9 +14,11 @@
   "Casper Nilsson",
   "Charles Sanchez (CharlesGabriel)",
   "Chris Phillips",
+  "cynicmusic",
   "Daniel Armstrong (HughSpectrum)",
   "Daniel Eddeland (daneeklu)",
   "Demetrius",
+  "Eliza Wyatt (Death's Darling)",
   "Eliza Wyatt (DeathsDarling)",
   "Evert",
   "Gaurav Munjal",
@@ -23,12 +27,16 @@
   "Ivan Voirol (Silver IV)",
   "Jetrel",
   "Johann Charlot",
+  "Johann Charlot (trunk)",
+  "Joshua Taylor",
   "Lanea Zimmerman (Sharm)",
   "Leonard Pabin",
+  "madmarcel (contributor)",
   "Manuel Riecke (MrBeast)",
   "Open Surge team",
   "Paulina Riva (PauR)",
   "qubodup",
+  "Richard Kettering (Jetrel)",
   "Stephen Challener",
   "Stephen Challener (Redshrike)",
   "Surt",
@@ -90,6 +98,34 @@
    ]
   },
   {
+   "title": "[LPC] All Seasons Apple Tree",
+   "url": "https://opengameart.org/content/lpc-all-seasons-apple-tree",
+   "authors": [
+    "Eliza Wyatt (Death's Darling)",
+    "Johann Charlot (trunk)"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0"
+   ],
+   "attribution": "Tree trunk by Johann C.\nShoot'em up graphic kit:\nhttp://opengameart.org/content/lpc-a-shootem-up-complete-graphic-kit",
+   "files": []
+  },
+  {
+   "title": "[LPC] Beach / Desert",
+   "url": "https://opengameart.org/content/lpc-beach-desert",
+   "authors": [
+    "bluecarrot16",
+    "and others listed in CREDITS-beach-desert.txt"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0"
+   ],
+   "attribution": "See CREDITS-beach-desert.txt. You MUST credit all authors with the information in this file, and you must link back to this page on OpenGameArt.",
+   "files": [
+    "assets/credits/lpc-beach-desert/CREDITS-beach-desert.txt"
+   ]
+  },
+  {
    "title": "LPC compatible 3/4 view cave interior",
    "url": "https://opengameart.org/content/lpc-compatible-34-view-cave-interior",
    "authors": [
@@ -121,6 +157,25 @@
    ]
   },
   {
+   "title": "[LPC] Crops",
+   "url": "https://opengameart.org/content/lpc-crops",
+   "authors": [
+    "bluecarrot16",
+    "Daniel Eddeland (daneeklu)",
+    "Joshua Taylor",
+    "Richard Kettering (Jetrel)"
+   ],
+   "licenses": [
+    "CC-BY-SA 4.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "attribution": "\"[LPC] Crops\" by bluecarrot16, Daniel Eddeland (daneeklu), Joshua Taylor, Richard Kettering (Jetrel). Commissioned by castelonia. See CREDITS-crops.txt. You MUST include all information in the \"ATTRIBUTION STATEMENT\" section of this file.",
+   "files": [
+    "assets/credits/lpc-crops/CREDITS-crops.txt"
+   ]
+  },
+  {
    "title": "[LPC] Farming tilesets, magic animations and UI elements",
    "url": "https://opengameart.org/content/lpc-farming-tilesets-magic-animations-and-ui-elements",
    "authors": [
@@ -133,6 +188,56 @@
    "attribution": null,
    "files": [
     "assets/credits/lpc-farming-tilesets-magic-animations-and-ui-elements/readme.txt"
+   ]
+  },
+  {
+   "title": "[LPC] Flower grow cycle",
+   "url": "https://opengameart.org/content/lpc-flower-grow-cycle",
+   "authors": [
+    "Lanea Zimmerman (Sharm)",
+    "William Thompson",
+    "madmarcel (contributor)"
+   ],
+   "licenses": [
+    "CC-BY 3.0",
+    "GPL 3.0",
+    "GPL 2.0",
+    "OGA-BY 3.0"
+   ],
+   "attribution": "Please credit Lanea Zimmerman \"Sharm\" as graphic artist. If you want to credit me you can list me as a contributor.",
+   "files": []
+  },
+  {
+   "title": "[LPC] Flowers / Plants / Fungi / Wood",
+   "url": "https://opengameart.org/content/lpc-flowers-plants-fungi-wood",
+   "authors": [
+    "bluecarrot16",
+    "and many others in CREDITS-plants.txt"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0"
+   ],
+   "attribution": "See CREDITS-plants.txt. You MUST credit all contributors with the information in the credits file, and you must link back to this page on OpenGameArt.",
+   "files": [
+    "assets/credits/lpc-flowers-plants-fungi-wood/CREDITS-plants.txt"
+   ]
+  },
+  {
+   "title": "[LPC] Fruit Trees",
+   "url": "https://opengameart.org/content/lpc-fruit-trees",
+   "authors": [
+    "bluecarrot16",
+    "Joshua Taylor",
+    "cynicmusic"
+   ],
+   "licenses": [
+    "CC-BY-SA 4.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "attribution": "\"[LPC] Fruit Trees\" by bluecarrot16, Joshua Taylor, and cynicmusic. Commissioned by castelonia. See CREDITS-fruit-trees.txt. You MUST include all information in this file, including a link back to this page on OpenGameArt.org",
+   "files": [
+    "assets/credits/lpc-fruit-trees/CREDITS-fruit-trees.txt"
    ]
   },
   {

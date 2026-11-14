@@ -28,7 +28,7 @@ const PACKS = JSON.parse(await readFile(path.join(import.meta.dirname, 'oga-pack
 
 // ---------- 讀對照表 ----------
 const dir = path.join(import.meta.dirname, 'world'), specs = new Map();
-for (const f of (await readdir(dir)).filter((f) => f.endsWith('.json') && (!onlyFile || f === onlyFile)).sort()) {
+for (const f of (await readdir(dir)).filter((f) => f.endsWith('.json') && (!onlyFile || onlyFile.split(',').includes(f))).sort()) {
   let m; try { m = JSON.parse(await readFile(path.join(dir, f), 'utf8')); } catch (e) { if (!preview) throw new Error(`${f} 不是正確的 JSON：${e.message}`); console.log(`略過 ${f}（JSON 有錯：${e.message}）`); continue; }
   for (const [name, s] of Object.entries(m.sprites || {})) {
     const add = (n, spec) => { if (specs.has(n)) throw new Error(`${n} 在兩個對照表裡都有（${f}）`); specs.set(n, { ...(m.defaults || {}), ...spec, from: f }); };
