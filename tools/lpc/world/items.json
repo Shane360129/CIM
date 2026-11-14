@@ -2460,41 +2460,56 @@
    ]
   },
   "tool/hoe": {
-   "note": "no LPC hoe icon: upright hoe from the medieval farm-tool set",
-   "src": "lpc-medieval-village-decorations/x/decoration_medieval.zip/decoration_medieval/decorations-medieval.png",
+   "note": "LPC 沒有鋤頭圖示：用拿著鋤頭往前刺那一格裡的鋤頭（橫的，跟十字鎬的圖示一樣方向）",
+   "src": "lpc-hand-tools/x/lpc-hand-tools.zip/lpc-hand-tools/tools/thrust/hoe.png",
    "rect": [
-    256,
-    600,
-    32,
-    40
-   ],
-   "native": false
-  },
-  "tool/hoe_copper": {
-   "src": "lpc-medieval-village-decorations/x/decoration_medieval.zip/decoration_medieval/decorations-medieval.png",
-   "rect": [
-    256,
-    600,
-    32,
-    40
+    340,
+    484,
+    44,
+    24
    ],
    "native": false,
+   "isolate": true
+  },
+  "tool/hoe_copper": {
+   "note": "鋤頭：鐵的部分換成銅色",
+   "src": "lpc-hand-tools/x/lpc-hand-tools.zip/lpc-hand-tools/tools/thrust/hoe.png",
+   "rect": [
+    340,
+    484,
+    44,
+    24
+   ],
+   "native": false,
+   "isolate": true,
    "recolor": [
     [
      "#2e2533",
      "#4e2410"
     ],
     [
-     "#45415c",
+     "#4d4a5d",
      "#763819"
     ],
     [
      "#726b7e",
-     "#a35022"
+     "#a3522a"
     ],
     [
-     "#404053",
-     "#703518"
+     "#867e7f",
+     "#c46a36"
+    ],
+    [
+     "#c4b59f",
+     "#e09060"
+    ],
+    [
+     "#e5e6c7",
+     "#f2b07a"
+    ],
+    [
+     "#ffffff",
+     "#ffd0a0"
     ]
    ]
   },

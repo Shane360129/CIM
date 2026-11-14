@@ -32,13 +32,8 @@
       "native": false
     },
     "terrain/soil": {
-      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
-      "rect": [
-        0,
-        0,
-        96,
-        96
-      ],
+      "note": "田（還沒翻土）：平的泥土；翻過的田（tilled/dry、tilled/wet）才有一條一條的犁溝，看得出差別",
+      "src": "liberated-pixel-cup-lpc-base-assets-sprites-map-tiles/x/lpc_base_assets.zip/LPC Base Assets/tiles/dirt2.png",
       "trim": false,
       "native": false
     },
@@ -267,6 +262,99 @@
         32,
         32
       ]
+    },
+    "fish/twin": {
+      "note": "比翼魚：兩條錦鯉（一條橘、一條粉紅）並排，LPC 沒有這種魚",
+      "native": false,
+      "size": [
+        40,
+        40
+      ],
+      "parts": [
+        {
+          "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+          "rect": [
+            192,
+            480,
+            32,
+            32
+          ],
+          "at": [
+            0,
+            0
+          ],
+          "recolor": [
+            [
+              "#7b763a",
+              "#e05a28"
+            ],
+            [
+              "#a09f44",
+              "#f28a42"
+            ],
+            [
+              "#d2cf77",
+              "#fff2e6"
+            ],
+            [
+              "#f6f4c0",
+              "#ffffff"
+            ],
+            [
+              "#5c5951",
+              "#d6c4bc"
+            ]
+          ]
+        },
+        {
+          "src": "lpc-food/x/lpc-food-v2.zip/lpc-food-v2/animal-products.png",
+          "rect": [
+            192,
+            480,
+            32,
+            32
+          ],
+          "at": [
+            8,
+            10
+          ],
+          "recolor": [
+            [
+              "#7b763a",
+              "#d0487a"
+            ],
+            [
+              "#a09f44",
+              "#ee7aa8"
+            ],
+            [
+              "#d2cf77",
+              "#ffe6f0"
+            ],
+            [
+              "#f6f4c0",
+              "#ffffff"
+            ],
+            [
+              "#5c5951",
+              "#d8bcc8"
+            ]
+          ],
+          "flip": true
+        }
+      ]
+    },
+    "terrain/garden": {
+      "note": "小鎮的菜園（居民在種，一直是翻過的樣子）",
+      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+      "rect": [
+        0,
+        0,
+        96,
+        96
+      ],
+      "trim": false,
+      "native": false
     }
   }
 }

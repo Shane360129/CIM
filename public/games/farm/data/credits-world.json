@@ -1,22 +1,36 @@
 {
  "note": "場景、作物、動物、道具的圖（LPC，OpenGameArt）的素材來源，由 tools/lpc/build-world.mjs 產生",
  "authors": [
+  "7Soul",
   "and many others in CREDITS-plants.txt",
+  "and others in credits",
   "and others in CREDITS-conifers.txt",
+  "and others in credits.txt",
   "and others listed in CREDITS-beach-desert.txt",
   "and others per Credits.txt",
   "ansimuz",
+  "bagzie",
   "Barbara Rivera",
   "Bart K.",
+  "Baŝto",
+  "BenCreating",
   "Blarumyrran",
   "bluecarrot16",
+  "bluecarrot16 (CC0 original)",
+  "Bonsaiheldin",
+  "brooss",
   "Buch",
   "Casper Nilsson",
   "Charles Sanchez (CharlesGabriel)",
   "Chris Phillips",
+  "commissioned by tebruno99",
   "cynicmusic",
+  "Daneeklu",
   "Daniel Armstrong (HughSpectrum)",
+  "Daniel Eddeland",
   "Daniel Eddeland (daneeklu)",
+  "Daniel Eddeland (Daneeklu)",
+  "DCSS Contributors",
   "Demetrius",
   "Eliza Wyatt (Death's Darling)",
   "Eliza Wyatt (DeathsDarling)",
@@ -24,28 +38,69 @@
   "Gaurav Munjal",
   "Guido Bos",
   "Hyptosis",
+  "Inboxninja",
+  "Ivan Voirol",
   "Ivan Voirol (Silver IV)",
+  "Janna/Lilius/Jannax",
+  "Jerom",
   "Jetrel",
   "Johann Charlot",
   "Johann Charlot (trunk)",
+  "Johannes Sjölund (wulax)",
+  "Johannes Sjölund (Wulax)",
+  "Jordan Irwin (AntumDeluge)",
   "Joshua Taylor",
   "Lanea Zimmerman (Sharm)",
   "Leonard Pabin",
   "madmarcel (contributor)",
   "Manuel Riecke (MrBeast)",
+  "Molly \"Cougarmint\" Willits",
+  "n2liquid",
+  "NaRNeRZz",
   "Open Surge team",
   "Paulina Riva (PauR)",
+  "Pierre Vigier",
+  "PriorBlue",
   "qubodup",
+  "RedVoxel",
+  "Reemax",
   "Richard Kettering (Jetrel)",
+  "Sevarihk (shiba dog, shark, giant rat, walking mushroom, underwater tiles)",
+  "Shepardskin (original chicken)",
   "Stephen Challener",
   "Stephen Challener (Redshrike)",
   "Surt",
+  "swirlingskirts",
   "Talosaurus",
+  "tapatilorenzo",
+  "thekingphoenix",
+  "Tuomo Untinen",
+  "Tuomo Untinen (Reemax)",
+  "WhitePaperChan",
   "William Thompson",
+  "William Thompson (contributor)",
+  "William.Thompsonj",
+  "Wolthera van Hövell tot Westerflier (TheraHedwig)",
   "Yar",
   "Zabin"
  ],
  "packs": [
+  {
+   "title": "Chick",
+   "url": "https://opengameart.org/content/chick",
+   "authors": [
+    "Jordan Irwin (AntumDeluge)",
+    "Shepardskin (original chicken)"
+   ],
+   "licenses": [
+    "CC0"
+   ],
+   "attribution": null,
+   "files": [
+    "assets/credits/chick/LICENSE.txt",
+    "assets/credits/chick/README.txt"
+   ]
+  },
   {
    "title": "LPC Revised — official GitHub repository (ElizaWy/LPC), selected non-character files",
    "url": "https://github.com/ElizaWy/LPC",
@@ -98,6 +153,21 @@
    ]
   },
   {
+   "title": "Livestock",
+   "url": "https://opengameart.org/content/livestock-0",
+   "authors": [
+    "brooss"
+   ],
+   "licenses": [
+    "CC-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0",
+    "GPL 2.0"
+   ],
+   "attribution": null,
+   "files": []
+  },
+  {
    "title": "[LPC] All Seasons Apple Tree",
    "url": "https://opengameart.org/content/lpc-all-seasons-apple-tree",
    "authors": [
@@ -123,6 +193,66 @@
    "attribution": "See CREDITS-beach-desert.txt. You MUST credit all authors with the information in this file, and you must link back to this page on OpenGameArt.",
    "files": [
     "assets/credits/lpc-beach-desert/CREDITS-beach-desert.txt"
+   ]
+  },
+  {
+   "title": "[LPC] bears, deer, lions and more",
+   "url": "https://opengameart.org/content/lpc-bears-deer-lions-and-more",
+   "authors": [
+    "tapatilorenzo",
+    "Sevarihk (shiba dog, shark, giant rat, walking mushroom, underwater tiles)"
+   ],
+   "licenses": [
+    "CC-BY 4.0"
+   ],
+   "attribution": "Adapted from work by Sevarihk under CC-BY 4.0 license, including the shiba dog, shark, giant rat, walking mushroom, and underwater tile sprites.",
+   "files": []
+  },
+  {
+   "title": "LPC cakes",
+   "url": "https://opengameart.org/content/lpc-cakes",
+   "authors": [
+    "WhitePaperChan",
+    "bluecarrot16 (CC0 original)"
+   ],
+   "licenses": [
+    "CC0"
+   ],
+   "attribution": "Cake from \"[LPC] Foods\" by bluecarrot16 licensed CC0 (https://opengameart.org/content/lpc-food). Crediting me for edits is not required.",
+   "files": []
+  },
+  {
+   "title": "[LPC] Cats and Dogs",
+   "url": "https://opengameart.org/content/lpc-cats-and-dogs",
+   "authors": [
+    "bluecarrot16"
+   ],
+   "licenses": [
+    "CC-BY 3.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0",
+    "GPL 2.0",
+    "OGA-BY 3.0"
+   ],
+   "attribution": "\"[LPC] Cats and Dogs\" Artist: bluecarrot16 License: CC-BY 3.0 / GPL 3.0 / GPL 2.0 / OGA-BY 3.0 Please link to opengameart: http://opengameart.org/content/lpc-cats-and-dogs",
+   "files": []
+  },
+  {
+   "title": "[LPC] Cavern and ruin tiles",
+   "url": "https://opengameart.org/content/lpc-cavern-and-ruin-tiles",
+   "authors": [
+    "Tuomo Untinen (Reemax)",
+    "and others in credits.txt"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0",
+    "GPL 3.0",
+    "GPL 2.0"
+   ],
+   "attribution": "see credits.txt",
+   "files": [
+    "assets/credits/lpc-cavern-and-ruin-tiles/credits.txt",
+    "assets/credits/lpc-cavern-and-ruin-tiles/credits.txt~"
    ]
   },
   {
@@ -157,6 +287,36 @@
    ]
   },
   {
+   "title": "[LPC] Containers",
+   "url": "https://opengameart.org/content/lpc-containers",
+   "authors": [
+    "bluecarrot16",
+    "Lanea Zimmerman (Sharm)",
+    "William Thompson",
+    "Tuomo Untinen (Reemax)",
+    "Evert",
+    "Buch",
+    "Blarumyrran",
+    "n2liquid",
+    "Jetrel",
+    "Guido Bos",
+    "Hyptosis",
+    "Bonsaiheldin",
+    "NaRNeRZz",
+    "PriorBlue",
+    "Jerom",
+    "7Soul",
+    "Wolthera van Hövell tot Westerflier (TheraHedwig)"
+   ],
+   "licenses": [
+    "CC-BY-SA 4.0"
+   ],
+   "attribution": "[LPC] Containers by bluecarrot16, Lanea Zimmerman (Sharm), William Thompson, Tuomo Untinen (Reemax), Evert, Buch, Blarumyrran, n2liquid, Jetrel, Guido Bos, Hyptosis, Bonsaiheldin, NaRNeRZz, PriorBlue, Jerom, 7Soul, and Wolthera van Hövell tot Westerflier (TheraHedwig). See CREDITS-container.txt. You MUST include all information in this file.",
+   "files": [
+    "assets/credits/lpc-containers/CREDITS-container.txt"
+   ]
+  },
+  {
    "title": "[LPC] Crops",
    "url": "https://opengameart.org/content/lpc-crops",
    "authors": [
@@ -173,6 +333,22 @@
    "attribution": "\"[LPC] Crops\" by bluecarrot16, Daniel Eddeland (daneeklu), Joshua Taylor, Richard Kettering (Jetrel). Commissioned by castelonia. See CREDITS-crops.txt. You MUST include all information in the \"ATTRIBUTION STATEMENT\" section of this file.",
    "files": [
     "assets/credits/lpc-crops/CREDITS-crops.txt"
+   ]
+  },
+  {
+   "title": "[LPC] Farm",
+   "url": "https://opengameart.org/content/lpc-farm",
+   "authors": [
+    "bluecarrot16",
+    "Wolthera van Hövell tot Westerflier (TheraHedwig)",
+    "Ivan Voirol"
+   ],
+   "licenses": [
+    "CC-BY 4.0"
+   ],
+   "attribution": "\"[LPC] Farm\" by bluecarrot16, Wolthera van Hövell tot Westerflier (TheraHedwig), and Ivan Voirol. License: CC-BY 4.0. http://opengameart.org/content/lpc-farm .\nBased on: \"Slates [32x32px orthogonal tileset by Ivan Voirol]\" by Ivan Voirol. License: CC-BY 4.0\nhttps://opengameart.org/content/slates-32x32px-orthogonal-tileset-by-ivan-voirol . \"LPC compatible Ancient Greek Architecture\" by Wolthera van Hövell tot Westerflier (TheraHedwig). Licenses: CC-BY-4.0 / GPL-3.0 / OGA-BY-3.0. https://opengameart.org/content/lpc-compatible-ancient-greek-architecture",
+   "files": [
+    "assets/credits/lpc-farm/CREDITS-farm.txt"
    ]
   },
   {
@@ -223,6 +399,27 @@
    ]
   },
   {
+   "title": "[LPC] Food",
+   "url": "https://opengameart.org/content/lpc-food",
+   "authors": [
+    "bluecarrot16",
+    "Daniel Eddeland (daneeklu)",
+    "Joshua Taylor",
+    "Richard Kettering (Jetrel)",
+    "thekingphoenix",
+    "RedVoxel",
+    "Molly \"Cougarmint\" Willits"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "attribution": "\"[LPC] Foods\" by bluecarrot16, Daniel Eddeland (daneeklu), Joshua Taylor, Richard Kettering (Jetrel), thekingphoenix, RedVoxel, and Molly \"Cougarmint\" Willits. See CREDITS-food.txt. Please include a link back to this page on OpenGameArt.",
+   "files": [
+    "assets/credits/lpc-food/CREDITS-food.txt"
+   ]
+  },
+  {
    "title": "[LPC] Fruit Trees",
    "url": "https://opengameart.org/content/lpc-fruit-trees",
    "authors": [
@@ -239,6 +436,143 @@
    "files": [
     "assets/credits/lpc-fruit-trees/CREDITS-fruit-trees.txt"
    ]
+  },
+  {
+   "title": "[LPC] Golem",
+   "url": "https://opengameart.org/content/lpc-golem",
+   "authors": [
+    "Stephen Challener (Redshrike)",
+    "William Thompson (contributor)"
+   ],
+   "licenses": [
+    "CC-BY 4.0",
+    "CC-BY 3.0",
+    "GPL 3.0",
+    "GPL 2.0",
+    "OGA-BY 3.0"
+   ],
+   "attribution": "Attribute Stephen \"Redshrike\" Challener as graphic artist and William.Thompsonj as contributor. If reasonable link to this page or the OGA homepage.",
+   "files": []
+  },
+  {
+   "title": "[LPC] Hand Tools",
+   "url": "https://opengameart.org/content/lpc-hand-tools",
+   "authors": [
+    "bluecarrot16",
+    "Pierre Vigier",
+    "Tuomo Untinen",
+    "Johannes Sjölund (wulax)",
+    "Inboxninja"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0"
+   ],
+   "attribution": "\"[LPC] Hand Tools\" by bluecarrot16, Pierre Vigier, Tuomo Untinen, Johannes Sjölund (wulax), and Inboxninja.\nLicense: CC-BY-SA 3.0 <https://creativecommons.org/licenses/by-sa/3.0/>. URL: <https://opengameart.org/content/lpc-hand-tools>\n\nBased on:  \"[LPC] Spear and Shovel Reworked\" by Pierre Vigier, Johannes Sjölund (wulax) and Inboxninja. License: CC-BY-SA 3.0 <https://opengameart.org/content/lpc-spear-and-shovel-reworked>; \"[LPC] Smash Weapons\" by Pierre Vigier and Tuomo Untinen. License: OGA-BY 3.0, CC-BY 4.0, CC-BY-SA 4.0, CC-BY-SA 3.0, GPL 3.0, or GPL 2.0. <https://opengameart.org/content/lpc-smash-weapons>; \"[LPC] Fishing Rod\" by bluecarrot16. License: OGA-BY 3.0+, CC-BY 3.0+, GPL v2.0+. For all contributions by bluecarrot16, clauses of the CC licenses pertaining to the use of effective technological measures (e.g. DRM) are waived.",
+   "files": [
+    "assets/credits/lpc-hand-tools/CREDITS-hand-tools.txt",
+    "assets/credits/lpc-hand-tools/CREDITS-fishing.txt"
+   ]
+  },
+  {
+   "title": "[LPC] House interior and decorations",
+   "url": "https://opengameart.org/content/lpc-house-interior-and-decorations",
+   "authors": [
+    "Tuomo Untinen (Reemax)",
+    "and others in credits.txt"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0",
+    "GPL 3.0",
+    "GPL 2.0"
+   ],
+   "attribution": "See credits.txt",
+   "files": [
+    "assets/credits/lpc-house-interior-and-decorations/credits.txt"
+   ]
+  },
+  {
+   "title": "[LPC] Items and game effects",
+   "url": "https://opengameart.org/content/lpc-items-and-game-effects",
+   "authors": [
+    "Tuomo Untinen (Reemax)",
+    "Johannes Sjölund (Wulax)",
+    "Daniel Eddeland",
+    "and others in credits"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0",
+    "GPL 3.0",
+    "GPL 2.0"
+   ],
+   "attribution": "See credits.txt",
+   "files": [
+    "assets/credits/lpc-items-and-game-effects/credits.txt"
+   ]
+  },
+  {
+   "title": "[LPC] Meals",
+   "url": "https://opengameart.org/content/lpc-meals",
+   "authors": [
+    "bluecarrot16",
+    "Daniel Eddeland (daneeklu)",
+    "Joshua Taylor",
+    "Richard Kettering (Jetrel)"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "attribution": "\"[LPC] Meals\" by bluecarrot16, Daniel Eddeland (daneeklu), Joshua Taylor, and Richard Kettering (Jetrel), commissioned by castelonia. CC-BY-SA 3.0 / GPL 3.0.\nhttps://opengameart.org/content/lpc-meals",
+   "files": [
+    "assets/credits/lpc-meals/CREDITS-meals.txt"
+   ]
+  },
+  {
+   "title": "[LPC] Mine",
+   "url": "https://opengameart.org/content/lpc-mine",
+   "authors": [
+    "bluecarrot16",
+    "Lanea Zimmerman (Sharm)",
+    "Ivan Voirol"
+   ],
+   "licenses": [
+    "CC-BY 4.0"
+   ],
+   "attribution": "\"[LPC] Mine\" by bluecarrot16, Lanea Zimmerman (Sharm), and Ivan Voirol. License: CC-BY-4.0. Based on:\n\n\"Liberated Pixel Cup (LPC) Base Assets (sprites & map tiles)\" by Lanea Zimmerman (Sharm), CC-BY 3.0+ <https://opengameart.org/comment/18611#comment-18611> <https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles>;\n\"LPC Weapons\" by Reemax, CC-BY 4.0 / CC-BY-SA 4.0 / CC-BY-SA 3.0 / GPL 3.0 / GPL 2.0 / OGA-BY 3.0 <https://opengameart.org/content/lpc-weapons>; and\n\"Slates [32x32px orthogonal tileset by Ivan Voirol]\", CC-BY 4.0 <https://opengameart.org/content/slates-32x32px-orthogonal-tileset-by-ivan-voirol>",
+   "files": [
+    "assets/credits/lpc-mine/CREDITS-mine.txt",
+    "assets/credits/lpc-mine/README-mine.txt"
+   ]
+  },
+  {
+   "title": "[LPC] Monsters",
+   "url": "https://opengameart.org/content/lpc-monsters",
+   "authors": [
+    "Charles Sanchez (CharlesGabriel)",
+    "bagzie",
+    "bluecarrot16"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "attribution": "\"[LPC] Monsters\" by Charles Sanchez (CharlesGabriel), bagzie, and bluecarrot16. License: CC-BY-SA 3.0+ or GPL 3.0+. https://opengameart.org/content/lpc-monsters https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles https://opengameart.org/content/bat-sprite",
+   "files": []
+  },
+  {
+   "title": "[LPC] Ore and Forge",
+   "url": "https://opengameart.org/content/lpc-ore-and-forge",
+   "authors": [
+    "bluecarrot16"
+   ],
+   "licenses": [
+    "CC-BY 4.0",
+    "CC-BY 3.0",
+    "GPL 3.0",
+    "OGA-BY 3.0"
+   ],
+   "attribution": "\"[LPC] Ore and Forge\" by bluecarrot16, commissioned by Pierre Vigier (pvigier). CC-BY 3.0+ / GPL 3.0+ / OGA-BY 3.0+",
+   "files": []
   },
   {
    "title": "[LPC Revised] 4-Season Terrain",
@@ -293,6 +627,69 @@
    ]
   },
   {
+   "title": "LPC style farm animals",
+   "url": "https://opengameart.org/content/lpc-style-farm-animals",
+   "authors": [
+    "Daniel Eddeland (daneeklu)",
+    "commissioned by tebruno99"
+   ],
+   "licenses": [
+    "CC-BY 3.0",
+    "GPL 2.0"
+   ],
+   "attribution": null,
+   "files": []
+  },
+  {
+   "title": "[LPC] Tailor",
+   "url": "https://opengameart.org/content/lpc-tailor",
+   "authors": [
+    "bluecarrot16",
+    "Stephen Challener (Redshrike)"
+   ],
+   "licenses": [
+    "CC-BY 4.0",
+    "CC-BY 3.0",
+    "GPL 3.0",
+    "OGA-BY 3.0"
+   ],
+   "attribution": "\"[LPC] Tailor\" by bluecarrot16 and Stephen Challener (Redshrike); commissioned by Pierre Vigier (pvigier). OGA-BY 3.0+ / CC-BY 3.0+ / GPL v3.0+. Based on sprites from the LPC base assets https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles by Stephen Challener (Redshrike), offered under CC-BY 3.0+ / GPL v3.0+. See https://opengameart.org/comment/18639#comment-18639. Clauses of the CC-BY license pertaining to digital rights management (DRM) are waived, see https://opengameart.org/forumtopic/anti-drm-waiver#comment-27226 .",
+   "files": [
+    "assets/credits/lpc-tailor/CREDITS-tailor.txt"
+   ]
+  },
+  {
+   "title": "[LPC] Tavern",
+   "url": "https://opengameart.org/content/lpc-tavern",
+   "authors": [
+    "bluecarrot16",
+    "Lanea Zimmerman (Sharm)",
+    "William.Thompsonj",
+    "Jetrel",
+    "DCSS Contributors",
+    "Reemax",
+    "Hyptosis",
+    "Daniel Eddeland (Daneeklu)",
+    "BenCreating",
+    "Evert",
+    "tapatilorenzo"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0"
+   ],
+   "attribution": "\"[LPC] Tavern\" by bluecarrot16, Lanea Zimmerman (Sharm), William.Thompsonj, Jetrel, DCSS Contributors, Reemax, Hyptosis, Daniel Eddeland (Daneeklu), BenCreating, Evert, tapatilorenzo. License: CC-BY-SA 3.0. <https://opengameart.org/content/lpc-tavern>. See CREDITS-tavern.txt for details.",
+   "files": [
+    "assets/credits/lpc-tavern/CREDITS-tavern.txt",
+    "assets/credits/lpc-tavern/README-tavern.txt",
+    "assets/credits/lpc-tavern/CREDITS-container.txt",
+    "assets/credits/lpc-tavern/CREDITS-floors.txt",
+    "assets/credits/lpc-tavern/CREDITS-walls.txt",
+    "assets/credits/lpc-tavern/drummer.txt",
+    "assets/credits/lpc-tavern/flautist.txt",
+    "assets/credits/lpc-tavern/lutist.txt"
+   ]
+  },
+  {
    "title": "[LPC] Trees",
    "url": "https://opengameart.org/content/lpc-trees",
    "authors": [
@@ -329,6 +726,62 @@
    "files": [
     "assets/credits/lpc-trees/CREDITS-trees.txt"
    ]
+  },
+  {
+   "title": "[LPC] Wooden Furniture",
+   "url": "https://opengameart.org/content/lpc-wooden-furniture",
+   "authors": [
+    "bluecarrot16",
+    "Baŝto",
+    "Lanea Zimmerman (Sharm)",
+    "William Thompson",
+    "Tuomo Untinen (Reemax)",
+    "Janna/Lilius/Jannax"
+   ],
+   "licenses": [
+    "CC-BY-SA 4.0",
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "attribution": "\"LPC Wooden Furniture\" by bluecarrot16, Baŝto, Lanea Zimmerman (Sharm), William Thompson, Tuomo Untinen (Reemax), Janna/Lilius/Jannax. Please link back to https://opengameart.org/content/lpc-wooden-furniture .\nsee CREDITS-*.txt. All information in this file must be included.",
+   "files": [
+    "assets/credits/lpc-wooden-furniture/credits-furniture.txt_.zip",
+    "assets/credits/lpc-wooden-furniture/CREDITS-furniture.txt"
+   ]
+  },
+  {
+   "title": "[LPC] Woodshop",
+   "url": "https://opengameart.org/content/lpc-woodshop",
+   "authors": [
+    "bluecarrot16"
+   ],
+   "licenses": [
+    "CC-BY 4.0",
+    "CC-BY 3.0",
+    "GPL 3.0",
+    "GPL 2.0",
+    "OGA-BY 3.0"
+   ],
+   "attribution": "\"[LPC] Woodshop\" by bluecarrot16. OGA-BY 3.0+ / CC-BY-3.0+ / GPL v2.0+.",
+   "files": [
+    "assets/credits/lpc-woodshop/CREDITS-woodshop.txt"
+   ]
+  },
+  {
+   "title": "More LPC meals",
+   "url": "https://opengameart.org/content/more-lpc-meals",
+   "authors": [
+    "swirlingskirts",
+    "bluecarrot16",
+    "Daneeklu",
+    "Jetrel"
+   ],
+   "licenses": [
+    "CC-BY-SA 3.0",
+    "GPL 3.0"
+   ],
+   "attribution": "Bluecarrot16 https://opengameart.org/content/lpc-meals https://opengameart.org/content/lpc-food\nDaneeklu created the chicken breast\nJetrel created the drumstick",
+   "files": []
   }
  ]
 }
