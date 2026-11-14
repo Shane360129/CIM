@@ -469,10 +469,13 @@ export const play = {
         continue;
       }
       if (it.beast) { // 家畜、寵物：有圖用圖（側面，往左走就翻過來），小時候畫小一點；有產品可以收的頭上冒泡泡
-        const b = it.beast, sz = b.d.size * (b.baby ? 0.6 : 1) * T, bx = b.x * T, by = b.y * T - (b.moving ? Math.abs(Math.sin(performance.now() / 130 + b.an.id)) * T * 0.04 : 0);
+        // 寵物照毛色選最接近的那一種圖；走路的時候播四格走路動畫（沒有走路圖的小動物就上下彈）
+        const b = it.beast, sz = b.d.size * (b.baby ? 0.6 : 1) * T, bx = b.x * T, art = b.d.art + petVariant(b.d, b.an.color);
+        const walk = b.moving && !b.baby && `${art}/walk${Math.floor(performance.now() / 140 + b.an.id) % 4}`, hasWalk = walk && sprite(walk);
+        const by = b.y * T - (b.moving && !hasWalk ? Math.abs(Math.sin(performance.now() / 130 + b.an.id)) * T * 0.04 : 0);
         if (!low) drawShadow(g, bx, b.y * T, sz * 0.7);
         g.save(); g.translate(bx, by); if (b.flip) g.scale(-1, 1);
-        if (!drawSprite(g, `${b.d.art}/${b.baby ? 'baby_side' : 'side'}`, 0, 0, sz, sz)) { g.fillStyle = b.an.color; g.strokeStyle = '#5a3d22'; g.lineWidth = Math.max(1.5, T * 0.04); g.beginPath(); g.ellipse(0, -sz * 0.3, sz * 0.38, sz * 0.28, 0, 0, 7); g.fill(); g.stroke(); g.beginPath(); g.arc(sz * 0.3, -sz * 0.5, sz * 0.17, 0, 7); g.fill(); g.stroke(); }
+        if (!(hasWalk && drawSprite(g, walk, 0, 0, sz, sz)) && !drawSprite(g, `${art}/${b.baby ? 'baby_side' : 'side'}`, 0, 0, sz, sz) && !drawSprite(g, `${b.d.art}/${b.baby ? 'baby_side' : 'side'}`, 0, 0, sz, sz)) { g.fillStyle = b.an.color; g.strokeStyle = '#5a3d22'; g.lineWidth = Math.max(1.5, T * 0.04); g.beginPath(); g.ellipse(0, -sz * 0.3, sz * 0.38, sz * 0.28, 0, 0, 7); g.fill(); g.stroke(); g.beginPath(); g.arc(sz * 0.3, -sz * 0.5, sz * 0.17, 0, 7); g.fill(); g.stroke(); }
         g.restore();
         if (b.an.ready) { drawBubble(g, ' ', bx, by - sz * 1.0, T, true); if (!drawSprite(g, data.items[b.d.product].art, bx, by - sz * 1.0 - T * 0.13, T * 0.45, T * 0.45)) drawName(g, '！', bx, by - sz - T * 0.3, T); }
         continue;
@@ -521,3 +524,10 @@ export const play = {
   },
 };
 const clampX = (x, w, pad) => Math.max(pad, Math.min(w - pad, x));
+// 寵物的毛色：data/animals.json 的 variants 是圖集裡每一種毛色的代表色，選跟這隻寵物的顏色最接近的（沒有 variants 就用預設的圖）
+function petVariant(d, color) {
+  if (!d.variants || !/^#[0-9a-f]{6}$/i.test(color || '')) return '';
+  const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)), c = rgb(color);
+  let best = 0, bd = Infinity; d.variants.forEach((h, i) => { const v = rgb(h), e = (v[0] - c[0]) ** 2 + (v[1] - c[1]) ** 2 + (v[2] - c[2]) ** 2; if (e < bd) { bd = e; best = i; } });
+  return `/c${best}`;
+}

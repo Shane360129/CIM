@@ -5322,14 +5322,15 @@
    ]
   },
   "animal/chicken/side": {
-   "note": "GROUP animals (native; side faces right) | lpc-style-farm-animals chicken, row 3 faces right",
    "src": "lpc-style-farm-animals/chicken_walk.png",
    "rect": [
     1,
     100,
-    30,
-    25
-   ]
+    31,
+    26
+   ],
+   "trim": false,
+   "note": "GROUP animals (native; side faces right) | lpc-style-farm-animals chicken, row 3 faces right"
   },
   "animal/chicken/baby_side": {
    "note": "chick (faces left in source, flipped), recoloured yellow",
@@ -5357,14 +5358,15 @@
    ]
   },
   "animal/duck/side": {
-   "note": "stand-in (no LPC duck): chicken with comb cropped off, wattle/beak/legs recoloured orange",
    "src": "lpc-style-farm-animals/chicken_walk.png",
    "rect": [
     1,
     103,
-    30,
-    22
+    31,
+    23
    ],
+   "trim": false,
+   "note": "stand-in (no LPC duck): chicken with comb cropped off, wattle/beak/legs recoloured orange",
    "recolor": [
     [
      "#9e3e37",
@@ -5396,14 +5398,15 @@
    "flip": true
   },
   "animal/cow/side": {
-   "note": "cow_walk row 3 faces right",
    "src": "lpc-style-farm-animals/cow_walk.png",
    "rect": [
     36,
-    429,
+    428,
     71,
-    44
-   ]
+    45
+   ],
+   "trim": false,
+   "note": "cow_walk row 3 faces right"
   },
   "animal/cow/baby_side": {
    "note": "stand-in calf: livestock-0 small cow, faces right",
@@ -5416,14 +5419,15 @@
    ]
   },
   "animal/sheep/side": {
-   "note": "sheep_walk row 3 faces right",
    "src": "lpc-style-farm-animals/sheep_walk.png",
    "rect": [
     42,
-    428,
+    427,
     49,
-    38
-   ]
+    40
+   ],
+   "trim": false,
+   "note": "sheep_walk row 3 faces right"
   },
   "animal/sheep/baby_side": {
    "note": "stand-in lamb: livestock-0 small sheep, faces right",
@@ -5436,14 +5440,15 @@
    ]
   },
   "animal/cat/side": {
-   "note": "ginger cat, row 0 faces right",
    "src": "lpc-cats-and-dogs/cat.png",
    "rect": [
     132,
-    8,
+    7,
     24,
-    19
-   ]
+    20
+   ],
+   "trim": false,
+   "note": "沒有指定毛色時用的"
   },
   "animal/cat/baby_side": {
    "note": "stand-in kitten: the cat frame with body middle and leg rows cut out",
@@ -5507,14 +5512,15 @@
    ]
   },
   "animal/dog/side": {
-   "note": "yellow dog, row 0 faces right",
    "src": "lpc-cats-and-dogs/dog.png",
    "rect": [
-    259,
-    8,
-    26,
-    21
-   ]
+    258,
+    7,
+    27,
+    22
+   ],
+   "trim": false,
+   "note": "沒有指定毛色時用的"
   },
   "animal/dog/baby_side": {
    "note": "stand-in puppy: the dog frame with body middle and leg rows cut out",
@@ -5576,6 +5582,730 @@
     19,
     19
    ]
+  },
+  "animal/chicken/walk0": {
+   "src": "lpc-style-farm-animals/chicken_walk.png",
+   "rect": [
+    1,
+    100,
+    31,
+    26
+   ],
+   "trim": false,
+   "note": "走路的四格（往右），每一格一樣大，換格子時不會晃；side（站著）用第一格"
+  },
+  "animal/chicken/walk1": {
+   "src": "lpc-style-farm-animals/chicken_walk.png",
+   "rect": [
+    33,
+    100,
+    31,
+    26
+   ],
+   "trim": false
+  },
+  "animal/chicken/walk2": {
+   "src": "lpc-style-farm-animals/chicken_walk.png",
+   "rect": [
+    65,
+    100,
+    31,
+    26
+   ],
+   "trim": false
+  },
+  "animal/chicken/walk3": {
+   "src": "lpc-style-farm-animals/chicken_walk.png",
+   "rect": [
+    97,
+    100,
+    31,
+    26
+   ],
+   "trim": false
+  },
+  "animal/duck/walk0": {
+   "src": "lpc-style-farm-animals/chicken_walk.png",
+   "rect": [
+    1,
+    103,
+    31,
+    23
+   ],
+   "trim": false,
+   "recolor": [
+    [
+     "#9e3e37",
+     "#e48b2c"
+    ],
+    [
+     "#c84141",
+     "#e48b2c"
+    ],
+    [
+     "#5c1f1a",
+     "#9c5a1c"
+    ],
+    [
+     "#cf7b49",
+     "#f6b43c"
+    ]
+   ],
+   "note": "走路的四格（往右），每一格一樣大，換格子時不會晃；side（站著）用第一格"
+  },
+  "animal/duck/walk1": {
+   "src": "lpc-style-farm-animals/chicken_walk.png",
+   "rect": [
+    33,
+    103,
+    31,
+    23
+   ],
+   "trim": false,
+   "recolor": [
+    [
+     "#9e3e37",
+     "#e48b2c"
+    ],
+    [
+     "#c84141",
+     "#e48b2c"
+    ],
+    [
+     "#5c1f1a",
+     "#9c5a1c"
+    ],
+    [
+     "#cf7b49",
+     "#f6b43c"
+    ]
+   ]
+  },
+  "animal/duck/walk2": {
+   "src": "lpc-style-farm-animals/chicken_walk.png",
+   "rect": [
+    65,
+    103,
+    31,
+    23
+   ],
+   "trim": false,
+   "recolor": [
+    [
+     "#9e3e37",
+     "#e48b2c"
+    ],
+    [
+     "#c84141",
+     "#e48b2c"
+    ],
+    [
+     "#5c1f1a",
+     "#9c5a1c"
+    ],
+    [
+     "#cf7b49",
+     "#f6b43c"
+    ]
+   ]
+  },
+  "animal/duck/walk3": {
+   "src": "lpc-style-farm-animals/chicken_walk.png",
+   "rect": [
+    97,
+    103,
+    31,
+    23
+   ],
+   "trim": false,
+   "recolor": [
+    [
+     "#9e3e37",
+     "#e48b2c"
+    ],
+    [
+     "#c84141",
+     "#e48b2c"
+    ],
+    [
+     "#5c1f1a",
+     "#9c5a1c"
+    ],
+    [
+     "#cf7b49",
+     "#f6b43c"
+    ]
+   ]
+  },
+  "animal/cow/walk0": {
+   "src": "lpc-style-farm-animals/cow_walk.png",
+   "rect": [
+    36,
+    428,
+    71,
+    45
+   ],
+   "trim": false,
+   "note": "走路的四格（往右），每一格一樣大，換格子時不會晃；side（站著）用第一格"
+  },
+  "animal/cow/walk1": {
+   "src": "lpc-style-farm-animals/cow_walk.png",
+   "rect": [
+    164,
+    428,
+    71,
+    45
+   ],
+   "trim": false
+  },
+  "animal/cow/walk2": {
+   "src": "lpc-style-farm-animals/cow_walk.png",
+   "rect": [
+    292,
+    428,
+    71,
+    45
+   ],
+   "trim": false
+  },
+  "animal/cow/walk3": {
+   "src": "lpc-style-farm-animals/cow_walk.png",
+   "rect": [
+    420,
+    428,
+    71,
+    45
+   ],
+   "trim": false
+  },
+  "animal/sheep/walk0": {
+   "src": "lpc-style-farm-animals/sheep_walk.png",
+   "rect": [
+    42,
+    427,
+    49,
+    40
+   ],
+   "trim": false,
+   "note": "走路的四格（往右），每一格一樣大，換格子時不會晃；side（站著）用第一格"
+  },
+  "animal/sheep/walk1": {
+   "src": "lpc-style-farm-animals/sheep_walk.png",
+   "rect": [
+    170,
+    427,
+    49,
+    40
+   ],
+   "trim": false
+  },
+  "animal/sheep/walk2": {
+   "src": "lpc-style-farm-animals/sheep_walk.png",
+   "rect": [
+    298,
+    427,
+    49,
+    40
+   ],
+   "trim": false
+  },
+  "animal/sheep/walk3": {
+   "src": "lpc-style-farm-animals/sheep_walk.png",
+   "rect": [
+    426,
+    427,
+    49,
+    40
+   ],
+   "trim": false
+  },
+  "animal/dog/walk0": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    258,
+    7,
+    27,
+    22
+   ],
+   "trim": false
+  },
+  "animal/dog/walk1": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    290,
+    7,
+    27,
+    22
+   ],
+   "trim": false
+  },
+  "animal/dog/walk2": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    322,
+    7,
+    27,
+    22
+   ],
+   "trim": false
+  },
+  "animal/dog/walk3": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    290,
+    7,
+    27,
+    22
+   ],
+   "trim": false
+  },
+  "animal/cat/walk0": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    132,
+    7,
+    24,
+    20
+   ],
+   "trim": false
+  },
+  "animal/cat/walk1": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    164,
+    7,
+    24,
+    20
+   ],
+   "trim": false
+  },
+  "animal/cat/walk2": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    196,
+    7,
+    24,
+    20
+   ],
+   "trim": false
+  },
+  "animal/cat/walk3": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    164,
+    7,
+    24,
+    20
+   ],
+   "trim": false
+  },
+  "animal/dog/c0/side": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    2,
+    7,
+    27,
+    22
+   ],
+   "trim": false,
+   "note": "毛色第 0 種（原圖由左到右：白、棕、黃、黑）"
+  },
+  "animal/dog/c0/walk0": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    2,
+    7,
+    27,
+    22
+   ],
+   "trim": false
+  },
+  "animal/dog/c0/walk1": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    34,
+    7,
+    27,
+    22
+   ],
+   "trim": false
+  },
+  "animal/dog/c0/walk2": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    66,
+    7,
+    27,
+    22
+   ],
+   "trim": false
+  },
+  "animal/dog/c0/walk3": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    34,
+    7,
+    27,
+    22
+   ],
+   "trim": false
+  },
+  "animal/dog/c1/side": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    130,
+    7,
+    27,
+    22
+   ],
+   "trim": false,
+   "note": "毛色第 1 種（原圖由左到右：白、棕、黃、黑）"
+  },
+  "animal/dog/c1/walk0": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    130,
+    7,
+    27,
+    22
+   ],
+   "trim": false
+  },
+  "animal/dog/c1/walk1": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    162,
+    7,
+    27,
+    22
+   ],
+   "trim": false
+  },
+  "animal/dog/c1/walk2": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    194,
+    7,
+    27,
+    22
+   ],
+   "trim": false
+  },
+  "animal/dog/c1/walk3": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    162,
+    7,
+    27,
+    22
+   ],
+   "trim": false
+  },
+  "animal/dog/c2/side": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    258,
+    7,
+    27,
+    22
+   ],
+   "trim": false,
+   "note": "毛色第 2 種（原圖由左到右：白、棕、黃、黑）"
+  },
+  "animal/dog/c2/walk0": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    258,
+    7,
+    27,
+    22
+   ],
+   "trim": false
+  },
+  "animal/dog/c2/walk1": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    290,
+    7,
+    27,
+    22
+   ],
+   "trim": false
+  },
+  "animal/dog/c2/walk2": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    322,
+    7,
+    27,
+    22
+   ],
+   "trim": false
+  },
+  "animal/dog/c2/walk3": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    290,
+    7,
+    27,
+    22
+   ],
+   "trim": false
+  },
+  "animal/dog/c3/side": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    386,
+    7,
+    27,
+    22
+   ],
+   "trim": false,
+   "note": "毛色第 3 種（原圖由左到右：白、棕、黃、黑）"
+  },
+  "animal/dog/c3/walk0": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    386,
+    7,
+    27,
+    22
+   ],
+   "trim": false
+  },
+  "animal/dog/c3/walk1": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    418,
+    7,
+    27,
+    22
+   ],
+   "trim": false
+  },
+  "animal/dog/c3/walk2": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    450,
+    7,
+    27,
+    22
+   ],
+   "trim": false
+  },
+  "animal/dog/c3/walk3": {
+   "src": "lpc-cats-and-dogs/dog.png",
+   "rect": [
+    418,
+    7,
+    27,
+    22
+   ],
+   "trim": false
+  },
+  "animal/cat/c0/side": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    4,
+    7,
+    24,
+    20
+   ],
+   "trim": false,
+   "note": "毛色第 0 種（原圖由左到右：白、橘、紅棕、黑）"
+  },
+  "animal/cat/c0/walk0": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    4,
+    7,
+    24,
+    20
+   ],
+   "trim": false
+  },
+  "animal/cat/c0/walk1": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    36,
+    7,
+    24,
+    20
+   ],
+   "trim": false
+  },
+  "animal/cat/c0/walk2": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    68,
+    7,
+    24,
+    20
+   ],
+   "trim": false
+  },
+  "animal/cat/c0/walk3": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    36,
+    7,
+    24,
+    20
+   ],
+   "trim": false
+  },
+  "animal/cat/c1/side": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    132,
+    7,
+    24,
+    20
+   ],
+   "trim": false,
+   "note": "毛色第 1 種（原圖由左到右：白、橘、紅棕、黑）"
+  },
+  "animal/cat/c1/walk0": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    132,
+    7,
+    24,
+    20
+   ],
+   "trim": false
+  },
+  "animal/cat/c1/walk1": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    164,
+    7,
+    24,
+    20
+   ],
+   "trim": false
+  },
+  "animal/cat/c1/walk2": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    196,
+    7,
+    24,
+    20
+   ],
+   "trim": false
+  },
+  "animal/cat/c1/walk3": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    164,
+    7,
+    24,
+    20
+   ],
+   "trim": false
+  },
+  "animal/cat/c2/side": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    260,
+    7,
+    24,
+    20
+   ],
+   "trim": false,
+   "note": "毛色第 2 種（原圖由左到右：白、橘、紅棕、黑）"
+  },
+  "animal/cat/c2/walk0": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    260,
+    7,
+    24,
+    20
+   ],
+   "trim": false
+  },
+  "animal/cat/c2/walk1": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    292,
+    7,
+    24,
+    20
+   ],
+   "trim": false
+  },
+  "animal/cat/c2/walk2": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    324,
+    7,
+    24,
+    20
+   ],
+   "trim": false
+  },
+  "animal/cat/c2/walk3": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    292,
+    7,
+    24,
+    20
+   ],
+   "trim": false
+  },
+  "animal/cat/c3/side": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    388,
+    7,
+    24,
+    20
+   ],
+   "trim": false,
+   "note": "毛色第 3 種（原圖由左到右：白、橘、紅棕、黑）"
+  },
+  "animal/cat/c3/walk0": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    388,
+    7,
+    24,
+    20
+   ],
+   "trim": false
+  },
+  "animal/cat/c3/walk1": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    420,
+    7,
+    24,
+    20
+   ],
+   "trim": false
+  },
+  "animal/cat/c3/walk2": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    452,
+    7,
+    24,
+    20
+   ],
+   "trim": false
+  },
+  "animal/cat/c3/walk3": {
+   "src": "lpc-cats-and-dogs/cat.png",
+   "rect": [
+    420,
+    7,
+    24,
+    20
+   ],
+   "trim": false
   }
  }
 }

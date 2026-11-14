@@ -76,7 +76,13 @@
     "#e8c66a",
     "#b0b6bd"
    ],
-   "size": 0.8
+   "size": 0.8,
+   "variants": [
+    "#ffffff",
+    "#8a5a34",
+    "#e8c66a",
+    "#3b3430"
+   ]
   },
   "cat": {
    "name": "小貓",
@@ -89,7 +95,13 @@
     "#e8c08a",
     "#8a5a34"
    ],
-   "size": 0.7
+   "size": 0.7,
+   "variants": [
+    "#ffffff",
+    "#f0a04a",
+    "#8a3a24",
+    "#3b3430"
+   ]
   }
  },
  "traits": [
