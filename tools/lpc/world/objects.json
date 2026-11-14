@@ -1,0 +1,2421 @@
+{
+ "note": "地圖上的物件（obj/…）和建築（building/…）。src 是 art-src/lpc/oga/ 底下的路徑；建築用 parts 拼成（roofs-preview 的屋頂＋換過的牆、門窗、招牌）。原生像素大小，底邊＝著地處",
+ "sprites": {
+  "obj/stone_s": {
+   "src": "lpc-revised-4-season-terrain/x/4-season_terrain.zip/Terrain Objects/Rocks, Grasslands.png",
+   "rect": [
+    128,
+    64,
+    32,
+    32
+   ],
+   "note": "4-season 草地小石頭"
+  },
+  "obj/branch": {
+   "src": "lpc-flowers-plants-fungi-wood/x/lpc-flowers-plants-fungi-wood.zip/lpc-flowers-plants-fungi-wood/plants.png",
+   "rect": [
+    96,
+    896,
+    32,
+    32
+   ],
+   "note": "plants.png 樹枝"
+  },
+  "obj/weed": {
+   "src": "lpc-revised-4-season-terrain/x/4-season_terrain.zip/Terrain Objects/Grasses, Tall.png",
+   "rect": [
+    32,
+    0,
+    32,
+    64
+   ],
+   "note": "4-season 春季矮草叢"
+  },
+  "obj/grass_l": {
+   "src": "lpc-revised-4-season-terrain/x/4-season_terrain.zip/Terrain Objects/Bush - Seasonal A.png",
+   "rect": [
+    64,
+    0,
+    32,
+    32
+   ],
+   "note": "4-season 春季闊葉草叢"
+  },
+  "obj/flower_yellow": {
+   "src": "lpc-revised-4-season-terrain/x/4-season_terrain.zip/Terrain Objects/Flowers - Garden.png",
+   "rect": [
+    160,
+    64,
+    32,
+    32
+   ],
+   "note": "4-season 黃花叢"
+  },
+  "building/house1": {
+   "parts": [
+    {
+     "src": "lpc-thatched-roof-cottage/cottage.png",
+     "rect": [
+      290,
+      150,
+      92,
+      74
+     ],
+     "at": [
+      14,
+      78
+     ]
+    },
+    {
+     "src": "lpc-thatched-roof-cottage/cottage.png",
+     "rect": [
+      96,
+      496,
+      92,
+      16
+     ],
+     "at": [
+      14,
+      152
+     ]
+    },
+    {
+     "src": "lpc-thatched-roof-cottage/thatched-roof.png",
+     "rect": [
+      87,
+      0,
+      120,
+      16
+     ],
+     "at": [
+      0,
+      12
+     ]
+    },
+    {
+     "src": "lpc-thatched-roof-cottage/thatched-roof.png",
+     "rect": [
+      87,
+      40,
+      120,
+      68
+     ],
+     "at": [
+      0,
+      28
+     ]
+    },
+    {
+     "src": "liberated-pixel-cup-lpc-base-assets-sprites-map-tiles/x/lpc_base_assets.zip/LPC Base Assets/tiles/house.png",
+     "rect": [
+      199,
+      11,
+      22,
+      45
+     ],
+     "at": [
+      80,
+      0
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      208,
+      768,
+      32,
+      48
+     ],
+     "at": [
+      44,
+      120
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      386,
+      16,
+      28,
+      31
+     ],
+     "at": [
+      18,
+      96
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      386,
+      16,
+      28,
+      31
+     ],
+     "at": [
+      74,
+      96
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      448,
+      64,
+      32,
+      22
+     ],
+     "at": [
+      16,
+      118
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      448,
+      64,
+      32,
+      22
+     ],
+     "at": [
+      72,
+      118
+     ]
+    },
+    {
+     "src": "lpc-medieval-village-decorations/x/decoration_medieval.zip/decoration_medieval/decorations-medieval.png",
+     "rect": [
+      354,
+      657,
+      30,
+      32
+     ],
+     "at": [
+      104,
+      136
+     ],
+     "key": "#81a100"
+    }
+   ],
+   "size": [
+    134,
+    168
+   ],
+   "note": "茅草四坡屋頂（去掉中段縮矮）＋木骨架白牆＋石基、拱門、花台窗、煙囪"
+  },
+  "obj/bin": {
+   "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+   "rect": [
+    0,
+    416,
+    64,
+    64
+   ],
+   "isolate": true,
+   "note": "lpc-containers 大木箱（當出貨箱）"
+  },
+  "obj/mailbox": {
+   "src": "maibox-sprite-pack/x/MailboxPack.zip/MailboxPack/32x32/Mailboxsprite_side.png",
+   "note": "maibox 路邊信箱（LPC 相近風格）"
+  },
+  "obj/well": {
+   "parts": [
+    {
+     "src": "lpc-style-well/lpc-well.png",
+     "rect": [
+      0,
+      16,
+      64,
+      48
+     ],
+     "at": [
+      0,
+      6
+     ]
+    },
+    {
+     "src": "lpc-style-well/lpc-well.png",
+     "rect": [
+      0,
+      64,
+      64,
+      32
+     ],
+     "at": [
+      0,
+      34
+     ]
+    },
+    {
+     "src": "lpc-style-well/lpc-well.png",
+     "rect": [
+      64,
+      64,
+      32,
+      32
+     ],
+     "at": [
+      40,
+      8
+     ]
+    }
+   ],
+   "size": [
+    72,
+    66
+   ],
+   "note": "lpc-style-well 石井圈＋水桶（比原尺寸大一點）"
+  },
+  "obj/scarecrow": {
+   "src": "lpc-signposts-graves-line-cloths-and-scare-crow/signpost-outsidestuff.png",
+   "rect": [
+    96,
+    0,
+    32,
+    64
+   ],
+   "note": "稻草人"
+  },
+  "obj/bench": {
+   "src": "lpc-victorian-town-decorations/x/lpc-victorian-decoration.zip/lpc-victorian-decoration/victorian-market.png",
+   "rect": [
+    216,
+    432,
+    48,
+    48
+   ],
+   "note": "victorian 木長椅"
+  },
+  "obj/signpost": {
+   "src": "lpc-signposts-graves-line-cloths-and-scare-crow/signpost-outsidestuff.png",
+   "rect": [
+    0,
+    0,
+    32,
+    32
+   ],
+   "note": "箭頭路標"
+  },
+  "obj/crate": {
+   "src": "elizawy-lpc-revised-github/Objects/Furniture/Crate.png",
+   "rect": [
+    32,
+    32,
+    32,
+    32
+   ],
+   "note": "LPC Revised 木箱（倉庫箱也用這張）"
+  },
+  "obj/barrel": {
+   "src": "elizawy-lpc-revised-github/Objects/Furniture/Barrel.png",
+   "rect": [
+    0,
+    0,
+    32,
+    64
+   ],
+   "note": "LPC Revised 木桶"
+  },
+  "building/coop1": {
+   "src": "lpc-farm/x/lpc-farm.zip/lpc-farm/barn.png",
+   "rect": [
+    512,
+    808,
+    128,
+    192
+   ],
+   "note": "lpc-farm 高腳雞舍（茅草屋頂）"
+  },
+  "building/barn1": {
+   "parts": [
+    {
+     "src": "lpc-roofs/x/lpc-roofs-v2.zip/lpc-roofs-v2/preview/roofs-preview-recolors.png",
+     "rect": [
+      800,
+      96,
+      128,
+      104
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-farm/x/lpc-farm.zip/lpc-farm/barn.png",
+     "rect": [
+      2,
+      0,
+      63,
+      72
+     ],
+     "at": [
+      2,
+      104
+     ]
+    },
+    {
+     "src": "lpc-farm/x/lpc-farm.zip/lpc-farm/barn.png",
+     "rect": [
+      129,
+      0,
+      63,
+      72
+     ],
+     "at": [
+      65,
+      104
+     ]
+    },
+    {
+     "src": "lpc-roofs/x/lpc-roofs-v2.zip/lpc-roofs-v2/preview/roofs-preview-recolors.png",
+     "rect": [
+      800,
+      272,
+      128,
+      16
+     ],
+     "at": [
+      0,
+      176
+     ]
+    },
+    {
+     "src": "lpc-farm/x/lpc-farm.zip/lpc-farm/barn.png",
+     "rect": [
+      386,
+      112,
+      61,
+      64
+     ],
+     "at": [
+      33,
+      128
+     ]
+    },
+    {
+     "src": "lpc-farm/x/lpc-farm.zip/lpc-farm/barn.png",
+     "rect": [
+      416,
+      360,
+      31,
+      24
+     ],
+     "at": [
+      2,
+      116
+     ]
+    },
+    {
+     "src": "lpc-farm/x/lpc-farm.zip/lpc-farm/barn.png",
+     "rect": [
+      416,
+      360,
+      31,
+      24
+     ],
+     "at": [
+      95,
+      116
+     ]
+    }
+   ],
+   "size": [
+    128,
+    192
+   ],
+   "note": "roofs-preview 四坡石板屋頂＋lpc-farm 紅色白邊木板牆、X 形大門、小窗"
+  },
+  "building/mine_entrance": {
+   "parts": [
+    {
+     "src": "lpc-rocks/x/rocks.zip/rocks/rocks.png",
+     "rect": [
+      769,
+      269,
+      127,
+      104
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-mine/x/lpc-mine.zip/lpc-mine/mine.png",
+     "rect": [
+      64,
+      423,
+      96,
+      89
+     ],
+     "at": [
+      16,
+      15
+     ]
+    }
+   ],
+   "size": [
+    127,
+    104
+   ],
+   "note": "lpc-rocks 岩堆＋lpc-mine 木造坑口"
+  },
+  "building/store": {
+   "parts": [
+    {
+     "src": "lpc-roofs/x/lpc-roofs-v2.zip/lpc-roofs-v2/preview/roofs-preview-recolors.png",
+     "rect": [
+      960,
+      96,
+      160,
+      40
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-roofs/x/lpc-roofs-v2.zip/lpc-roofs-v2/preview/roofs-preview-recolors.png",
+     "rect": [
+      960,
+      168,
+      160,
+      32
+     ],
+     "at": [
+      0,
+      40
+     ]
+    },
+    {
+     "src": "lpc-revised-fully-configured-4-seasons-tilesets-for-tiled-map-editor/lpc-tileset-buildings.png",
+     "rect": [
+      1888,
+      0,
+      79,
+      64
+     ],
+     "at": [
+      2,
+      72
+     ]
+    },
+    {
+     "src": "lpc-revised-fully-configured-4-seasons-tilesets-for-tiled-map-editor/lpc-tileset-buildings.png",
+     "rect": [
+      1969,
+      0,
+      79,
+      64
+     ],
+     "at": [
+      81,
+      72
+     ]
+    },
+    {
+     "src": "lpc-roofs/x/lpc-roofs-v2.zip/lpc-roofs-v2/preview/roofs-preview-recolors.png",
+     "rect": [
+      960,
+      272,
+      160,
+      16
+     ],
+     "at": [
+      0,
+      136
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      592,
+      768,
+      32,
+      48
+     ],
+     "at": [
+      64,
+      104
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      16,
+      122,
+      64,
+      44
+     ],
+     "at": [
+      0,
+      86
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      16,
+      122,
+      64,
+      44
+     ],
+     "at": [
+      96,
+      86
+     ]
+    },
+    {
+     "src": "lpc-medieval-village-decorations/x/decoration_medieval.zip/decoration_medieval/decorations-medieval.png",
+     "rect": [
+      418,
+      928,
+      60,
+      28
+     ],
+     "at": [
+      2,
+      74
+     ],
+     "key": "#81a100"
+    },
+    {
+     "src": "lpc-medieval-village-decorations/x/decoration_medieval.zip/decoration_medieval/decorations-medieval.png",
+     "rect": [
+      418,
+      928,
+      60,
+      28
+     ],
+     "at": [
+      62,
+      74
+     ],
+     "key": "#81a100"
+    },
+    {
+     "src": "lpc-medieval-village-decorations/x/decoration_medieval.zip/decoration_medieval/decorations-medieval.png",
+     "rect": [
+      418,
+      928,
+      36,
+      28
+     ],
+     "at": [
+      122,
+      74
+     ],
+     "key": "#81a100"
+    },
+    {
+     "src": "lpc-hanging-signs/lpc-hanging-signs.png",
+     "rect": [
+      32,
+      0,
+      32,
+      32
+     ],
+     "at": [
+      64,
+      72
+     ]
+    }
+   ],
+   "size": [
+    160,
+    152
+   ],
+   "note": "roofs-preview 綠色 mansard 屋頂＋黃色木板牆＋玻璃門、櫥窗、條紋遮雨棚、陶罐招牌"
+  },
+  "building/smith": {
+   "parts": [
+    {
+     "src": "lpc-roofs/x/lpc-roofs-v2.zip/lpc-roofs-v2/preview/roofs-preview-recolors.png",
+     "rect": [
+      224,
+      96,
+      160,
+      16
+     ],
+     "at": [
+      0,
+      14
+     ]
+    },
+    {
+     "src": "lpc-roofs/x/lpc-roofs-v2.zip/lpc-roofs-v2/preview/roofs-preview-recolors.png",
+     "rect": [
+      224,
+      144,
+      160,
+      56
+     ],
+     "at": [
+      0,
+      30
+     ]
+    },
+    {
+     "src": "lpc-revised-fully-configured-4-seasons-tilesets-for-tiled-map-editor/lpc-tileset-buildings.png",
+     "rect": [
+      0,
+      864,
+      79,
+      64
+     ],
+     "at": [
+      2,
+      86
+     ]
+    },
+    {
+     "src": "lpc-revised-fully-configured-4-seasons-tilesets-for-tiled-map-editor/lpc-tileset-buildings.png",
+     "rect": [
+      49,
+      864,
+      79,
+      64
+     ],
+     "at": [
+      81,
+      86
+     ]
+    },
+    {
+     "src": "lpc-roofs/x/lpc-roofs-v2.zip/lpc-roofs-v2/preview/roofs-preview-recolors.png",
+     "rect": [
+      224,
+      272,
+      160,
+      16
+     ],
+     "at": [
+      0,
+      150
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      16,
+      768,
+      32,
+      48
+     ],
+     "at": [
+      64,
+      118
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      160,
+      16,
+      32,
+      32
+     ],
+     "at": [
+      20,
+      98
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      160,
+      16,
+      32,
+      32
+     ],
+     "at": [
+      108,
+      98
+     ]
+    },
+    {
+     "src": "lpc-hanging-signs/lpc-hanging-signs.png",
+     "rect": [
+      96,
+      32,
+      32,
+      32
+     ],
+     "at": [
+      64,
+      82
+     ]
+    },
+    {
+     "src": "lpc-medieval-village-decorations/x/decoration_medieval.zip/decoration_medieval/decorations-medieval.png",
+     "rect": [
+      417,
+      737,
+      29,
+      30
+     ],
+     "at": [
+      130,
+      136
+     ],
+     "key": "#81a100"
+    },
+    {
+     "src": "liberated-pixel-cup-lpc-base-assets-sprites-map-tiles/x/lpc_base_assets.zip/LPC Base Assets/tiles/house.png",
+     "rect": [
+      199,
+      11,
+      22,
+      45
+     ],
+     "at": [
+      124,
+      0
+     ]
+    }
+   ],
+   "size": [
+    160,
+    166
+   ],
+   "note": "roofs-preview 石板屋頂＋灰石牆＋鐵門、煙囪、鐵鎚招牌、鐵砧"
+  },
+  "building/carpenter": {
+   "parts": [
+    {
+     "src": "lpc-roofs/x/lpc-roofs-v2.zip/lpc-roofs-v2/preview/roofs-preview-recolors.png",
+     "rect": [
+      224,
+      1040,
+      128,
+      16
+     ],
+     "at": [
+      16,
+      0
+     ],
+     "recolor": [
+      [
+       "#074337",
+       "#7a4e2d"
+      ],
+      [
+       "#0c2d2b",
+       "#4a2c1a"
+      ],
+      [
+       "#0b5c2f",
+       "#94633a"
+      ],
+      [
+       "#2f8136",
+       "#b5814f"
+      ],
+      [
+       "#101414",
+       "#2a1a10"
+      ]
+     ]
+    },
+    {
+     "src": "lpc-roofs/x/lpc-roofs-v2.zip/lpc-roofs-v2/preview/roofs-preview-recolors.png",
+     "rect": [
+      224,
+      1104,
+      128,
+      65
+     ],
+     "at": [
+      16,
+      16
+     ],
+     "recolor": [
+      [
+       "#074337",
+       "#7a4e2d"
+      ],
+      [
+       "#0c2d2b",
+       "#4a2c1a"
+      ],
+      [
+       "#0b5c2f",
+       "#94633a"
+      ],
+      [
+       "#2f8136",
+       "#b5814f"
+      ],
+      [
+       "#101414",
+       "#2a1a10"
+      ]
+     ]
+    },
+    {
+     "src": "lpc-farm/x/lpc-farm.zip/lpc-farm/barn.png",
+     "rect": [
+      194,
+      96,
+      63,
+      64
+     ],
+     "at": [
+      18,
+      81
+     ]
+    },
+    {
+     "src": "lpc-farm/x/lpc-farm.zip/lpc-farm/barn.png",
+     "rect": [
+      321,
+      96,
+      63,
+      64
+     ],
+     "at": [
+      81,
+      81
+     ]
+    },
+    {
+     "src": "lpc-roofs/x/lpc-roofs-v2.zip/lpc-roofs-v2/preview/roofs-preview-recolors.png",
+     "rect": [
+      224,
+      1232,
+      128,
+      16
+     ],
+     "at": [
+      16,
+      145
+     ]
+    },
+    {
+     "src": "lpc-farm/x/lpc-farm.zip/lpc-farm/barn.png",
+     "rect": [
+      706,
+      112,
+      61,
+      64
+     ],
+     "at": [
+      49,
+      97
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      386,
+      16,
+      28,
+      31
+     ],
+     "at": [
+      20,
+      93
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      386,
+      16,
+      28,
+      31
+     ],
+     "at": [
+      112,
+      93
+     ]
+    },
+    {
+     "src": "lpc-woodshop/x/lpc-woodshop.zip/lpc-woodshop/woodshop.png",
+     "rect": [
+      482,
+      352,
+      26,
+      32
+     ],
+     "at": [
+      0,
+      129
+     ]
+    },
+    {
+     "src": "lpc-woodshop/x/lpc-woodshop.zip/lpc-woodshop/woodshop.png",
+     "rect": [
+      1,
+      388,
+      30,
+      24
+     ],
+     "at": [
+      130,
+      137
+     ]
+    }
+   ],
+   "size": [
+    160,
+    161
+   ],
+   "note": "roofs-preview 金屬方頂屋頂改成木頭色＋lpc-farm 棕色木板牆＋棕色 X 形大門、窗、木板堆"
+  },
+  "building/tackle": {
+   "parts": [
+    {
+     "src": "lpc-roofs/x/lpc-roofs-v2.zip/lpc-roofs-v2/preview/roofs-preview-recolors.png",
+     "rect": [
+      608,
+      89,
+      160,
+      23
+     ],
+     "at": [
+      0,
+      0
+     ],
+     "hue": 190
+    },
+    {
+     "src": "lpc-roofs/x/lpc-roofs-v2.zip/lpc-roofs-v2/preview/roofs-preview-recolors.png",
+     "rect": [
+      608,
+      128,
+      160,
+      72
+     ],
+     "at": [
+      0,
+      23
+     ],
+     "hue": 190
+    },
+    {
+     "src": "lpc-revised-fully-configured-4-seasons-tilesets-for-tiled-map-editor/lpc-tileset-buildings.png",
+     "rect": [
+      1408,
+      0,
+      79,
+      64
+     ],
+     "at": [
+      2,
+      95
+     ]
+    },
+    {
+     "src": "lpc-revised-fully-configured-4-seasons-tilesets-for-tiled-map-editor/lpc-tileset-buildings.png",
+     "rect": [
+      1489,
+      0,
+      79,
+      64
+     ],
+     "at": [
+      81,
+      95
+     ]
+    },
+    {
+     "src": "lpc-roofs/x/lpc-roofs-v2.zip/lpc-roofs-v2/preview/roofs-preview-recolors.png",
+     "rect": [
+      608,
+      272,
+      160,
+      16
+     ],
+     "at": [
+      0,
+      159
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      272,
+      768,
+      32,
+      48
+     ],
+     "at": [
+      64,
+      127
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      417,
+      304,
+      30,
+      32
+     ],
+     "at": [
+      22,
+      107
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      417,
+      304,
+      30,
+      32
+     ],
+     "at": [
+      108,
+      107
+     ]
+    },
+    {
+     "src": "lpc-farming-tilesets-magic-animations-and-ui-elements/x/submission_daneeklu.zip/submission_daneeklu/tilesets/farming_fishing.png",
+     "rect": [
+      576,
+      104,
+      32,
+      16
+     ],
+     "at": [
+      64,
+      99
+     ]
+    },
+    {
+     "src": "elizawy-lpc-revised-github/Objects/Furniture/Barrel.png",
+     "rect": [
+      2,
+      10,
+      28,
+      37
+     ],
+     "at": [
+      4,
+      138
+     ]
+    },
+    {
+     "src": "elizawy-lpc-revised-github/Objects/Furniture/Crate.png",
+     "rect": [
+      64,
+      32,
+      32,
+      32
+     ],
+     "at": [
+      124,
+      145
+     ]
+    }
+   ],
+   "size": [
+    160,
+    175
+   ],
+   "note": "roofs-preview 四坡屋頂（色相轉成藍色）＋淺藍灰木板牆＋木門、窗、魚形招牌、木桶、木箱"
+  },
+  "building/clinic": {
+   "parts": [
+    {
+     "src": "lpc-roofs/x/lpc-roofs-v2.zip/lpc-roofs-v2/preview/roofs-preview-recolors.png",
+     "rect": [
+      416,
+      64,
+      160,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ],
+     "recolor": [
+      [
+       "#6e7675",
+       "#5d8fa8"
+      ],
+      [
+       "#4d5357",
+       "#3e6782"
+      ],
+      [
+       "#8a9090",
+       "#7fb2c8"
+      ],
+      [
+       "#5d6667",
+       "#4c7b95"
+      ],
+      [
+       "#3d4147",
+       "#2e4b61"
+      ],
+      [
+       "#9e9da1",
+       "#a9d0dd"
+      ]
+     ]
+    },
+    {
+     "src": "lpc-roofs/x/lpc-roofs-v2.zip/lpc-roofs-v2/preview/roofs-preview-recolors.png",
+     "rect": [
+      416,
+      128,
+      160,
+      72
+     ],
+     "at": [
+      0,
+      32
+     ],
+     "recolor": [
+      [
+       "#6e7675",
+       "#5d8fa8"
+      ],
+      [
+       "#4d5357",
+       "#3e6782"
+      ],
+      [
+       "#8a9090",
+       "#7fb2c8"
+      ],
+      [
+       "#5d6667",
+       "#4c7b95"
+      ],
+      [
+       "#3d4147",
+       "#2e4b61"
+      ],
+      [
+       "#9e9da1",
+       "#a9d0dd"
+      ]
+     ]
+    },
+    {
+     "src": "lpc-revised-fully-configured-4-seasons-tilesets-for-tiled-map-editor/lpc-tileset-buildings.png",
+     "rect": [
+      1248,
+      0,
+      79,
+      64
+     ],
+     "at": [
+      2,
+      104
+     ]
+    },
+    {
+     "src": "lpc-revised-fully-configured-4-seasons-tilesets-for-tiled-map-editor/lpc-tileset-buildings.png",
+     "rect": [
+      1329,
+      0,
+      79,
+      64
+     ],
+     "at": [
+      81,
+      104
+     ]
+    },
+    {
+     "src": "lpc-roofs/x/lpc-roofs-v2.zip/lpc-roofs-v2/preview/roofs-preview-recolors.png",
+     "rect": [
+      416,
+      272,
+      160,
+      16
+     ],
+     "at": [
+      0,
+      168
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      592,
+      512,
+      32,
+      48
+     ],
+     "at": [
+      64,
+      136
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      353,
+      288,
+      30,
+      40
+     ],
+     "at": [
+      20,
+      116
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      353,
+      288,
+      30,
+      40
+     ],
+     "at": [
+      108,
+      116
+     ]
+    },
+    {
+     "src": "lpc-victorian-town-decorations/x/lpc-victorian-decoration.zip/lpc-victorian-decoration/victorian-streets.png",
+     "rect": [
+      193,
+      323,
+      30,
+      36
+     ],
+     "at": [
+      65,
+      104
+     ]
+    },
+    {
+     "src": "lpc-victorian-town-decorations/x/lpc-victorian-decoration.zip/lpc-victorian-decoration/victorian-streets.png",
+     "rect": [
+      168,
+      424,
+      17,
+      21
+     ],
+     "at": [
+      71,
+      111
+     ]
+    }
+   ],
+   "size": [
+    160,
+    184
+   ],
+   "note": "roofs-preview 陡四坡屋頂（灰色改成淺藍）＋白木板牆＋白門、窗簾窗、蛇杖招牌"
+  },
+  "building/diner": {
+   "parts": [
+    {
+     "src": "lpc-roofs/x/lpc-roofs-v2.zip/lpc-roofs-v2/preview/roofs-preview-recolors.png",
+     "rect": [
+      568,
+      1056,
+      144,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-roofs/x/lpc-roofs-v2.zip/lpc-roofs-v2/preview/roofs-preview-recolors.png",
+     "rect": [
+      568,
+      1120,
+      144,
+      40
+     ],
+     "at": [
+      0,
+      32
+     ]
+    },
+    {
+     "src": "lpc-revised-fully-configured-4-seasons-tilesets-for-tiled-map-editor/lpc-tileset-buildings.png",
+     "rect": [
+      1248,
+      0,
+      63,
+      64
+     ],
+     "at": [
+      10,
+      72
+     ]
+    },
+    {
+     "src": "lpc-revised-fully-configured-4-seasons-tilesets-for-tiled-map-editor/lpc-tileset-buildings.png",
+     "rect": [
+      1345,
+      0,
+      63,
+      64
+     ],
+     "at": [
+      73,
+      72
+     ]
+    },
+    {
+     "src": "lpc-roofs/x/lpc-roofs-v2.zip/lpc-roofs-v2/preview/roofs-preview-recolors.png",
+     "rect": [
+      568,
+      1232,
+      144,
+      16
+     ],
+     "at": [
+      0,
+      136
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      80,
+      512,
+      32,
+      48
+     ],
+     "at": [
+      56,
+      104
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      225,
+      289,
+      30,
+      40
+     ],
+     "at": [
+      20,
+      84
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      225,
+      289,
+      30,
+      40
+     ],
+     "at": [
+      94,
+      84
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Windows/Window Awnings A.png",
+     "rect": [
+      256,
+      24,
+      32,
+      24
+     ],
+     "at": [
+      19,
+      74
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Windows/Window Awnings A.png",
+     "rect": [
+      256,
+      24,
+      32,
+      24
+     ],
+     "at": [
+      93,
+      74
+     ]
+    },
+    {
+     "src": "lpc-hanging-signs/lpc-hanging-signs.png",
+     "rect": [
+      64,
+      0,
+      32,
+      32
+     ],
+     "at": [
+      56,
+      68
+     ]
+    }
+   ],
+   "size": [
+    144,
+    152
+   ],
+   "note": "roofs-preview 紅陶瓦屋頂＋米白木板牆＋門、紅窗簾窗、遮雨棚、麵包招牌"
+  },
+  "building/home_a": {
+   "parts": [
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Brick House B.png",
+     "rect": [
+      0,
+      0,
+      192,
+      192
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Brick House B.png",
+     "rect": [
+      62,
+      110,
+      64,
+      16
+     ],
+     "at": [
+      46,
+      126
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Brick House B.png",
+     "rect": [
+      62,
+      110,
+      28,
+      16
+     ],
+     "at": [
+      110,
+      126
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Brick House B.png",
+     "rect": [
+      62,
+      110,
+      64,
+      16
+     ],
+     "at": [
+      46,
+      142
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Brick House B.png",
+     "rect": [
+      62,
+      110,
+      28,
+      16
+     ],
+     "at": [
+      110,
+      142
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Brick House B.png",
+     "rect": [
+      62,
+      110,
+      64,
+      16
+     ],
+     "at": [
+      46,
+      158
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Brick House B.png",
+     "rect": [
+      62,
+      110,
+      28,
+      16
+     ],
+     "at": [
+      110,
+      158
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Brick House B.png",
+     "rect": [
+      62,
+      110,
+      64,
+      16
+     ],
+     "at": [
+      46,
+      174
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Brick House B.png",
+     "rect": [
+      62,
+      110,
+      28,
+      16
+     ],
+     "at": [
+      110,
+      174
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Brick House B.png",
+     "rect": [
+      62,
+      110,
+      64,
+      2
+     ],
+     "at": [
+      46,
+      190
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Brick House B.png",
+     "rect": [
+      62,
+      110,
+      28,
+      2
+     ],
+     "at": [
+      110,
+      190
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Brick House B.png",
+     "rect": [
+      88,
+      128,
+      48,
+      64
+     ],
+     "at": [
+      72,
+      128
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Brick House B.png",
+     "rect": [
+      47,
+      127,
+      35,
+      47
+     ],
+     "at": [
+      35,
+      127
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Brick House B.png",
+     "rect": [
+      47,
+      127,
+      35,
+      47
+     ],
+     "at": [
+      123,
+      127
+     ]
+    }
+   ],
+   "size": [
+    192,
+    192
+   ],
+   "note": "LPC Revised 紅磚山牆小屋（Brick House B），門移到正中間、兩側各一扇窗"
+  },
+  "building/home_b": {
+   "parts": [
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Paneled House A.png",
+     "rect": [
+      0,
+      0,
+      160,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Paneled House A.png",
+     "rect": [
+      0,
+      32,
+      96,
+      32
+     ],
+     "at": [
+      0,
+      32
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Paneled House A.png",
+     "rect": [
+      32,
+      32,
+      64,
+      32
+     ],
+     "at": [
+      96,
+      32
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Paneled House A.png",
+     "rect": [
+      158,
+      0,
+      2,
+      32
+     ],
+     "at": [
+      158,
+      32
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Paneled House A.png",
+     "rect": [
+      0,
+      64,
+      8,
+      72
+     ],
+     "at": [
+      0,
+      64
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Paneled House A.png",
+     "rect": [
+      8,
+      64,
+      22,
+      72
+     ],
+     "at": [
+      8,
+      64
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Paneled House A.png",
+     "rect": [
+      8,
+      64,
+      22,
+      72
+     ],
+     "at": [
+      30,
+      64
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Paneled House A.png",
+     "rect": [
+      8,
+      64,
+      22,
+      72
+     ],
+     "at": [
+      52,
+      64
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Paneled House A.png",
+     "rect": [
+      8,
+      64,
+      22,
+      72
+     ],
+     "at": [
+      74,
+      64
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Paneled House A.png",
+     "rect": [
+      8,
+      64,
+      22,
+      72
+     ],
+     "at": [
+      96,
+      64
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Paneled House A.png",
+     "rect": [
+      8,
+      64,
+      22,
+      72
+     ],
+     "at": [
+      118,
+      64
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Paneled House A.png",
+     "rect": [
+      8,
+      64,
+      22,
+      72
+     ],
+     "at": [
+      140,
+      64
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Paneled House A.png",
+     "rect": [
+      0,
+      64,
+      8,
+      72
+     ],
+     "at": [
+      152,
+      64
+     ],
+     "flip": true
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      160,
+      112,
+      32,
+      32
+     ],
+     "at": [
+      10,
+      76
+     ]
+    },
+    {
+     "src": "lpc-windows-doors/x/lpc-windows-doors-v2.zip/lpc-windows-doors-v2/windows-doors.png",
+     "rect": [
+      160,
+      112,
+      32,
+      32
+     ],
+     "at": [
+      118,
+      76
+     ]
+    },
+    {
+     "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Structures/Paneled House A.png",
+     "rect": [
+      96,
+      32,
+      62,
+      128
+     ],
+     "at": [
+      49,
+      32
+     ]
+    }
+   ],
+   "size": [
+    160,
+    160
+   ],
+   "note": "LPC Revised 藍色護牆板小屋（Paneled House A），門廊移到正中間、兩側各一扇窗"
+  },
+  "obj/fountain": {
+   "src": "lpc-revised-base-structure-kit/x/lpc_structure_pack.zip/Structure/Misc/Fountain A.png",
+   "note": "LPC Revised 三層噴水池"
+  },
+  "obj/fest_stall": {
+   "parts": [
+    {
+     "src": "lpc-victorian-town-decorations/x/lpc-victorian-decoration.zip/lpc-victorian-decoration/victorian-streets.png",
+     "rect": [
+      96,
+      2912,
+      64,
+      56
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "bulletin-board-and-items/bulletin_board_items.png",
+     "rect": [
+      2,
+      7,
+      27,
+      17
+     ],
+     "at": [
+      6,
+      6
+     ]
+    },
+    {
+     "src": "bulletin-board-and-items/bulletin_board_items.png",
+     "rect": [
+      64,
+      64,
+      32,
+      28
+     ],
+     "at": [
+      34,
+      3
+     ]
+    },
+    {
+     "src": "bulletin-board-and-items/bulletin_board_items.png",
+     "rect": [
+      96,
+      99,
+      21,
+      21
+     ],
+     "at": [
+      22,
+      14
+     ]
+    }
+   ],
+   "size": [
+    64,
+    56
+   ],
+   "note": "victorian 木看板＋紙條（佈告欄）"
+  },
+  "obj/lamp": {
+   "src": "lpc-lamp-posts-rework/x/lpc_lamp_posts_rework-1.0.zip/PNG/32x32/lamp-2-post-1/lamp-2-post-1-short-single.png",
+   "note": "路燈（矮款）"
+  },
+  "obj/town_bench": {
+   "src": "lpc-victorian-town-decorations/x/lpc-victorian-decoration.zip/lpc-victorian-decoration/victorian-market.png",
+   "rect": [
+    24,
+    432,
+    48,
+    48
+   ],
+   "note": "victorian 紅長椅"
+  },
+  "obj/planter": {
+   "src": "lpc-victorian-town-decorations/x/lpc-victorian-decoration.zip/lpc-victorian-decoration/victorian-garden.png",
+   "rect": [
+    160,
+    336,
+    32,
+    48
+   ],
+   "note": "victorian 方形花台（紅花）；溫室盆栽也用這張"
+  },
+  "obj/postbox": {
+   "src": "lpc-victorian-town-decorations/x/lpc-victorian-decoration.zip/lpc-victorian-decoration/victorian-market.png",
+   "rect": [
+    96,
+    272,
+    32,
+    48
+   ],
+   "note": "victorian 紅色郵筒"
+  },
+  "obj/cart": {
+   "src": "lpc-victorian-town-decorations/x/lpc-victorian-decoration.zip/lpc-victorian-decoration/victorian-market.png",
+   "rect": [
+    128,
+    352,
+    96,
+    64
+   ],
+   "isolate": true,
+   "note": "victorian 綠色攤販推車"
+  },
+  "obj/boulder": {
+   "src": "lpc-rocks/x/rocks.zip/rocks/rocks.png",
+   "rect": [
+    384,
+    128,
+    64,
+    64
+   ],
+   "note": "lpc-rocks 大岩石（底部有草）"
+  },
+  "obj/big_root": {
+   "src": "lpc-flowers-plants-fungi-wood/x/lpc-flowers-plants-fungi-wood.zip/lpc-flowers-plants-fungi-wood/plants.png",
+   "rect": [
+    32,
+    800,
+    64,
+    64
+   ],
+   "note": "plants.png 帶根的大樹樁"
+  },
+  "obj/board": {
+   "src": "lpc-signposts-graves-line-cloths-and-scare-crow/signpost-outsidestuff.png",
+   "rect": [
+    32,
+    32,
+    32,
+    32
+   ],
+   "note": "貼著紙條的木告示板（便條板、山神小祠牌）"
+  },
+  "obj/fallen_log": {
+   "src": "lpc-flowers-plants-fungi-wood/x/lpc-flowers-plants-fungi-wood.zip/lpc-flowers-plants-fungi-wood/plants.png",
+   "rect": [
+    128,
+    864,
+    64,
+    32
+   ],
+   "note": "plants.png 長草的倒木"
+  },
+  "obj/fern": {
+   "src": "lpc-flowers-plants-fungi-wood/x/lpc-flowers-plants-fungi-wood.zip/lpc-flowers-plants-fungi-wood/plants.png",
+   "rect": [
+    352,
+    288,
+    32,
+    32
+   ],
+   "note": "plants.png 蕨類"
+  },
+  "obj/mushrooms": {
+   "src": "lpc-revised-4-season-terrain/x/4-season_terrain.zip/Terrain Objects/Mushrooms.png",
+   "rect": [
+    0,
+    96,
+    32,
+    32
+   ],
+   "note": "4-season 一叢小蘑菇"
+  },
+  "obj/mossy_stone": {
+   "parts": [
+    {
+     "src": "lpc-rocks/x/rocks.zip/rocks/rocks.png",
+     "rect": [
+      352,
+      128,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-rocks/x/rocks.zip/rocks/rocks-snow-overlay.png",
+     "rect": [
+      352,
+      128,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ],
+     "recolor": [
+      [
+       "#d4e1ec",
+       "#5c8a35"
+      ],
+      [
+       "#f6f7f8",
+       "#86b246"
+      ],
+      [
+       "#e0e8f0",
+       "#6f9c3c"
+      ],
+      [
+       "#eef2f7",
+       "#7aa840"
+      ],
+      [
+       "#b2cae2",
+       "#466b2b"
+      ]
+     ]
+    }
+   ],
+   "size": [
+    32,
+    32
+   ],
+   "note": "lpc-rocks 石頭＋積雪層改成綠色＝青苔"
+  },
+  "obj/reeds": {
+   "src": "lpc-flowers-plants-fungi-wood/x/lpc-flowers-plants-fungi-wood.zip/lpc-flowers-plants-fungi-wood/plants.png",
+   "rect": [
+    32,
+    416,
+    32,
+    64
+   ],
+   "note": "plants.png 香蒲（比原尺寸高一點）"
+  },
+  "obj/lotus_leaf": {
+   "src": "lpc-flowers-plants-fungi-wood/x/lpc-flowers-plants-fungi-wood.zip/lpc-flowers-plants-fungi-wood/plants.png",
+   "rect": [
+    96,
+    480,
+    32,
+    32
+   ],
+   "note": "plants.png 荷葉"
+  },
+  "obj/boardwalk": {
+   "src": "dock-tileset/Artis_dock.png",
+   "rect": [
+    312,
+    24,
+    32,
+    32
+   ],
+   "trim": false,
+   "note": "dock-tileset 木棧板（平放，一格）"
+  },
+  "obj/lantern": {
+   "parts": [
+    {
+     "src": "lpc-victorian-town-decorations/x/lpc-victorian-decoration.zip/lpc-victorian-decoration/victorian-streets.png",
+     "rect": [
+      99,
+      224,
+      29,
+      32
+     ],
+     "at": [
+      0,
+      25
+     ]
+    },
+    {
+     "src": "lpc-lamp-posts-rework/x/lpc_lamp_posts_rework-1.0.zip/PNG/32x32/hanging/lamp-1-hanging.png",
+     "rect": [
+      7,
+      4,
+      18,
+      26
+     ],
+     "at": [
+      5,
+      0
+     ]
+    }
+   ],
+   "size": [
+    29,
+    57
+   ],
+   "note": "石座＋燈籠（石燈籠的替代）"
+  },
+  "obj/flower_red": {
+   "src": "lpc-revised-4-season-terrain/x/4-season_terrain.zip/Terrain Objects/Flowers - Garden.png",
+   "rect": [
+    64,
+    64,
+    32,
+    32
+   ],
+   "note": "4-season 紅花叢"
+  },
+  "obj/flower_white": {
+   "src": "lpc-revised-4-season-terrain/x/4-season_terrain.zip/Terrain Objects/Flowers - Garden.png",
+   "rect": [
+    0,
+    64,
+    32,
+    32
+   ],
+   "note": "4-season 白花叢"
+  },
+  "obj/flowerbed": {
+   "src": "lpc-victorian-town-decorations/x/lpc-victorian-decoration.zip/lpc-victorian-decoration/victorian-garden.png",
+   "rect": [
+    64,
+    481,
+    64,
+    33
+   ],
+   "isolate": true,
+   "note": "victorian 木花箱（紅花）"
+  },
+  "obj/stone_m": {
+   "src": "lpc-rocks/x/rocks.zip/rocks/rocks.png",
+   "rect": [
+    256,
+    32,
+    32,
+    32
+   ],
+   "note": "lpc-rocks 淺灰石頭"
+  },
+  "obj/bus_stop": {
+   "src": "lpc-victorian-town-decorations/x/lpc-victorian-decoration.zip/lpc-victorian-decoration/victorian-streets.png",
+   "rect": [
+    0,
+    2840,
+    32,
+    72
+   ],
+   "note": "victorian 時刻表看板（當站牌）"
+  },
+  "obj/flower_arch": {
+   "src": "lpc-victorian-town-decorations/x/lpc-victorian-decoration.zip/lpc-victorian-decoration/victorian-garden.png",
+   "rect": [
+    96,
+    128,
+    96,
+    96
+   ],
+   "note": "victorian 爬藤花拱門"
+  },
+  "obj/pet_bed": {
+   "parts": [
+    {
+     "src": "elizawy-lpc-revised-github/Objects/Small Items/Baskets A.png",
+     "rect": [
+      0,
+      0,
+      32,
+      32
+     ],
+     "at": [
+      0,
+      2
+     ]
+    },
+    {
+     "src": "lpc-revised-base-object-kit/x/lpc_objectspack.zip/Objects/Decoration/Pillows.png",
+     "rect": [
+      292,
+      72,
+      17,
+      15
+     ],
+     "at": [
+      7,
+      4
+     ]
+    },
+    {
+     "src": "elizawy-lpc-revised-github/Objects/Small Items/Baskets A.png",
+     "rect": [
+      0,
+      15,
+      32,
+      13
+     ],
+     "at": [
+      0,
+      17
+     ]
+    }
+   ],
+   "size": [
+    32,
+    32
+   ],
+   "note": "籐籃＋紅坐墊（當寵物床）"
+  },
+  "obj/feeder": {
+   "parts": [
+    {
+     "src": "lpc-troughs-expanded/x/lpc_troughs_expanded.zip/LPC troughs expanded/atlas.png",
+     "rect": [
+      160,
+      16,
+      32,
+      28
+     ],
+     "at": [
+      0,
+      8
+     ]
+    },
+    {
+     "src": "lpc-medieval-village-decorations/x/decoration_medieval.zip/decoration_medieval/decorations-medieval.png",
+     "rect": [
+      440,
+      532,
+      28,
+      14
+     ],
+     "at": [
+      2,
+      0
+     ],
+     "key": "#81a100"
+    }
+   ],
+   "size": [
+    32,
+    36
+   ],
+   "note": "小木槽＋乾草（飼料槽）"
+  },
+  "obj/stage": {
+   "src": "lpc-medieval-village-decorations/x/decoration_medieval.zip/decoration_medieval/decorations-medieval.png",
+   "rect": [
+    64,
+    1312,
+    96,
+    96
+   ],
+   "key": "#81a100",
+   "note": "medieval 木平台＋台階"
+  },
+  "obj/bunting": {
+   "parts": [
+    {
+     "src": "lpc-signposts-graves-line-cloths-and-scare-crow/signpost-outsidestuff.png",
+     "rect": [
+      12,
+      64,
+      76,
+      32
+     ],
+     "at": [
+      0,
+      0
+     ]
+    },
+    {
+     "src": "lpc-victorian-town-decorations/x/lpc-victorian-decoration.zip/lpc-victorian-decoration/victorian-streets.png",
+     "rect": [
+      301,
+      34,
+      13,
+      21
+     ],
+     "at": [
+      9,
+      8
+     ]
+    },
+    {
+     "src": "lpc-victorian-town-decorations/x/lpc-victorian-decoration.zip/lpc-victorian-decoration/victorian-streets.png",
+     "rect": [
+      301,
+      2,
+      13,
+      21
+     ],
+     "at": [
+      24,
+      8
+     ]
+    },
+    {
+     "src": "lpc-victorian-town-decorations/x/lpc-victorian-decoration.zip/lpc-victorian-decoration/victorian-streets.png",
+     "rect": [
+      301,
+      66,
+      13,
+      21
+     ],
+     "at": [
+      39,
+      8
+     ]
+    },
+    {
+     "src": "lpc-victorian-town-decorations/x/lpc-victorian-decoration.zip/lpc-victorian-decoration/victorian-streets.png",
+     "rect": [
+      301,
+      98,
+      13,
+      21
+     ],
+     "at": [
+      54,
+      8
+     ]
+    }
+   ],
+   "size": [
+    76,
+    32
+   ],
+   "note": "曬衣架的柱子和繩子＋小旗子（三角旗）"
+  },
+  "obj/hay": {
+   "src": "lpc-medieval-village-decorations/x/decoration_medieval.zip/decoration_medieval/decorations-medieval.png",
+   "rect": [
+    96,
+    704,
+    32,
+    32
+   ],
+   "native": false,
+   "note": "medieval 一小堆乾草（道具圖示）"
+  },
+  "obj/brush": {
+   "src": "lpc-woodshop/x/lpc-woodshop.zip/lpc-woodshop/woodshop.png",
+   "rect": [
+    32,
+    288,
+    32,
+    32
+   ],
+   "native": false,
+   "note": "找不到刷子，暫用木工刨刀（道具圖示）"
+  }
+ }
+}
