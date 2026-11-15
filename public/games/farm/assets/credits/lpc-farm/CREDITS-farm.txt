@@ -1,0 +1,54 @@
+"[LPC] Farm" by bluecarrot16, Wolthera van Hövell tot Westerflier (TheraHedwig), and Ivan Voirol
+http://opengameart.org/content/lpc-farm
+
+
+Based on:
+
+Slates [32x32px orthogonal tileset by Ivan Voirol]
+Ivan Voirol
+CC-BY 4.0
+https://opengameart.org/content/slates-32x32px-orthogonal-tileset-by-ivan-voirol
+
+LPC compatible Ancient Greek Architecture
+Wolthera van Hövell tot Westerflier (TheraHedwig)
+CC-BY-4.0 / GPL-3.0 / OGA-BY-3.0
+https://opengameart.org/content/lpc-compatible-ancient-greek-architecture
+
+
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *  
+
+Build a farm, in the style of the LPC! Kindly commissioned by Rupil. 
+
+There are several excellent LPC asset packs to do with farming, but this pack should help you build a more complete farm. Contents: 
+- Modular barn, in two colors: red and brown
+- Towers/silos
+- Granary
+- Modular chicken coop and nesting boxes
+- Apiary/beehives
+- Sheds/stables
+- Two new fences
+- Farm crafting machines---butter churner, cheese press, mayonnaise maker
+- Animated windmill blades and water wheels
+
+Because the LPC assets span a range of time periods and technology levels, these assets are meant to be flexible; most buildings come in two styles: a more primitive style with thatched roofs and wattlework https://en.wikipedia.org/wiki/Wattle_(construction)---appropriate for medieval or pre-modern settings, and a more modern style (but still targeting an early industrial period---think the Victorian era). 
+
+Animated windmill and water wheels were adapted from Ivan Voirol's excellent Slates set https://opengameart.org/content/slates-32x32px-orthogonal-tileset-by-ivan-voirol . I have drawn thatched roofs in the past, but I liked TheraHedwig's better https://opengameart.org/content/lpc-compatible-ancient-greek-architecture and so based this set of their roofs. 
+
+
+
+Preview image also includes assets from the following submissions, which would go well with these assets:
+
+- "[LPC] Terrains" by bluecarrot16, Lanea Zimmerman (Sharm), Daniel Eddeland (Daneeklu), Richard Kettering (Jetrel), Zachariah Husiar (Zabin), Hyptosis, Casper Nilsson, Buko Studios, Nushio, ZaPaper, billknye, William Thompson, caeles, Redshrike, Bertram, and Rayane Félix (RayaneFLX). https://opengameart.org/content/lpc-terrains
+- "[LPC] Containers" by bluecarrot16, Lanea Zimmerman (Sharm), William Thompson, Tuomo Untinen (Reemax), Evert, Buch, Blarumyrran, n2liquid, Jetrel, Guido Bos, Hyptosis, Bonsaiheldin, NaRNeRZz, PriorBlue, Jerom, 7Soul, and Wolthera van Hövell tot Westerflier (TheraHedwig). https://opengameart.org/content/lpc-containers
+- "[LPC] Horses" by bluecarrot16 https://opengameart.org/content/lpc-horses
+https://opengameart.org/content/lpc-medieval-village-decorations
+- "LPC style farm animals" by Daniel Eddeland (daneeklu). https://opengameart.org/content/lpc-style-farm-animals
+
+And a few other asset packs that might be helpful:
+
+https://opengameart.org/content/lpc-fruit-trees
+https://opengameart.org/content/lpc-crops
+https://opengameart.org/content/lpc-food
+https://opengameart.org/content/lpc-goat
+https://opengameart.org/content/lpc-turkey
+https://opengameart.org/content/lpc-cats-and-dogs

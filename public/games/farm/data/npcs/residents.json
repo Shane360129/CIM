@@ -12,21 +12,22 @@
   "portrait": "portrait/ahe",
   "look": {
    "gender": "boy",
-   "skin": "#f6cfa3",
-   "eyes": "soft",
-   "brows": "worry",
-   "mouths": "smile",
-   "hair": "curly",
-   "hairColor": "#3b3430",
-   "top": "shirt",
-   "topColor": "#7dbb5a",
+   "head": "male_plump",
+   "skin": "#e4a47c",
+   "eyes": "brown",
+   "brows": "thick",
+   "mouths": "normal",
+   "hair": "curly_short",
+   "hairColor": "#5f1f04",
+   "top": "apron",
+   "topColor": "#2f8136",
    "bottom": "pants",
-   "bottomColor": "#5a5f66",
-   "shoes": "sneaker",
-   "shoesColor": "#8a5a34",
+   "bottomColor": "#797580",
+   "shoes": "shoes",
+   "shoesColor": "#744b30",
    "hat": "none",
-   "hatColor": "#f6d34a",
-   "acc": "glasses"
+   "hatColor": "#ab1e1e",
+   "acc": "glasses_round"
   },
   "schedule": [
    [
@@ -111,20 +112,21 @@
   "portrait": "portrait/xiaoman",
   "look": {
    "gender": "girl",
-   "skin": "#ffe0bd",
-   "eyes": "round",
-   "brows": "plain",
-   "mouths": "open",
-   "hair": "twin",
-   "hairColor": "#a8502a",
-   "top": "tee",
-   "topColor": "#ffffff",
+   "head": "female_small",
+   "skin": "#e4a47c",
+   "eyes": "brown",
+   "brows": "thin",
+   "mouths": "normal",
+   "hair": "pigtails",
+   "hairColor": "#faa301",
+   "top": "apron",
+   "topColor": "#f3c03f",
    "bottom": "skirt",
-   "bottomColor": "#f6d34a",
-   "shoes": "sneaker",
-   "shoesColor": "#8a5a34",
+   "bottomColor": "#b7996a",
+   "shoes": "shoes",
+   "shoesColor": "#744b30",
    "hat": "none",
-   "hatColor": "#f6d34a",
+   "hatColor": "#ab1e1e",
    "acc": "none"
   },
   "schedule": [
@@ -201,7 +203,12 @@
    "birthday": "你記得！！我要哭了……不行，哭了麵包會鹹！",
    "gift_love": "天啊天啊天啊！我最喜歡這個了！",
    "gift_like": "謝謝你！我會好好用的！",
-   "gift_dislike": "啊……這個我有點怕……不過謝謝你。"
+   "gift_dislike": "啊……這個我有點怕……不過謝謝你。",
+   "love": [
+    "剛出爐的第一個，永遠是你的。這是我們說好的！",
+    "我今天多點了一盞燈，這樣你一抬頭就看得到。",
+    "想牽你的手……麵粉有擦乾淨喔！真的！"
+   ]
   },
   "full": true,
   "mailGift": [
@@ -222,20 +229,20 @@
   "portrait": "portrait/shilei",
   "look": {
    "gender": "boy",
-   "skin": "#e8b98a",
-   "eyes": "cool",
+   "skin": "#7f4c31",
+   "eyes": "brown",
    "brows": "thick",
-   "mouths": "pout",
-   "hair": "short",
-   "hairColor": "#2b2421",
-   "top": "tee",
-   "topColor": "#5a5f66",
-   "bottom": "work",
-   "bottomColor": "#8a5a34",
-   "shoes": "boot",
-   "shoesColor": "#3b3430",
-   "hat": "beanie",
-   "hatColor": "#3b6ea8",
+   "mouths": "normal",
+   "hair": "buzzcut",
+   "hairColor": "#31313e",
+   "top": "apron",
+   "topColor": "#75502d",
+   "bottom": "pants2",
+   "bottomColor": "#4a5057",
+   "shoes": "boots",
+   "shoesColor": "#2a3034",
+   "hat": "bandana",
+   "hatColor": "#3c49ad",
    "acc": "none"
   },
   "schedule": [
@@ -300,7 +307,12 @@
    "birthday": "……生日。謝謝。很久沒有人記得了。",
    "gift_love": "……好東西。我會用它打一把最好的。",
    "gift_like": "嗯。謝了。",
-   "gift_dislike": "……這個我用不到。"
+   "gift_dislike": "……這個我用不到。",
+   "love": [
+    "……你來了。爐子的火，我調得剛剛好。",
+    "今天沒什麼話。坐在旁邊就好。……這樣，最好。",
+    "風鈴響了。我想，是你的腳步聲。"
+   ]
   },
   "full": true,
   "mailGift": [
@@ -321,21 +333,22 @@
   "portrait": "portrait/tongbo",
   "look": {
    "gender": "boy",
-   "skin": "#f6cfa3",
-   "eyes": "smile",
+   "head": "male_elderly",
+   "skin": "#e4a47c",
+   "eyes": "brown",
    "brows": "thick",
-   "mouths": "open",
-   "hair": "short",
-   "hairColor": "#f3ead2",
+   "mouths": "normal",
+   "hair": "balding",
+   "hairColor": "#d8dcdc",
    "top": "shirt",
-   "topColor": "#e5484d",
-   "bottom": "work",
-   "bottomColor": "#3b6ea8",
-   "shoes": "boot",
-   "shoesColor": "#8a5a34",
+   "topColor": "#ab1e1e",
+   "bottom": "cuffed",
+   "bottomColor": "#466ac9",
+   "shoes": "boots",
+   "shoesColor": "#744b30",
    "hat": "none",
-   "hatColor": "#f6d34a",
-   "acc": "none"
+   "hatColor": "#ab1e1e",
+   "acc": "mustache"
   },
   "schedule": [
    [
@@ -420,20 +433,20 @@
   "portrait": "portrait/xiyin",
   "look": {
    "gender": "girl",
-   "skin": "#c98e62",
-   "eyes": "sharp",
-   "brows": "plain",
-   "mouths": "smile",
+   "skin": "#7f4c31",
+   "eyes": "blue",
+   "brows": "thin",
+   "mouths": "normal",
    "hair": "long",
-   "hairColor": "#26304a",
-   "top": "tee",
-   "topColor": "#ffffff",
-   "bottom": "work",
-   "bottomColor": "#3b6ea8",
-   "shoes": "rain",
-   "shoesColor": "#3b6ea8",
+   "hairColor": "#3c49ad",
+   "top": "overalls",
+   "topColor": "#466ac9",
+   "bottom": "pants2",
+   "bottomColor": "#3c49ad",
+   "shoes": "boots",
+   "shoesColor": "#466ac9",
    "hat": "none",
-   "hatColor": "#f6d34a",
+   "hatColor": "#ab1e1e",
    "acc": "none"
   },
   "schedule": [
@@ -510,7 +523,12 @@
    "birthday": "……你記得啊。謝啦。今天提早關店，請你吃烤魚。",
    "gift_love": "哇，這條！你在哪釣的？！",
    "gift_like": "不錯嘛，謝了。",
-   "gift_dislike": "呃，這個我不太懂欣賞。"
+   "gift_dislike": "呃，這個我不太懂欣賞。",
+   "love": [
+    "今天風向不錯。不是因為魚，是因為你要來。",
+    "有你在旁邊，連浮標都抖得比較溫柔。",
+    "我把店關了。理由？……想跟你去湖邊發呆。"
+   ]
   },
   "full": true,
   "mailGift": [
@@ -531,20 +549,20 @@
   "portrait": "portrait/baizhi",
   "look": {
    "gender": "girl",
-   "skin": "#ffe0bd",
-   "eyes": "soft",
+   "skin": "#e4a47c",
+   "eyes": "gray",
    "brows": "thin",
-   "mouths": "smile",
+   "mouths": "normal",
    "hair": "bob",
-   "hairColor": "#5a3d22",
-   "top": "sweater",
-   "topColor": "#ffffff",
-   "bottom": "longskirt",
-   "bottomColor": "#4f9a8a",
-   "shoes": "leather",
-   "shoesColor": "#3b3430",
+   "hairColor": "#5f1f04",
+   "top": "cardigan",
+   "topColor": "#e5e6c7",
+   "bottom": "skirt",
+   "bottomColor": "#0098b2",
+   "shoes": "shoes2",
+   "shoesColor": "#2a3034",
    "hat": "none",
-   "hatColor": "#f6d34a",
+   "hatColor": "#ab1e1e",
    "acc": "glasses"
   },
   "schedule": [
@@ -611,7 +629,12 @@
    "birthday": "生日……我自己都沒放在心上。謝謝你，我很高興。",
    "gift_love": "這個對身體很好，你真細心。",
    "gift_like": "謝謝，我會好好使用。",
-   "gift_dislike": "這個……請不要拿太靠近我。"
+   "gift_dislike": "這個……請不要拿太靠近我。",
+   "love": [
+    "今天有按時吃飯嗎？……不回答也沒關係，我煮了湯，等你。",
+    "診所現在不太安靜了。你一來，連藥櫃都好像比較開心。",
+    "剛剛那是蟲嗎？……你在旁邊，我好像就沒那麼怕了。"
+   ]
   },
   "full": true,
   "mailGift": [
@@ -632,20 +655,20 @@
   "portrait": "portrait/chunshen",
   "look": {
    "gender": "girl",
-   "skin": "#f6cfa3",
-   "eyes": "smile",
-   "brows": "plain",
-   "mouths": "open",
+   "skin": "#e4a47c",
+   "eyes": "brown",
+   "brows": "thin",
+   "mouths": "normal",
    "hair": "bob",
-   "hairColor": "#8a5a34",
-   "top": "sweater",
-   "topColor": "#c8553d",
-   "bottom": "longskirt",
-   "bottomColor": "#f3e6c8",
-   "shoes": "leather",
-   "shoesColor": "#8a5a34",
-   "hat": "beanie",
-   "hatColor": "#f0a04a",
+   "hairColor": "#b6550e",
+   "top": "apron",
+   "topColor": "#ab1e1e",
+   "bottom": "skirt",
+   "bottomColor": "#b7996a",
+   "shoes": "shoes2",
+   "shoesColor": "#744b30",
+   "hat": "kerchief",
+   "hatColor": "#ef7e19",
    "acc": "none"
   },
   "schedule": [
@@ -737,20 +760,22 @@
   "portrait": "portrait/xiaoshu",
   "look": {
    "gender": "boy",
-   "skin": "#ffe0bd",
-   "eyes": "round",
-   "brows": "plain",
-   "mouths": "open",
-   "hair": "spiky",
-   "hairColor": "#8a5a34",
-   "top": "tee",
-   "topColor": "#f6d34a",
+   "body": "teen",
+   "head": "male_small",
+   "skin": "#e4a47c",
+   "eyes": "brown",
+   "brows": "thick",
+   "mouths": "normal",
+   "hair": "spiked",
+   "hairColor": "#b6550e",
+   "top": "tshirt",
+   "topColor": "#f3c03f",
    "bottom": "shorts",
-   "bottomColor": "#3b6ea8",
-   "shoes": "sneaker",
-   "shoesColor": "#8a5a34",
+   "bottomColor": "#466ac9",
+   "shoes": "shoes",
+   "shoesColor": "#744b30",
    "hat": "none",
-   "hatColor": "#f6d34a",
+   "hatColor": "#ab1e1e",
    "acc": "none"
   },
   "schedule": [
@@ -843,21 +868,21 @@
   "portrait": "portrait/yunxiu",
   "look": {
    "gender": "girl",
-   "skin": "#fbe0c4",
-   "eyes": "cool",
+   "skin": "#e4a47c",
+   "eyes": "purple",
    "brows": "thin",
-   "mouths": "smile",
-   "hair": "long",
-   "hairColor": "#2f2a35",
-   "top": "sweater",
-   "topColor": "#8a7fb5",
-   "bottom": "longskirt",
-   "bottomColor": "#4a4660",
-   "shoes": "leather",
-   "shoesColor": "#6b4a2e",
+   "mouths": "normal",
+   "hair": "long_straight",
+   "hairColor": "#31313e",
+   "top": "cardigan",
+   "topColor": "#a966dd",
+   "bottom": "skirt",
+   "bottomColor": "#b3afa1",
+   "shoes": "shoes2",
+   "shoesColor": "#744b30",
    "hat": "none",
-   "hatColor": "#d9b45a",
-   "acc": "glasses"
+   "hatColor": "#ab1e1e",
+   "acc": "glasses_round"
   },
   "schedule": [
    [
@@ -868,9 +893,10 @@
    ],
    [
     480,
-    10.5,
-    10.5,
-    "wander"
+    5,
+    11.6,
+    "stay",
+    "uptown"
    ],
    [
     1020,
@@ -919,7 +945,12 @@
    "birthday": "你記得我的生日……謝謝你，我很開心。",
    "gift_love": "這個是我最喜歡的！謝謝你！",
    "gift_like": "謝謝，我會好好用的。",
-   "gift_dislike": "呃……謝謝你的心意。"
+   "gift_dislike": "呃……謝謝你的心意。",
+   "love": [
+    "我在筆記本上又寫了一頁你。放心，這次的標題很體面。",
+    "你的腳步聲還是很大。……不過我現在聽得出來，是你。",
+    "看到你之前，我已經想好要說什麼了。……結果全忘了。"
+   ]
   },
   "mailGift": [
    "honey",
@@ -940,20 +971,20 @@
   "portrait": "portrait/ayan",
   "look": {
    "gender": "boy",
-   "skin": "#e8b98a",
-   "eyes": "sharp",
+   "skin": "#ea9f54",
+   "eyes": "orange",
    "brows": "thick",
-   "mouths": "open",
-   "hair": "spiky",
-   "hairColor": "#b5462e",
-   "top": "tee",
-   "topColor": "#e5673a",
+   "mouths": "normal",
+   "hair": "spiked",
+   "hairColor": "#c7341b",
+   "top": "tshirt",
+   "topColor": "#ef7e19",
    "bottom": "shorts",
-   "bottomColor": "#3d4a5c",
-   "shoes": "sandal",
-   "shoesColor": "#6b4a2e",
+   "bottomColor": "#4a5057",
+   "shoes": "sandals",
+   "shoesColor": "#744b30",
    "hat": "none",
-   "hatColor": "#d9b45a",
+   "hatColor": "#ab1e1e",
    "acc": "none"
   },
   "schedule": [
@@ -965,9 +996,10 @@
    ],
    [
     480,
-    5.5,
-    11.5,
-    "wander"
+    35,
+    11.6,
+    "stay",
+    "uptown"
    ],
    [
     720,
@@ -1022,7 +1054,12 @@
    "birthday": "你記得我的生日……謝謝你，我很開心。",
    "gift_love": "這個是我最喜歡的！謝謝你！",
    "gift_like": "謝謝，我會好好用的。",
-   "gift_dislike": "呃……謝謝你的心意。"
+   "gift_dislike": "呃……謝謝你的心意。",
+   "love": [
+    "今天水溫剛剛好！這次我真的有量！……不過看到你，就更熱了。",
+    "冰牛奶賣得超好！我覺得，你一定是我的幸運符！",
+    "我媽問我最近怎麼一直笑。我說因為有你，她就不問了！"
+   ]
   },
   "mailGift": [
    "coal",
@@ -1043,20 +1080,20 @@
   "portrait": "portrait/youzi",
   "look": {
    "gender": "girl",
-   "skin": "#fbe0c4",
-   "eyes": "lash",
+   "skin": "#e4a47c",
+   "eyes": "green",
    "brows": "thin",
-   "mouths": "smile",
-   "hair": "twin",
-   "hairColor": "#d98a4a",
-   "top": "stripe",
-   "topColor": "#f3a6b8",
+   "mouths": "normal",
+   "hair": "pigtails",
+   "hairColor": "#faa301",
+   "top": "tshirt_vneck",
+   "topColor": "#c36072",
    "bottom": "skirt",
-   "bottomColor": "#f6e2a8",
-   "shoes": "sandal",
-   "shoesColor": "#6b4a2e",
-   "hat": "straw",
-   "hatColor": "#d9b45a",
+   "bottomColor": "#f3c03f",
+   "shoes": "sandals",
+   "shoesColor": "#744b30",
+   "hat": "bowler",
+   "hatColor": "#f3c03f",
    "acc": "none"
   },
   "schedule": [
@@ -1068,9 +1105,10 @@
    ],
    [
     480,
-    35.5,
-    12.5,
-    "wander"
+    25,
+    11.6,
+    "wander",
+    "uptown"
    ],
    [
     660,
@@ -1131,7 +1169,12 @@
    "birthday": "你記得我的生日……謝謝你，我很開心。",
    "gift_love": "這個是我最喜歡的！謝謝你！",
    "gift_like": "謝謝，我會好好用的。",
-   "gift_dislike": "呃……謝謝你的心意。"
+   "gift_dislike": "呃……謝謝你的心意。",
+   "love": [
+    "早安！我今天跟花說了你的名字，它們都笑得好開心。",
+    "我在包花的時候，一直在想你有沒有好好吃飯。……不要笑我。",
+    "你的手牽起來，比任何一朵花都暖。我偷偷記下來了。"
+   ]
   },
   "mailGift": [
    "seed_tulip",
@@ -1152,20 +1195,20 @@
   "portrait": "portrait/atie",
   "look": {
    "gender": "boy",
-   "skin": "#f6cfa3",
-   "eyes": "cool",
+   "skin": "#e4a47c",
+   "eyes": "brown",
    "brows": "thick",
-   "mouths": "pout",
-   "hair": "short",
-   "hairColor": "#2b2b2e",
+   "mouths": "normal",
+   "hair": "plain",
+   "hairColor": "#31313e",
    "top": "shirt",
-   "topColor": "#3d5a80",
-   "bottom": "pants",
-   "bottomColor": "#2e3440",
-   "shoes": "leather",
-   "shoesColor": "#6b4a2e",
-   "hat": "cap",
-   "hatColor": "#d9b45a",
+   "topColor": "#3c49ad",
+   "bottom": "formal",
+   "bottomColor": "#4a5057",
+   "shoes": "shoes2",
+   "shoesColor": "#2a3034",
+   "hat": "bonnie",
+   "hatColor": "#4a5057",
    "acc": "none"
   },
   "schedule": [
@@ -1177,9 +1220,10 @@
    ],
    [
     480,
-    38.5,
-    10.5,
-    "wander"
+    43.5,
+    17.5,
+    "wander",
+    "uptown"
    ],
    [
     600,
@@ -1261,21 +1305,22 @@
   "portrait": "portrait/haibo",
   "look": {
    "gender": "boy",
-   "skin": "#e8b98a",
-   "eyes": "smile",
+   "head": "male_elderly",
+   "skin": "#ea9f54",
+   "eyes": "blue",
    "brows": "thick",
-   "mouths": "open",
-   "hair": "short",
-   "hairColor": "#d8d8d8",
-   "top": "sweater",
-   "topColor": "#3a6b8a",
-   "bottom": "work",
-   "bottomColor": "#4a4a4a",
-   "shoes": "boot",
-   "shoesColor": "#6b4a2e",
-   "hat": "beanie",
-   "hatColor": "#d9b45a",
-   "acc": "none"
+   "mouths": "normal",
+   "hair": "plain",
+   "hairColor": "#d8dcdc",
+   "top": "longsleeve",
+   "topColor": "#466ac9",
+   "bottom": "pants2",
+   "bottomColor": "#4a5057",
+   "shoes": "boots",
+   "shoesColor": "#744b30",
+   "hat": "bonnie",
+   "hatColor": "#3c49ad",
+   "acc": "beard"
   },
   "schedule": [
    [
@@ -1286,9 +1331,10 @@
    ],
    [
     480,
-    14.5,
-    10.5,
-    "wander"
+    34,
+    9.4,
+    "wander",
+    "beach"
    ],
    [
     840,
@@ -1365,20 +1411,22 @@
   "portrait": "portrait/yaya",
   "look": {
    "gender": "girl",
-   "skin": "#fbe0c4",
-   "eyes": "round",
-   "brows": "worry",
-   "mouths": "o",
-   "hair": "twin",
-   "hairColor": "#5a4636",
-   "top": "hoodie",
-   "topColor": "#f6d34a",
+   "body": "teen",
+   "head": "female_small",
+   "skin": "#e4a47c",
+   "eyes": "brown",
+   "brows": "thin",
+   "mouths": "normal",
+   "hair": "bunches",
+   "hairColor": "#5f1f04",
+   "top": "longsleeve",
+   "topColor": "#f3c03f",
    "bottom": "skirt",
-   "bottomColor": "#e58aa0",
-   "shoes": "rain",
-   "shoesColor": "#6b4a2e",
+   "bottomColor": "#c36072",
+   "shoes": "boots",
+   "shoesColor": "#744b30",
    "hat": "none",
-   "hatColor": "#d9b45a",
+   "hatColor": "#ab1e1e",
    "acc": "none"
   },
   "schedule": [
@@ -1474,21 +1522,22 @@
   "portrait": "portrait/molaoshi",
   "look": {
    "gender": "boy",
-   "skin": "#f6cfa3",
-   "eyes": "soft",
-   "brows": "plain",
-   "mouths": "smile",
-   "hair": "curly",
-   "hairColor": "#6b6b6b",
+   "head": "male_gaunt",
+   "skin": "#e4a47c",
+   "eyes": "brown",
+   "brows": "thin",
+   "mouths": "normal",
+   "hair": "parted",
+   "hairColor": "#aaaaaa",
    "top": "shirt",
-   "topColor": "#8a7a5c",
-   "bottom": "pants",
-   "bottomColor": "#4a4636",
-   "shoes": "leather",
-   "shoesColor": "#6b4a2e",
+   "topColor": "#b7996a",
+   "bottom": "formal",
+   "bottomColor": "#996b4a",
+   "shoes": "shoes2",
+   "shoesColor": "#744b30",
    "hat": "none",
-   "hatColor": "#d9b45a",
-   "acc": "glasses"
+   "hatColor": "#ab1e1e",
+   "acc": "glasses_halfmoon"
   },
   "schedule": [
    [
@@ -1499,9 +1548,10 @@
    ],
    [
     480,
-    15.5,
-    11.5,
-    "wander"
+    15,
+    11.6,
+    "wander",
+    "uptown"
    ],
    [
     960,
@@ -1583,20 +1633,20 @@
   "portrait": "portrait/maisui",
   "look": {
    "gender": "girl",
-   "skin": "#e8b98a",
-   "eyes": "sharp",
-   "brows": "plain",
-   "mouths": "open",
-   "hair": "bob",
-   "hairColor": "#8a5a2e",
+   "skin": "#ea9f54",
+   "eyes": "brown",
+   "brows": "thin",
+   "mouths": "normal",
+   "hair": "bob_side_part",
+   "hairColor": "#b6550e",
    "top": "shirt",
-   "topColor": "#d9a441",
-   "bottom": "jeans",
-   "bottomColor": "#3d5a80",
-   "shoes": "boot",
-   "shoesColor": "#6b4a2e",
+   "topColor": "#f3c03f",
+   "bottom": "pants2",
+   "bottomColor": "#466ac9",
+   "shoes": "boots",
+   "shoesColor": "#744b30",
    "hat": "none",
-   "hatColor": "#d9b45a",
+   "hatColor": "#ab1e1e",
    "acc": "none"
   },
   "schedule": [
@@ -1608,9 +1658,10 @@
    ],
    [
     480,
-    31.5,
-    10.5,
-    "wander"
+    32,
+    17.5,
+    "wander",
+    "uptown"
    ],
    [
     540,
@@ -1671,7 +1722,12 @@
    "birthday": "你記得我的生日……謝謝你，我很開心。",
    "gift_love": "這個是我最喜歡的！謝謝你！",
    "gift_like": "謝謝，我會好好用的。",
-   "gift_dislike": "呃……謝謝你的心意。"
+   "gift_dislike": "呃……謝謝你的心意。",
+   "love": [
+    "今天的行情我記好了，晚上陪你吃飯的時候，慢慢講給你聽。",
+    "我才不會說想你。……只是你不在的時候，報表寫得特別慢。",
+    "你的手很粗糙，可是我很喜歡。這句話只說一次。"
+   ]
   },
   "mailGift": [
    "fertilizer_gold",
@@ -1692,21 +1748,22 @@
   "portrait": "portrait/laosong",
   "look": {
    "gender": "boy",
-   "skin": "#e8b98a",
-   "eyes": "smile",
+   "head": "male_elderly",
+   "skin": "#ea9f54",
+   "eyes": "gray",
    "brows": "thin",
-   "mouths": "smile",
+   "mouths": "normal",
    "hair": "long",
-   "hairColor": "#e8e8e8",
-   "top": "sweater",
-   "topColor": "#6b8a5a",
-   "bottom": "longskirt",
-   "bottomColor": "#5a5f4a",
-   "shoes": "sandal",
-   "shoesColor": "#6b4a2e",
+   "hairColor": "#d8dcdc",
+   "top": "cardigan",
+   "topColor": "#134507",
+   "bottom": "pantaloons",
+   "bottomColor": "#797580",
+   "shoes": "sandals",
+   "shoesColor": "#744b30",
    "hat": "none",
-   "hatColor": "#d9b45a",
-   "acc": "none"
+   "hatColor": "#ab1e1e",
+   "acc": "beard"
   },
   "schedule": [
    [
@@ -1717,9 +1774,10 @@
    ],
    [
     480,
-    8.5,
-    12.5,
-    "wander"
+    34.5,
+    9.5,
+    "wander",
+    "forest"
    ],
    [
     1020,
@@ -1789,21 +1847,21 @@
   "portrait": "portrait/liuli",
   "look": {
    "gender": "girl",
-   "skin": "#f6cfa3",
-   "eyes": "lash",
+   "skin": "#e4a47c",
+   "eyes": "purple",
    "brows": "thin",
-   "mouths": "pout",
-   "hair": "long",
-   "hairColor": "#3a6b8a",
-   "top": "hoodie",
-   "topColor": "#5a3d7a",
+   "mouths": "normal",
+   "hair": "long_messy",
+   "hairColor": "#3c49ad",
+   "top": "longsleeve",
+   "topColor": "#621e78",
    "bottom": "pants",
-   "bottomColor": "#2e2e3a",
-   "shoes": "boot",
-   "shoesColor": "#6b4a2e",
-   "hat": "none",
-   "hatColor": "#d9b45a",
-   "acc": "scarf"
+   "bottomColor": "#4a5057",
+   "shoes": "boots",
+   "shoesColor": "#744b30",
+   "hat": "hood",
+   "hatColor": "#621e78",
+   "acc": "none"
   },
   "schedule": [
    [
@@ -1871,7 +1929,12 @@
    "birthday": "你記得我的生日……謝謝你，我很開心。",
    "gift_love": "這個是我最喜歡的！謝謝你！",
    "gift_like": "謝謝，我會好好用的。",
-   "gift_dislike": "呃……謝謝你的心意。"
+   "gift_dislike": "呃……謝謝你的心意。",
+   "love": [
+    "我的行李都收好了，不過我哪裡也不去。嘻嘻，信不信隨你。",
+    "今天進了一批好貨，第一個想給你看。第二個才是別人。",
+    "腳長根的感覺，原來是這樣。好像也不壞。"
+   ]
   },
   "mailGift": [
    "amethyst",
@@ -1892,20 +1955,22 @@
   "portrait": "portrait/apeng",
   "look": {
    "gender": "boy",
-   "skin": "#f6cfa3",
-   "eyes": "round",
+   "body": "teen",
+   "head": "male_small",
+   "skin": "#e4a47c",
+   "eyes": "brown",
    "brows": "thick",
-   "mouths": "open",
-   "hair": "curly",
-   "hairColor": "#4a3626",
-   "top": "tee",
-   "topColor": "#f3ead2",
+   "mouths": "normal",
+   "hair": "curly_short",
+   "hairColor": "#5f1f04",
+   "top": "apron",
+   "topColor": "#b7996a",
    "bottom": "shorts",
-   "bottomColor": "#5a5f66",
-   "shoes": "sneaker",
-   "shoesColor": "#6b4a2e",
+   "bottomColor": "#797580",
+   "shoes": "shoes",
+   "shoesColor": "#744b30",
    "hat": "none",
-   "hatColor": "#d9b45a",
+   "hatColor": "#ab1e1e",
    "acc": "none"
   },
   "schedule": [
@@ -1995,20 +2060,21 @@
   "portrait": "portrait/qinglan",
   "look": {
    "gender": "boy",
-   "skin": "#e8b98a",
-   "eyes": "cool",
-   "brows": "plain",
-   "mouths": "pout",
-   "hair": "long",
-   "hairColor": "#3b4a3a",
-   "top": "hoodie",
-   "topColor": "#4a6b5a",
-   "bottom": "work",
-   "bottomColor": "#3a3a30",
-   "shoes": "boot",
-   "shoesColor": "#6b4a2e",
+   "head": "male_gaunt",
+   "skin": "#ea9f54",
+   "eyes": "green",
+   "brows": "thin",
+   "mouths": "normal",
+   "hair": "long_tied",
+   "hairColor": "#31313e",
+   "top": "cardigan",
+   "topColor": "#134507",
+   "bottom": "pants2",
+   "bottomColor": "#4a5057",
+   "shoes": "boots",
+   "shoesColor": "#744b30",
    "hat": "none",
-   "hatColor": "#d9b45a",
+   "hatColor": "#ab1e1e",
    "acc": "none"
   },
   "schedule": [
@@ -2084,7 +2150,12 @@
    "birthday": "你記得我的生日……謝謝你，我很開心。",
    "gift_love": "這個是我最喜歡的！謝謝你！",
    "gift_like": "謝謝，我會好好用的。",
-   "gift_dislike": "呃……謝謝你的心意。"
+   "gift_dislike": "呃……謝謝你的心意。",
+   "love": [
+    "今天山上起霧。我送你回去……路滑，手給我。",
+    "我採到一朵很好看的花。不是藥草，是想給你的。",
+    "下山的時候，我又繞去你們的田。這次是想看你。"
+   ]
   },
   "mailGift": [
    "tonic",
@@ -2105,21 +2176,22 @@
   "portrait": "portrait/mipo",
   "look": {
    "gender": "girl",
-   "skin": "#fbe0c4",
-   "eyes": "smile",
-   "brows": "worry",
-   "mouths": "smile",
-   "hair": "bob",
-   "hairColor": "#e0e0e0",
-   "top": "sweater",
-   "topColor": "#c9788a",
-   "bottom": "longskirt",
-   "bottomColor": "#6b5a6b",
-   "shoes": "sandal",
-   "shoesColor": "#6b4a2e",
+   "head": "female_elderly",
+   "skin": "#e4a47c",
+   "eyes": "brown",
+   "brows": "thin",
+   "mouths": "normal",
+   "hair": "bangs_bun",
+   "hairColor": "#d8dcdc",
+   "top": "cardigan",
+   "topColor": "#8a3d28",
+   "bottom": "skirt",
+   "bottomColor": "#621e78",
+   "shoes": "slippers",
+   "shoesColor": "#744b30",
    "hat": "none",
-   "hatColor": "#d9b45a",
-   "acc": "glasses"
+   "hatColor": "#ab1e1e",
+   "acc": "glasses_halfmoon"
   },
   "schedule": [
    [
@@ -2214,20 +2286,20 @@
   "portrait": "portrait/atuo",
   "look": {
    "gender": "boy",
-   "skin": "#e8b98a",
-   "eyes": "round",
+   "skin": "#7f4c31",
+   "eyes": "brown",
    "brows": "thick",
-   "mouths": "open",
-   "hair": "spiky",
-   "hairColor": "#2e2a26",
+   "mouths": "normal",
+   "hair": "messy1",
+   "hairColor": "#31313e",
    "top": "overalls",
-   "topColor": "#c9772e",
-   "bottom": "work",
-   "bottomColor": "#4a3a2a",
-   "shoes": "boot",
-   "shoesColor": "#6b4a2e",
+   "topColor": "#ef7e19",
+   "bottom": "pants2",
+   "bottomColor": "#744b30",
+   "shoes": "boots",
+   "shoesColor": "#744b30",
    "hat": "none",
-   "hatColor": "#d9b45a",
+   "hatColor": "#ab1e1e",
    "acc": "none"
   },
   "schedule": [
@@ -2296,7 +2368,12 @@
    "birthday": "你記得我的生日……謝謝你，我很開心。",
    "gift_love": "這個是我最喜歡的！謝謝你！",
    "gift_like": "謝謝，我會好好用的。",
-   "gift_dislike": "呃……謝謝你的心意。"
+   "gift_dislike": "呃……謝謝你的心意。",
+   "love": [
+    "今天挖到一顆很亮的石頭！我要先給你看，再給別人看！",
+    "礦坑裡很涼，不過站在你旁邊，一點都不冷！",
+    "我現在喊回音，心裡想的都是你！哈哈，我小聲一點！"
+   ]
   },
   "mailGift": [
    "iron_ore",
@@ -2317,20 +2394,21 @@
   "portrait": "portrait/xiaocheng",
   "look": {
    "gender": "girl",
-   "skin": "#fbe0c4",
-   "eyes": "soft",
-   "brows": "worry",
-   "mouths": "o",
+   "head": "female_small",
+   "skin": "#e4a47c",
+   "eyes": "blue",
+   "brows": "thin",
+   "mouths": "normal",
    "hair": "bob",
-   "hairColor": "#6b8ab5",
-   "top": "stripe",
-   "topColor": "#bcd6ec",
-   "bottom": "longskirt",
-   "bottomColor": "#e8e2d0",
-   "shoes": "sneaker",
-   "shoesColor": "#6b4a2e",
-   "hat": "beanie",
-   "hatColor": "#d9b45a",
+   "hairColor": "#0074cb",
+   "top": "tshirt_vneck",
+   "topColor": "#c6eefd",
+   "bottom": "skirt",
+   "bottomColor": "#e5e6c7",
+   "shoes": "shoes",
+   "shoesColor": "#744b30",
+   "hat": "bonnie",
+   "hatColor": "#f3c03f",
    "acc": "none"
   },
   "schedule": [
@@ -2393,7 +2471,12 @@
    "birthday": "你記得我的生日……謝謝你，我很開心。",
    "gift_love": "這個是我最喜歡的！謝謝你！",
    "gift_like": "謝謝，我會好好用的。",
-   "gift_dislike": "呃……謝謝你的心意。"
+   "gift_dislike": "呃……謝謝你的心意。",
+   "love": [
+    "我、我今天又畫了你……只畫一點點，在畫的角落。",
+    "你在旁邊的話，我的手就不會抖了。真的。",
+    "藍色又用完了……沒關係，今天的天空有你，我想用最藍的畫它。"
+   ]
   },
   "mailGift": [
    "seed_tulip",
@@ -2414,21 +2497,22 @@
   "portrait": "portrait/awangshu",
   "look": {
    "gender": "boy",
-   "skin": "#f6cfa3",
-   "eyes": "smile",
+   "head": "male_plump",
+   "skin": "#e4a47c",
+   "eyes": "brown",
    "brows": "thick",
-   "mouths": "open",
-   "hair": "short",
-   "hairColor": "#6b4a2e",
+   "mouths": "normal",
+   "hair": "plain",
+   "hairColor": "#b6550e",
    "top": "shirt",
-   "topColor": "#e8872e",
-   "bottom": "work",
-   "bottomColor": "#5a4a3a",
-   "shoes": "boot",
-   "shoesColor": "#6b4a2e",
+   "topColor": "#ef7e19",
+   "bottom": "cuffed",
+   "bottomColor": "#996b4a",
+   "shoes": "boots",
+   "shoesColor": "#744b30",
    "hat": "none",
-   "hatColor": "#d9b45a",
-   "acc": "none"
+   "hatColor": "#ab1e1e",
+   "acc": "mustache"
   },
   "schedule": [
    [
@@ -2439,9 +2523,10 @@
    ],
    [
     480,
-    15.5,
-    10.5,
-    "wander"
+    8,
+    17.5,
+    "wander",
+    "uptown"
    ],
    [
     720,

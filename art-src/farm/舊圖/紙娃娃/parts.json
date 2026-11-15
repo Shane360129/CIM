@@ -1,0 +1,1181 @@
+{
+ "note": "紙娃娃的零件清單。art 是圖集裡的名字（素材到了才填）；沒有 art 的用程式畫的暫代零件（shape）。tint 是這個零件跟著哪個顏色換色。",
+ "layers": [
+  "hairBack",
+  "armBack",
+  "body",
+  "bottom",
+  "shoes",
+  "top",
+  "armFront",
+  "face",
+  "hairFront",
+  "hat",
+  "acc",
+  "tool"
+ ],
+ "colors": {
+  "skin": [
+   "#ffe0bd",
+   "#f6cfa3",
+   "#e8b98a",
+   "#c98e62",
+   "#9a6541",
+   "#6e4530"
+  ],
+  "hair": [
+   "#2b2421",
+   "#5a3d22",
+   "#8a5a34",
+   "#c98a3c",
+   "#e8c66a",
+   "#f3ead2",
+   "#b0b6bd",
+   "#d9544d",
+   "#e88ab0",
+   "#6aa8e8",
+   "#5fae6a",
+   "#8a6ad8"
+  ],
+  "cloth": [
+   "#ffffff",
+   "#f3e6c8",
+   "#e5484d",
+   "#f0a04a",
+   "#f6d34a",
+   "#7dbb5a",
+   "#4f9a8a",
+   "#6aa8e8",
+   "#3b6ea8",
+   "#8a6ad8",
+   "#e88ab0",
+   "#8a5a34",
+   "#5a5f66",
+   "#2b2421"
+  ]
+ },
+ "eyes": [
+  {
+   "id": "round",
+   "name": "大圓眼"
+  },
+  {
+   "id": "soft",
+   "name": "下垂眼"
+  },
+  {
+   "id": "sharp",
+   "name": "上揚眼"
+  },
+  {
+   "id": "smile",
+   "name": "瞇瞇眼"
+  },
+  {
+   "id": "lash",
+   "name": "長睫毛"
+  },
+  {
+   "id": "cool",
+   "name": "細長眼"
+  }
+ ],
+ "brows": [
+  {
+   "id": "plain",
+   "name": "普通眉"
+  },
+  {
+   "id": "thick",
+   "name": "粗眉"
+  },
+  {
+   "id": "thin",
+   "name": "細彎眉"
+  },
+  {
+   "id": "worry",
+   "name": "八字眉"
+  }
+ ],
+ "mouths": [
+  {
+   "id": "smile",
+   "name": "微笑"
+  },
+  {
+   "id": "open",
+   "name": "大笑"
+  },
+  {
+   "id": "pout",
+   "name": "嘟嘴"
+  },
+  {
+   "id": "o",
+   "name": "驚訝"
+  }
+ ],
+ "hair": [
+  {
+   "id": "short",
+   "name": "清爽短髮"
+  },
+  {
+   "id": "spiky",
+   "name": "刺刺短髮"
+  },
+  {
+   "id": "curly",
+   "name": "自然捲"
+  },
+  {
+   "id": "twin",
+   "name": "雙馬尾"
+  },
+  {
+   "id": "bob",
+   "name": "鮑伯短髮"
+  },
+  {
+   "id": "long",
+   "name": "及腰長直髮"
+  },
+  {
+   "id": "h01a",
+   "name": "中分"
+  },
+  {
+   "id": "h01b",
+   "name": "平頭"
+  },
+  {
+   "id": "h02a",
+   "name": "蓬鬆瀏海"
+  },
+  {
+   "id": "h02b",
+   "name": "側分油頭"
+  },
+  {
+   "id": "h03a",
+   "name": "小狼尾"
+  },
+  {
+   "id": "h03b",
+   "name": "綁小馬尾"
+  },
+  {
+   "id": "h04a",
+   "name": "刺蝟頭"
+  },
+  {
+   "id": "h04b",
+   "name": "超短寸頭"
+  },
+  {
+   "id": "h05a",
+   "name": "高馬尾"
+  },
+  {
+   "id": "h05b",
+   "name": "大波浪捲髮"
+  },
+  {
+   "id": "h06a",
+   "name": "丸子頭"
+  },
+  {
+   "id": "h06b",
+   "name": "雙丸子頭"
+  },
+  {
+   "id": "h07a",
+   "name": "麻花辮"
+  },
+  {
+   "id": "h07b",
+   "name": "公主切"
+  },
+  {
+   "id": "h08a",
+   "name": "短捲髮"
+  },
+  {
+   "id": "h08b",
+   "name": "低馬尾"
+  },
+  {
+   "id": "h09a",
+   "name": "半紮髮"
+  },
+  {
+   "id": "h09b",
+   "name": "西瓜皮"
+  },
+  {
+   "id": "h10a",
+   "name": "亂翹短髮"
+  },
+  {
+   "id": "h10b",
+   "name": "及肩直髮"
+  },
+  {
+   "id": "h11a",
+   "name": "側邊編髮"
+  },
+  {
+   "id": "h11b",
+   "name": "捲毛蓬蓬頭"
+  },
+  {
+   "id": "h12a",
+   "name": "遮眼長瀏海"
+  },
+  {
+   "id": "h12b",
+   "name": "髮帶短髮"
+  }
+ ],
+ "top": [
+  {
+   "id": "tee",
+   "name": "素面短袖 T 恤",
+   "sleeve": "short"
+  },
+  {
+   "id": "stripe",
+   "name": "條紋短袖 T 恤",
+   "sleeve": "short"
+  },
+  {
+   "id": "hoodie",
+   "name": "連帽衫",
+   "sleeve": "long"
+  },
+  {
+   "id": "shirt",
+   "name": "格子長袖襯衫",
+   "sleeve": "long"
+  },
+  {
+   "id": "sweater",
+   "name": "圓領毛衣",
+   "sleeve": "long"
+  },
+  {
+   "id": "overalls",
+   "name": "吊帶工作服",
+   "sleeve": "short",
+   "dress": true
+  },
+  {
+   "id": "t13a",
+   "name": "口袋 T",
+   "sleeve": "short"
+  },
+  {
+   "id": "t13b",
+   "name": "背心",
+   "sleeve": "short"
+  },
+  {
+   "id": "t13c",
+   "name": "短袖襯衫",
+   "sleeve": "short"
+  },
+  {
+   "id": "t14a",
+   "name": "POLO 衫",
+   "sleeve": "short"
+  },
+  {
+   "id": "t14b",
+   "name": "高領毛衣",
+   "sleeve": "long"
+  },
+  {
+   "id": "t14c",
+   "name": "針織背心",
+   "sleeve": "short"
+  },
+  {
+   "id": "t15a",
+   "name": "長袖 T 恤",
+   "sleeve": "long"
+  },
+  {
+   "id": "t15b",
+   "name": "牛仔外套",
+   "sleeve": "long"
+  },
+  {
+   "id": "t15c",
+   "name": "工作夾克",
+   "sleeve": "long"
+  },
+  {
+   "id": "t16a",
+   "name": "羽絨外套",
+   "sleeve": "long"
+  },
+  {
+   "id": "t16b",
+   "name": "毛呢大衣",
+   "sleeve": "long"
+  },
+  {
+   "id": "t16c",
+   "name": "雨衣",
+   "sleeve": "long"
+  },
+  {
+   "id": "t17a",
+   "name": "運動外套",
+   "sleeve": "long"
+  },
+  {
+   "id": "t17b",
+   "name": "披風",
+   "sleeve": "long"
+  },
+  {
+   "id": "t17c",
+   "name": "農夫背心",
+   "sleeve": "short"
+  },
+  {
+   "id": "t18a",
+   "name": "短洋裝",
+   "sleeve": "short",
+   "dress": true
+  },
+  {
+   "id": "t18b",
+   "name": "長洋裝",
+   "sleeve": "short",
+   "dress": true
+  },
+  {
+   "id": "t18c",
+   "name": "圍裙洋裝",
+   "sleeve": "short",
+   "dress": true
+  },
+  {
+   "id": "t19a",
+   "name": "浴衣",
+   "sleeve": "long",
+   "dress": true
+  },
+  {
+   "id": "t19b",
+   "name": "睡衣",
+   "sleeve": "long",
+   "dress": true
+  },
+  {
+   "id": "t19c",
+   "name": "廚師服",
+   "sleeve": "long",
+   "dress": true
+  },
+  {
+   "id": "t20a",
+   "name": "漁夫連身褲",
+   "sleeve": "short",
+   "dress": true
+  },
+  {
+   "id": "t20b",
+   "name": "禮服",
+   "sleeve": "long",
+   "dress": true
+  },
+  {
+   "id": "t20c",
+   "name": "節慶服",
+   "sleeve": "long",
+   "dress": true
+  },
+  {
+   "id": "t21a",
+   "name": "草莓圖案 T",
+   "sleeve": "short"
+  },
+  {
+   "id": "t21b",
+   "name": "小雞圖案 T",
+   "sleeve": "short"
+  },
+  {
+   "id": "t21c",
+   "name": "紅蘿蔔刺繡毛衣",
+   "sleeve": "long"
+  },
+  {
+   "id": "t22a",
+   "name": "星空襯衫",
+   "sleeve": "long"
+  },
+  {
+   "id": "t22b",
+   "name": "落葉毛衣",
+   "sleeve": "long"
+  },
+  {
+   "id": "t22c",
+   "name": "雪花毛衣",
+   "sleeve": "long"
+  },
+  {
+   "id": "t23a",
+   "name": "櫻花上衣",
+   "sleeve": "short"
+  },
+  {
+   "id": "t23b",
+   "name": "西瓜 T",
+   "sleeve": "short"
+  },
+  {
+   "id": "t23c",
+   "name": "漁夫背心",
+   "sleeve": "short"
+  },
+  {
+   "id": "t24a",
+   "name": "礦工外套",
+   "sleeve": "long"
+  }
+ ],
+ "bottom": [
+  {
+   "id": "shorts",
+   "name": "短褲"
+  },
+  {
+   "id": "pants",
+   "name": "長褲"
+  },
+  {
+   "id": "jeans",
+   "name": "牛仔褲"
+  },
+  {
+   "id": "skirt",
+   "name": "百褶短裙"
+  },
+  {
+   "id": "longskirt",
+   "name": "A 字長裙"
+  },
+  {
+   "id": "work",
+   "name": "工作褲"
+  },
+  {
+   "id": "b25a",
+   "name": "七分褲",
+   "art": true
+  },
+  {
+   "id": "b25b",
+   "name": "運動褲",
+   "art": true,
+   "long": true
+  },
+  {
+   "id": "b25c",
+   "name": "燈籠褲",
+   "art": true,
+   "long": true
+  },
+  {
+   "id": "b26a",
+   "name": "吊帶短褲",
+   "art": true
+  },
+  {
+   "id": "b26b",
+   "name": "卡其褲",
+   "art": true,
+   "long": true
+  },
+  {
+   "id": "b26c",
+   "name": "格子裙",
+   "art": true
+  },
+  {
+   "id": "b27a",
+   "name": "蓬蓬裙",
+   "art": true
+  },
+  {
+   "id": "b27b",
+   "name": "褲裙",
+   "art": true
+  },
+  {
+   "id": "b27c",
+   "name": "燈芯絨褲",
+   "art": true,
+   "long": true
+  },
+  {
+   "id": "b28a",
+   "name": "雪褲",
+   "art": true,
+   "long": true
+  },
+  {
+   "id": "b28b",
+   "name": "海灘褲",
+   "art": true
+  },
+  {
+   "id": "b28c",
+   "name": "牛仔短裙",
+   "art": true
+  },
+  {
+   "id": "b29a",
+   "name": "長圓裙",
+   "art": true,
+   "long": true
+  },
+  {
+   "id": "b29b",
+   "name": "工作吊帶褲",
+   "art": true,
+   "long": true
+  },
+  {
+   "id": "b29c",
+   "name": "燈籠短褲",
+   "art": true
+  },
+  {
+   "id": "b30a",
+   "name": "騎馬褲",
+   "art": true,
+   "long": true
+  },
+  {
+   "id": "b30b",
+   "name": "百慕達短褲",
+   "art": true
+  },
+  {
+   "id": "b30c",
+   "name": "針織長裙",
+   "art": true,
+   "long": true
+  },
+  {
+   "id": "b31a",
+   "name": "節慶紗裙",
+   "art": true
+  }
+ ],
+ "shoes": [
+  {
+   "id": "sneaker",
+   "name": "布鞋"
+  },
+  {
+   "id": "boot",
+   "name": "短靴"
+  },
+  {
+   "id": "rain",
+   "name": "雨鞋"
+  },
+  {
+   "id": "sandal",
+   "name": "涼鞋"
+  },
+  {
+   "id": "leather",
+   "name": "皮鞋"
+  },
+  {
+   "id": "k32a",
+   "name": "運動鞋"
+  },
+  {
+   "id": "k32b",
+   "name": "拖鞋"
+  },
+  {
+   "id": "k32c",
+   "name": "草鞋"
+  },
+  {
+   "id": "k32d",
+   "name": "雪靴",
+   "tall": true
+  },
+  {
+   "id": "k32e",
+   "name": "娃娃鞋"
+  },
+  {
+   "id": "k33a",
+   "name": "木屐"
+  },
+  {
+   "id": "k33b",
+   "name": "工作靴",
+   "tall": true
+  },
+  {
+   "id": "k33c",
+   "name": "高筒帆布鞋",
+   "tall": true
+  },
+  {
+   "id": "k33d",
+   "name": "毛毛拖鞋"
+  },
+  {
+   "id": "k33e",
+   "name": "長筒靴",
+   "tall": true
+  }
+ ],
+ "hat": [
+  {
+   "id": "none",
+   "name": "不戴"
+  },
+  {
+   "id": "straw",
+   "name": "寬邊草帽"
+  },
+  {
+   "id": "beanie",
+   "name": "毛線帽"
+  },
+  {
+   "id": "cap",
+   "name": "棒球帽"
+  },
+  {
+   "id": "c34a",
+   "name": "貝雷帽",
+   "art": true
+  },
+  {
+   "id": "c34b",
+   "name": "漁夫帽",
+   "art": true
+  },
+  {
+   "id": "c34c",
+   "name": "牛仔帽",
+   "art": true
+  },
+  {
+   "id": "c35a",
+   "name": "頭巾",
+   "art": true
+  },
+  {
+   "id": "c35b",
+   "name": "髮箍",
+   "art": true,
+   "band": {
+    "w": 1.12,
+    "at": 0.5,
+    "side": {
+     "h": 0.72,
+     "bottom": 0.55,
+     "sx": 0.45
+    }
+   }
+  },
+  {
+   "id": "c35c",
+   "name": "蝴蝶結",
+   "art": true,
+   "band": {
+    "w": 0.62,
+    "at": 0.16
+   }
+  },
+  {
+   "id": "c36a",
+   "name": "花冠",
+   "art": true,
+   "band": {
+    "w": 1.08,
+    "at": 0.22
+   }
+  },
+  {
+   "id": "c36b",
+   "name": "廚師帽",
+   "art": true
+  },
+  {
+   "id": "c36c",
+   "name": "礦工頭燈帽",
+   "art": true
+  },
+  {
+   "id": "c37a",
+   "name": "雨帽",
+   "art": true
+  },
+  {
+   "id": "c37b",
+   "name": "節慶紅帽",
+   "art": true
+  },
+  {
+   "id": "c37c",
+   "name": "兔耳髮箍",
+   "art": true,
+   "band": {
+    "w": 0.95,
+    "at": 0.3,
+    "side": {
+     "h": 1.25,
+     "bottom": 0.45,
+     "sx": 0.4
+    }
+   }
+  },
+  {
+   "id": "c38a",
+   "name": "貓耳帽",
+   "art": true,
+   "hood": true
+  },
+  {
+   "id": "c38b",
+   "name": "小雞帽",
+   "art": true,
+   "hood": true
+  },
+  {
+   "id": "c38c",
+   "name": "西瓜帽",
+   "art": true,
+   "hood": true
+  },
+  {
+   "id": "c39a",
+   "name": "南瓜帽",
+   "art": true
+  },
+  {
+   "id": "c39b",
+   "name": "雪人毛帽",
+   "art": true,
+   "hood": true
+  },
+  {
+   "id": "c39c",
+   "name": "海盜帽",
+   "art": true
+  },
+  {
+   "id": "c40a",
+   "name": "魔法師帽",
+   "art": true
+  },
+  {
+   "id": "c40b",
+   "name": "皇冠",
+   "art": true,
+   "band": {
+    "w": 0.62,
+    "at": 0.1
+   }
+  },
+  {
+   "id": "c40c",
+   "name": "遮陽帽",
+   "art": true
+  },
+  {
+   "id": "c41a",
+   "name": "安全帽",
+   "art": true
+  },
+  {
+   "id": "c41b",
+   "name": "耳罩",
+   "art": true,
+   "band": {
+    "w": 1.18,
+    "at": 0.58,
+    "mid": true,
+    "side": {
+     "h": 0.85,
+     "bottom": 0.78,
+     "sx": 0.32
+    }
+   }
+  },
+  {
+   "id": "c41c",
+   "name": "髮夾組",
+   "art": true,
+   "band": {
+    "w": 0.95,
+    "at": 0.3
+   }
+  },
+  {
+   "id": "c42a",
+   "name": "花朵頭飾",
+   "art": true,
+   "band": {
+    "w": 1.0,
+    "at": 0.22
+   }
+  },
+  {
+   "id": "c42b",
+   "name": "青蛙帽",
+   "art": true,
+   "hood": true
+  },
+  {
+   "id": "c42c",
+   "name": "蜂蜜罐帽",
+   "art": true
+  }
+ ],
+ "acc": [
+  {
+   "id": "none",
+   "name": "沒有"
+  },
+  {
+   "id": "glasses",
+   "name": "圓框眼鏡"
+  },
+  {
+   "id": "scarf",
+   "name": "圍巾"
+  },
+  {
+   "id": "a43a",
+   "name": "圓框眼鏡",
+   "slot": "face",
+   "w": 0.78,
+   "art": true
+  },
+  {
+   "id": "a43b",
+   "name": "方框眼鏡",
+   "slot": "face",
+   "w": 0.8,
+   "art": true
+  },
+  {
+   "id": "a43c",
+   "name": "墨鏡",
+   "slot": "face",
+   "w": 0.8,
+   "art": true
+  },
+  {
+   "id": "a44a",
+   "name": "格紋圍巾",
+   "slot": "neck",
+   "w": 0.72,
+   "art": true
+  },
+  {
+   "id": "a44b",
+   "name": "領結",
+   "slot": "bow",
+   "w": 0.34,
+   "art": true
+  },
+  {
+   "id": "a44c",
+   "name": "領帶",
+   "slot": "tie",
+   "w": 0.22,
+   "art": true
+  },
+  {
+   "id": "a45a",
+   "name": "花朵項鍊",
+   "slot": "necklace",
+   "w": 0.42,
+   "art": true
+  },
+  {
+   "id": "a45b",
+   "name": "後背包",
+   "slot": "back",
+   "w": 0.7,
+   "art": true
+  },
+  {
+   "id": "a45c",
+   "name": "斜背包",
+   "slot": "hip",
+   "w": 0.38,
+   "art": true
+  },
+  {
+   "id": "a46a",
+   "name": "圍裙",
+   "slot": "apron",
+   "w": 0.62,
+   "art": true
+  },
+  {
+   "id": "a47a",
+   "name": "OK 繃",
+   "slot": "cheek",
+   "w": 0.22,
+   "art": true
+  },
+  {
+   "id": "a47b",
+   "name": "花朵髮夾",
+   "slot": "clip",
+   "w": 0.26,
+   "art": true
+  },
+  {
+   "id": "a47c",
+   "name": "星星髮夾",
+   "slot": "clip",
+   "w": 0.26,
+   "art": true
+  },
+  {
+   "id": "a48a",
+   "name": "天使翅膀",
+   "slot": "wings",
+   "w": 1.25,
+   "art": true
+  },
+  {
+   "id": "a48c",
+   "name": "腰包",
+   "slot": "waist",
+   "w": 0.66,
+   "art": true
+  },
+  {
+   "id": "a49a",
+   "name": "披肩",
+   "slot": "cape",
+   "w": 0.86,
+   "art": true
+  },
+  {
+   "id": "a50a",
+   "name": "口哨",
+   "slot": "necklace",
+   "w": 0.36,
+   "art": true
+  },
+  {
+   "id": "a50c",
+   "name": "種子袋腰帶",
+   "slot": "waist",
+   "w": 0.72,
+   "art": true
+  },
+  {
+   "id": "a51b",
+   "name": "鈴鐺項圈",
+   "slot": "collar",
+   "w": 0.5,
+   "art": true
+  },
+  {
+   "id": "a51c",
+   "name": "徽章",
+   "slot": "badge",
+   "w": 0.2,
+   "art": true
+  },
+  {
+   "id": "a52a",
+   "name": "髮帶",
+   "slot": "band",
+   "w": 1.0,
+   "art": true
+  },
+  {
+   "id": "a52b",
+   "name": "圍兜",
+   "slot": "apron",
+   "w": 0.55,
+   "art": true
+  }
+ ],
+ "presets": {
+  "boy": {
+   "gender": "boy",
+   "skin": "#ffe0bd",
+   "eyes": "round",
+   "brows": "plain",
+   "mouths": "smile",
+   "hair": "short",
+   "hairColor": "#5a3d22",
+   "top": "tee",
+   "topColor": "#6aa8e8",
+   "bottom": "shorts",
+   "bottomColor": "#8a5a34",
+   "shoes": "sneaker",
+   "shoesColor": "#ffffff",
+   "hat": "none",
+   "hatColor": "#f6d34a",
+   "acc": "none"
+  },
+  "girl": {
+   "gender": "girl",
+   "skin": "#ffe0bd",
+   "eyes": "lash",
+   "brows": "thin",
+   "mouths": "smile",
+   "hair": "twin",
+   "hairColor": "#8a5a34",
+   "top": "stripe",
+   "topColor": "#e88ab0",
+   "bottom": "skirt",
+   "bottomColor": "#3b6ea8",
+   "shoes": "boot",
+   "shoesColor": "#8a5a34",
+   "hat": "none",
+   "hatColor": "#f6d34a",
+   "acc": "none"
+  }
+ },
+ "slots": {
+  "face": {
+   "y": "hy",
+   "dy": 0.06,
+   "sx": 0.22,
+   "sw": 0.55
+  },
+  "cheek": {
+   "y": "hy",
+   "dy": 0.22,
+   "dx": 0.24,
+   "sx": 0.18
+  },
+  "clip": {
+   "y": "hy",
+   "dy": -0.3,
+   "dx": 0.3,
+   "sx": -0.12
+  },
+  "band": {
+   "y": "hy",
+   "dy": -0.42,
+   "sx": -0.04
+  },
+  "neck": {
+   "y": "sh",
+   "dy": 0.38,
+   "sx": 0.04
+  },
+  "bow": {
+   "y": "sh",
+   "dy": 0.04,
+   "sx": 0.16,
+   "sw": 0.5
+  },
+  "tie": {
+   "y": "sh",
+   "dy": 0.16,
+   "sx": 0.18
+  },
+  "necklace": {
+   "y": "sh",
+   "dy": 0.16,
+   "sx": 0.12,
+   "sw": 0.5
+  },
+  "collar": {
+   "y": "sh",
+   "dy": 0.05,
+   "sx": 0.04
+  },
+  "badge": {
+   "y": "sh",
+   "dy": 0.26,
+   "dx": 0.14,
+   "sx": 0.12
+  },
+  "apron": {
+   "y": "sh",
+   "dy": 0.32,
+   "sx": 0.06,
+   "sw": 0.7
+  },
+  "cape": {
+   "y": "sh",
+   "dy": 0.12,
+   "sx": -0.02,
+   "sw": 0.8
+  },
+  "waist": {
+   "y": "by",
+   "dy": -0.1,
+   "sx": 0.0,
+   "sw": 0.7
+  },
+  "hip": {
+   "y": "by",
+   "dy": -0.1,
+   "dx": 0.3,
+   "sx": -0.12
+  },
+  "back": {
+   "y": "sh",
+   "dy": 0.3,
+   "behind": true,
+   "sx": -0.24,
+   "sw": 0.6
+  },
+  "wings": {
+   "y": "sh",
+   "dy": 0.22,
+   "behind": true,
+   "sx": -0.22,
+   "sw": 0.55
+  }
+ },
+ "fit": {
+  "top": {
+   "k": 0.8,
+   "y": 0.06,
+   "sx": 0.0
+  },
+  "bottom": {
+   "k": 0.82,
+   "y": -0.2,
+   "sx": 0.0
+  },
+  "hat": {
+   "k": 0.9
+  },
+  "shoes": {
+   "k": 1
+  },
+  "note": "美術衣服的比例與位置（單位 U＝頭的高度）。k：圖的像素換成素體比例的倍數",
+  "hatY": {
+   "straw": -0.5,
+   "beanie": -0.62,
+   "cap": -0.52
+  }
+ }
+}

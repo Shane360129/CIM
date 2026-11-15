@@ -1,5 +1,6 @@
 // 暫代圖：美術還沒到的時候，用色塊加名字先頂著，遊戲照樣能跑。素材到了之後這裡會先找圖，沒有圖才畫色塊。
 // 所有東西都以「腳底中心」為基準畫（x、y 是腳踩的那一點），這樣依 y 排序就會有正確的前後遮擋
+import { sprite } from './sprites.js';
 const OUTLINE = '#5a3d22';
 
 function label(g, text, x, y, size) {
@@ -19,8 +20,10 @@ export function drawBubble(g, text, x, y, T, big = false) {
   g.fillStyle = '#fff'; g.fillRect(x - size * 0.3 + 1, y - 4, size * 0.6 - 2, 4);
   g.fillStyle = OUTLINE; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, x, y - h / 2 + size * 0.05);
 }
-// 翻過的田：深一點的土加幾道犁溝；澆過水顏色更深
+// 翻過的田：有 LPC 的翻土圖（tilled/dry、tilled/wet）就用圖，沒有就畫深一點的土加幾道犁溝；澆過水顏色更深
 export function drawTilled(g, x, y, T, wet) {
+  const s = sprite(wet ? 'tilled/wet' : 'tilled/dry');
+  if (s) { const was = g.imageSmoothingEnabled; g.imageSmoothingEnabled = false; g.drawImage(s.img, s.x, s.y, s.w, s.h, x * T, y * T, T, T); g.imageSmoothingEnabled = was; return; }
   g.fillStyle = wet ? '#6b4526' : '#8a5a34'; g.beginPath(); g.roundRect(x * T + 3, y * T + 3, T - 6, T - 6, T * 0.14); g.fill();
   g.strokeStyle = wet ? '#523218' : '#734828'; g.lineWidth = T * 0.05; g.lineCap = 'round';
   for (let i = 1; i <= 3; i++) { g.beginPath(); g.moveTo(x * T + T * 0.18, y * T + T * i / 4); g.lineTo(x * T + T * 0.82, y * T + T * i / 4); g.stroke(); }

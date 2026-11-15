@@ -1,0 +1,34 @@
+Authors: Benjamin K. Smith (BenCreating), bluecarrot16, TheraHedwig, Evert, MuffinElZangano, Durrani, Pierre Vigier (pvigier), ElizaWy, Matthew Krohn (makrohn), Johannes Sjölund (wulax), Stephen Challener (Redshrike), Nila122, Marcel van de Steeg (MadMarcel), Thane Brimhall (pennomi), laetissima, 
+
+- body/bodies/female/universal/light.png: by Benjamin K. Smith (BenCreating), bluecarrot16, TheraHedwig, Evert, MuffinElZangano, Durrani, Pierre Vigier (pvigier), ElizaWy, Matthew Krohn (makrohn), Johannes Sjölund (wulax), Stephen Challener (Redshrike). License(s): OGA-BY 3.0, CC-BY-SA 3.0, GPL 3.0. 
+    - https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles
+    - https://opengameart.org/content/lpc-medieval-fantasy-character-sprites
+    - https://opengameart.org/content/lpc-ladies
+    - https://opengameart.org/content/lpc-7-womens-shirts
+    - https://opengameart.org/content/lpc-jump-expanded
+
+- head/heads/human_female/universal/light.png: by bluecarrot16, Benjamin K. Smith (BenCreating), Stephen Challener (Redshrike). License(s): OGA-BY 3.0, CC-BY-SA 3.0, GPL 3.0. 
+    - https://opengameart.org/content/
+    - https://opengameart.org/content/lpc-character-bases
+
+- hair/braid/female/light_brown.png: by Nila122, ElizaWy. License(s): CC-BY-SA 3.0, GPL 3.0, GPL 2.0. 
+    - https://opengameart.org/content/3-hairs-for-lpc
+    - https://opengameart.org/content/lpc-hair
+
+- torso/clothes/tanktop/female/white.png: by bluecarrot16, ElizaWy, Matthew Krohn (makrohn), Marcel van de Steeg (MadMarcel). License(s): CC-BY-SA 3.0, GPL 3.0. 
+    - https://opengameart.org/content/lpc-female-orcogregoblintroll-base-walkcycle
+    - https://opengameart.org/content/lpc-7-womens-shirts
+    - http://opengameart.org/content/lpc-clothing-updates
+
+- torso/clothes/corset/female/red.png: by ElizaWy, Nila122. License(s): CC-BY-SA 3.0, GPL 3.0. 
+    - https://opengameart.org/content/lpc-clothes-and-hair
+    - https://opengameart.org/content/lpc-7-womens-shirts
+
+- legs/skirts/straight/female/purple.png: by bluecarrot16, ElizaWy. License(s): OGA-BY 3.0, GPL 3.0. 
+    - http://opengameart.org/content/lpc-clothing-updates
+
+- feet/ghillies/female/black.png: by bluecarrot16, Thane Brimhall (pennomi), laetissima, Matthew Krohn (makrohn). License(s): CC-BY-SA 3.0, GPL 3.0. 
+    - https://opengameart.org/content/lpc-2-characters
+    - http://opengameart.org/content/lpc-clothing-updates
+
+- tools/slash/foreground/drum.png: by . License(s): . !MISSING LICENSE INFORMATION! PLEASE CORRECT MANUALY AND REPORT BACK VIA A GITHUB ISSUE

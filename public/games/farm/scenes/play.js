@@ -1,10 +1,10 @@
 // 遊戲場景（階段 4）：自家農場、農舍裡、往小鎮的路。自己的走動在這裡先動；格子、物品、錢、時間都聽伺服器的（資料在 core/world.js）
 import { buildGround } from '../render/ground.js';
 import { drawObject, drawPlayer, drawBubble, drawTilled, drawShadow, drawName } from '../render/placeholder.js';
-import { drawDoll } from '../render/doll.js';
-import { drawSprite } from '../render/sprites.js';
-import { groundAt, levelOf, sellPrice, animalPos, hearts, mineMap, monPos, npcPos, walkGrid, seasonIndex, rng } from '../shared/rules.js';
-import { iconEl } from '../render/sprites.js';
+import { drawDoll, portraitEl } from '../render/doll.js';
+import { drawSprite, drawSign } from '../render/sprites.js';
+import { groundAt, levelOf, sellPrice, animalPos, hearts, mineMap, monPos, npcPos, walkGrid, seasonIndex, rng, eventReady, farmStat } from '../shared/rules.js';
+import { iconEl, sprite } from '../render/sprites.js';
 import { openPanel, itemIcon, setToolLv } from '../ui/panels.js';
 import { create } from './create.js';
 import { createFishing } from '../systems/fishing.js';
@@ -39,6 +39,8 @@ export const play = {
     hud.show(true); hud.showPlay(true);
     hud.setChat({ maxChars: balance.bubbleMaxChars, emoteList: balance.emotes, say: (text) => this.room.send({ t: 'bubble', text }), emote: (e) => this.room.send({ t: 'emote', e }) });
     hud.onBag(() => { this.fishing.cancel(); this.togglePanel('bag'); });
+    ctx.wardrobe = () => { if (!this.busy()) ctx.scenes.go(create, { edit: true }); }; // 背包裡的「換衣服」：在哪裡都能換
+    ctx.replayEvent = (id) => this.replay(id); // 圖鑑裡「再看一次」看過的劇情
     hud.onPhoto(() => { if (!hud.hasCard) this.photo(); });
     hud.onSettings(() => { if (hud.hasPanel) hud.closePanel(); else if (!hud.hasCard) openSettings(ctx); });
     hud.onGuide(() => { if (!hud.hasCard) this.guideCard(); });
@@ -57,7 +59,7 @@ export const play = {
       W.on('status', (s) => { net(s); if (s === 'replaced') hud.card('農場在別的地方打開了', ['同一個帳號一次只能在一個分頁玩。'], [{ label: '知道了', value: true }]); }),
       W.on('snapshot', (m) => { this.sent = { t: 0, vx: 0, vy: 0 }; this.setMap(W.me.map); refresh(); if (m.summary) this.showSummary(m.summary, m.partner); }),
       W.on('map', (id) => { this.fishing.cancel(); this.setMap(id); hud.closePanel(); refresh(); }),
-      W.on('self', refresh), W.on('farm', refresh),
+      W.on('self', () => { refresh(); if (W.self.evOpen) this.storyT = 99; }), W.on('farm', refresh), // 對方開始了兩個人的劇情：馬上一起演
       W.on('toast', (t) => hud.toast(t)),
       W.on('given', (m) => { const o = W.others.get(m.from); hud.toast(`${o ? o.name : '對方'} 送你 ${ctx.data.items[m.item].name}×${m.n}`, 2000); }),
       W.on('built', (m) => { this.setMap(this.mapId); refresh(); if (m.by !== W.me.id) hud.toast(m.what === 'house' ? '農舍擴建好了！' : '新的田開墾好了！', 1800); }),
@@ -65,9 +67,10 @@ export const play = {
       W.on('faint', () => hud.card('昏倒了…', ['被怪物打到沒力氣，醒來已經在礦坑外面。東西都還在，只是體力剩一半。'], [{ label: '好', value: true }])),
       W.on('mine-upd', (m) => { if (m.by === W.me.id && m.drops) hud.toast('拿到 ' + Object.entries(m.drops).map(([id, n]) => `${ctx.data.items[id].name}×${n}`).join('、'), 1300); if (m.stairs && m.stairs.open && m.rock && m.rock.x === m.stairs.x && m.rock.y === m.stairs.y) hud.toast('石頭下面有往下的樓梯！', 1600); }),
       W.on('objs', (m) => { if (m.by === W.me.id && m.drops) hud.toast('拿到 ' + Object.entries(m.drops).map(([id, n]) => `${ctx.data.items[id].name}×${n}`).join('、'), 1300); }),
-      W.on('newday', (m) => { refresh(); hud.closePanel(); hud.closeCard(); this.morning(m); ctx.audio.music(this.mapId, W.farm.season); }),
+      W.on('newday', (m) => { refresh(); ctx.audio.music(this.mapId, W.farm.season); if (this.eventing) { this.afterEvent = () => this.morning(m); return; } hud.closePanel(); hud.closeCard(); this.morning(m); }),
     ];
     if (ctx.pendingSummary) { this.showSummary(ctx.pendingSummary.summary, ctx.pendingSummary.partner); ctx.pendingSummary = null; }
+    this.eventing = false; this.storyT = 0; this.evRetry = {};
   },
   exit(ctx) { if (this.offSet) this.offSet(); this.fishing.cancel(); if (this.hunt) { this.hunt.timer.remove(); this.hunt = null; } this.off.forEach((f) => f()); ctx.hud.show(false); ctx.hud.showPlay(false); ctx.view.onResize = null; },
 
@@ -75,7 +78,7 @@ export const play = {
   setMap(id) {
     this.ctx.audio.music(id, (this.world.farm && this.world.farm.season) || 'spring');
     const { ctx } = this, mine = id === 'mine' && this.world.mine, map = mine ? mineMap(this.bal, mine.floor) : ctx.data.maps[id] || ctx.data.maps.farm, objects = ctx.data.objects;
-    this.mapId = mine ? 'mine' : ctx.data.maps[id] ? id : 'farm'; this.map = map; this.ground = buildGround(map, this.T, !!(this.world.farm && (this.world.farm.land || {}).field2));
+    this.mapId = mine ? 'mine' : ctx.data.maps[id] ? id : 'farm'; this.map = map; this.ground = buildGround(map, this.T, !!(this.world.farm && (this.world.farm.land || {}).field2), (this.world.farm && this.world.farm.season) || 'spring');
     this.solid = new Set(); this.useAt = new Map(); this.things = [];
     for (const o of map.objects) {
       const def = objects[o.type]; if (def.tool) continue;
@@ -108,7 +111,59 @@ export const play = {
     }
     hud.card(head, [...lines, ...born], [{ label: '開始新的一天', value: true }]);
   },
-  togglePanel(mode) { const hud = this.ctx.hud; if (hud.hasPanel) hud.closePanel(); else if (!hud.hasCard) openPanel(this.ctx, mode); },
+  togglePanel(mode) { const hud = this.ctx.hud; if (this.eventing) return; if (hud.hasPanel) hud.closePanel(); else if (!hud.hasCard) openPanel(this.ctx, mode); },
+  busy() { return !!this.eventing; },
+
+  // ---------- 劇情 ----------
+  // 居民的心事件在跟他說話時發生（talk）；主線（story）和兩個人的劇情（duo）照 when 的條件自己發生：每隔幾秒、沒在做別的事的時候看一次
+  storyState() {
+    const W = this.world, f = W.farm, p = this.player, H = this.bal.friend.heart, mate = [...W.others.values()].find((o) => o.map === W.me.map && !o.asleep && Math.hypot(o.x - p.x, o.y - p.y) <= this.bal.story.togetherReach);
+    return { map: this.mapId, x: p.x, y: p.y, minute: W.minute(), day: f.day, season: f.season, weather: f.weather, seen: W.self.events || {}, flags: W.self.flags || {},
+      stat: (k) => farmStat(f, k), restored: Object.values(f.restore || {}).filter((r) => r && r.done).length, houseLv: f.houseLv || 1, together: !!mate,
+      fixed: Object.fromEntries(Object.entries(f.restore || {}).filter(([, r]) => r && r.done).map(([k]) => [k, 1])),
+      hearts: Object.fromEntries(Object.entries(W.self.friend || {}).map(([k, v]) => [k, Math.floor(v.pts / H)])) };
+  },
+  checkStory(dt) {
+    const { hud, data } = this.ctx, W = this.world;
+    if ((this.storyT = (this.storyT || 0) + dt) < this.bal.story.checkSeconds) return;
+    this.storyT = 0;
+    if (this.ctx.noStory || this.eventing || this.talking || hud.hasCard || hud.typing || this.fishing.active || this.player.asleep || !W.ready || !W.farm || this.hunt || this.mapId === 'mine') return;
+    // 有開了還沒演完的（演到一半斷線、或對方開始了兩個人的劇情）：先演那一段
+    const open = W.self.evOpen; if (open && data.events[open.id] && !(W.self.events || {})[open.id]) return this.playEvent(open.id, open);
+    const s = this.storyState(), now = performance.now(); if (now < (this.nextStoryAt || 0)) return; // 剛演完一段：隔一下再演下一段，不要一段接一段
+    const id = Object.keys(data.events).find((k) => { const ev = data.events[k]; return ev.kind !== 'heart' && !s.seen[k] && (this.evRetry[k] || 0) < now && eventReady(ev, s); });
+    if (id) this.startEvent(id);
+  },
+  async startEvent(id) {
+    this.eventing = true;
+    const r = await this.room.req({ t: 'event-start', event: id });
+    if (r.t !== 'ok') { this.eventing = false; this.evRetry[id] = performance.now() + 30000; return; } // 伺服器說還不行（例如對方正在演別段）：等一下再試
+    await this.playEvent(id, r.open);
+  },
+  async replay(id) {
+    const ev = this.ctx.data.events[id]; if (!ev || this.eventing) return;
+    this.eventing = true; this.player.moving = false;
+    try { await runEvent(this.ctx, ev, {}); } finally { this.eventing = false; this.storyT = 0; }
+  },
+  async playEvent(id, open) {
+    const { hud, data } = this.ctx, ev = data.events[id]; this.eventing = true; this.player.moving = false; this.fishing.cancel();
+    try {
+      const picks = await runEvent(this.ctx, ev, { cast: open && open.cast });
+      const d = await this.room.req({ t: 'event-done', event: id, picks });
+      if (d.t === 'ok') {
+        const lines = [];
+        for (const [npc, n] of Object.entries(d.gains || {})) if (n > 0 && data.npcs[npc]) lines.push(`${data.npcs[npc].name} 更喜歡你了 ♥`);
+        for (const g of d.got || []) lines.push(`拿到 ${data.items[g.id].name}×${g.n}${g.chest ? '（背包滿了，放進倉庫箱）' : ''}`);
+        if (d.money) lines.push(`獎金 ${d.money} 元進了錢包`);
+        if (ev.album) lines.push(`📖 紀念冊多了一頁：「${ev.album}」`);
+        if (ev.kind !== 'heart' && lines.length) await hud.card(`「${ev.title}」`, lines, [{ label: '好', value: true }]);
+        else if (lines.length) hud.toast(lines.join('　'), 1800);
+      }
+    } finally {
+      this.eventing = false; this.storyT = 0; if (ev.kind !== 'heart') this.nextStoryAt = performance.now() + this.bal.story.gapSeconds * 1000;
+      if (this.afterEvent) { const f = this.afterEvent; this.afterEvent = null; f(); }
+    }
+  },
   // 測試程式用的捷徑（資料其實都在 world 裡）
   get ready() { return this.world.ready; }, get others() { return this.world.others; }, get tiles() { return this.world.tiles; },
   get farm() { return this.world.farm; }, get bubbles() { return this.world.bubbles; }, minute() { return this.world.minute(); },
@@ -133,7 +188,7 @@ export const play = {
   // 動作：先看那一格是不是可以互動的東西（門、出貨箱、床…），不是的話就用手上的東西對那一格做事（送請求給伺服器）
   async act(t) {
     const { hud, data } = this.ctx, W = this.world, pl = this.player;
-    if (hud.hasCard || !W.ready || t.x < 0 || t.y < 0 || t.x >= this.map.w || t.y >= this.map.h) return;
+    if (this.eventing || hud.hasCard || !W.ready || t.x < 0 || t.y < 0 || t.x >= this.map.w || t.y >= this.map.h) return;
     W.mark = { ...t, life: 0.6, color: '#fff' };
     if (this.map.mine) return this.actMine(t);
     const fe = this.fest(); if (fe && !this.hunt && Math.abs(t.x + 0.5 - (fe.d.stage.x + 1)) <= 1.6 && Math.abs(t.y - fe.d.stage.y) <= 1) return this.festival(fe);
@@ -294,10 +349,10 @@ export const play = {
   },
   // 現在在小鎮上的居民和他們的位置（照行程用時間算）
   folks() {
-    const W = this.world, npcs = this.ctx.data.npcs; if (!['town', 'forest', 'beach'].includes(this.mapId) || !W.farm) return [];
+    const W = this.world, npcs = this.ctx.data.npcs; const d0 = this.ctx.data, npcMaps = ['town', ...Object.keys(d0.maps).filter((m) => d0.maps[m].npcEntry)]; if (!npcMaps.includes(this.mapId) || !W.farm) return [];
     const min = W.minute(), walk = this.bal.friend.walkMinutes, d = this.ctx.data, fe = W.farm.festival && d.festivals[W.farm.festival];
-    this.grids ||= Object.fromEntries(['town', 'forest', 'beach'].map((m) => [m, walkGrid(d.maps[m], d.objects)]));
-    const opts = { entries: { forest: [1.6, 28.0], beach: [1.6, 8.0] }, wet: ['rain', 'storm'].includes(W.farm.weather), fest: fe && fe.map === 'town' ? fe.stage : null };
+    this.grids ||= Object.fromEntries(npcMaps.map((m) => [m, walkGrid(d.maps[m], d.objects)]));
+    const opts = { entries: Object.fromEntries(npcMaps.filter((m) => d.maps[m].npcEntry).map((m) => [m, d.maps[m].npcEntry])), wet: ['rain', 'storm'].includes(W.farm.weather), fest: fe && fe.map === 'town' ? fe.stage : null };
     const list = Object.entries(npcs).filter(([, n]) => n.full).map(([id, n]) => ({ id, n, ...npcPos(n, min, walk, this.grids, opts) })).filter((f) => f.map === this.mapId);
     // 閒著、站得很近的兩個人會聊天：每 30 分鐘（遊戲時間）的前 8 分鐘，其中一個人頭上冒一句話
     const lines = d.chatter.lines, slot = Math.floor(min / 30);
@@ -307,21 +362,25 @@ export const play = {
     }
     return list;
   },
-  // 跟居民說話：每天第一次聊天加好感；可以把手上的東西送給他（一天一次、一週兩次）
-  async talk(folk) {
+  // 跟居民說話：每天第一次聊天加好感；可以把手上的東西送給他（一天一次、一週兩次）。說話的時候主線劇情不會插進來
+  async talk(folk) { if (this.eventing || this.talking) return; this.talking = true; try { return await this.talkTo(folk); } finally { this.talking = false; } },
+  async talkTo(folk) {
     const { hud, data } = this.ctx, W = this.world, n = folk.n, F = this.bal.friend, pl = this.player;
     if (Math.hypot(folk.x - pl.x, folk.y - pl.y) > this.bal.reach + 1) return hud.toast('走近一點再說話', 900);
-    const face = (expr) => iconEl(`${n.portrait}/${expr}`, 96) || iconEl(`${n.portrait}/normal`, 96);
+    const face = (expr) => portraitEl(n.look, expr, 96); // 頭像：用居民的 LPC 角色
     const r = await this.room.req({ t: 'talk', npc: folk.id }); if (r.t !== 'ok') return hud.toast('他好像沒聽到', 900);
     const fr = W.self.friend[folk.id] || { pts: 0 }, h = Math.floor(fr.pts / F.heart);
     // 好感夠了、還沒看過的劇情：先演那一段
-    const evId = Object.keys(data.events).find((k) => data.events[k].npc === folk.id && h >= data.events[k].hearts && !(W.self.events || {})[k] && (this.ctx.settings.get('romance') || !data.events[k].romance));
-    if (evId) { const picks = await runEvent(this.ctx, data.events[evId]); const d = await this.room.req({ t: 'event-done', event: evId, picks }); if (d.t === 'ok' && d.gain) hud.toast(`${n.name} 更喜歡你了 ♥`, 1600); return; }
+    // 戀愛劇情（romance: true）只在戀愛內容打開時演；關掉時演同一個心數的友情版（romance: false）
+    const love = this.ctx.settings.get('romance'), fits = (e) => (love ? e.romance !== false : !e.romance);
+    const evId = Object.keys(data.events).find((k) => data.events[k].kind === 'heart' && data.events[k].npc === folk.id && h >= data.events[k].hearts && !(W.self.events || {})[k] && fits(data.events[k]));
+    if (evId) return this.playEvent(evId);
     const wet = ['rain', 'storm'].includes(W.farm.weather);
-    const pool = [...n.talk.any, ...(wet ? n.talk.rain : []), ...(h >= 3 ? n.talk.h3 : []), ...(h >= 6 ? n.talk.h6 : [])];
+    const dating = love && !!(W.self.flags || {})['love_' + folk.id]; // 交往中：多幾句只有交往後才會說的話
+    const pool = [...n.talk.any, ...(wet ? n.talk.rain : []), ...(h >= 3 ? n.talk.h3 : []), ...(h >= 6 ? n.talk.h6 : []), ...(dating ? [...(n.talk.love || []), ...(n.talk.love || [])] : [])];
     const text = r.first ? n.talk.first : r.bday && r.daily ? n.talk.birthday : pool[(W.farm.day * 7 + folk.id.length * 3 + (this.talkN = (this.talkN || 0) + 1)) % pool.length];
     const held = W.self.inv[hud.selected], it = held && data.items[held.id], canGift = it && it.kind !== 'tool';
-    const sub = `${n.job}・${'♥'.repeat(h)}${'♡'.repeat(Math.max(0, 10 - h))}`;
+    const sub = `${n.job}・${'♥'.repeat(h)}${'♡'.repeat(Math.max(0, 10 - h))}${dating ? '・交往中' : ''}`;
     const pick = await hud.dialog({ portrait: face(r.bday ? 'happy' : 'normal'), name: n.name, sub, text, buttons: [...(canGift ? [{ label: `送他 ${it.name}`, value: 'gift', ghost: true }] : []), { label: '再見', value: null }] });
     if (pick !== 'gift') return;
     const g = await this.room.req({ t: 'gift', npc: folk.id, slot: hud.selected });
@@ -348,8 +407,9 @@ export const play = {
   },
 
   update(dt) {
-    const { ctx } = this, W = this.world, p = this.player, hud = ctx.hud, a = hud.typing || hud.hasCard || !W.ready || this.fishing.state === 'game' ? { x: 0, y: 0 } : ctx.input.axis(), sp = this.bal.walkSpeed * dt * (W.buff('speed') ? this.bal.buffs.speed : 1);
+    const { ctx } = this, W = this.world, p = this.player, hud = ctx.hud, a = this.eventing || hud.typing || hud.hasCard || !W.ready || this.fishing.state === 'game' ? { x: 0, y: 0 } : ctx.input.axis(), sp = this.bal.walkSpeed * dt * (W.buff('speed') ? this.bal.buffs.speed : 1);
     this.fishing.update(dt); if ((a.x || a.y) && this.fishing.active) this.fishing.cancel(); // 一走動就收竿
+    this.checkStory(dt);
     p.px = p.x; p.py = p.y;
     // 左右、上下分開試：斜著撞到牆會沿著牆滑過去，不會整個卡住
     if (a.x && this.free(p.x + a.x * sp, p.y)) p.x += a.x * sp;
@@ -407,9 +467,13 @@ export const play = {
     camera.follow(me.x * T, me.y * T, view, this.map.w * T, this.map.h * T, 0.18);
     g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = this.map.outdoor ? '#5f9c4a' : '#3b2f22'; g.fillRect(0, 0, view.canvas.width, view.canvas.height);
     camera.apply(view);
-    g.imageSmoothingEnabled = true;
+    g.imageSmoothingEnabled = !this.ground.pixel; // LPC 地形是像素圖：放大不要糊
     g.drawImage(this.ground, 0, 0, this.ground.width * this.ground.scale, this.ground.height * this.ground.scale);
-    if (this.map.walls) { g.fillStyle = '#b08a5e'; g.fillRect(0, 0, this.map.w * T, T); g.fillStyle = '#8a6a44'; g.fillRect(0, T * 0.86, this.map.w * T, T * 0.14); }
+    if (this.map.walls) { // 室內最上面一排是牆：有 LPC 的壁紙圖就一段一段貼，沒有就畫色塊
+      const ws = sprite('terrain/wall');
+      if (ws) { g.imageSmoothingEnabled = false; const dw = ws.w * T / 32; for (let x = 0; x < this.map.w * T; x += dw) g.drawImage(ws.img, ws.x, ws.y, ws.w, ws.h, x, 0, dw, T); }
+      else { g.fillStyle = '#b08a5e'; g.fillRect(0, 0, this.map.w * T, T); g.fillStyle = '#8a6a44'; g.fillRect(0, T * 0.86, this.map.w * T, T * 0.14); }
+    }
     const x0 = camera.x / T - 3, x1 = (camera.x + view.w / camera.zoom) / T + 3, y0 = camera.y / T - 1, y1 = (camera.y + view.h / camera.zoom) / T + 4;
     const list = [];
     for (const t of W.tiles.values()) {
@@ -465,16 +529,25 @@ export const play = {
         continue;
       }
       if (it.beast) { // 家畜、寵物：有圖用圖（側面，往左走就翻過來），小時候畫小一點；有產品可以收的頭上冒泡泡
-        const b = it.beast, sz = b.d.size * (b.baby ? 0.6 : 1) * T, bx = b.x * T, by = b.y * T - (b.moving ? Math.abs(Math.sin(performance.now() / 130 + b.an.id)) * T * 0.04 : 0);
+        // 寵物照毛色選最接近的那一種圖；走路的時候播四格走路動畫（沒有走路圖的小動物就上下彈）
+        const b = it.beast, sz = b.d.size * (b.baby ? 0.6 : 1) * T, bx = b.x * T, art = b.d.art + petVariant(b.d, b.an.color);
+        const walk = b.moving && !b.baby && `${art}/walk${Math.floor(performance.now() / 140 + b.an.id) % 4}`, hasWalk = walk && sprite(walk);
+        const by = b.y * T - (b.moving && !hasWalk ? Math.abs(Math.sin(performance.now() / 130 + b.an.id)) * T * 0.04 : 0);
         if (!low) drawShadow(g, bx, b.y * T, sz * 0.7);
         g.save(); g.translate(bx, by); if (b.flip) g.scale(-1, 1);
-        if (!drawSprite(g, `${b.d.art}/${b.baby ? 'baby_side' : 'side'}`, 0, 0, sz, sz)) { g.fillStyle = b.an.color; g.strokeStyle = '#5a3d22'; g.lineWidth = Math.max(1.5, T * 0.04); g.beginPath(); g.ellipse(0, -sz * 0.3, sz * 0.38, sz * 0.28, 0, 0, 7); g.fill(); g.stroke(); g.beginPath(); g.arc(sz * 0.3, -sz * 0.5, sz * 0.17, 0, 7); g.fill(); g.stroke(); }
+        if (!(hasWalk && drawSprite(g, walk, 0, 0, sz, sz)) && !drawSprite(g, `${art}/${b.baby ? 'baby_side' : 'side'}`, 0, 0, sz, sz) && !drawSprite(g, `${b.d.art}/${b.baby ? 'baby_side' : 'side'}`, 0, 0, sz, sz)) { g.fillStyle = b.an.color; g.strokeStyle = '#5a3d22'; g.lineWidth = Math.max(1.5, T * 0.04); g.beginPath(); g.ellipse(0, -sz * 0.3, sz * 0.38, sz * 0.28, 0, 0, 7); g.fill(); g.stroke(); g.beginPath(); g.arc(sz * 0.3, -sz * 0.5, sz * 0.17, 0, 7); g.fill(); g.stroke(); }
         g.restore();
         if (b.an.ready) { drawBubble(g, ' ', bx, by - sz * 1.0, T, true); if (!drawSprite(g, data.items[b.d.product].art, bx, by - sz * 1.0 - T * 0.13, T * 0.45, T * 0.45)) drawName(g, '！', bx, by - sz - T * 0.3, T); }
         continue;
       }
       if (it.t) {
-        const d = it.t.def; if (!(d.art && drawSprite(g, d.art.replace('{season}', season), it.t.fx * T, it.t.fy * T, d.w * T, d.h * T))) drawObject(g, d, it.t.fx * T, it.t.fy * T, T);
+        const d = it.t.def, art = d.art && d.art.replace('{season}', season);
+        // 人走到大樹、房子後面被擋住的時候，那棵樹（那棟房子）變半透明，看得到自己和對方
+        const sp = art && sprite(art), hide = sp && sp.native && sp.h * T / 32 > T * 1.4 && people.some((pp) => { const px = pp.q.x * T, py = pp.q.y * T, w = sp.w * T / 32, h = sp.h * T / 32; return pp.q.y < it.t.fy && Math.abs(px - it.t.fx * T) < w * 0.45 && py - T * 0.7 > it.t.fy * T - h && py - T * 0.7 < it.t.fy * T - T * 0.3; });
+        if (hide) g.globalAlpha = 0.45;
+        if (!(art && drawSprite(g, art, it.t.fx * T, it.t.fy * T, d.w * T, d.h * T, d.hue || 0))) drawObject(g, d, it.t.fx * T, it.t.fy * T, T);
+        g.globalAlpha = 1;
+        if (d.sign) drawSign(g, d.sign, it.t.fx * T, it.t.fy * T - T * (d.signY || 1.25), T); // 組合出來的建築：門口掛招牌
         if (it.t.def.use === 'notes' && this.unreadNotes()) drawBubble(g, '📝', it.t.fx * T, it.t.fy * T - T * 1.3, T, true); // 便條板有對方的新便條
         if (it.t.def.use === 'mail' && (W.self.mail || []).some((m) => !m.got)) drawBubble(g, '✉', it.t.fx * T, it.t.fy * T - T * 1.2, T, true); // 信箱有新的信
         // 加工機：做好了頭上冒出成品，還在做就冒小點點
@@ -516,3 +589,10 @@ export const play = {
   },
 };
 const clampX = (x, w, pad) => Math.max(pad, Math.min(w - pad, x));
+// 寵物的毛色：data/animals.json 的 variants 是圖集裡每一種毛色的代表色，選跟這隻寵物的顏色最接近的（沒有 variants 就用預設的圖）
+function petVariant(d, color) {
+  if (!d.variants || !/^#[0-9a-f]{6}$/i.test(color || '')) return '';
+  const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)), c = rgb(color);
+  let best = 0, bd = Infinity; d.variants.forEach((h, i) => { const v = rgb(h), e = (v[0] - c[0]) ** 2 + (v[1] - c[1]) ** 2 + (v[2] - c[2]) ** 2; if (e < bd) { bd = e; best = i; } });
+  return `/c${best}`;
+}

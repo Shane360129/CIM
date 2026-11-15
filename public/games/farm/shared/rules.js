@@ -197,3 +197,37 @@ function npcPos1(npc, minute, walk, grids, opts) {
 }
 // 送這個東西給他，他的反應：love 最喜歡、like 喜歡、dislike 討厭、neutral 普通
 export function giftTaste(items, npc, id) { for (const k of ['loves', 'likes', 'dislikes']) if ((npc[k] || []).some((spec) => matches(items, id, spec))) return k === 'loves' ? 'love' : k === 'likes' ? 'like' : 'dislike'; return 'neutral'; }
+// 劇情的條件（data/events/story.json、duo.json 每一段的 when）：伺服器和畫面用同一套判斷。s 是現在的狀況：
+//   map、x、y（在哪張地圖、哪裡）、minute（今天幾點，遊戲分鐘）、day、season、weather、seen（看過的劇情）、flags（選過的旗標）、
+//   stat(k)（農場的統計）、restored（修好幾個設施）、fixed（修好了哪些設施）、hearts（跟每位居民幾心）、houseLv、together（對方是不是在旁邊）
+// when 的每一項都可以不寫；寫了就要全部符合：
+//   map 'farm' 或 ['farm','town']、at [x, y, 半徑]、day 第幾天以後、season、weather、hour [從幾點, 到幾點)（凌晨 1 點寫 25）、
+//   after 看過哪幾段、flags 選過哪些旗標、notFlags 沒選過哪些、stats { harvest: 1 }、restored 修好幾個、fixed 修好了哪個（'clocktower'）、
+//   hearts { xiaoman: 2 }、houseLv、together 兩個人都在
+export function eventReady(ev, s) {
+  const w = ev.when || {}, list = (v) => (Array.isArray(v) ? v : [v]);
+  if (w.map && !list(w.map).includes(s.map)) return false;
+  if (w.at && Math.hypot(s.x - w.at[0], s.y - w.at[1]) > (w.at[2] || 2)) return false;
+  if (w.day && s.day < w.day) return false;
+  if (w.season && !list(w.season).includes(s.season)) return false;
+  if (w.weather && !list(w.weather).includes(s.weather)) return false;
+  if (w.hour && (s.minute / 60 < w.hour[0] || s.minute / 60 >= w.hour[1])) return false;
+  if (w.after && !list(w.after).every((id) => s.seen[id])) return false;
+  if (w.flags && !list(w.flags).every((f) => s.flags[f])) return false;
+  if (w.notFlags && list(w.notFlags).some((f) => s.flags[f])) return false;
+  if (w.stats && !Object.entries(w.stats).every(([k, n]) => s.stat(k) >= n)) return false;
+  if (w.restored != null && s.restored < w.restored) return false;
+  if (w.fixed && !list(w.fixed).every((id) => s.fixed[id])) return false;
+  if (w.hearts && !Object.entries(w.hearts).every(([npc, n]) => (s.hearts[npc] || 0) >= n)) return false;
+  if (w.houseLv && s.houseLv < w.houseLv) return false;
+  if (w.together && !s.together) return false;
+  return true;
+}
+// 農場的統計數字（成就、劇情的條件用）：一般是做了幾次，另外幾個是算出來的
+export function farmStat(f, k) { return k === 'codex' ? Object.keys(f.codex || {}).length : k === 'day' ? f.day : k === 'mineDeepest' ? f.mineDeepest || 1 : (f.stats || {})[k] || 0; }
+// 三種劇情檔合在一起：居民的心事件（hearts）、主線（story）、兩個人的劇情（duo）。kind 記是哪一種
+export function mergeEvents(hearts, story, duo) {
+  const out = {};
+  for (const [kind, src] of [['heart', hearts], ['story', story], ['duo', duo]]) for (const [id, ev] of Object.entries(src || {})) out[id] = { ...ev, kind };
+  return out;
+}

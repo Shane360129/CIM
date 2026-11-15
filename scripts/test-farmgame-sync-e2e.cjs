@@ -6,6 +6,10 @@ const { chromium } = require('playwright');
   const B = 'http://localhost:8787', S = process.argv[2] || '.';
   const j = async (p, b, t, m) => (await fetch(B + p, { method: m || (b ? 'POST' : 'GET'), headers: { 'content-type': 'application/json', ...(t ? { authorization: 'Bearer ' + t } : {}) }, body: b ? JSON.stringify(b) : undefined })).json();
   for (let i = 0; i < 40; i++) { try { await j('/api/app-info'); break; } catch { await new Promise((r) => setTimeout(r, 1000)); } }
+  // 外觀零件的清單（LPC）：換髮型、換帽子按一下「下一個」會變成清單上的下一款
+  const PARTS = await (await fetch(B + '/games/farm/data/doll/parts.json')).json();
+  const nextId = (list, id) => { const l = list.filter((v) => !v.hidden), i = l.findIndex((v) => v.id === id); return l[(i + 1) % l.length].id; };
+  const HAIR2 = nextId(PARTS.hair, PARTS.presets.girl.hair), HAT2 = nextId(PARTS.hat, PARTS.presets.girl.hat);
   const a = await j('/api/register', { username: 'sy_a', password: 'pass123456', displayName: '小晴' });
   await j('/api/admin/settings', { inviteCode: 'inv-2' }, a.token, 'PATCH');
   const b = await j('/api/register', { username: 'sy_b', password: 'pass123456', displayName: '阿耕', inviteCode: 'inv-2' });
@@ -37,7 +41,7 @@ const { chromium } = require('playwright');
   const pa = await enter(a.token, async (p) => { await p.locator('.maker [data-gender=girl]').click(); await p.locator('.maker [data-next=hair]').click(); await p.locator('.maker .minput').fill('晴晴'); await p.screenshot({ path: S + '/s3-create.png' }); });
   const pb = await enter(b.token); await pa.waitForTimeout(500);
   let sa = await st(pa), sb = await st(pb);
-  ok('建立角色：A 選女生、換髮型、改名字，B 看到一樣的造型和名字', sa.me.look.gender === 'girl' && sa.me.look.hair === 'bob' && sb.other && sb.other.look.hair === 'bob' && sb.other.name === '晴晴' && sa.other.look.gender === 'boy');
+  ok('建立角色：A 選女生、換髮型、改名字，B 看到一樣的造型和名字', sa.me.look.gender === 'girl' && sa.me.look.hair === HAIR2 && sb.other && sb.other.look.hair === HAIR2 && sb.other.name === '晴晴' && sa.other.look.gender === 'boy');
   await pa.keyboard.down('KeyD'); await pa.waitForTimeout(900); await pa.keyboard.up('KeyD'); await pa.waitForTimeout(500);
   sa = await st(pa); sb = await st(pb);
   ok(`A 走動，B 畫面上的 A 跟著走到差不多的位置（A ${sa.me.x.toFixed(2)}、B 看到 ${sb.other.x.toFixed(2)}）`, sa.me.x > 11 && Math.abs(sb.other.x - sa.me.x) < 0.25 && Math.abs(sb.other.y - sa.me.y) < 0.25);
@@ -154,6 +158,25 @@ const { chromium } = require('playwright');
   ok('選「幫你試吃」跳到對應的那一段', /吃邊邊沒有焦的地方/.test(await pa.locator('.dialog .dtext').textContent()));
   for (let i = 0; i < 6 && (await pa.locator('.dialog').count()); i++) { await pa.keyboard.press('Space'); await pa.waitForTimeout(80); await pa.locator('.dialog button').first().click().catch(() => {}); await pa.waitForTimeout(900); }
   ok('劇情演完回到遊戲', (await pa.locator('.dialog').count()) === 0);
+  // 戀愛：小滿 10 心時，戀愛內容打開演告白、關掉演友情版；交往後跟她說話，對話框寫「交往中」（一樣是把畫面上的好感、看過的劇情改掉來看流程）
+  const EV = await pa.evaluate(() => { const e = window.__game.data.events; return { on: e.xiaoman_10 && e.xiaoman_10.title, off: e.xiaoman_10f && e.xiaoman_10f.title }; });
+  const fakeLove = (romance, extra) => pa.evaluate(([romance, extra]) => {
+    const g = window.__game, W = g.world, r = W.room; g.settings.set('romance', romance);
+    const fake = () => { W.self.friend.xiaoman = { pts: 2500 }; W.self.events = { ...W.self.events, xiaoman_2: 1, xiaoman_4: 1, xiaoman_6: 1, xiaoman_8: 1, ...extra.events }; W.self.flags = { ...(W.self.flags || {}), ...extra.flags }; };
+    if (!r.orig) r.orig = r.req.bind(r); r.req = async (m) => { const out = await r.orig(m); if (m.t === 'talk') fake(); return out; }; fake();
+  }, [romance, extra]);
+  const talkXm = async () => { const f = (await pa.evaluate(() => window.__game.scenes.current.folks().map((x) => ({ id: x.id, x: x.x, y: x.y })))).find((x) => x.id === 'xiaoman'); await tp(pa, f.x, f.y + 1.0, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(1200); await pa.waitForSelector('.dialog', { timeout: 6000 }).catch(() => {}); return pa.evaluate(() => { const d = document.querySelector('.dialog .dsub'); return d ? d.textContent : ''; }); };
+  const through = async () => { for (let i = 0; i < 90; i++) { if (!(await pa.locator('.dialog').count())) { if (!(await pa.evaluate(() => !!window.__game.scenes.current.eventing))) break; await pa.waitForTimeout(150); continue; } await pa.locator('.dialog').click({ position: { x: 20, y: 15 }, timeout: 2000 }).catch(() => {}); await pa.locator('.dialog .row button').first().click({ timeout: 2000 }).catch(() => {}); } };
+  if (!EV.on || !EV.off) console.log('（還沒有小滿的 10 心劇情，跳過戀愛的檢查）'); else {
+  await fakeLove(true, { events: {}, flags: {} }); const t10 = await talkXm();
+  ok('小滿 10 心、戀愛內容打開：演告白「' + EV.on + '」', !!EV.on && t10 === EV.on, t10); await pa.screenshot({ path: S + '/s6-love.png' }); await through();
+  await fakeLove(false, { events: {}, flags: {} }); const t10f = await talkXm();
+  ok('戀愛內容關掉：演友情版「' + EV.off + '」', !!EV.off && t10f === EV.off, t10f); await through();
+  await fakeLove(true, { events: { xiaoman_10: 1, xiaoman_10f: 1 }, flags: { love_xiaoman: 1 } }); const tl = await talkXm();
+  ok('交往後跟小滿說話：對話框寫「交往中」', /交往中/.test(tl), tl); await pa.screenshot({ path: S + '/s6-dating.png' });
+  for (let i = 0; i < 3 && (await pa.locator('.dialog').count()); i++) { await pa.locator('.dialog button').last().click().catch(() => {}); await pa.waitForTimeout(300); }
+  await pa.evaluate(() => { const g = window.__game, r = g.world.room; g.settings.set('romance', true); if (r.orig) r.req = r.orig; });
+  }
   // 節慶（把畫面上的日子當成節慶、時間縮成 3 秒來看流程；伺服器知道今天不是節慶，所以不會給獎）
   await pa.evaluate(() => { const g = window.__game; g.world.farm.festival = 'flower'; g.data.festivals.flower.seconds = 3; g.data.festivals.egg.seconds = 3; });
   await tp(pa, 22, 21.6, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
@@ -189,7 +212,7 @@ const { chromium } = require('playwright');
   ok('木工屋：可以擴建農舍、開墾南邊的田、蓋溫室，寫出要多少錢和材料', (await pa.locator('.panel .shoprow').count()) === 3 && /15000 元/.test(await pa.locator('.panel .shoprow[data-item=greenhouse]').textContent()) && /3000 元/.test(await pa.locator('.panel .shoprow[data-item=house]').textContent()) && /8000 元/.test(await pa.locator('.panel .shoprow[data-item=field2]').textContent()));
   await pa.keyboard.press('Escape');
   await pa.keyboard.press('KeyE'); await pa.waitForTimeout(200); await pa.locator('.panel [data-act=codex]').click(); await pa.waitForTimeout(300);
-  ok('背包 → 圖鑑與成就：六類圖鑑、54 個成就、紀念冊', (await pa.locator('.panel h3').count()) === 8 && /成就 0／54/.test((await pa.locator('.panel h3').allTextContents()).join('|')) && /紀念冊 \d+／\d+/.test((await pa.locator('.panel h3').allTextContents()).join('|')) && (await pa.locator('.panel .cell.unknown').count()) >= 50);
+  ok('背包 → 圖鑑與成就：六類圖鑑、54 個成就、紀念冊、三種劇情', (await pa.locator('.panel h3').count()) === 11 && /居民的故事 \d+／\d+\|晴耕谷的故事 \d+／\d+\|兩個人的回憶 \d+／\d+/.test((await pa.locator('.panel h3').allTextContents()).join('|')) && /成就 0／54/.test((await pa.locator('.panel h3').allTextContents()).join('|')) && /紀念冊 \d+／\d+/.test((await pa.locator('.panel h3').allTextContents()).join('|')) && (await pa.locator('.panel .cell.unknown').count()) >= 50);
   await pa.screenshot({ path: S + '/s7-codex.png' }); await pa.keyboard.press('Escape');
   await tp(pa, 30, 9.7, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
   ok('鐵匠鋪：列出六種工具現在的等級和升級要的錠', (await pa.locator('.panel .shoprow').count()) === 6 && /銅錠×5、1000 元/.test(await pa.locator('.panel .shoprow[data-item=hoe]').textContent()));
@@ -238,7 +261,7 @@ const { chromium } = require('playwright');
   await pb.evaluate(([x, y]) => window.__game.world.room.req({ t: 'use', slot: 0, x: x + 1, y }), [F.x, F.y]); // A 在衣櫃裡的時候，B 那邊照常運作
   await pa.locator('.maker [data-next=hat]').click(); await pa.locator('.maker [data-act=done]').click(); await pb.waitForTimeout(600);
   sa = await st(pa); sb = await st(pb);
-  ok('衣櫃換裝（戴上草帽），B 馬上看到；回到農舍畫面時看得到 B 剛翻的土', sa.me.look.hat === 'straw' && sb.other.look.hat === 'straw' && sa.tiles.length === 2);
+  ok('衣櫃換裝（換一頂帽子），B 馬上看到；回到農舍畫面時看得到 B 剛翻的土', sa.me.look.hat === HAT2 && sb.other.look.hat === HAT2 && sa.tiles.length === 2);
   await tp(pa, 8.5, 2.5, 'up'); await pa.keyboard.press('Space'); await pa.waitForTimeout(300);
   ok('對著爐灶按空白鍵：列出 20 道料理，等級不夠的會寫幾級才會煮', (await pa.locator('.panel .shoprow').count()) === 20 && /料理 8 級才會煮/.test(await pa.locator('.panel .shoprow[data-item=strawberry_cake]').textContent()));
   await pa.screenshot({ path: S + '/s5-cook.png' }); await pa.keyboard.press('Escape');
@@ -260,7 +283,7 @@ const { chromium } = require('playwright');
   await pa.close(); await pb.waitForTimeout(300);
   await pb.evaluate(async ([x, y]) => { const w = window.__game.world; w.room.send({ t: 'move', x: 5, y: 7.6, dir: 'down', vx: 0, vy: 0 }); await new Promise((r) => setTimeout(r, 200)); await w.room.req({ t: 'warp', i: 0 }); await new Promise((r) => setTimeout(r, 100)); w.room.send({ t: 'move', x: x + 1.5, y: y - 0.5, dir: 'down', vx: 0, vy: 0 }); await new Promise((r) => setTimeout(r, 200)); const pick = w.self.inv.findIndex((s) => s && s.id === 'pick'); await w.room.req({ t: 'use', slot: pick, x: x + 1, y }); }, [F.x, F.y]);
   const pa2 = await enter(a.token);
-  ok('重新進來不用再建立角色，造型和名字還在，人還在農舍裡', (await st(pa2)).me.look.hat === 'straw' && (await st(pa2)).me.name === '晴晴' && (await st(pa2)).me.map === 'house');
+  ok('重新進來不用再建立角色，造型和名字還在，人還在農舍裡', (await st(pa2)).me.look.hat === HAT2 && (await st(pa2)).me.name === '晴晴' && (await st(pa2)).me.map === 'house');
   const card = await pa2.locator('.card').textContent().catch(() => '');
   ok('A 回來看到「你不在時發生的事」：' + card, /你不在時發生的事/.test(card) && /阿耕/.test(card) && /清理 1 次/.test(card));
   ok('沒有錯誤訊息 ' + errs.join(' | '), errs.length === 0);

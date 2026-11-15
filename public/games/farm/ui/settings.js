@@ -19,12 +19,27 @@ export function openSettings(ctx) {
       row('字體大小', choice('font', [['s', '小'], ['m', '中'], ['l', '大']])),
       row('觸控搖桿', choice('stick', [['auto', '碰螢幕才出現'], ['always', '一直顯示']])),
       row('搖桿位置', choice('hand', [['right', '左邊搖桿'], ['left', '右邊搖桿']]), '慣用左手可以換邊'),
-      row('戀愛內容', choice('romance', [[true, '開'], [false, '關']]), '關掉後不會出現交往相關的劇情'),
+      row('戀愛內容', choice('romance', [[true, '開'], [false, '關']]), '關掉後，可以交往的居民的告白劇情會換成友情的版本'),
       row('新手教學', choice('tutorial', [[true, '顯示'], [false, '不顯示']])));
     root.append(mk('h3', '', '兩個人共用'));
     const cur = (W.farm.opts || {}).dayLen || bal.dayMinutesReal;
     root.append(row('一天的長度', choice('dayLen', bal.dayLenOptions.map((m) => [m, `${m} 分鐘`]), () => cur, async (v) => { const r = await W.room.req({ t: 'set', key: 'dayLen', value: v }); if (r.t !== 'ok') hud.toast('改不了，等一下再試', 1300); }), '現實的幾分鐘是遊戲的一天。改了對方那邊也會一起變'));
     root.append(mk('p', 'hint', '鍵盤：WASD／方向鍵走路、空白鍵動作、E 背包、T 說話、1～0 切換快捷列、Esc 關閉。'));
+    // 素材來源：LPC 的圖用 CC-BY-SA 等授權，規定要在遊戲裡看得到作者
+    const cr = ctx.data.creditsLpc;
+    const link = (text, href) => { const a = mk('a', '', text); a.href = href; a.target = '_blank'; a.rel = 'noopener'; return a; };
+    if (cr) { root.append(mk('h3', '', '素材來源')); const p = mk('p', 'hint credits', `角色圖：Liberated Pixel Cup（LPC）的素材（${cr.licenses.join('、')}）。作者：${cr.authors.join('、')}。`); root.append(p, link('角色圖的完整名單（每張圖的作者、授權、出處）', 'assets/lpc/CREDITS.csv')); }
+    // 場景、作物、動物、道具的圖：OpenGameArt 上的 LPC 素材包，每一包列出作者、授權、原始網頁和它附的說明檔
+    const cw = ctx.data.creditsWorld;
+    if (cw && cw.packs && cw.packs.length) {
+      const box = mk('details', 'credits'); box.append(mk('summary', '', `場景、作物、動物、道具的圖：OpenGameArt 上 ${cw.packs.length} 個 LPC 素材包（點開看作者）`));
+      for (const k of cw.packs) {
+        const row = mk('p', 'hint'); row.append(link(k.title, k.url), mk('span', '', `　作者：${k.authors.join('、')}；授權：${k.licenses.join('、')}`));
+        for (const f of k.files || []) { row.append(' '); row.append(link('（說明）', f)); }
+        box.append(row);
+      }
+      root.append(box);
+    }
   }
   draw();
   const off = W.on('farm', (m) => { if (m && m.t === 'opts') draw(); });

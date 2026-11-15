@@ -80,7 +80,8 @@ export function createHud(ui, slots) {
       hud.closeCard();
       return new Promise((resolve) => {
         card = mk('div', 'dialog'); const face = mk('div', 'dface'), body = mk('div', 'dbody'), txt = mk('p', 'dtext'), row = mk('div', 'row');
-        if (portrait) face.append(portrait); body.append(mk('h2', '', name), sub ? mk('small', 'dsub', sub) : '', txt, row); card.append(face, body);
+        if (portrait) face.append(portrait); else card.classList.add('noface'); // 沒有頭像（旁白）：字放滿整個框
+        body.append(name ? mk('h2', '', name) : '', sub ? mk('small', 'dsub', sub) : '', txt, row); card.append(face, body);
         let i = 0; const full = () => { i = text.length; txt.textContent = text; clearInterval(timer); row.classList.remove('hidden'); };
         const timer = setInterval(() => { i += 1; txt.textContent = text.slice(0, i); if (i >= text.length) full(); }, 28);
         row.classList.add('hidden'); card.typing = () => i < text.length; card.skip = full;
