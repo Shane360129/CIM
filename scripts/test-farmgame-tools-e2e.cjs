@@ -52,6 +52,15 @@ const { chromium } = require('playwright');
   await W(([x, y]) => { const w = window.__game.world; Object.assign(w.me, { x, y, px: x, py: y, dir: 'down' }); w.room.send({ t: 'move', x, y, dir: 'down', vx: 0, vy: 0 }); }, [stand.x - 2, stand.y - 1]);
   const can = await W(() => window.__game.world.self.inv.findIndex((s) => s && s.id === 'can')); await p.keyboard.press('Digit' + ((can + 1) % 10)); await p.waitForTimeout(700);
   await p.screenshot({ path: S + '/tools-field.png' });
+  // 範圍選擇記在這台裝置上：選 3×3、重新整理，拿起鋤頭還是 3×3
+  await p.keyboard.press('Digit' + ((hoe + 1) % 10)); await p.waitForTimeout(300);
+  for (let i = 0; i < 6 && !/3×3/.test(await p.locator('.rangebtn').innerText()); i++) { await p.keyboard.press('KeyR'); await p.waitForTimeout(120); }
+  await p.reload(); await p.waitForFunction(() => window.__game && window.__game.data, null, { timeout: 30000 }); await p.waitForTimeout(300);
+  await p.locator('#stage').click({ position: { x: 150, y: 200 } }); await p.waitForFunction(() => window.__game.scenes.current.ready === true, null, { timeout: 20000 });
+  for (let i = 0; i < 4 && await p.locator('.card').count(); i++) { await p.locator('.card button').last().click(); await p.waitForTimeout(250); }
+  await p.keyboard.press('Digit' + ((hoe + 1) % 10)); await p.waitForTimeout(500);
+  const r4 = (await p.locator('.rangebtn:not(.hidden)').count()) ? await p.locator('.rangebtn').innerText() : '';
+  ok('範圍選擇記在這台裝置上：重新整理之後還是 3×3 → ' + r4, /3×3/.test(r4));
   ok('沒有錯誤訊息 ' + errs.join(' | '), errs.length === 0);
   await br.close(); process.exit(fails ? 1 : 0);
 })().catch((e) => { console.log('SCRIPT ERROR', e.message.slice(0, 400)); process.exit(1); });

@@ -33,6 +33,8 @@ function cornerCanvas(dry, wet) {
   if (!sprite('tilled/d11') || !sprite('tilled/w11')) return null; // 圖集裡還沒有接邊的圖
   c = document.createElement('canvas'); c.width = c.height = 32; const q = c.getContext('2d');
   for (const id of PIECES[dry] || []) { const sp = sprite('tilled/d' + id); q.drawImage(sp.img, sp.x, sp.y, 32, 32, 0, 0, 32, 32); }
+  // 翻過的土跟田裡還沒翻的泥土顏色太像：只把翻過的土畫深一點（透明的地方不動），一眼看得出翻過了
+  q.globalCompositeOperation = 'source-atop'; q.fillStyle = 'rgba(58, 26, 6, .26)'; q.fillRect(0, 0, 32, 32); q.globalCompositeOperation = 'source-over';
   if (wet) { // 半透明的那層不能疊兩次（會更深）：三格的內角改成用中間那張的三個小角
     const ids = PIECES[wet] || [];
     if (ids.length === 1 || wet === 9 || wet === 6) for (const id of ids) { const sp = sprite('tilled/w' + id); q.drawImage(sp.img, sp.x, sp.y, 32, 32, 0, 0, 32, 32); }

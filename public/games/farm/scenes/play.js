@@ -41,7 +41,8 @@ export const play = {
     hud.onBag(() => { this.fishing.cancel(); this.togglePanel('bag'); });
     ctx.wardrobe = () => { if (!this.busy()) ctx.scenes.go(create, { edit: true }); }; // 背包裡的「換衣服」：在哪裡都能換
     ctx.replayEvent = (id) => this.replay(id); // 圖鑑裡「再看一次」看過的劇情
-    ctx.rangePick ||= {}; hud.onRange(() => this.cycleRange()); // 高級工具一次弄幾格：每種工具記住上次選的（沒選過就用最大的）
+    if (!ctx.rangePick) { try { ctx.rangePick = JSON.parse(localStorage.getItem('farm-range') || '{}') || {}; } catch { ctx.rangePick = {}; } } // 高級工具一次弄幾格：每種工具記住上次選的（沒選過就用最大的），存在這台裝置上
+    hud.onRange(() => this.cycleRange());
     hud.onPhoto(() => { if (!hud.hasCard) this.photo(); });
     hud.onSettings(() => { if (hud.hasPanel) hud.closePanel(); else if (!hud.hasCard) openSettings(ctx); });
     hud.onGuide(() => { if (!hud.hasCard) this.guideCard(); });
@@ -67,7 +68,7 @@ export const play = {
       W.on('built', (m) => { this.setMap(this.mapId); refresh(); if (m.by !== W.me.id) hud.toast(m.what === 'house' ? '農舍擴建好了！' : '新的田開墾好了！', 1800); }),
       W.on('restored', (m) => { const r = ctx.data.restore[m.fac]; hud.closePanel(); hud.card(`「${r.name}」修好了！`, [r.perkText, ...(m.all ? [balance.restore.allDone.text + `（${balance.restore.allDone.money} 元）`] : [])], [{ label: '太好了', value: true }]); }),
       W.on('faint', () => hud.card('昏倒了…', ['被怪物打到沒力氣，醒來已經在礦坑外面。東西都還在，只是體力剩一半。'], [{ label: '好', value: true }])),
-      W.on('mine-upd', (m) => { if (m.by === W.me.id && m.drops) hud.toast('拿到 ' + Object.entries(m.drops).map(([id, n]) => `${ctx.data.items[id].name}×${n}`).join('、'), 1300); if (m.stairs && m.stairs.open && m.rock && m.rock.x === m.stairs.x && m.rock.y === m.stairs.y) hud.toast('石頭下面有往下的樓梯！', 1600); }),
+      W.on('mine-upd', (m) => { if (m.by === W.me.id && m.drops) hud.toast('拿到 ' + Object.entries(m.drops).map(([id, n]) => `${ctx.data.items[id].name}×${n}`).join('、'), 1300); if (m.stairs && m.stairs.open && [m.rock, ...(m.rocks || [])].some((k) => k && k.hp <= 0 && k.x === m.stairs.x && k.y === m.stairs.y)) hud.toast('石頭下面有往下的樓梯！', 1600); }),
       W.on('objs', (m) => { if (m.by === W.me.id && m.drops) hud.toast('拿到 ' + Object.entries(m.drops).map(([id, n]) => `${ctx.data.items[id].name}×${n}`).join('、'), 1300); }),
       W.on('newday', (m) => { refresh(); ctx.audio.music(this.mapId, W.farm.season); if (this.eventing) { this.afterEvent = () => this.morning(m); return; } hud.closePanel(); hud.closeCard(); this.morning(m); }),
     ];
@@ -187,8 +188,8 @@ export const play = {
   // 手上拿的東西會動到哪幾格：鋤頭、澆水壺、斧頭、十字鎬、鐮刀照工具等級；種子、肥料要帶著播種器；加工機放一格
   aimInfo() {
     const W = this.world, d = this.ctx.data, held = W.self.inv[this.ctx.hud.selected], item = held && d.items[held.id];
-    if (!item || !W.ready || !this.map || this.map.mine) return null;
-    if (!(item.kind === 'tool' ? ['hoe', 'can', 'axe', 'pick', 'sickle'].includes(item.tool) : ['seed', 'fertilizer', 'machine'].includes(item.kind))) return null;
+    if (!item || !W.ready || !this.map) return null;
+    if (this.map.mine ? !(item.kind === 'tool' && item.tool === 'pick' && W.mine) : !(item.kind === 'tool' ? ['hoe', 'can', 'axe', 'pick', 'sickle'].includes(item.tool) : ['seed', 'fertilizer', 'machine'].includes(item.kind))) return null; // 礦坑裡只有十字鎬
     const kind = areaKind(this.bal, item, W.self.inv.some((q) => q && q.id === 'seeder')), shapes = toolShapes(this.bal, kind, kind ? (W.self.toolLv || {})[kind] || 1 : 1);
     const idx = Math.min(this.ctx.rangePick[kind] ?? shapes.length - 1, shapes.length - 1);
     return { item, kind, shapes, idx, shape: shapes[idx] };
@@ -196,14 +197,16 @@ export const play = {
   cycleRange() {
     const a = this.aimInfo(); if (!a || a.shapes.length < 2) return;
     this.ctx.rangePick[a.kind] = (a.idx + 1) % a.shapes.length; const s = a.shapes[this.ctx.rangePick[a.kind]];
+    try { localStorage.setItem('farm-range', JSON.stringify(this.ctx.rangePick)); } catch { /* 存不了：這次有效 */ }
     this.ctx.hud.toast(`一次弄 ${s[0]}×${s[1]} 格`, 800);
   },
   // 這一格用手上的東西做得到嗎（畫瞄準的時候，做得到的格子亮一點；伺服器另外再檢查一次）
   aimOk(item, x, y, many) {
     const W = this.world, d = this.ctx.data, t = W.tile(this.mapId, x, y), o = W.obj(this.mapId, x, y), od = o && d.objects[o.type];
     if (x < 0 || y < 0 || x >= this.map.w || y >= this.map.h) return false;
+    if (this.map.mine) return !!W.mine && W.mine.rocks.some((r) => r.x === x && r.y === y); // 礦坑：前面有石頭
     if (item.kind === 'tool') {
-      if (['axe', 'pick', 'sickle'].includes(item.tool)) return (od && od.tool === item.tool && (!many || !od.duo)) || (item.tool === 'sickle' && !!t && !!t.c && (t.c.s === -1 || (!many && t.c.s < 4))) || (!many && item.tool === 'pick' && !!t && !t.c && !o); // 一次清一片時只清障礙和枯掉的作物
+      if (['axe', 'pick', 'sickle'].includes(item.tool)) return (od && od.tool === item.tool && (!many || !od.duo)) || (item.tool === 'sickle' && !!t && !!t.c && (t.c.s === -1 || t.c.s === 4 || (!many && t.c.s < 4))) || (!many && item.tool === 'pick' && !!t && !t.c && !o); // 一次清一片時只清障礙、枯掉的作物，鐮刀順便收成熟了的
       if (item.tool === 'hoe') { let gr = groundAt(this.map, x, y); if (gr === 'locked' && this.mapId === 'farm' && (W.farm.land || {}).field2) gr = 'soil'; return gr === 'soil' && !t && !o && !this.solid.has(key(x, y)); }
       if (item.tool === 'can') return !!t && !t.w;
     }
@@ -223,7 +226,7 @@ export const play = {
       for (let y = cy - 5; y <= cy + 5; y++) for (let x = cx - 6; x <= cx + 6; x++) { if (groundAt(this.map, x, y) !== 'soil' && !W.tile(this.mapId, x, y)) continue; g.strokeRect(x * T + 0.5, y * T + 0.5, T - 1, T - 1); }
     }
     const f = this.facingTile(), now = performance.now(), pulse = 0.75 + 0.25 * Math.sin(now / 260), ft = W.tile(this.mapId, f.x, f.y);
-    const ripe = ft && ft.c && ft.c.s === 4, shape = ripe ? [1, 1] : a.shape, many = shape[0] * shape[1] > 1; // 面前是熟了的作物：按下去是收成那一格
+    const ripe = ft && ft.c && ft.c.s === 4 && a.item.tool !== 'sickle', shape = ripe ? [1, 1] : a.shape, many = shape[0] * shape[1] > 1; // 面前是熟了的作物：按下去是收成那一格（鐮刀一次收一片）
     for (const q of areaTiles(f.x, f.y, p.dir, shape)) {
       const ok = ripe || this.aimOk(a.item, q.x, q.y, many);
       g.fillStyle = ok ? `rgba(255, 245, 200, ${0.22 * pulse})` : 'rgba(0, 0, 0, 0)'; g.strokeStyle = ok ? `rgba(255, 250, 225, ${0.9 * pulse})` : 'rgba(255, 255, 255, .35)';
@@ -293,6 +296,7 @@ export const play = {
     const r = await this.room.req({ t: 'use', slot: hud.selected, x: t.x, y: t.y, dir: pl.dir, size: aim ? aim.idx : 0 });
     if (r.t === 'ok' && r.n > 1 && (r.tired || r.full)) hud.toast(`${r.tired ? '體力不夠' : '背包滿了'}，只做了 ${r.n} 格`, 1500);
     else if (r.t === 'ok' && r.n > 1 && aim && aim.item.kind === 'seed') hud.toast(`播了 ${r.n} 格`, 1000);
+    else if (r.t === 'ok' && r.harvested > 1) hud.toast(`收成了 ${r.harvested} 個`, 1200);
     if (r.t === 'ok' && r.waiting) hud.toast('這個太大了，要兩個人一起動手！等對方也來敲一下', 2200);
     if (r.t === 'ok' && r.got) hud.toast(`收成了 ${data.items[r.got.id].name}${r.got.q ? `（${this.bal.quality.names[r.got.q]}）` : ''}`, 1200);
     if (r.t === 'no' && r.reason === 'busy') return hud.toast(`還在做，大約還要 ${r.left >= 60 ? Math.round(r.left / 60) + ' 小時' : r.left + ' 分鐘'}`, 1300);
@@ -314,8 +318,12 @@ export const play = {
     const now = W.serverNow(), mon = s.mons.map((m) => ({ m, p: monPos(m, now) })).filter((q) => Math.hypot(q.p.x - pl.x, q.p.y - pl.y) < this.bal.reach + 0.3).sort((a, b) => Math.hypot(a.p.x - t.x - 0.5, a.p.y - t.y - 0.5) - Math.hypot(b.p.x - t.x - 0.5, b.p.y - t.y - 0.5))[0];
     const held = W.self.inv[hud.selected], tool = held && data.items[held.id].tool;
     let r = null;
+    const aim = tool === 'pick' ? this.aimInfo() : null, area = aim && aim.shape[0] * aim.shape[1] > 1 ? areaTiles(t.x, t.y, pl.dir, aim.shape) : null; // 晶的十字鎬一次敲一片
     if (mon && (tool === 'sword' || Math.hypot(mon.p.x - t.x - 0.5, mon.p.y - t.y - 0.5) < 0.9)) r = await this.room.req({ t: 'mon-hit', mid: mon.m.id, slot: hud.selected });
-    else if (s.rocks.some((k) => k.x === t.x && k.y === t.y)) r = await this.room.req({ t: 'mine-hit', x: t.x, y: t.y, slot: hud.selected });
+    else if (area && area.some((q) => s.rocks.some((k) => k.x === q.x && k.y === q.y))) {
+      W.mark = { ...t, tiles: area.map((q) => [q.x, q.y]), life: 0.6, color: '#fff' };
+      r = await this.room.req({ t: 'mine-hit', x: t.x, y: t.y, slot: hud.selected, dir: pl.dir, size: aim.idx });
+    } else if (s.rocks.some((k) => k.x === t.x && k.y === t.y)) r = await this.room.req({ t: 'mine-hit', x: t.x, y: t.y, slot: hud.selected });
     else if (s.stairs.open && s.stairs.x === t.x && s.stairs.y === t.y) r = await this.room.req({ t: 'mine-down' });
     else if (Math.abs(t.x - s.spawn.x) <= 1 && t.y >= s.spawn.y) return this.elevator(true);
     if (r && r.t === 'no') { const need = r.reason.startsWith('tool:') && TOOL_NAME[r.reason.slice(5)]; const text = need ? `這個要用${need}` : NO_TEXT[r.reason]; if (text) hud.toast(text, 1200); }
