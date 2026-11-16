@@ -52,7 +52,8 @@
    "fertilizer",
    "fertilizer_gold",
    "hay",
-   "brush"
+   "brush",
+   "seeder"
   ],
   "hint": "阿禾的店。種子要種在翻過的土上；每一季賣的種子不一樣，換季前沒收成的作物會枯掉。",
   "seeds": "season"

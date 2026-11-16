@@ -70,7 +70,7 @@ export function createWorld(session, bal) {
     const who = w.who(m.id); if (!who) return;
     who.action = m.kind === 'water' ? 'water' : m.kind === 'cast' ? 'cast' : m.kind === 'pick' || m.kind === 'sword' ? 'swing' : m.kind === 'eat' || m.kind === 'cook' ? 'eat' : m.kind === 'harvest' || m.kind === 'plant' || m.kind === 'fertilize' ? 'eat' : 'swing'; who.actionT = 0; who.tool = m.kind;
     if (m.kind === 'push' && m.id !== w.me.id && m.map === w.me.map) emit('toast', `${who.name} 在搬大傢伙，快過去一起動手！`);
-    if (m.id !== w.me.id && m.map === w.me.map) w.mark = { x: m.x, y: m.y, life: 0.6, color: '#ffd76a' };
+    if (m.id !== w.me.id && m.map === w.me.map) w.mark = { x: m.x, y: m.y, life: 0.6, color: '#ffd76a', ...(m.tiles ? { tiles: m.tiles } : {}) }; // 對方一次弄一片：整片閃一下
     who.fishing = m.kind === 'cast' ? { x: m.x, y: m.y } : null; // 對方在釣魚：看得到他的浮標
     if (m.kind === 'harvest' || m.kind === 'cook') w.floaters.push({ map: m.map, x: m.x + 0.5, y: m.y, item: m.item, q: m.q, life: 1.1 });
   });

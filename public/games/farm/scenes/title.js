@@ -2,7 +2,7 @@
 import { play } from './play.js';
 import { buildGround } from '../render/ground.js';
 import { drawSprite } from '../render/sprites.js';
-import { drawTilled, drawShadow } from '../render/placeholder.js';
+import { drawTilledArea, drawShadow } from '../render/placeholder.js';
 import { drawDoll } from '../render/doll.js';
 import { create } from './create.js';
 import { createWorld } from '../core/world.js';
@@ -39,7 +39,9 @@ export const title = {
     g.drawImage(bg.ground, 0, 0, bg.w, bg.h);
     const T = 64, list = [], t = this.t;
     const thing = (art, x, y) => list.push({ y, draw: () => drawSprite(g, art.replace('{season}', season), x * T, y * T, T * 3, T * 3) });
-    for (let x = 9; x < 15; x++) for (let y = 4; y < 7; y++) { drawTilled(g, x, y, T, false); const c = ['carrot', 'cabbage', 'pumpkin'][y - 4]; list.push({ y: y + 0.8, draw: () => drawSprite(g, `crop/${c}/${(x + y) % 3 === 0 ? 3 : 4}`, (x + 0.5) * T, (y + 0.9) * T, T, T) }); }
+    const field = []; for (let x = 9; x < 15; x++) for (let y = 4; y < 7; y++) field.push({ x, y });
+    drawTilledArea(g, T, field, (x, y, wet) => !wet && x >= 9 && x < 15 && y >= 4 && y < 7); // 翻過的田接成一片
+    for (let x = 9; x < 15; x++) for (let y = 4; y < 7; y++) { const c = ['carrot', 'cabbage', 'pumpkin'][y - 4]; list.push({ y: y + 0.8, draw: () => drawSprite(g, `crop/${c}/${(x + y) % 3 === 0 ? 3 : 4}`, (x + 0.5) * T, (y + 0.9) * T, T, T) }); }
     thing('building/house1', 4, 4.9); thing('obj/mailbox', 6, 5.3); thing('obj/bin', 7.4, 4.6); thing('obj/scarecrow', 12, 3.6);
     thing('tree/oak/{season}', 0.6, 3.4); thing('tree/oak/{season}', 8.2, 2.2); thing('tree/maple/{season}', 1.2, 8.6); thing('tree/pine/{season}', 15.4, 5.6);
     thing('obj/flower_yellow', 2.2, 6.2); thing('obj/flower_red', 6.6, 7.2); thing('obj/grass_l', 10.4, 9.6); thing('obj/flower_white', 14, 7.6);

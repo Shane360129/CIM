@@ -21,6 +21,38 @@ export function drawBubble(g, text, x, y, T, big = false) {
   g.fillStyle = OUTLINE; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, x, y - h / 2 + size * 0.05);
 }
 // 翻過的田：有 LPC 的翻土圖（tilled/dry、tilled/wet）就用圖，沒有就畫深一點的土加幾道犁溝；澆過水顏色更深
+// 翻過的田接成一片：LPC 的地形圖是畫在「格子的角」上的（一塊地的邊緣在格線往外一點），所以照每一個格子角四周的四格
+// 有沒有翻過，挑一張角、邊或中間的圖，畫在那個角的位置（往左上偏半格）。澆過水的再疊一層半透明的深色，一樣照四周有沒有澆過。
+// 一個角四周的樣子（四個位元：左上 1、右上 2、左下 4、右下 8）拼好的圖存起來，同樣的不用再拼。
+const tilledCache = new Map();
+// 有翻過的那幾格 → 用哪幾張圖疊起來（三格的內角用兩張邊疊出來；斜對角的兩格用兩個角）
+const PIECES = { 1: ['22'], 2: ['02'], 4: ['20'], 8: ['00'], 3: ['12'], 12: ['10'], 5: ['21'], 10: ['01'], 15: ['11'], 9: ['22', '00'], 6: ['02', '20'], 7: ['12', '21'], 11: ['12', '01'], 13: ['21', '10'], 14: ['01', '10'] };
+const QUAD = [[1, 0, 0], [2, 16, 0], [4, 0, 16], [8, 16, 16]]; // 位元、在這張圖裡的位置
+function cornerCanvas(dry, wet) {
+  const key = dry * 16 + wet; let c = tilledCache.get(key); if (c !== undefined) return c;
+  if (!sprite('tilled/d11') || !sprite('tilled/w11')) return null; // 圖集裡還沒有接邊的圖
+  c = document.createElement('canvas'); c.width = c.height = 32; const q = c.getContext('2d');
+  for (const id of PIECES[dry] || []) { const sp = sprite('tilled/d' + id); q.drawImage(sp.img, sp.x, sp.y, 32, 32, 0, 0, 32, 32); }
+  if (wet) { // 半透明的那層不能疊兩次（會更深）：三格的內角改成用中間那張的三個小角
+    const ids = PIECES[wet] || [];
+    if (ids.length === 1 || wet === 9 || wet === 6) for (const id of ids) { const sp = sprite('tilled/w' + id); q.drawImage(sp.img, sp.x, sp.y, 32, 32, 0, 0, 32, 32); }
+    else { const sp = sprite('tilled/w11'); for (const [b, ox, oy] of QUAD) if (wet & b) q.drawImage(sp.img, sp.x + ox, sp.y + oy, 16, 16, ox, oy, 16, 16); }
+  }
+  tilledCache.set(key, c); return c;
+}
+// 畫一片翻過的田：tiles 是要畫的那幾格（看得到的就好），has(x, y, wet) 問某一格有沒有翻過（wet：翻過而且澆過水）
+export function drawTilledArea(g, T, tiles, has) {
+  if (!sprite('tilled/d11')) { for (const t of tiles) drawTilled(g, t.x, t.y, T, has(t.x, t.y, true)); return; }
+  const seen = new Set(), was = g.imageSmoothingEnabled; g.imageSmoothingEnabled = false;
+  for (const t of tiles) for (const [cx, cy] of [[t.x, t.y], [t.x + 1, t.y], [t.x, t.y + 1], [t.x + 1, t.y + 1]]) {
+    const k = cx + ',' + cy; if (seen.has(k)) continue; seen.add(k);
+    const around = [[cx - 1, cy - 1, 1], [cx, cy - 1, 2], [cx - 1, cy, 4], [cx, cy, 8]];
+    let dry = 0, wet = 0; for (const [x, y, b] of around) { if (has(x, y, false)) dry |= b; if (has(x, y, true)) wet |= b; }
+    const c = dry && cornerCanvas(dry, wet); if (c) g.drawImage(c, (cx - 0.5) * T, (cy - 0.5) * T, T, T);
+  }
+  g.imageSmoothingEnabled = was;
+}
+// 一格一格畫（舊的畫法，接邊的圖不在的時候用）
 export function drawTilled(g, x, y, T, wet) {
   const s = sprite(wet ? 'tilled/wet' : 'tilled/dry');
   if (s) { const was = g.imageSmoothingEnabled; g.imageSmoothingEnabled = false; g.drawImage(s.img, s.x, s.y, s.w, s.h, x * T, y * T, T, T); g.imageSmoothingEnabled = was; return; }

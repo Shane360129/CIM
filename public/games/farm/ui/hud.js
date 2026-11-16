@@ -43,6 +43,8 @@ export function createHud(ui, slots) {
   const chips = mk('div', 'chips hidden'), chipMoney = mk('span', 'chip'), chipEnergy = mk('span', 'chip energy'), efill = mk('i'), btnBag = mk('button', 'chip', '🎒');
   const ebar = mk('span', 'ebar'); ebar.append(efill); chipEnergy.append('⚡', ebar); btnBag.type = 'button'; btnBag.title = '背包（E）'; const chipHp = mk('span', 'chip hp hidden'), hfill = mk('i'), hbar = mk('span', 'ebar'); hbar.append(hfill); chipHp.append('❤', hbar); chipHp.title = '血量（只有在礦坑裡會用到）';
   chips.append(chipMoney, chipEnergy, chipHp, btnBag); ui.append(chips);
+  // 範圍按鈕：拿著高級工具（或帶著播種器拿種子）時出現，點一下切換一次弄幾格
+  const rangeBtn = mk('button', 'rangebtn hidden'); rangeBtn.type = 'button'; rangeBtn.title = '一次弄幾格（R）'; rangeBtn.dataset.act = 'range'; ui.append(rangeBtn);
   const closeSay = () => { say.classList.add('hidden'); sayInput.blur(); };
   say.addEventListener('submit', (e) => { e.preventDefault(); const t = sayInput.value.trim(); sayInput.value = ''; closeSay(); if (t && onSay) onSay(t); });
   sayInput.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeSay(); e.stopPropagation(); } });
@@ -50,7 +52,10 @@ export function createHud(ui, slots) {
   btnEmote.addEventListener('click', () => emotes.classList.toggle('hidden'));
   // 用 defineProperties 而不是 Object.assign：後者會把 get typing 這種「每次問才算」的屬性當場算一次、變成固定的值
   Object.defineProperties(hud, Object.getOwnPropertyDescriptors({
-    showPlay(on) { for (const n of [clock, side, chips]) n.classList.toggle('hidden', !on); if (!on) { guide.classList.add('hidden'); emotes.classList.add('hidden'); closeSay(); hud.closeCard(); hud.closePanel(); } },
+    showPlay(on) { for (const n of [clock, side, chips]) n.classList.toggle('hidden', !on); if (!on) { guide.classList.add('hidden'); emotes.classList.add('hidden'); rangeBtn.classList.add('hidden'); closeSay(); hud.closeCard(); hud.closePanel(); } },
+    // 範圍按鈕的字（null 就藏起來）
+    setRange(text) { rangeBtn.classList.toggle('hidden', !text); if (text && rangeBtn.textContent !== text) rangeBtn.textContent = text; },
+    onRange(fn) { rangeBtn.onclick = fn; },
     onBag(fn) { btnBag.onclick = fn; },
     setStatus(money, energy, max, hp = null, hpMax = 100) { chipHp.classList.toggle('hidden', hp == null); if (hp != null) hfill.style.width = Math.round(100 * hp / hpMax) + '%'; const m = `💰 ${money}`; if (chipMoney.textContent !== m) chipMoney.textContent = m; efill.style.width = Math.round(100 * energy / max) + '%'; chipEnergy.classList.toggle('low', energy < max * 0.2); chipEnergy.title = `體力 ${energy}/${max}`; },
     // 快捷列：背包的前 10 格。make(i) 回傳那一格要放的圖示（沒有東西回傳 null）

@@ -6306,6 +6306,879 @@
     20
    ],
    "trim": false
+  },
+  "tool/pick_iron": {
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    96,
+    0,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#867e7f",
+     "#5d7692"
+    ],
+    [
+     "#4a5057",
+     "#3a495a"
+    ],
+    [
+     "#8aaaab",
+     "#758ca7"
+    ],
+    [
+     "#818b8b",
+     "#607996"
+    ],
+    [
+     "#726b7e",
+     "#546a83"
+    ]
+   ],
+   "note": "iron: 銅的換色表同一個原色換成iron的顏色（深淺一樣）"
+  },
+  "tool/pick_gold": {
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    96,
+    0,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#867e7f",
+     "#efc035"
+    ],
+    [
+     "#4a5057",
+     "#a7800e"
+    ],
+    [
+     "#8aaaab",
+     "#f3d067"
+    ],
+    [
+     "#818b8b",
+     "#efc33d"
+    ],
+    [
+     "#726b7e",
+     "#ecb719"
+    ]
+   ],
+   "note": "gold: 銅的換色表同一個原色換成gold的顏色（深淺一樣）"
+  },
+  "tool/pick_crystal": {
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    96,
+    0,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#867e7f",
+     "#50cfe3"
+    ],
+    [
+     "#4a5057",
+     "#1b91a3"
+    ],
+    [
+     "#8aaaab",
+     "#82ddeb"
+    ],
+    [
+     "#818b8b",
+     "#58d1e4"
+    ],
+    [
+     "#726b7e",
+     "#35c8de"
+    ]
+   ],
+   "note": "crystal: 銅的換色表同一個原色換成crystal的顏色（深淺一樣）"
+  },
+  "tool/axe_iron": {
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    192,
+    224,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#9d9d9d",
+     "#788fa9"
+    ],
+    [
+     "#5d5d5d",
+     "#435468"
+    ],
+    [
+     "#b5b5b5",
+     "#93a5ba"
+    ],
+    [
+     "#5f5e5b",
+     "#435468"
+    ],
+    [
+     "#9f9f9f",
+     "#7a91aa"
+    ],
+    [
+     "#a5a299",
+     "#7a91aa"
+    ],
+    [
+     "#bebebe",
+     "#9daec0"
+    ],
+    [
+     "#5f5d5a",
+     "#425468"
+    ],
+    [
+     "#989898",
+     "#738aa5"
+    ]
+   ],
+   "note": "iron: 銅的換色表同一個原色換成iron的顏色（深淺一樣）"
+  },
+  "tool/axe_gold": {
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    192,
+    224,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#9d9d9d",
+     "#f3d16d"
+    ],
+    [
+     "#5d5d5d",
+     "#c19410"
+    ],
+    [
+     "#b5b5b5",
+     "#f7df97"
+    ],
+    [
+     "#5f5e5b",
+     "#c19410"
+    ],
+    [
+     "#9f9f9f",
+     "#f3d371"
+    ],
+    [
+     "#a5a299",
+     "#f3d371"
+    ],
+    [
+     "#bebebe",
+     "#f7df97"
+    ],
+    [
+     "#5f5d5a",
+     "#c09410"
+    ],
+    [
+     "#989898",
+     "#f2ce62"
+    ]
+   ],
+   "note": "gold: 銅的換色表同一個原色換成gold的顏色（深淺一樣）"
+  },
+  "tool/axe_crystal": {
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    192,
+    224,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#9d9d9d",
+     "#87deeb"
+    ],
+    [
+     "#5d5d5d",
+     "#1fa8bd"
+    ],
+    [
+     "#b5b5b5",
+     "#b0e9f2"
+    ],
+    [
+     "#5f5e5b",
+     "#1fa8bd"
+    ],
+    [
+     "#9f9f9f",
+     "#8bdfec"
+    ],
+    [
+     "#a5a299",
+     "#8bdfec"
+    ],
+    [
+     "#bebebe",
+     "#b0e9f2"
+    ],
+    [
+     "#5f5d5a",
+     "#1fa7bc"
+    ],
+    [
+     "#989898",
+     "#7ddbea"
+    ]
+   ],
+   "note": "crystal: 銅的換色表同一個原色換成crystal的顏色（深淺一樣）"
+  },
+  "tool/sickle_iron": {
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    96,
+    288,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#69d2b1",
+     "#798fa9"
+    ],
+    [
+     "#71fdd1",
+     "#95a7bb"
+    ],
+    [
+     "#545c56",
+     "#3f5063"
+    ],
+    [
+     "#6b6e6c",
+     "#4e627a"
+    ],
+    [
+     "#b1b1b1",
+     "#8fa1b7"
+    ]
+   ],
+   "note": "iron: 銅的換色表同一個原色換成iron的顏色（深淺一樣）"
+  },
+  "tool/sickle_gold": {
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    96,
+    288,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#69d2b1",
+     "#f3d26e"
+    ],
+    [
+     "#71fdd1",
+     "#f7df97"
+    ],
+    [
+     "#545c56",
+     "#b68c0f"
+    ],
+    [
+     "#6b6e6c",
+     "#e1ad12"
+    ],
+    [
+     "#b1b1b1",
+     "#f6de96"
+    ]
+   ],
+   "note": "gold: 銅的換色表同一個原色換成gold的顏色（深淺一樣）"
+  },
+  "tool/sickle_crystal": {
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    96,
+    288,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#69d2b1",
+     "#88deec"
+    ],
+    [
+     "#71fdd1",
+     "#b0e9f2"
+    ],
+    [
+     "#545c56",
+     "#1d9fb3"
+    ],
+    [
+     "#6b6e6c",
+     "#25c3db"
+    ],
+    [
+     "#b1b1b1",
+     "#b0e9f2"
+    ]
+   ],
+   "note": "crystal: 銅的換色表同一個原色換成crystal的顏色（深淺一樣）"
+  },
+  "tool/sword_iron": {
+   "note": "iron: 銅的換色表同一個原色換成iron的顏色（深淺一樣）",
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    288,
+    160,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#c5d5c9",
+     "#aebccb"
+    ],
+    [
+     "#d6e2d4",
+     "#bec9d5"
+    ],
+    [
+     "#d5dfd1",
+     "#bac6d3"
+    ],
+    [
+     "#d5e1cf",
+     "#bac6d3"
+    ],
+    [
+     "#86a4a1",
+     "#6f87a3"
+    ],
+    [
+     "#77969a",
+     "#627c99"
+    ],
+    [
+     "#ccdacb",
+     "#b4c1cf"
+    ],
+    [
+     "#d3dfd2",
+     "#bbc6d3"
+    ],
+    [
+     "#a8c2b5",
+     "#93a5ba"
+    ],
+    [
+     "#c3d5c5",
+     "#adbbca"
+    ],
+    [
+     "#7f9f9f",
+     "#68829f"
+    ],
+    [
+     "#a6c1b3",
+     "#91a4b9"
+    ],
+    [
+     "#a3bdb0",
+     "#8da1b6"
+    ],
+    [
+     "#a2bdb0",
+     "#8da0b6"
+    ],
+    [
+     "#6f8f8f",
+     "#5b738f"
+    ],
+    [
+     "#7f7f7f",
+     "#5b738f"
+    ],
+    [
+     "#c5cdad",
+     "#9cadc0"
+    ],
+    [
+     "#9dac94",
+     "#7b92ab"
+    ],
+    [
+     "#4b3731",
+     "#2c3846"
+    ],
+    [
+     "#58423b",
+     "#354352"
+    ],
+    [
+     "#482420",
+     "#252f3a"
+    ]
+   ]
+  },
+  "tool/sword_gold": {
+   "note": "gold: 銅的換色表同一個原色換成gold的顏色（深淺一樣）",
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    288,
+    160,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#c5d5c9",
+     "#f7df97"
+    ],
+    [
+     "#d6e2d4",
+     "#f7df97"
+    ],
+    [
+     "#d5dfd1",
+     "#f7df97"
+    ],
+    [
+     "#d5e1cf",
+     "#f7df97"
+    ],
+    [
+     "#86a4a1",
+     "#f2cc5c"
+    ],
+    [
+     "#77969a",
+     "#f0c442"
+    ],
+    [
+     "#ccdacb",
+     "#f7df97"
+    ],
+    [
+     "#d3dfd2",
+     "#f7df97"
+    ],
+    [
+     "#a8c2b5",
+     "#f7df97"
+    ],
+    [
+     "#c3d5c5",
+     "#f7df97"
+    ],
+    [
+     "#7f9f9f",
+     "#f1c850"
+    ],
+    [
+     "#a6c1b3",
+     "#f7df97"
+    ],
+    [
+     "#a3bdb0",
+     "#f6de94"
+    ],
+    [
+     "#a2bdb0",
+     "#f6dd93"
+    ],
+    [
+     "#6f8f8f",
+     "#eebe2e"
+    ],
+    [
+     "#7f7f7f",
+     "#eebe2e"
+    ],
+    [
+     "#c5cdad",
+     "#f7df97"
+    ],
+    [
+     "#9dac94",
+     "#f4d373"
+    ],
+    [
+     "#4b3731",
+     "#80630a"
+    ],
+    [
+     "#58423b",
+     "#98750c"
+    ],
+    [
+     "#482420",
+     "#6c5309"
+    ]
+   ]
+  },
+  "tool/sword_crystal": {
+   "note": "crystal: 銅的換色表同一個原色換成crystal的顏色（深淺一樣）",
+   "src": "lpc-items-and-game-effects/x/ItemsAndEffects.zip/ItemsAndEffects/items1.png",
+   "rect": [
+    288,
+    160,
+    32,
+    32
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#c5d5c9",
+     "#b0e9f2"
+    ],
+    [
+     "#d6e2d4",
+     "#b0e9f2"
+    ],
+    [
+     "#d5dfd1",
+     "#b0e9f2"
+    ],
+    [
+     "#d5e1cf",
+     "#b0e9f2"
+    ],
+    [
+     "#86a4a1",
+     "#77dae9"
+    ],
+    [
+     "#77969a",
+     "#5dd3e5"
+    ],
+    [
+     "#ccdacb",
+     "#b0e9f2"
+    ],
+    [
+     "#d3dfd2",
+     "#b0e9f2"
+    ],
+    [
+     "#a8c2b5",
+     "#b0e9f2"
+    ],
+    [
+     "#c3d5c5",
+     "#b0e9f2"
+    ],
+    [
+     "#7f9f9f",
+     "#6bd6e7"
+    ],
+    [
+     "#a6c1b3",
+     "#b0e9f2"
+    ],
+    [
+     "#a3bdb0",
+     "#aee9f2"
+    ],
+    [
+     "#a2bdb0",
+     "#ade8f2"
+    ],
+    [
+     "#6f8f8f",
+     "#4acde2"
+    ],
+    [
+     "#7f7f7f",
+     "#4acde2"
+    ],
+    [
+     "#c5cdad",
+     "#b0e9f2"
+    ],
+    [
+     "#9dac94",
+     "#8de0ec"
+    ],
+    [
+     "#4b3731",
+     "#14707e"
+    ],
+    [
+     "#58423b",
+     "#188595"
+    ],
+    [
+     "#482420",
+     "#115e6a"
+    ]
+   ]
+  },
+  "tool/hoe_iron": {
+   "note": "iron: 銅的換色表同一個原色換成iron的顏色（深淺一樣）",
+   "src": "lpc-hand-tools/x/lpc-hand-tools.zip/lpc-hand-tools/tools/thrust/hoe.png",
+   "rect": [
+    340,
+    484,
+    44,
+    24
+   ],
+   "native": false,
+   "isolate": true,
+   "recolor": [
+    [
+     "#2e2533",
+     "#202831"
+    ],
+    [
+     "#4d4a5d",
+     "#3c4c5e"
+    ],
+    [
+     "#726b7e",
+     "#546a83"
+    ],
+    [
+     "#867e7f",
+     "#5d7692"
+    ],
+    [
+     "#c4b59f",
+     "#8fa2b7"
+    ],
+    [
+     "#e5e6c7",
+     "#b9c4d2"
+    ],
+    [
+     "#ffffff",
+     "#e6eaef"
+    ]
+   ]
+  },
+  "tool/hoe_gold": {
+   "note": "gold: 銅的換色表同一個原色換成gold的顏色（深淺一樣）",
+   "src": "lpc-hand-tools/x/lpc-hand-tools.zip/lpc-hand-tools/tools/thrust/hoe.png",
+   "rect": [
+    340,
+    484,
+    44,
+    24
+   ],
+   "native": false,
+   "isolate": true,
+   "recolor": [
+    [
+     "#2e2533",
+     "#5b4607"
+    ],
+    [
+     "#4d4a5d",
+     "#ad850e"
+    ],
+    [
+     "#726b7e",
+     "#ecb719"
+    ],
+    [
+     "#867e7f",
+     "#efc035"
+    ],
+    [
+     "#c4b59f",
+     "#f7df97"
+    ],
+    [
+     "#e5e6c7",
+     "#f7df97"
+    ],
+    [
+     "#ffffff",
+     "#f7df97"
+    ]
+   ]
+  },
+  "tool/hoe_crystal": {
+   "note": "crystal: 銅的換色表同一個原色換成crystal的顏色（深淺一樣）",
+   "src": "lpc-hand-tools/x/lpc-hand-tools.zip/lpc-hand-tools/tools/thrust/hoe.png",
+   "rect": [
+    340,
+    484,
+    44,
+    24
+   ],
+   "native": false,
+   "isolate": true,
+   "recolor": [
+    [
+     "#2e2533",
+     "#0f4f59"
+    ],
+    [
+     "#4d4a5d",
+     "#1c97a9"
+    ],
+    [
+     "#726b7e",
+     "#35c8de"
+    ],
+    [
+     "#867e7f",
+     "#50cfe3"
+    ],
+    [
+     "#c4b59f",
+     "#b0e9f2"
+    ],
+    [
+     "#e5e6c7",
+     "#b0e9f2"
+    ],
+    [
+     "#ffffff",
+     "#b0e9f2"
+    ]
+   ]
+  },
+  "tool/can_iron": {
+   "src": "lpc-hand-tools/x/lpc-hand-tools.zip/lpc-hand-tools/tools/thrust/watering-can.png",
+   "rect": [
+    658,
+    296,
+    21,
+    14
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#9d6639",
+     "#4d6178"
+    ],
+    [
+     "#8f5030",
+     "#45576b"
+    ],
+    [
+     "#613025",
+     "#303d4b"
+    ],
+    [
+     "#aa8550",
+     "#5a718c"
+    ],
+    [
+     "#411e05",
+     "#192027"
+    ]
+   ],
+   "note": "iron: 銅的換色表同一個原色換成iron的顏色（深淺一樣）"
+  },
+  "tool/can_gold": {
+   "src": "lpc-hand-tools/x/lpc-hand-tools.zip/lpc-hand-tools/tools/thrust/watering-can.png",
+   "rect": [
+    658,
+    296,
+    21,
+    14
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#9d6639",
+     "#deab12"
+    ],
+    [
+     "#8f5030",
+     "#c69810"
+    ],
+    [
+     "#613025",
+     "#8b6b0b"
+    ],
+    [
+     "#aa8550",
+     "#eebd2a"
+    ],
+    [
+     "#411e05",
+     "#493806"
+    ]
+   ],
+   "note": "gold: 銅的換色表同一個原色換成gold的顏色（深淺一樣）"
+  },
+  "tool/can_crystal": {
+   "src": "lpc-hand-tools/x/lpc-hand-tools.zip/lpc-hand-tools/tools/thrust/watering-can.png",
+   "rect": [
+    658,
+    296,
+    21,
+    14
+   ],
+   "native": false,
+   "recolor": [
+    [
+     "#9d6639",
+     "#23c1d9"
+    ],
+    [
+     "#8f5030",
+     "#20acc2"
+    ],
+    [
+     "#613025",
+     "#167988"
+    ],
+    [
+     "#aa8550",
+     "#46cce1"
+    ],
+    [
+     "#411e05",
+     "#0c3f47"
+    ]
+   ],
+   "note": "crystal: 銅的換色表同一個原色換成crystal的顏色（深淺一樣）"
+  },
+  "tool/seeder": {
+   "note": "播種器：種子袋換成綠色（上面疊一株小苗）",
+   "src": "lpc-containers/x/container-v4_2.zip/container-v4_2/container.png",
+   "rect": [
+    320,
+    832,
+    32,
+    32
+   ],
+   "native": false,
+   "hue": 95
   }
  }
 }
