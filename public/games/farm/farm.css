@@ -175,3 +175,37 @@ button.chip { cursor: pointer; }
 #ui.lefty .stick { left: auto; right: calc(22px + env(safe-area-inset-right)); }
 #ui.lefty .act-btn { right: auto; left: calc(26px + env(safe-area-inset-left)); }
 @media (pointer: coarse) { .guide { top: calc(166px + env(safe-area-inset-top)); } }
+
+/* 地圖面板：一排地圖的名字、縮小的地圖 */
+.panel.mappanel { width: min(760px, calc(100% - 20px)); }
+.maptabs { display: flex; flex-wrap: wrap; gap: 4px; margin: 2px 0 8px; }
+.maptabs button { font: inherit; font-size: 13px; font-weight: 700; padding: 4px 9px; border-radius: 8px; border: 2px solid #5a3d22; background: #fffaf0; color: #5a3d22; cursor: pointer; }
+.maptabs button.me::after { content: " ●"; color: #e8872e; }
+.maptabs button.on { background: #ffd76a; }
+.mapcv { display: block; margin: 0 auto; border-radius: 8px; border: 2px solid #5a3d22; background: #5f9c4a; }
+.mapwhere span { display: inline-block; margin-right: 1.6em; }
+.maplegend { font-size: 12px; }
+
+/* 右邊那排按鈕：畫面不夠高（手機橫放）就排成兩排，不會壓到動作鈕；地圖面板改成名字在左、地圖在右，地圖才畫得大 */
+@media (max-height: 520px) {
+  .side { display: grid; grid-auto-flow: column; grid-template-rows: repeat(3, auto); direction: rtl; }
+  .emotes { right: calc(104px + env(safe-area-inset-right)); }
+  .panel.mappanel { display: grid; grid-template-columns: 174px 1fr; grid-template-areas: "head head" "tabs map" "where map"; grid-template-rows: auto auto 1fr; column-gap: 12px; align-items: start; max-height: calc(100% - 12px); padding: 8px 14px 10px; }
+  .mappanel .phead { grid-area: head; margin-bottom: 4px; } .maptabs { grid-area: tabs; } .mapcv { grid-area: map; } .mappanel .hint { grid-area: where; } .mappanel .maplegend { display: none; }
+}
+/* 直的手機：快捷列排成兩排（一排五格），十格都看得到，不用左右滑 */
+@media (pointer: coarse) and (min-height: 521px) {
+  .hotbar { flex-wrap: wrap; width: 244px; max-width: none; overflow: visible; }
+  .guide { top: calc(214px + env(safe-area-inset-top)); }
+}
+/* 手機橫放：快捷列放回下面中間（搖桿和動作鈕之間），不會擋到畫面中間的人；教學提示回到錢和體力的下面 */
+@media (pointer: coarse) and (max-height: 520px) {
+  /* 搖桿比動作鈕寬，所以快捷列往右偏一點，剛好夾在兩者中間（一般的手機十格都放得下，更窄的才要左右滑） */
+  .hotbar { top: auto; bottom: calc(8px + env(safe-area-inset-bottom)); left: calc(50% + 18px); transform: translateX(-50%); max-width: calc(100% - 264px - env(safe-area-inset-left) - env(safe-area-inset-right)); }
+  #ui.lefty .hotbar { left: calc(50% - 18px); }
+  .guide { top: calc(100px + env(safe-area-inset-top)); }
+  .say { bottom: calc(66px + env(safe-area-inset-bottom)); }
+  .side { top: calc(50px + env(safe-area-inset-top)); }
+  .rangebtn { right: calc(122px + env(safe-area-inset-right)); bottom: calc(72px + env(safe-area-inset-bottom)); }
+  #ui.lefty .rangebtn { right: auto; left: calc(122px + env(safe-area-inset-left)); }
+}

@@ -1,4 +1,4 @@
-// 輸入：鍵盤（WASD／方向鍵走路、空白或 Enter 動作、E 背包、數字鍵快捷列、Esc）、滑鼠點畫面、觸控（左下搖桿、右下動作鈕）
+// 輸入：鍵盤（WASD／方向鍵走路、空白或 Enter 動作、E 背包、M 地圖、+／- 鏡頭遠近、數字鍵快捷列、Esc）、滑鼠點畫面和滾輪、觸控（左下搖桿、右下動作鈕）
 // 遊戲只問兩件事：現在往哪個方向走（axis），以及發生了什麼事（on）
 export function createInput(canvas, ui) {
   const keys = new Set(), handlers = {};
@@ -15,6 +15,9 @@ export function createInput(canvas, ui) {
     else if (e.code === 'KeyE') emit('bag');
     else if (e.code === 'KeyT') { emit('say'); e.preventDefault(); }
     else if (e.code === 'KeyR') emit('range'); // 高級工具：切換一次弄幾格
+    else if (e.code === 'KeyM') emit('map');
+    else if (e.code === 'Equal' || e.code === 'NumpadAdd') emit('zoom', 1); // 鏡頭拉近、拉遠
+    else if (e.code === 'Minus' || e.code === 'NumpadSubtract') emit('zoom', -1);
     else if (e.code === 'Escape') emit('esc');
     else if (/^Digit[0-9]$/.test(e.code)) emit('slot', (Number(e.code.slice(5)) + 9) % 10); // 1～9 是第 1～9 格，0 是第 10 格
   });
@@ -24,6 +27,9 @@ export function createInput(canvas, ui) {
   // 點畫面：滑鼠和手指都算（搖桿和按鈕是另外的元素，不會走到這裡）
   canvas.addEventListener('pointerdown', (e) => { emit('tap', { x: e.clientX, y: e.clientY, touch: e.pointerType !== 'mouse' }); });
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+  // 滑鼠滾輪：鏡頭拉近、拉遠（一次一段；觸控板會連續送很多個，隔一下才算下一次）
+  let wheelAt = 0;
+  canvas.addEventListener('wheel', (e) => { e.preventDefault(); const now = performance.now(); if (!e.deltaY || now - wheelAt < 200) return; wheelAt = now; emit('zoom', e.deltaY < 0 ? 1 : -1); }, { passive: false });
 
   // 觸控：第一次碰到螢幕才把搖桿和動作鈕放出來，用滑鼠的電腦不會看到
   let touchUi = null;

@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 // 測試工具：把本機（wrangler dev）農場裡「第一個玩家」（最早註冊的）的工具升到指定等級，背包放進播種器、種子、肥料和升晶級的材料，錢加多一點。
 // 只動 .wrangler/state 裡的本機資料，跟正式環境無關。給 scripts/test-farmroom-tools.mjs 用。
+// 本機資料放在別的資料夾（wrangler dev --persist-to 資料夾）的話，用環境變數 FARM_STATE=資料夾 指過去。
 // 用法：先停掉 npm run dev，再跑 node scripts/farm-give-tools.mjs [等級，預設 4（金）] [工具=等級 …]，然後重開 npm run dev
 //   例如 node scripts/farm-give-tools.mjs 4 pick=5：全部升到金，十字鎬升到晶
 import { DatabaseSync } from 'node:sqlite';
 import { readdirSync, readFileSync } from 'node:fs';
 const BAL = JSON.parse(readFileSync(new URL('../public/games/farm/data/balance.json', import.meta.url), 'utf8'));
-const dir = '.wrangler/state/v3/do/chat-FarmRoom', top = BAL.tools.levels.length, lv = Math.max(1, Math.min(top, Number(process.argv[2]) || 4));
+const dir = (process.env.FARM_STATE || '.wrangler/state') + '/v3/do/chat-FarmRoom', top = BAL.tools.levels.length, lv = Math.max(1, Math.min(top, Number(process.argv[2]) || 4));
 const only = Object.fromEntries(process.argv.slice(3).map((x) => x.split('=')).filter(([t, v]) => t && v).map(([t, v]) => [t, Math.max(1, Math.min(top, Number(v) || lv))])); // 個別指定
 const GIVE = [['seeder', 1], ['seed_carrot', 40], ['fertilizer', 30], ['gold_bar', 10], ['diamond', 1], ['moonstone', 2]];
 let n = 0;

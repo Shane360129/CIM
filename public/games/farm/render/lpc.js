@@ -2,6 +2,7 @@
 // 零件有哪些圖層、前後順序、怎麼換色，寫在 data/doll/lpc.json（tools/lpc/build-characters.mjs 產生）。
 // 圖還沒下載好的時候先回傳 false，呼叫的人畫暫代的樣子；下載好之後自動換成真的。
 import { upgradeLook } from '../shared/look.js';
+import { snap } from './pixel.js';
 
 const ROOT = new URL('../assets/lpc/', import.meta.url).href;
 const ROW = { up: 0, left: 1, down: 2, right: 3 }; // LPC 每張動作圖由上到下：背面、向左、正面、向右
@@ -146,7 +147,7 @@ export function drawLPC(g, look, x, y, px, dir, action, t, tool) {
   else lastSheet.set(look, { c, fs });
   const row = ROW[dir] ?? 2, f = Math.max(0, Math.min(p.f, c.width / fs - 1)), foot = FOOT + (fs - 64) / 2;
   const was = g.imageSmoothingEnabled; g.imageSmoothingEnabled = false;
-  g.drawImage(c, f * fs, row * fs, fs, fs, x - (fs / 2) * px, y - (foot + (p.hop || 0)) * px, fs * px, fs * px);
+  g.drawImage(c, f * fs, row * fs, fs, fs, snap(x - (fs / 2) * px), snap(y - (foot + (p.hop || 0)) * px), fs * px, fs * px); // 對到螢幕像素上，走路時臉和衣服的像素不會一下寬一下窄
   g.imageSmoothingEnabled = was;
   return true;
 }

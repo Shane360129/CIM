@@ -72,7 +72,7 @@ const { chromium } = require('playwright');
   await pa.locator('.panel .cell').nth(await slotOf(pa, 'seed_spinach')).click(); await pa.waitForTimeout(150); await pa.locator('.panel [data-act=give]').click(); await pb.waitForTimeout(500);
   ok('站在一起時背包裡可以把東西送給對方：A 沒了、B 多 6 個並看到提示', (await count(pa, 'seed_spinach')) === 0 && (await count(pb, 'seed_spinach')) === 12 && /送你/.test(await pb.locator('.toast').textContent().catch(() => '')));
   await pa.keyboard.press('Escape'); await pb.evaluate(async () => { const w = window.__game.world; await w.room.req({ t: 'give', slot: w.self.inv.findIndex((x) => x && x.id === 'seed_spinach'), n: 6 }); }); await pa.waitForTimeout(300);
-  await pa.locator('.side button').nth(2).click(); await pa.waitForTimeout(500); await pa.locator('.card button').last().click(); await pa.waitForTimeout(900);
+  await pa.locator('.side [data-act=photo]').click(); await pa.waitForTimeout(500); await pa.locator('.card button').last().click(); await pa.waitForTimeout(900);
   const msgs = (await j(`/api/conversations/${dm.id}/messages`, null, a.token)).messages || [];
   ok('按 📷 拍照：照片以圖片訊息傳到這個聊天室', msgs.some((m) => m.type === 'image' && !!(m.meta && m.meta.media)) && (await count(pa, 'seed_spinach')) === 6);
   // 種田：找一格沒有東西擋著的田

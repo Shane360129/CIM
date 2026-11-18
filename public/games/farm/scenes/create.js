@@ -1,6 +1,7 @@
 // 建立角色／衣櫃換裝：左邊（手機是上面）預覽，右邊一列一列選零件和顏色。按「完成」存到伺服器，對方馬上看到。
 // 第一次進農場還沒有角色時會先到這裡；之後在家裡選「換衣服」也是這個畫面（edit: true）。
 import { drawDoll } from '../render/doll.js';
+import { setPixelGrid } from '../render/pixel.js';
 import { drawLPC } from '../render/lpc.js';
 import { upgradeLook } from '../shared/look.js';
 import { play } from './play.js';
@@ -131,7 +132,7 @@ export const create = {
     }
   },
   render({ view }) {
-    const g = view.ctx, k = view.dpr; g.setTransform(k, 0, 0, k, 0, 0);
+    const g = view.ctx, k = view.dpr; g.setTransform(k, 0, 0, k, 0, 0); setPixelGrid(k, k);
     g.fillStyle = '#cfe8b0'; g.fillRect(0, 0, view.w, view.h);
     // 預覽放在沒有被面板蓋住的那一塊：寬螢幕在左半邊，直的手機在上面
     const wide = view.w > 720, cx = wide ? (view.w - Math.min(420, view.w * 0.5)) / 2 : view.w / 2, areaH = wide ? view.h : view.h * 0.36;

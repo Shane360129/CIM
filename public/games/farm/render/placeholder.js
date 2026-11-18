@@ -1,9 +1,11 @@
 // 暫代圖：美術還沒到的時候，用色塊加名字先頂著，遊戲照樣能跑。素材到了之後這裡會先找圖，沒有圖才畫色塊。
 // 所有東西都以「腳底中心」為基準畫（x、y 是腳踩的那一點），這樣依 y 排序就會有正確的前後遮擋
 import { sprite } from './sprites.js';
+import { textSize } from './pixel.js';
 const OUTLINE = '#5a3d22';
 
 function label(g, text, x, y, size) {
+  size = textSize(size); // 鏡頭拉遠時名字不會小到看不清楚
   g.font = `700 ${size}px "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif`;
   g.textAlign = 'center'; g.textBaseline = 'middle';
   g.lineWidth = size * 0.28; g.strokeStyle = 'rgba(255,255,255,.85)'; g.strokeText(text, x, y);
@@ -11,7 +13,7 @@ function label(g, text, x, y, size) {
 }
 // 頭上的泡泡（聊天的一句話或表情）
 export function drawBubble(g, text, x, y, T, big = false) {
-  const size = T * (big ? 0.5 : 0.22);
+  const size = textSize(T * (big ? 0.5 : 0.22), big ? 20 : 12);
   g.font = `700 ${size}px "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif`;
   const w = Math.max(T * 0.6, g.measureText(text).width + size * 1.1), h = size * 1.9;
   g.fillStyle = '#fff'; g.strokeStyle = OUTLINE; g.lineWidth = Math.max(2, T * 0.04); g.lineJoin = 'round';
@@ -64,6 +66,13 @@ export function drawTilled(g, x, y, T, wet) {
   if (wet) { g.fillStyle = 'rgba(160, 215, 255, .5)'; g.beginPath(); g.ellipse(x * T + T * 0.68, y * T + T * 0.3, T * 0.09, T * 0.05, 0, 0, 7); g.fill(); }
 }
 export function drawName(g, text, x, y, T) { label(g, text, x, y, T * 0.2); }
+// 小名牌：面前可以互動的東西叫什麼（米色底、咖啡色框，壓在房子和家具上也看得清楚）
+export function drawTag(g, text, x, y, T) {
+  const size = textSize(T * 0.21, 12); g.font = `700 ${size}px "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif`;
+  const w = g.measureText(text).width + size * 0.9, h = size * 1.55;
+  g.fillStyle = 'rgba(255, 250, 235, .94)'; g.strokeStyle = OUTLINE; g.lineWidth = Math.max(1.5, size * 0.12); g.beginPath(); g.roundRect(x - w / 2, y - h, w, h, h * 0.35); g.fill(); g.stroke();
+  g.fillStyle = OUTLINE; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, x, y - h / 2 + size * 0.04);
+}
 export function drawShadow(g, x, y, w) {
   g.fillStyle = 'rgba(40, 60, 30, .22)';
   g.beginPath(); g.ellipse(x, y, w * 0.5, w * 0.17, 0, 0, 7); g.fill();
