@@ -1199,6 +1199,15 @@
   "art": "obj/brush",
   "desc": "幫家畜刷毛，牠會更喜歡你"
  },
+ "seeder": {
+  "name": "播種器",
+  "kind": "tool",
+  "tool": "seeder",
+  "buy": 1500,
+  "art": "tool/seeder",
+  "overlay": "crop/cabbage/0",
+  "desc": "帶在身上就有效：拿著種子或肥料時，一次播一片（越高級播越多格，可以到鐵匠鋪升級）"
+ },
  "copper_ore": {
   "name": "銅礦",
   "kind": "mineral",

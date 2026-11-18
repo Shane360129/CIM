@@ -30,7 +30,7 @@ import RESTORE from '../public/games/farm/data/restore.json';
 import ACHIEVEMENTS from '../public/games/farm/data/achievements.json';
 import { groundAt, seasonId, rng, weatherOf, isWet, cropStage, cropTotal, levelOf, rollQuality, invAdd, invTake, sellPrice, makeItems, matches, planTake, shopItems, absMinute, animalPos, genFloor, monPos, mineMap, npcPos, walkGrid, giftTaste, seasonIndex } from '../public/games/farm/shared/rules.js';
 import { upgradeLook } from '../public/games/farm/shared/look.js';
-import { eventReady, farmStat, mergeEvents } from '../public/games/farm/shared/rules.js';
+import { eventReady, farmStat, mergeEvents, toolPower, areaKind, toolShapes, areaTiles } from '../public/games/farm/shared/rules.js';
 
 const ITEMS = makeItems(RAW_ITEMS, MACHINES); // 加工品（g:機器:原料）的名字和價錢是算出來的
 const EVENTS = mergeEvents(HEART_EVENTS, STORY_EVENTS, DUO_EVENTS); // 劇情：居民的心事件、主線、兩個人的劇情
@@ -163,7 +163,7 @@ export class FarmRoom {
     this.pl.set(id, p); return p;
   }
   // 每做一件事：統計 +1（成就用）；某種事第一次發生時，在紀念冊記一筆
-  logEvent(userId, type, data) { const st = (this.farm.stats ||= {}); st[type] = (st[type] || 0) + 1; this.farmDirty = true; if (st[type] === 1 && BAL.album[type]) (this.farm.album ||= []).push({ day: this.farm.day, key: type, by: userId }); if (st[type] === 1) this.broadcast({ t: 'stat', key: type, album: this.farm.album || [] }); this.sql.exec(`INSERT INTO events (ts, day, user_id, type, data) VALUES (?, ?, ?, ?, ?)`, Date.now(), this.farm.day, userId, type, data ? JSON.stringify(data) : null); }
+  logEvent(userId, type, data, n = 1) { const st = (this.farm.stats ||= {}), first = !st[type]; st[type] = (st[type] || 0) + n; this.farmDirty = true; if (first && BAL.album[type]) (this.farm.album ||= []).push({ day: this.farm.day, key: type, by: userId }); if (first) this.broadcast({ t: 'stat', key: type, album: this.farm.album || [] }); this.sql.exec(`INSERT INTO events (ts, day, user_id, type, data) VALUES (?, ?, ?, ?, ?)`, Date.now(), this.farm.day, userId, type, data ? JSON.stringify(data) : null); }
   pubTile(k) { const v = this.tiles.get(k), t = unK(k); return v ? { ...t, t: 1, w: v.w === this.farm.day ? 1 : 0, f: v.f || 0, c: v.c ? { id: v.c.id, s: v.c.dead ? -1 : cropStage(CROPS[v.c.id], v.c.g) } : null } : { ...t, t: 0 }; }
   pubObj(k) { const o = this.objs.get(k); return o ? { ...unK(k), type: o.type, hp: o.hp, ...(o.item ? { item: o.item } : {}), ...(o.kind ? { kind: o.kind, out: o.out || null, doneAt: o.doneAt || 0 } : {}) } : { ...unK(k), type: null }; }
   // 一天在現實裡是幾分鐘：兩個人共用的設定，只能選平衡設定檔列出來的幾種
@@ -264,10 +264,10 @@ export class FarmRoom {
       if (min < shop.open || min >= shop.close + this.perk('shopHours')) return no('closed'); if (this.farm.money < item.buy * n) return no('money');
       if (!invAdd(p.inv, BAL.invSlots, m.item, n)) return no('full');
       this.farm.money -= item.buy * n; this.logEvent(a.id, 'buy', { id: m.item, n }); self(); farmChanged(); done();
-    } else if (m.t === 'upgrade') { // 鐵匠鋪：用錠和錢把工具升一級（木 → 銅 → 鐵 → 金）。越高級越省體力，斧頭、十字鎬、鐮刀、劍一下打得比較多
+    } else if (m.t === 'upgrade') { // 鐵匠鋪：用錠和錢把工具升一級（木 → 銅 → 鐵 → 金 → 晶）。越高級越省體力、一下打得比較多，鋤頭、澆水壺、播種器一次弄越多格
       const T = BAL.tools, tool = m.tool; if (!near('smith')) return no('far'); if (!T.upgradable.includes(tool) || !p.inv.some((x) => x && ITEMS[x.id].tool === tool)) return no('unknown');
       const lv = (p.toolLv ||= {})[tool] || 1, cost = T.cost[lv]; if (!cost) return no('max');
-      if (this.farm.money < cost.money) return no('money'); const plan = planTake(ITEMS, p.inv, { [cost.bar]: cost.n }); if (!plan) return no('materials');
+      if (this.farm.money < cost.money) return no('money'); const plan = planTake(ITEMS, p.inv, { [cost.bar]: cost.n, ...(cost.extra || {}) }); if (!plan) return no('materials'); // 晶級還要寶石
       for (const [i, k] of plan) invTake(p.inv, i, k); this.farm.money -= cost.money; p.toolLv[tool] = lv + 1;
       this.logEvent(a.id, 'upgrade', { tool, lv: lv + 1 }); self(); farmChanged(); done({ lv: lv + 1 });
     } else if (m.t === 'quest-done') { // 佈告欄的每日委託：東西交齊就拿到報酬，交的人跟委託人的好感也會增加
@@ -456,6 +456,13 @@ export class FarmRoom {
   }
 
   // ---------- 礦坑 ----------
+  // 一顆石頭敲碎掉什麼：寶石原石照這一層抽一種寶石，其他照礦石的表
+  rockDrops(T, floor) {
+    const M = BAL.mine; if (!T.gems) return T.drops;
+    const pool = M.gems.filter(([, from]) => floor >= from); let k = Math.random() * pool.reduce((s2, g) => s2 + g[2], 0);
+    for (const [id, , w] of pool) { k -= w; if (k <= 0) return { [id]: 1 }; }
+    return { quartz: 1 };
+  }
   // 每一層用種子生成（shared/rules.js 的 genFloor），當天敲掉了哪些石頭記在農場上，隔天重新長出來。人在礦坑裡時 a.map 是 'mine'、a.floor 是第幾層
   floorState(n) { const f = this.farm; if (!f.mine || f.mine.day !== f.day) f.mine = { day: f.day, floors: {} }; return (f.mine.floors[n] ||= genFloor(f.seed, n, f.day, BAL)); }
   toFloor(n, msg) { const text = JSON.stringify(msg); for (const { ws, a } of this.online()) if (a.map === 'mine' && a.floor === n) { try { ws.send(text); } catch {} } }
@@ -479,12 +486,35 @@ export class FarmRoom {
       if (a.floor >= M.floors) return no('closed'); goTo(a.floor + 1); return done();
     }
     const held = p.inv[Math.floor(Number(m.slot))], tool = held && ITEMS[held.id].tool;
+    if (m.t === 'mine-hit' && tool === 'pick') { // 晶的十字鎬一次敲一片：範圍裡的石頭每一顆敲一下
+      const shapes = toolShapes(BAL, 'pick', (p.toolLv && p.toolLv.pick) || 1), shape = shapes[Math.max(0, Math.min(shapes.length - 1, Number.isInteger(m.size) ? m.size : 0))];
+      if (shape[0] * shape[1] > 1) {
+        const x = Math.floor(Number(m.x)), y = Math.floor(Number(m.y)); if (Math.hypot(x + 0.5 - a.x, y + 0.5 - a.y) > BAL.reach) return no('far');
+        const pw = toolPower(BAL, (p.toolLv && p.toolLv.pick) || 1), drops = {}, upd = [], at = []; let tired = false, full = false;
+        for (const t of areaTiles(x, y, ['left', 'right', 'up', 'down'].includes(m.dir) ? m.dir : a.dir, shape)) {
+          const rock = st.rocks.find((r) => r.x === t.x && r.y === t.y); if (!rock) continue;
+          if (p.energy < M.energy) { tired = true; break; }
+          const T = M.rockTypes[rock.type];
+          if (rock.hp <= pw) {
+            const d = this.rockDrops(T, a.floor), inv = JSON.parse(JSON.stringify(p.inv)); if (Object.entries(d).some(([id, k]) => !invAdd(inv, BAL.invSlots, id, k))) { full = true; break; }
+            p.inv = inv; p.energy -= M.energy; p.skills.mining = (p.skills.mining || 0) + T.xp; for (const [id, k] of Object.entries(d)) drops[id] = (drops[id] || 0) + k;
+            st.rocks = st.rocks.filter((r) => r !== rock); if (st.stairs.x === t.x && st.stairs.y === t.y) st.stairs.open = true; this.logEvent(a.id, 'mine', { type: rock.type }); upd.push({ x: t.x, y: t.y, hp: 0 });
+          } else { p.energy -= M.energy; rock.hp -= pw; upd.push({ x: t.x, y: t.y, hp: rock.hp }); }
+          at.push([t.x, t.y]);
+        }
+        if (upd.length) {
+          const dr = Object.keys(drops).length ? drops : null; this.farmDirty = true; self(); this.broadcast({ t: 'fx', id: a.id, kind: 'pick', map: 'mine', x, y, tiles: at });
+          this.toFloor(a.floor, { t: 'mine-upd', floor: a.floor, rocks: upd, stairs: st.stairs, by: a.id, drops: dr }); return done({ drops: dr, n: upd.length, tired, full });
+        }
+        if (tired) return no('tired'); if (full) return no('full'); // 一顆都沒敲到：照一顆的規則回報
+      }
+    }
     if (m.t === 'mine-hit') { // 敲石頭：要用十字鎬。敲碎了掉石頭、礦石或寶石；樓梯藏在其中一顆下面
       const x = Math.floor(Number(m.x)), y = Math.floor(Number(m.y)), rock = st.rocks.find((r) => r.x === x && r.y === y); if (!rock) return no('nothing');
       if (tool !== 'pick') return no('tool:pick'); if (Math.hypot(x + 0.5 - a.x, y + 0.5 - a.y) > BAL.reach) return no('far');
-      const T = M.rockTypes[rock.type], pw = (p.toolLv && p.toolLv.pick) || 1; let drops = null;
+      const T = M.rockTypes[rock.type], pw = toolPower(BAL, (p.toolLv && p.toolLv.pick) || 1); let drops = null; // 金的十字鎬一下敲碎
       if (rock.hp <= pw) {
-        drops = T.gems ? (() => { const pool = M.gems.filter(([, from]) => a.floor >= from); let k = Math.random() * pool.reduce((s2, g) => s2 + g[2], 0); for (const [id, , w] of pool) { k -= w; if (k <= 0) return { [id]: 1 }; } return { quartz: 1 }; })() : T.drops;
+        drops = this.rockDrops(T, a.floor);
         const inv = JSON.parse(JSON.stringify(p.inv)); for (const [id, n] of Object.entries(drops)) if (!invAdd(inv, BAL.invSlots, id, n)) return no('full');
         if (p.energy < M.energy) return no('tired'); p.energy -= M.energy; p.inv = inv; p.skills.mining = (p.skills.mining || 0) + T.xp;
         st.rocks = st.rocks.filter((r) => r !== rock); if (st.stairs.x === x && st.stairs.y === y) st.stairs.open = true; this.logEvent(a.id, 'mine', { type: rock.type });
@@ -639,6 +669,52 @@ export class FarmRoom {
     Object.assign(p, { map: a.map, x: a.x, y: a.y }); this.dirtyPl.add(a.id);
     this.broadcast({ t: 'warp', id: a.id, map: a.map, x: a.x, y: a.y, dir: a.dir }); done();
   }
+  // 一次弄一片（高級的鋤頭、澆水壺、播種器、斧頭、十字鎬、鐮刀）：範圍裡每一格照順序做，做不到的格子跳過，體力不夠或背包滿了就停。
+  // 斧頭、十字鎬、鐮刀只清障礙和枯掉的作物，不會動到長著的作物、翻過的土。全部做完一起廣播。回傳做了幾格
+  useArea(a, p, c) {
+    const f = this.farm, day = f.day, season = seasonId(day, BAL), changedTiles = [], changedObjs = [], drops = {}, at = [];
+    let n = 0, tired = false, full = false, harvested = 0, got = null, kind = c.ak === 'hoe' ? 'till' : c.ak === 'can' ? 'water' : c.ak === 'seeder' ? (c.item.kind === 'seed' ? 'plant' : 'fertilize') : c.tool;
+    for (const t of areaTiles(c.x, c.y, c.dir, c.shape)) {
+      if (t.x < 0 || t.y < 0 || t.x >= c.map.w || t.y >= c.map.h) continue;
+      const k = K(a.map, t.x, t.y), obj = this.objs.get(k), tile = this.tiles.get(k), crop = tile && tile.c;
+      if (c.ak === 'hoe') {
+        let g = groundAt(c.map, t.x, t.y); if (g === 'locked' && a.map === 'farm' && (f.land || {}).field2) g = 'soil';
+        if (g !== 'soil' || tile || obj || STATIC[a.map].has(t.x + ',' + t.y)) continue;
+        if (!c.spend(BAL.energy.hoe)) { tired = true; break; } this.tiles.set(k, { w: 0 }); changedTiles.push(k);
+      } else if (c.ak === 'can') {
+        if (!tile || tile.w === day) continue; if (!c.spend(BAL.energy.can)) { tired = true; break; } tile.w = day; changedTiles.push(k);
+      } else if (c.ak === 'seeder') {
+        const s = p.inv[c.slot]; if (!s || s.id !== c.held.id) break; // 手上這包用完了
+        if (!tile || obj) continue;
+        if (c.item.kind === 'seed') { if (crop || (c.map.outdoor && !CROPS[c.item.crop].seasons.includes(season))) continue; invTake(p.inv, c.slot, 1); tile.c = { id: c.item.crop, g: 0 }; }
+        else { if (tile.f || (crop && cropStage(CROPS[crop.id], crop.g) > 0)) continue; invTake(p.inv, c.slot, 1); tile.f = c.item.power; }
+        changedTiles.push(k);
+      } else { // 斧頭、十字鎬、鐮刀
+        const d = obj && OBJECTS[obj.type];
+        if (d && d.tool === c.tool && !d.duo) {
+          if (obj.hp <= c.power) {
+            const inv = JSON.parse(JSON.stringify(p.inv)); if (Object.entries(d.drops).some(([id, k2]) => !invAdd(inv, BAL.invSlots, id, k2))) { full = true; break; }
+            if (!c.spend(d.energy)) { tired = true; break; }
+            p.inv = inv; this.objs.delete(k); c.xp(d.xp[0], d.xp[1]); this.logEvent(a.id, 'clear', { type: obj.type }); for (const [id, k2] of Object.entries(d.drops)) drops[id] = (drops[id] || 0) + k2;
+          } else { if (!c.spend(d.energy)) { tired = true; break; } obj.hp -= c.power; }
+          this.dirtyObjs.add(k); changedObjs.push(k);
+        } else if (c.tool === 'sickle' && crop && crop.dead) { if (!c.spend(1)) { tired = true; break; } tile.c = null; changedTiles.push(k); if (kind !== 'harvest') kind = 'cut'; }
+        else if (c.tool === 'sickle' && crop && cropStage(CROPS[crop.id], crop.g) === 4) { // 熟了：收成（品質看肥料、農耕等級、料理的運氣）
+          const def = CROPS[crop.id], lucky = p.buffs && p.buffs.luck > this.absNow() ? BAL.buffs.luck : 0;
+          const q = rollQuality(Math.random, (tile.f || 0) + lucky + this.perk('luck'), levelOf(p.skills.farming || 0, BAL).lv, BAL);
+          if (!invAdd(p.inv, BAL.invSlots, crop.id, 1, q)) { full = true; break; }
+          c.xp('farming', def.xp); if (def.regrowDays) crop.g = cropTotal(def) - def.regrowDays; else { tile.c = null; tile.f = 0; }
+          changedTiles.push(k); harvested++; got = { id: crop.id, q }; kind = 'harvest';
+        }
+        else continue;
+      }
+      n++; at.push([t.x, t.y]);
+    }
+    for (const k of changedTiles) { const t = unK(k); this.touch(t.map, t.x, t.y); }
+    if (changedTiles.length) { this.logEvent(a.id, kind, { x: c.x, y: c.y, n: changedTiles.length }, changedTiles.length); this.broadcast({ t: 'tiles', by: a.id, kind, list: changedTiles.map((k) => this.pubTile(k)) }); }
+    if (changedObjs.length) this.broadcast({ t: 'objs', by: a.id, list: changedObjs.map((k) => this.pubObj(k)), drops: Object.keys(drops).length ? drops : null });
+    return { n, tired, full, kind, at, harvested, got };
+  }
   // 用手上的東西對某一格做事：先看那一格有沒有可以清掉的東西，再看手上拿的是什麼。伺服器檢查都合法才生效；兩個人搶同一格，先到的成功
   onUse(ws, a, p, m, { no, done, self }) {
     if (a.map === 'mine') return no('nothing'); // 礦坑裡的事走 mine-* 訊息
@@ -648,11 +724,20 @@ export class FarmRoom {
     if (Math.hypot(x + 0.5 - a.x, y + 0.5 - a.y) > BAL.reach) return bad('far');
     const held = p.inv[Math.floor(Number(m.slot))] || null, item = held ? ITEMS[held.id] : null, tool = item && item.kind === 'tool' ? item.tool : null;
     const day = this.farm.day, level = (skill) => levelOf((p.skills[skill] || 0), BAL).lv;
-    const lvOf = (t) => (p.toolLv && p.toolLv[t]) || 1, power = tool ? lvOf(tool) : 1; // 工具等級：越高越省體力、一下打得比較多
-    const spend = (e) => { e = Math.max(1, Math.round(e * (1 - BAL.tools.energyCut * (power - 1)))); if (p.energy < e) return false; p.energy -= e; return true; };
+    const lvOf = (t) => (p.toolLv && p.toolLv[t]) || 1, lv = tool ? lvOf(tool) : 1, power = toolPower(BAL, lv); // 工具等級：越高越省體力、一下打得比較多（金一下打掉樹和石頭）
+    const spend = (e) => { e = Math.max(1, Math.round(e * (1 - BAL.tools.energyCut * (lv - 1)))); if (p.energy < e) return false; p.energy -= e; return true; };
     const xp = (skill, n) => { p.skills[skill] = (p.skills[skill] || 0) + Math.round(n * (1 + this.perk('xp'))); };
     const fx = (kind, extra) => this.broadcast({ t: 'fx', id: a.id, kind, map: a.map, x, y, ...extra }); // 讓對方看到你在做什麼
     const obj = this.objs.get(k);
+    const ak = areaKind(BAL, item, p.inv.some((s) => s && s.id === 'seeder')), shapes = toolShapes(BAL, ak, ak ? lvOf(ak) : 1);
+    const shape = shapes[Math.max(0, Math.min(shapes.length - 1, Number.isInteger(m.size) ? m.size : 0))], t0 = this.tiles.get(k);
+    const mature0 = t0 && t0.c && !t0.c.dead && cropStage(CROPS[t0.c.id], t0.c.g) === 4;
+    if (shape[0] * shape[1] > 1 && !(obj && (obj.type === 'forage' || obj.type === 'machine')) && (!mature0 || ak === 'sickle')) { // 鐮刀一次割一片：熟了的一起收成
+      const r = this.useArea(a, p, { x, y, dir: ['left', 'right', 'up', 'down'].includes(m.dir) ? m.dir : a.dir, shape, ak, tool, item, held, slot: Math.floor(Number(m.slot)), map, power, spend, xp });
+      if (r.n) { self(); this.broadcast({ t: 'fx', id: a.id, kind: r.kind, map: a.map, x, y, tiles: r.at, ...(r.got ? { item: r.got.id, q: r.got.q } : {}) }); return done({ n: r.n, tired: r.tired, full: r.full, harvested: r.harvested, got: r.got }); }
+      // 一格都沒做到：照一格的規則再判斷一次，回報是哪裡不對（例如這裡要用鐮刀）。一次割一片時不會割掉還在長的作物（要割掉單獨一株，範圍切成 1×1）
+      if (ak === 'sickle' && t0 && t0.c && !t0.c.dead) return bad('nothing');
+    }
     if (obj && obj.type === 'forage') { // 野外的採集物：手上拿什麼都可以撿
       if (!invAdd(p.inv, BAL.invSlots, obj.item, 1)) return bad('full');
       this.objs.delete(k); this.dirtyObjs.add(k); xp('foraging', BAL.forage.xp); this.logEvent(a.id, 'forage', { id: obj.item }); self(); fx('harvest', { item: obj.item });

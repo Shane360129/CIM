@@ -18,6 +18,13 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #1d2a1f; col
   font: inherit; font-size: 18px; font-weight: 700; }
 .act-btn:active, .act-btn.down { background: rgba(200, 110, 30, .95); transform: scale(.95); }
 
+/* 範圍按鈕：電腦在快捷列右上方，手機在動作鈕上面 */
+.rangebtn { position: absolute; left: calc(50% + 150px); bottom: calc(70px + env(safe-area-inset-bottom)); padding: 6px 12px; border-radius: 999px;
+  border: 2px solid #5a3d22; background: #fffaf0; color: #5a3d22; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 2px 0 rgba(90, 61, 34, .35); }
+.rangebtn:active { transform: translateY(1px); }
+@media (pointer: coarse) { .rangebtn { left: auto; right: calc(26px + env(safe-area-inset-right)); bottom: calc(136px + env(safe-area-inset-bottom)); }
+  #ui.lefty .rangebtn { right: auto; left: calc(26px + env(safe-area-inset-left)); } }
+
 /* 快捷列（階段 1 只是空格子，數字鍵可以切換） */
 .hotbar { position: absolute; left: 50%; bottom: calc(10px + env(safe-area-inset-bottom)); transform: translateX(-50%);
   display: flex; gap: 4px; padding: 5px; border-radius: 12px; background: rgba(120, 84, 50, .9); border: 2px solid #5a3d22;

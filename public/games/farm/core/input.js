@@ -14,6 +14,7 @@ export function createInput(canvas, ui) {
     if (e.code === 'Space' || e.code === 'Enter') { emit('action'); e.preventDefault(); }
     else if (e.code === 'KeyE') emit('bag');
     else if (e.code === 'KeyT') { emit('say'); e.preventDefault(); }
+    else if (e.code === 'KeyR') emit('range'); // 高級工具：切換一次弄幾格
     else if (e.code === 'Escape') emit('esc');
     else if (/^Digit[0-9]$/.test(e.code)) emit('slot', (Number(e.code.slice(5)) + 9) % 10); // 1～9 是第 1～9 格，0 是第 10 格
   });

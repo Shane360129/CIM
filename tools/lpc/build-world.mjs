@@ -129,7 +129,8 @@ if (preview) { // 檢查圖：每張小圖放大兩倍，下面寫名字
   await sharp(pv.data, { raw: { width: pv.w, height: pv.h, channels: 4 } }).composite([{ input: svg }]).png().toFile(preview);
   console.log(`檢查圖 ${preview}：${made.length} 張`);
 } else {
-  const png = await sharp(atlas.data, { raw: { width: W, height: H, channels: 4 } }).png({ compressionLevel: 9, effort: 10 }).toBuffer();
+  // 不壓成 256 色：像素圖要原本的顏色。壓成 256 色時，每多加幾張圖整張的色盤就會變，舊的圖也跟著變色、出現雜點（檔案大一點，約 640 KB）
+  const png = await sharp(atlas.data, { raw: { width: W, height: H, channels: 4 } }).png({ compressionLevel: 9, palette: false }).toBuffer();
   await writeFile(path.join(OUT, 'w1.png'), png);
   await writeFile(path.join(OUT, 'w1.json'), JSON.stringify({ image: 'w1.png', w: W, h: H, pixel: true, sprites: Object.fromEntries(made.map((m) => [m.name, [m.x, m.y, m.b.w, m.b.h, m.native ? 1 : 0]])) }) + '\n');
   // 素材來源：用到的素材包的作者、授權、出處；素材包規定要附的說明檔照抄一份

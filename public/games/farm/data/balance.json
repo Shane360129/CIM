@@ -494,39 +494,26 @@
     "walkMinutes": 40
   },
   "tools": {
-    "levels": [
-      "木",
-      "銅",
-      "鐵",
-      "金"
-    ],
-    "upgradable": [
-      "hoe",
-      "can",
-      "axe",
-      "pick",
-      "sickle",
-      "sword"
-    ],
+    "levels": ["木", "銅", "鐵", "金", "晶"],
+    "upgradable": ["hoe", "can", "axe", "pick", "sickle", "sword", "seeder"],
     "cost": [
       null,
-      {
-        "bar": "copper_bar",
-        "n": 5,
-        "money": 1000
-      },
-      {
-        "bar": "iron_bar",
-        "n": 5,
-        "money": 4000
-      },
-      {
-        "bar": "gold_bar",
-        "n": 5,
-        "money": 15000
-      }
+      { "bar": "copper_bar", "n": 5, "money": 1000 },
+      { "bar": "iron_bar", "n": 5, "money": 4000 },
+      { "bar": "gold_bar", "n": 5, "money": 15000 },
+      { "bar": "gold_bar", "n": 10, "money": 40000, "extra": { "diamond": 1, "moonstone": 2 } }
     ],
-    "energyCut": 0.2
+    "energyCut": 0.2,
+    "power": [1, 2, 3, 5, 8],
+    "areaNote": "一次弄幾格：[寬, 深]，寬是左右、深是往前（從面前那一格開始）。每一級列出最大的範圍，玩家可以切小一點。播種器帶在身上就有效：拿著種子或肥料時一次播一片。斧頭、十字鎬、鐮刀的範圍只清障礙（樹、石頭、雜草）和枯掉的作物，不會動到長著的作物",
+    "area": {
+      "hoe": [[1, 1], [1, 3], [3, 3], [3, 5], [5, 5]],
+      "can": [[1, 1], [1, 3], [3, 3], [3, 5], [5, 5]],
+      "seeder": [[1, 3], [3, 3], [3, 5], [5, 5], [5, 7]],
+      "axe": [[1, 1], [1, 1], [1, 1], [1, 1], [3, 3]],
+      "pick": [[1, 1], [1, 1], [1, 1], [1, 1], [3, 3]],
+      "sickle": [[1, 1], [1, 1], [3, 3], [3, 3], [5, 5]]
+    }
   },
   "quest": {
     "pool": [

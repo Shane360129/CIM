@@ -24,7 +24,7 @@ export function openSettings(ctx) {
     root.append(mk('h3', '', '兩個人共用'));
     const cur = (W.farm.opts || {}).dayLen || bal.dayMinutesReal;
     root.append(row('一天的長度', choice('dayLen', bal.dayLenOptions.map((m) => [m, `${m} 分鐘`]), () => cur, async (v) => { const r = await W.room.req({ t: 'set', key: 'dayLen', value: v }); if (r.t !== 'ok') hud.toast('改不了，等一下再試', 1300); }), '現實的幾分鐘是遊戲的一天。改了對方那邊也會一起變'));
-    root.append(mk('p', 'hint', '鍵盤：WASD／方向鍵走路、空白鍵動作、E 背包、T 說話、1～0 切換快捷列、Esc 關閉。'));
+    root.append(mk('p', 'hint', '鍵盤：WASD／方向鍵走路、空白鍵動作、E 背包、T 說話、R 切換高級工具一次弄幾格、1～0 切換快捷列、Esc 關閉。'));
     // 素材來源：LPC 的圖用 CC-BY-SA 等授權，規定要在遊戲裡看得到作者
     const cr = ctx.data.creditsLpc;
     const link = (text, href) => { const a = mk('a', '', text); a.href = href; a.target = '_blank'; a.rel = 'noopener'; return a; };

@@ -416,6 +416,204 @@
     "obj/stall": {
       "note": "種子攤：紅白條紋遮雨棚的攤子，擺著花和水果",
       "src": "lpc-bazaar-rework/x/lpc_bazaar_rework-1.0-1.zip/PNG/32x32/bazaar_table-ns-red.png"
+    },
+    "tilled/d00": {
+      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+      "rect": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "trim": false,
+      "native": false
+    },
+    "tilled/w00": {
+      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+      "rect": [
+        160,
+        0,
+        32,
+        32
+      ],
+      "trim": false,
+      "native": false
+    },
+    "tilled/d01": {
+      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+      "rect": [
+        0,
+        32,
+        32,
+        32
+      ],
+      "trim": false,
+      "native": false
+    },
+    "tilled/w01": {
+      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+      "rect": [
+        160,
+        32,
+        32,
+        32
+      ],
+      "trim": false,
+      "native": false
+    },
+    "tilled/d02": {
+      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+      "rect": [
+        0,
+        64,
+        32,
+        32
+      ],
+      "trim": false,
+      "native": false
+    },
+    "tilled/w02": {
+      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+      "rect": [
+        160,
+        64,
+        32,
+        32
+      ],
+      "trim": false,
+      "native": false
+    },
+    "tilled/d10": {
+      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+      "rect": [
+        32,
+        0,
+        32,
+        32
+      ],
+      "trim": false,
+      "native": false
+    },
+    "tilled/w10": {
+      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+      "rect": [
+        192,
+        0,
+        32,
+        32
+      ],
+      "trim": false,
+      "native": false
+    },
+    "tilled/d11": {
+      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+      "rect": [
+        32,
+        32,
+        32,
+        32
+      ],
+      "trim": false,
+      "native": false
+    },
+    "tilled/w11": {
+      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+      "rect": [
+        192,
+        32,
+        32,
+        32
+      ],
+      "trim": false,
+      "native": false
+    },
+    "tilled/d12": {
+      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+      "rect": [
+        32,
+        64,
+        32,
+        32
+      ],
+      "trim": false,
+      "native": false
+    },
+    "tilled/w12": {
+      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+      "rect": [
+        192,
+        64,
+        32,
+        32
+      ],
+      "trim": false,
+      "native": false
+    },
+    "tilled/d20": {
+      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+      "rect": [
+        64,
+        0,
+        32,
+        32
+      ],
+      "trim": false,
+      "native": false
+    },
+    "tilled/w20": {
+      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+      "rect": [
+        224,
+        0,
+        32,
+        32
+      ],
+      "trim": false,
+      "native": false
+    },
+    "tilled/d21": {
+      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+      "rect": [
+        64,
+        32,
+        32,
+        32
+      ],
+      "trim": false,
+      "native": false
+    },
+    "tilled/w21": {
+      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+      "rect": [
+        224,
+        32,
+        32,
+        32
+      ],
+      "trim": false,
+      "native": false
+    },
+    "tilled/d22": {
+      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+      "rect": [
+        64,
+        64,
+        32,
+        32
+      ],
+      "trim": false,
+      "native": false
+    },
+    "tilled/w22": {
+      "src": "elizawy-lpc-revised-github/Terrain/tilled_soil.png",
+      "rect": [
+        224,
+        64,
+        32,
+        32
+      ],
+      "trim": false,
+      "native": false
     }
   }
 }

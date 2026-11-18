@@ -46,7 +46,7 @@ export function createWorld(session, bal) {
   room.on('mine', (m) => { w.mine = m.state; if (w.farm) w.farm.mineDeepest = m.deepest; emit('map', 'mine'); });
   room.on('mine-upd', (m) => {
     const s = w.mine; if (!s || s.floor !== m.floor) return;
-    if (m.rock) { if (m.rock.hp <= 0) s.rocks = s.rocks.filter((r) => !(r.x === m.rock.x && r.y === m.rock.y)); else { const r = s.rocks.find((r) => r.x === m.rock.x && r.y === m.rock.y); if (r) r.hp = m.rock.hp; } }
+    for (const k of [m.rock, ...(m.rocks || [])]) { if (!k) continue; if (k.hp <= 0) s.rocks = s.rocks.filter((r) => !(r.x === k.x && r.y === k.y)); else { const r = s.rocks.find((r) => r.x === k.x && r.y === k.y); if (r) r.hp = k.hp; } } // 晶的十字鎬一次敲好幾顆：rocks
     if (m.stairs) s.stairs = m.stairs;
     if (m.mon) { if (m.mon.hp <= 0) s.mons = s.mons.filter((x) => x.id !== m.mon.id); else { const x = s.mons.find((x) => x.id === m.mon.id); if (x) { x.hp = m.mon.hp; x.hitAt = performance.now(); } } }
     emit('mine-upd', m);
@@ -70,7 +70,7 @@ export function createWorld(session, bal) {
     const who = w.who(m.id); if (!who) return;
     who.action = m.kind === 'water' ? 'water' : m.kind === 'cast' ? 'cast' : m.kind === 'pick' || m.kind === 'sword' ? 'swing' : m.kind === 'eat' || m.kind === 'cook' ? 'eat' : m.kind === 'harvest' || m.kind === 'plant' || m.kind === 'fertilize' ? 'eat' : 'swing'; who.actionT = 0; who.tool = m.kind;
     if (m.kind === 'push' && m.id !== w.me.id && m.map === w.me.map) emit('toast', `${who.name} 在搬大傢伙，快過去一起動手！`);
-    if (m.id !== w.me.id && m.map === w.me.map) w.mark = { x: m.x, y: m.y, life: 0.6, color: '#ffd76a' };
+    if (m.id !== w.me.id && m.map === w.me.map) w.mark = { x: m.x, y: m.y, life: 0.6, color: '#ffd76a', ...(m.tiles ? { tiles: m.tiles } : {}) }; // 對方一次弄一片：整片閃一下
     who.fishing = m.kind === 'cast' ? { x: m.x, y: m.y } : null; // 對方在釣魚：看得到他的浮標
     if (m.kind === 'harvest' || m.kind === 'cook') w.floaters.push({ map: m.map, x: m.x + 0.5, y: m.y, item: m.item, q: m.q, life: 1.1 });
   });

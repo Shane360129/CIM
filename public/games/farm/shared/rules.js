@@ -231,3 +231,25 @@ export function mergeEvents(hearts, story, duo) {
   for (const [kind, src] of [['heart', hearts], ['story', story], ['duo', duo]]) for (const [id, ev] of Object.entries(src || {})) out[id] = { ...ev, kind };
   return out;
 }
+// ---------- 工具的等級：一下打多重、一次弄幾格 ----------
+// 一下打多重（斧頭、十字鎬敲樹和石頭）：照等級查 balance.tools.power（金一下打掉樹和石頭）
+export const toolPower = (bal, lv) => { const t = bal.tools.power; return t[Math.max(0, Math.min(t.length, lv || 1) - 1)]; };
+// 這個東西用哪一種範圍：鋤頭、澆水壺、斧頭、十字鎬、鐮刀照自己的等級；種子和肥料要背包裡有播種器（照播種器的等級）
+export function areaKind(bal, item, hasSeeder) {
+  if (!item) return null;
+  if (item.kind === 'tool') return bal.tools.area[item.tool] ? item.tool : null;
+  return (item.kind === 'seed' || item.kind === 'fertilizer') && hasSeeder ? 'seeder' : null;
+}
+// 這一級可以選的範圍（[寬, 深]），從 1×1 到最大，一樣的只列一次
+export function toolShapes(bal, kind, lv) {
+  const t = kind && bal.tools.area[kind]; if (!t) return [[1, 1]];
+  const out = [[1, 1]];
+  for (const s of t.slice(0, Math.max(1, Math.min(t.length, lv || 1)))) if (!out.some((o) => o[0] === s[0] && o[1] === s[1])) out.push(s);
+  return out;
+}
+// 範圍裡有哪幾格：(x, y) 是面前那一格（或點的那一格），dir 是面向；寬 w 左右置中、深 d 往前
+export function areaTiles(x, y, dir, shape) {
+  const f = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] }[dir] || [0, 1], side = [-f[1], f[0]], [w, d] = shape || [1, 1], out = [];
+  for (let i = 0; i < d; i++) for (let j = -Math.floor(w / 2); j <= Math.floor(w / 2); j++) out.push({ x: x + f[0] * i + side[0] * j, y: y + f[1] * i + side[1] * j });
+  return out;
+}

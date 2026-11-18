@@ -1,17 +1,19 @@
 // 遊戲裡的面板：背包、出貨箱、倉庫箱、種子攤。都是一般的網頁元素，蓋在畫面中間；內容每次有變化就整個重畫。
 import { iconEl } from '../render/sprites.js';
-import { sellPrice, planTake, levelOf, hearts, shopItems } from '../shared/rules.js';
+import { sellPrice, planTake, levelOf, hearts, shopItems, toolShapes, toolPower } from '../shared/rules.js';
 import { portraitEl } from '../render/doll.js';
 import { warmLPC } from '../render/lpc.js';
 import { upgradeLook } from '../shared/look.js';
 const mk = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
 
 // 一個物品的小圖：有圖用圖（種子是「種子袋＋作物」疊起來），沒有圖用名字的第一個字
-let toolLv = {}; // 自己的工具等級：升到銅以上的工具換一張圖
+let toolLv = {}; // 自己的工具等級：銅、鐵、金、晶的工具各換一張顏色不一樣的圖
 export const setToolLv = (lv) => { toolLv = lv || {}; };
+const TIER_ART = ['', '_copper', '_iron', '_gold', '_crystal'];
+function toolIcon(it, size) { for (let l = (toolLv[it.tool] || 1) - 1; l >= 1; l--) { const e = iconEl(it.art + TIER_ART[l], size); if (e) return e; } return null; } // 沒有那一級的圖就用低一級的
 export function itemIcon(items, id, size = 34) {
   const it = items[id], box = mk('span', 'iicon'); if (!it) return box;
-  const base = (it.tool && (toolLv[it.tool] || 1) >= 2 && iconEl(it.art + '_copper', size)) || iconEl(it.art, size);
+  const base = (it.tool && toolIcon(it, size)) || iconEl(it.art, size);
   if (base) { box.append(base); if (it.overlay) { const o = iconEl(it.overlay, size * 0.55); if (o) { o.classList.add('over'); box.append(o); } } }
   else box.append(mk('span', 'ifallback', it.name.slice(0, 1)));
   return box;
@@ -121,13 +123,18 @@ export function openPanel(ctx, mode, arg = {}) {
       }
       root.append(list);
     } else if (mode === 'smith') {
-      const T = bal.tools, lvs = W.self.toolLv || {};
-      root.append(mk('p', 'hint', '石磊可以用錠把工具升級（木 → 銅 → 鐵 → 金）。越高級越省體力；斧頭、十字鎬、鐮刀、劍一下打得比較多。錠要用熔爐煉。'));
+      const T = bal.tools, lvs = W.self.toolLv || {}, owns = (tool) => W.self.inv.some((q) => q && items[q.id].tool === tool);
+      root.append(mk('p', 'hint', `石磊可以用錠把工具升級（${T.levels.join(' → ')}）。越高級越省體力：鋤頭、澆水壺、播種器一次弄越多格；斧頭、十字鎬到金一下就打掉樹和石頭，晶還能一次清一片。晶要金錠加寶石，錠要用熔爐煉。拿著工具時按 R（手機按畫面上的範圍鈕）可以切換一次弄幾格。`));
+      // 下一級多了什麼：一次幾格、一下打多重
+      const gain = (tool, lv) => { const sh = toolShapes(bal, tool, lv + 1).pop(), was = toolShapes(bal, tool, lv).pop(), out = [];
+        if (sh[0] * sh[1] > was[0] * was[1]) out.push(`一次 ${sh[0]}×${sh[1]} 格`); if ((tool === 'axe' || tool === 'pick') && toolPower(bal, lv + 1) > toolPower(bal, lv)) out.push(toolPower(bal, lv + 1) >= 5 ? '一下打掉樹和石頭' : `一下打 ${toolPower(bal, lv + 1)}`); return out.length ? '（' + out.join('、') + '）' : ''; };
+      const costText = (c) => [`${items[c.bar].name}×${c.n}`, ...Object.entries(c.extra || {}).map(([k, n]) => `${items[k].name}×${n}`), `${c.money} 元`].join('、');
       const list = mk('div', 'shoplist');
       for (const tool of T.upgradable) {
         const id = Object.keys(items).find((k) => items[k].tool === tool && !items[k].power), it = items[id], lv = lvs[tool] || 1, cost = T.cost[lv], row = mk('div', 'shoprow'); row.dataset.item = tool;
-        row.append(itemIcon(items, id), mk('span', 'sname', `${it.name}（${T.levels[lv - 1]}）`), mk('span', 'sdesc', cost ? `升到${T.levels[lv]}：${items[cost.bar].name}×${cost.n}、${cost.money} 元` : '已經是最高級'));
-        const b = mk('button', 'pbtn', '升級'); b.type = 'button'; b.disabled = !cost || W.farm.money < cost.money || !planTake(items, W.self.inv, { [cost.bar]: cost.n });
+        const has = owns(tool), now = toolShapes(bal, tool, lv).pop();
+        row.append(itemIcon(items, id), mk('span', 'sname', `${it.name}（${T.levels[lv - 1]}${now[0] * now[1] > 1 ? `・${now[0]}×${now[1]}` : ''}）`), mk('span', 'sdesc', !has ? '還沒有（雜貨店買得到）' : cost ? `升到${T.levels[lv]}${gain(tool, lv)}：${costText(cost)}` : '已經是最高級'));
+        const b = mk('button', 'pbtn', '升級'); b.type = 'button'; b.disabled = !has || !cost || W.farm.money < cost.money || !planTake(items, W.self.inv, { [cost.bar]: cost.n, ...(cost.extra || {}) });
         b.addEventListener('click', async () => { const r = await room.req({ t: 'upgrade', tool }); if (r.t === 'ok') hud.toast(`${it.name}升到${T.levels[r.lv - 1]}了！`, 1500); else say(r); }); row.append(b); list.append(row);
       }
       root.append(list);
