@@ -2,7 +2,7 @@
 // 晴耕谷的 LPC 場景素材工具：照 tools/lpc/world/*.json 的對照表，從 OpenGameArt 的 LPC 素材包（art-src/lpc/oga/，不進 git）
 // 切出遊戲要的每一張圖（名字跟以前的手繪圖一樣，程式不用改），排成一張像素圖集。
 //
-//   node tools/lpc/build-world.mjs                       做 public/games/farm/assets/w1.png ＋ w1.json，整理素材來源
+//   node tools/lpc/build-world.mjs                       做 public/games/farm/assets/w1.webp ＋ w1.json，整理素材來源
 //   node tools/lpc/build-world.mjs --preview 圖.png [--only 開頭,開頭] [--file 對照表.json]   只畫一張檢查圖（每張小圖＋名字），不動遊戲的圖集
 //
 // 對照表（tools/lpc/world/*.json）的格式：{ "sprites": { "遊戲的圖名": 設定, … } }
@@ -15,7 +15,7 @@
 //   isolate 只留最大的那一塊（切的範圍裡混進隔壁東西的一角時用；影子跟本體連在一起會一起留下）
 //   parts  拼圖：[{ src, rect / grid+cell, at: [x, y], flip, hue, recolor, key }, …] 疊在 size: [寬, 高] 的透明畫布上（建築用）
 import sharp from 'sharp';
-import { readFile, writeFile, mkdir, readdir, copyFile, access } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, readdir, copyFile, access, rm } from 'node:fs/promises';
 import path from 'node:path';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
@@ -129,10 +129,14 @@ if (preview) { // 檢查圖：每張小圖放大兩倍，下面寫名字
   await sharp(pv.data, { raw: { width: pv.w, height: pv.h, channels: 4 } }).composite([{ input: svg }]).png().toFile(preview);
   console.log(`檢查圖 ${preview}：${made.length} 張`);
 } else {
-  // 不壓成 256 色：像素圖要原本的顏色。壓成 256 色時，每多加幾張圖整張的色盤就會變，舊的圖也跟著變色、出現雜點（檔案大一點，約 640 KB）
-  const png = await sharp(atlas.data, { raw: { width: W, height: H, channels: 4 } }).png({ compressionLevel: 9, palette: false }).toBuffer();
-  await writeFile(path.join(OUT, 'w1.png'), png);
-  await writeFile(path.join(OUT, 'w1.json'), JSON.stringify({ image: 'w1.png', w: W, h: H, pixel: true, sprites: Object.fromEntries(made.map((m) => [m.name, [m.x, m.y, m.b.w, m.b.h, m.native ? 1 : 0]])) }) + '\n');
+  // 不壓成 256 色：像素圖要原本的顏色。壓成 256 色時，每多加幾張圖整張的色盤就會變，舊的圖也跟著變色、出現雜點。
+  // 存成無損的 WebP：每個像素跟原本一模一樣，檔案比 PNG 小三成多（約 640 KB → 410 KB），第一次開遊戲少下載兩百多 KB。存完解回來比對一次
+  const png = await sharp(atlas.data, { raw: { width: W, height: H, channels: 4 } }).webp({ lossless: true, effort: 6 }).toBuffer();
+  const back = await sharp(png).ensureAlpha().raw().toBuffer(); let bad = 0;
+  for (let i = 0; i < back.length; i += 4) { const a = atlas.data[i + 3]; if (a !== back[i + 3] || (a && (atlas.data[i] !== back[i] || atlas.data[i + 1] !== back[i + 1] || atlas.data[i + 2] !== back[i + 2]))) bad++; }
+  if (bad) problems.push(`圖集存成 WebP 之後有 ${bad} 個像素跟原本不一樣`);
+  await writeFile(path.join(OUT, 'w1.webp'), png); await rm(path.join(OUT, 'w1.png'), { force: true }); // 舊的 PNG 圖集不用了
+  await writeFile(path.join(OUT, 'w1.json'), JSON.stringify({ image: 'w1.webp', w: W, h: H, pixel: true, sprites: Object.fromEntries(made.map((m) => [m.name, [m.x, m.y, m.b.w, m.b.h, m.native ? 1 : 0]])) }) + '\n');
   // 素材來源：用到的素材包的作者、授權、出處；素材包規定要附的說明檔照抄一份
   const credits = [], authors = new Set();
   await mkdir(path.join(OUT, 'credits'), { recursive: true });
@@ -144,6 +148,6 @@ if (preview) { // 檢查圖：每張小圖放大兩倍，下面寫名字
     credits.push({ title: p.title, url: p.url, authors: p.authors, licenses: p.licenses, attribution: p.attribution, files }); p.authors.forEach((a) => authors.add(a));
   }
   await writeFile(path.join(ROOT, 'public/games/farm/data/credits-world.json'), JSON.stringify({ note: '場景、作物、動物、道具的圖（LPC，OpenGameArt）的素材來源，由 tools/lpc/build-world.mjs 產生', authors: [...authors].sort((a, b) => a.localeCompare(b)), packs: credits }, null, 1));
-  console.log(`圖集 w1.png：${made.length} 張小圖、${W}×${H}、${(png.length / 1024).toFixed(0)} KB；用到 ${used.size} 個素材包`);
+  console.log(`圖集 w1.webp：${made.length} 張小圖、${W}×${H}、${(png.length / 1024).toFixed(0)} KB；用到 ${used.size} 個素材包`);
 }
 if (problems.length) { console.log(`有 ${problems.length} 個問題：`); problems.slice(0, 40).forEach((p) => console.log('  ' + p)); }

@@ -32,9 +32,11 @@ export function createHud(ui, slots) {
   clock.append(clockMain, clockSub, clockNet); ui.append(clock);
   const side = mk('div', 'side hidden'), btnSay = mk('button', '', '💬'), btnEmote = mk('button', '', '😊');
   btnSay.type = btnEmote.type = 'button'; btnSay.title = '說一句話（T）'; btnEmote.title = '表情';
-  const btnPhoto = mk('button', '', '📷'); btnPhoto.type = 'button'; btnPhoto.title = '拍一張照片傳到聊天室';
+  const btnPhoto = mk('button', '', '📷'); btnPhoto.type = 'button'; btnPhoto.title = '拍一張照片傳到聊天室'; btnPhoto.dataset.act = 'photo';
   const btnSet = mk('button', '', '⚙️'); btnSet.type = 'button'; btnSet.title = '設定'; btnSet.dataset.act = 'settings';
-  side.append(btnSay, btnEmote, btnPhoto, btnSet); ui.append(side);
+  const btnMap = mk('button', '', '🗺️'); btnMap.type = 'button'; btnMap.title = '地圖（M）'; btnMap.dataset.act = 'map';
+  const btnZoom = mk('button', '', '🔍'); btnZoom.type = 'button'; btnZoom.title = '鏡頭遠近（滾輪，或 +／-）'; btnZoom.dataset.act = 'zoom';
+  side.append(btnSay, btnEmote, btnMap, btnZoom, btnPhoto, btnSet); ui.append(side);
   const guide = mk('button', 'guide hidden'); guide.type = 'button'; ui.append(guide); // 新手教學：時鐘下面一行小字，不擋畫面，點了才展開
   const emotes = mk('div', 'emotes hidden'); ui.append(emotes);
   const say = mk('form', 'say hidden'), sayInput = mk('input'), sayBtn = mk('button', '', '送出');
@@ -76,6 +78,10 @@ export function createHud(ui, slots) {
       });
     },
     onPhoto(fn) { btnPhoto.onclick = fn; },
+    onMap(fn) { btnMap.onclick = fn; },
+    onZoom(fn) { btnZoom.onclick = fn; },
+    // 鏡頭只有一段可以選的時候（視窗太小）不用放按鈕
+    showZoom(on) { btnZoom.classList.toggle('hidden', !on); },
     onSettings(fn) { btnSet.onclick = fn; },
     onGuide(fn) { guide.onclick = fn; },
     setGuide(text) { guide.classList.toggle('hidden', !text || clock.classList.contains('hidden')); if (text && guide.textContent !== text) guide.textContent = text; },

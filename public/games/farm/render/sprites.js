@@ -1,6 +1,7 @@
-// 圖集裡的圖：LPC 素材工具（tools/lpc/build-world.mjs）做出來的 assets/w1.png ＋ w1.json（以前手繪的圖集 bN 收在 art-src/farm/舊圖/）。
+// 圖集裡的圖：LPC 素材工具（tools/lpc/build-world.mjs）做出來的 assets/w1.webp ＋ w1.json（無損的 WebP，像素跟原圖一模一樣）（以前手繪的圖集 bN 收在 art-src/farm/舊圖/）。
 // 有圖就畫圖，沒有圖回傳 false，呼叫的人再畫暫代的色塊。圖還沒載入完、或某一批還沒做，遊戲都照樣能跑。
 import { loadImage, loadJSON } from '../core/assets.js';
+import { snap, textSize } from './pixel.js';
 const sprites = new Map(); // 名字 → { img, x, y, w, h }
 export async function loadAtlas(name) {
   try {
@@ -19,7 +20,8 @@ export function drawSprite(g, name, x, y, w, h, hue = 0, scale = 1) {
   const s = sprites.get(name); if (!s) return false;
   const k = s.native ? PX * scale : Math.min(w / s.w, h / s.h), dw = s.w * k, dh = s.h * k;
   const was = g.imageSmoothingEnabled; if (s.pixel) g.imageSmoothingEnabled = false;
-  if (hue) g.drawImage(hueSprite(s, hue), x - dw / 2, y - dh, dw, dh); else g.drawImage(s.img, s.x, s.y, s.w, s.h, x - dw / 2, y - dh, dw, dh);
+  const dx = s.pixel ? snap(x - dw / 2) : x - dw / 2, dy = s.pixel ? snap(y - dh) : y - dh; // 像素圖對到螢幕像素上（會動的動物、掉出來的東西才不會糊）
+  if (hue) g.drawImage(hueSprite(s, hue), dx, dy, dw, dh); else g.drawImage(s.img, s.x, s.y, s.w, s.h, dx, dy, dw, dh);
   if (s.pixel) g.imageSmoothingEnabled = was;
   return true;
 }
@@ -40,7 +42,7 @@ function hueSprite(s, hue) {
 }
 // 木頭招牌：建築門口上方掛一塊寫著名字的牌子
 export function drawSign(g, text, x, y, T) {
-  const fs = Math.round(T * 0.26); g.font = `700 ${fs}px "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif`;
+  const fs = Math.round(textSize(T * 0.26, 12)); g.font = `700 ${fs}px "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif`;
   const w = g.measureText(text).width + T * 0.36, h = fs + T * 0.18;
   g.fillStyle = '#7a5232'; g.fillRect(x - w * 0.32, y - h / 2 - T * 0.14, T * 0.05, T * 0.16); g.fillRect(x + w * 0.32 - T * 0.05, y - h / 2 - T * 0.14, T * 0.05, T * 0.16);
   g.fillStyle = '#c99a5f'; g.strokeStyle = '#5a3d22'; g.lineWidth = Math.max(2, T * 0.045); g.beginPath(); g.roundRect(x - w / 2, y - h / 2, w, h, T * 0.08); g.fill(); g.stroke();

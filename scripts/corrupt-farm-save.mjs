@@ -3,7 +3,7 @@
 // 用法：先停掉 npm run dev，再跑 node scripts/corrupt-farm-save.mjs [farm|player|chunk]，然後重開 npm run dev、跑 npm run test:farmroom -- after-corrupt
 import { DatabaseSync } from 'node:sqlite';
 import { readdirSync } from 'node:fs';
-const dir = '.wrangler/state/v3/do/chat-FarmRoom', what = process.argv[2] || 'farm';
+const dir = (process.env.FARM_STATE || '.wrangler/state') + '/v3/do/chat-FarmRoom', what = process.argv[2] || 'farm';
 let n = 0;
 for (const f of readdirSync(dir).filter((x) => x.endsWith('.sqlite') && x !== 'metadata.sqlite')) {
   const db = new DatabaseSync(`${dir}/${f}`);

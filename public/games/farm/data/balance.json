@@ -1,8 +1,17 @@
 {
   "tile": 64,
-  "viewTilesWide": {
-    "phone": 9,
-    "desktop": 16
+  "zoom": {
+    "note": "鏡頭遠近：一格在畫面上幾個 CSS 像素。prefer 是預設，min～max 之間可以切換（實際只用「一個 LPC 像素剛好是整數個螢幕像素」的那幾段）",
+    "desktop": {
+      "prefer": 64,
+      "min": 32,
+      "max": 128
+    },
+    "phone": {
+      "prefer": 48,
+      "min": 30,
+      "max": 66
+    }
   },
   "viewTilesMin": 7,
   "walkSpeed": 4.2,

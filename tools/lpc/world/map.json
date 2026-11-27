@@ -47,8 +47,8 @@
       "rect": [
         128,
         0,
-        64,
-        128
+        32,
+        160
       ],
       "trim": false,
       "native": false

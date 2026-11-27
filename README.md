@@ -233,7 +233,7 @@ legacy-github-pages/  舊版（GitHub Pages + MQTT 端對端加密版）留存
 
 在一對一聊天的選單（右上角 ☰）點「我們的農場」，兩個人一起經營同一座農場：種田、釣魚、養動物、挖礦、認識小鎮居民、修復小鎮。群組和記事本裡的是另一款「家族牧場」，兩款互不影響。
 
-- **怎麼玩**：WASD／方向鍵走路、空白鍵動作、E 背包、T 說話、1～0 切快捷列；手機碰螢幕會出現搖桿和「動作」鈕。左上角的 📖 是新手教學，右邊的 ⚙️ 是設定（音量、省電畫質、字體、搖桿左右、一天的長度）。
+- **怎麼玩**：WASD／方向鍵走路、空白鍵動作、E 背包、M 地圖、T 說話、1～0 切快捷列；手機碰螢幕會出現搖桿和「動作」鈕。左上角的 📖 是新手教學，右邊的 🗺️ 是地圖（店在哪裡、對方在哪裡）、🔍 是鏡頭遠近（電腦也可以用滑鼠滾輪或 +／-）、⚙️ 是設定（音量、省電畫質、字體、搖桿左右、一天的長度）。
 - **兩個人才做得到的事**：一起搬開大石頭和超大樹根、在家門口的便條板留言、站在一起時互送東西、📷 拍照傳到聊天室。
 - **資料放哪**：每個一對一對話一座農場，存在各自的 Durable Object（`FarmRoom`）裡，跟聊天資料完全分開；每天自動備份，最近 7 天可以回復。
 
@@ -251,13 +251,14 @@ legacy-github-pages/  舊版（GitHub Pages + MQTT 端對端加密版）留存
 
 ### 素材工具
 
-美術原圖放 `art-src/farm/第N批/N-XX.png`（不進 git），切圖規則寫在 `tools/farm-assets/sheets.json`，然後：
+美術是 LPC（Liberated Pixel Cup）像素風，原始素材不進 git（下載方式寫在各工具開頭的說明）：
 
 ```bash
-node tools/farm-assets/build.mjs
+node tools/lpc/build-world.mjs        # 場景、作物、動物、道具：照 tools/lpc/world/*.json 切圖，合成圖集 assets/w1.webp（無損）＋ w1.json
+node tools/lpc/build-characters.mjs   # 角色零件：照 tools/lpc/characters.json 抄到 assets/lpc/，產生 data/doll/*.json
 ```
 
-會去背、切圖、縮放、合成圖集到 `public/games/farm/assets/`。還沒有圖的東西遊戲會自動用色塊＋名稱暫代，照樣能玩。紙娃娃零件對位用 `tools/doll-align.html`。生圖清單和每張圖的狀況在 `art-src/farm/待生成/` 與 `art-src/farm/生圖紀錄.jsonl`。
+還沒有圖的東西遊戲會自動用色塊＋名稱暫代，照樣能玩。素材的作者和授權在設定面板的「素材來源」看得到。以前手繪的圖和舊的素材工具收在 `art-src/farm/舊圖/`。
 
 規格、協定、進度、部署前檢查清單都在 `docs/farm-game/`。
 

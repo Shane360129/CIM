@@ -2,6 +2,7 @@
 import { play } from './play.js';
 import { buildGround } from '../render/ground.js';
 import { drawSprite } from '../render/sprites.js';
+import { setPixelGrid } from '../render/pixel.js';
 import { drawTilledArea, drawShadow } from '../render/placeholder.js';
 import { drawDoll } from '../render/doll.js';
 import { create } from './create.js';
@@ -33,9 +34,10 @@ export const title = {
     const season = (world && world.farm && world.farm.season) || 'spring', bg = this.scene(null, season);
     g.setTransform(k, 0, 0, k, 0, 0); g.fillStyle = '#5f9c4a'; g.fillRect(0, 0, view.w, view.h);
     // 場景蓋滿整個畫面；看不完的時候對準農舍門口的兩個人
-    const s = Math.max(view.w / bg.w, view.h / bg.h), fx = 4.6 * 64, fy = 5.6 * 64;
+    // 放大的倍數取整數個螢幕像素（一個 LPC 像素是地圖上的 2 個像素），像素圖才清楚
+    const s = Math.ceil(Math.max(view.w / bg.w, view.h / bg.h) * k * 2 - 1e-6) / (k * 2), fx = 4.6 * 64, fy = 5.6 * 64;
     const ox = Math.min(0, Math.max(view.w - bg.w * s, view.w / 2 - fx * s)), oy = Math.min(0, Math.max(view.h - bg.h * s, view.h / 2 - fy * s));
-    g.setTransform(k * s, 0, 0, k * s, k * ox, k * oy); g.imageSmoothingEnabled = false;
+    g.setTransform(k * s, 0, 0, k * s, Math.round(k * ox), Math.round(k * oy)); g.imageSmoothingEnabled = false; setPixelGrid(k * s, k);
     g.drawImage(bg.ground, 0, 0, bg.w, bg.h);
     const T = 64, list = [], t = this.t;
     const thing = (art, x, y) => list.push({ y, draw: () => drawSprite(g, art.replace('{season}', season), x * T, y * T, T * 3, T * 3) });
